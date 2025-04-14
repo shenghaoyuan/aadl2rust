@@ -1,0 +1,29 @@
+// AADL语法定义
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" | "--" ~ (!"\n" ~ ANY)* }
+
+identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | '.' .. '_')* }
+string_literal = ${ "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
+integer = @{ ASCII_DIGIT+ }
+
+// 基本类型
+type_identifier = { "data" | "thread" | "process" | "memory" | "bus" | "processor" | "system" | "abstract"
+| "implementation" | "subcomponents" | "end" }
+
+// 声明
+declaration = { 
+    type_identifier ~ identifier ~ 
+    ("extends" ~ identifier)? ~ 
+    ("{" ~ property* ~ "}")? 
+}
+
+property = {
+    identifier ~ "=>" ~ property_value ~ ";"
+}
+
+property_value = {
+    string_literal | integer | identifier | ("(" ~ property_value ~ ("," ~ property_value)* ~ ")")
+}
+
+// 文件由多个声明组成
+file = { SOI ~ declaration* ~ EOI }
