@@ -1,0 +1,117 @@
+// 自动生成的 Rust 代码 - 来自 AADL 模型
+// 生成时间: {{ now }}
+
+#![allow(unused_imports)]
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
+
+// === 子程序实现 ===
+{{#each subprograms}}
+// 子程序: {{ source_name }}
+mod {{ snakeCase name }} {
+    use std::sync::atomic::{AtomicI32, Ordering};
+
+    {{#if (eq name "sender_spg") }}
+    static COUNT: AtomicI32 = AtomicI32::new(0);
+    {{/if}}
+
+    {{#if (eq supported_languages "Java") }}
+    // 从Java转换的Rust实现
+    // 原始Java代码:
+    /*{{ source_code }}*/
+    {{/if}}
+
+    {{#if (eq name "sender_spg") }}
+    pub fn send(val: &mut i32) {
+        let new_count = COUNT.fetch_add(1, Ordering::SeqCst);
+        println!("[PING] {}", new_count + 1);
+        *val = new_count + 1;
+    }
+    {{/if}}
+
+    {{#if (eq name "receiver_spg") }}
+    pub fn receive(val: i32) {
+        if val != 0 {
+            println!("[PONG] {}", val);
+        }
+    }
+    {{/if}}
+}
+{{/each}}
+
+// === 线程定义 ===
+{{#each threads}}
+/// 线程: {{ name }}
+/// 周期: {{ period }}ms
+/// 优先级: {{ priority }}
+struct {{ pascalCase name }}Thread {
+    id: u32,
+    sender: Option<mpsc::Sender<i32>>,  // 改为i32类型
+    receiver: Option<mpsc::Receiver<i32>>,
+}
+
+impl {{ pascalCase name }}Thread {
+    fn new() -> Self {
+        Self {
+            id: {{ id }},
+            sender: None,
+            receiver: None,
+        }
+    }
+    
+    fn run(&mut self) {
+        let period = Duration::from_millis({{ period }});
+        let exec_time = Duration::from_millis({{ compute_execution_time }});
+        
+        loop {
+            let start = Instant::now();
+            
+            // 线程执行逻辑
+            {{#if (eq name "the_sender") }}
+            if let Some(sender) = &self.sender {
+                let mut val = 0;
+                {{ snakeCase (lookup_subprogram_by_connection "sender" ../connections) }}::send(&mut val);
+                sender.send(val).unwrap();
+            }
+            {{ else }}
+            if let Some(receiver) = &self.receiver {
+                let val = receiver.recv().unwrap();
+                {{ snakeCase (lookup_subprogram_by_connection "receiver" ../connections) }}::receive(val);
+            }
+            {{/if}}
+            
+            thread::sleep(exec_time);
+            let elapsed = start.elapsed();
+            if elapsed < period {
+                thread::sleep(period - elapsed);
+            }
+        }
+    }
+}
+{{/each}}
+
+// === 系统初始化 ===
+pub fn initialize_system() {
+    // 创建线程实例
+    {{#each threads}}
+    let mut {{ snakeCase name }} = {{ pascalCase name }}Thread::new();
+    {{/each}}
+    
+    // 建立连接
+    {{#each connections}}
+    let ({{ snakeCase sender }}_sender, {{ snakeCase receiver }}_receiver) = mpsc::channel();
+    {{ snakeCase sender }}.sender = Some({{ snakeCase sender }}_sender);
+    {{ snakeCase receiver }}.receiver = Some({{ snakeCase receiver }}_receiver);
+    {{/each}}
+    
+    // 启动线程
+    {{#each threads}}
+    thread::Builder::new()
+        .name("{{ name }}".to_string())
+        .stack_size({{ stack_size }})
+        .spawn(move || {
+            {{ snakeCase name }}.run();
+        }).unwrap();
+    {{/each}}
+}
