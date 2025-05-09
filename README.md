@@ -14,3 +14,5 @@
 ## ast
 
 根据aadl标准文件中的BNF，在rust中定义抽象语法
+
+为便于CTRL F，目前未模块化管理代码，整个ast在ast.rs单个文件中
