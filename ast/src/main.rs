@@ -1,4 +1,5 @@
-pub mod ast;
+mod ast;
+
 
 
 fn main() {
