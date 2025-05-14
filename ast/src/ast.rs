@@ -138,13 +138,13 @@ pub struct ComponentTypeExtension {
 //     pub classifier: ClassifierReference
 // }
 
-#[derive(Debug, Clone)]
-pub struct Feature {
-    pub identifier: String,
-    pub category: FeatureCategory,
-    pub direction: Option<Direction>,
-    pub data_type: Option<DataTypeReference>
-}
+// #[derive(Debug, Clone)]
+// pub struct Feature {
+//     pub identifier: String,
+//     pub category: FeatureCategory,
+//     pub direction: Option<Direction>,
+//     pub data_type: Option<DataTypeReference>
+// }
 
 #[derive(Debug, Clone)]
 pub struct FlowSpec {
@@ -395,6 +395,7 @@ pub struct FeaturePrototype {
 pub enum Direction {
     In,
     Out,
+    InOut,
 }
 /* ========== 原型精化 ========== */
 #[derive(Debug, Clone)]
@@ -473,13 +474,6 @@ pub enum PortDirection {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum PortType {
-    Event,
-    Data,
-    EventData,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AccessDirection {
     Requires,
     Provides,
@@ -500,4 +494,102 @@ pub struct PrototypePropertyAssociation {
     pub name: String,
     pub value: PropertyValue,
     pub applies_to: Option<Vec<String>>,
+}
+
+
+/*================software component====================*/
+
+/*==========5.1 Data 没有syntax========= */
+
+/*==========5.2 Subprograms and Subprogram Calls============= */
+#[derive(Debug, Clone)]
+pub struct CallSequence {
+    /// 调用序列标识符 (defining_call_sequence_identifier)
+    pub identifier: String,
+    
+    /// 子程序调用列表 (subprogram_call+)
+    pub calls: Vec<SubprogramCall>,
+    
+    /// 调用序列属性 (call_sequence_property_association*)
+    pub properties: Vec<PropertyAssociation>,
+    
+    /// 模式约束 (in_modes)
+    pub in_modes: Option<Vec<String>>,
+}
+
+/* ========== 子程序调用 ========== */
+#[derive(Debug, Clone)]
+pub struct SubprogramCall {
+    /// 调用标识符 (defining_call_identifier)
+    pub identifier: String,
+    
+    /// 被调用的子程序 (called_subprogram)
+    pub called: CalledSubprogram,
+    
+    /// 调用属性 (subcomponent_call_property_association*)
+    pub properties: Vec<PropertyAssociation>,
+}
+
+/* ========== 被调用的子程序 ========== */
+//TODO:目前只定义了一种引用方式，其它的引用方式未见过案例
+#[derive(Debug, Clone)]
+pub enum CalledSubprogram {
+    /// 通过分类器引用 (subprogram_unique_component_classifier_reference)
+    Classifier(UniqueComponentClassifierReference),
+}
+
+
+/*8 features and shared access */
+//功能是组件类型定义的一部分，指定接口
+//TODO:目前只考虑port,例子在Notion中有图片
+#[derive(Debug, Clone)]
+pub enum Feature {
+    // 抽象特征 (abstract_feature_spec)
+    //Abstract(AbstractFeature),
+    
+    // 端口 (port_spec)
+    Port(PortSpec),
+    
+    // 特征组 (feature_group_spec)
+    //FeatureGroup(FeatureGroupSpec),
+    
+    // 子组件访问 (subcomponent_access_spec)
+    //SubcomponentAccess(SubcomponentAccess),
+    
+    // 参数 (parameter_spec)
+    //Parameter(ParameterSpec),
+    
+    // 精化特征 (feature_refinement)
+    //Refinement(FeatureRefinement)
+}
+/* ========== 端口类型 ========== */
+/// 对应标准中的 `port_type`
+#[derive(Debug, Clone)]
+pub enum PortType {
+    /// `data port [reference]`
+    Data {
+        classifier: Option<PortDataTypeReference>,
+    },
+    /// `event data port [reference]`
+    EventData {
+        classifier: Option<PortDataTypeReference>,
+    },
+    /// `event port`
+    Event,
+}
+
+/// 端口数据类型引用（对应标准中的两种引用方式）
+#[derive(Debug, Clone)]
+pub enum PortDataTypeReference {
+    /// `data_unique_component_classifier_reference`
+    Classifier(UniqueComponentClassifierReference),
+    /// `data_component_prototype_identifier`
+    Prototype(String),
+}
+#[derive(Debug, Clone)]
+pub struct PortSpec {
+    /// `defining_port_identifier`
+    pub identifier: String,
+    pub direction: PortDirection,
+    pub port_type: PortType,
 }
