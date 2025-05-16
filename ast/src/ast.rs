@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-mod aadl_ast_cj{
+pub mod aadl_ast_cj{
 
 /* ========== 4.2 Package ========== */
 // 包名（双冒号分隔的标识符序列）
