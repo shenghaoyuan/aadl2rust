@@ -1,3 +1,6 @@
+#[allow(dead_code)]
+mod aadl_ast_cj{
+
 /* ========== 4.2 Package ========== */
 // 包名（双冒号分隔的标识符序列）
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -76,8 +79,8 @@ pub struct ComponentType {
     pub identifier: String,
     pub prototypes: PrototypeClause,
     pub features: FeatureClause,
-    pub flows: FlowClause,
-    pub modes: Option<ModesClause>,
+    //pub flows: FlowClause,
+    //pub modes: Option<ModesClause>,
     pub properties: PropertyClause,
     pub annexes: Vec<AnnexSubclause>
 }
@@ -110,12 +113,12 @@ pub enum FeatureClause {
     Items(Vec<Feature>)
 }
 
-#[derive(Debug, Clone)]
-pub enum FlowClause {
-    None,
-    Empty,
-    Items(Vec<FlowSpec>)
-}
+// #[derive(Debug, Clone)]
+// pub enum FlowClause {
+//     None,
+//     Empty,
+//     Items(Vec<FlowSpec>)
+// }
 
 //组件类型扩展 
 #[derive(Debug, Clone)]
@@ -126,38 +129,25 @@ pub struct ComponentTypeExtension {
     pub prototype_bindings: Option<PrototypeBindings>,
     pub prototypes: PrototypeClause,
     pub features: FeatureClause,
-    pub flows: FlowClause,
-    pub modes: Option<ModesClause>,
+    //pub flows: FlowClause,
+    //pub modes: Option<ModesClause>,
     pub properties: PropertyClause,
     pub annexes: Vec<AnnexSubclause>
 }
-// 相关子结构
+
+
 // #[derive(Debug, Clone)]
-// pub struct Prototype {
+// pub struct FlowSpec {
 //     pub identifier: String,
-//     pub classifier: ClassifierReference
+//     pub source: Option<FlowEndpoint>,
+//     pub sink: Option<FlowEndpoint>
 // }
 
 // #[derive(Debug, Clone)]
-// pub struct Feature {
-//     pub identifier: String,
-//     pub category: FeatureCategory,
-//     pub direction: Option<Direction>,
-//     pub data_type: Option<DataTypeReference>
+// pub enum ModesClause {
+//     Modes(Vec<Mode>),
+//     RequiresModes
 // }
-
-#[derive(Debug, Clone)]
-pub struct FlowSpec {
-    pub identifier: String,
-    pub source: Option<FlowEndpoint>,
-    pub sink: Option<FlowEndpoint>
-}
-
-#[derive(Debug, Clone)]
-pub enum ModesClause {
-    Modes(Vec<Mode>),
-    RequiresModes
-}
 
 //基础类型定义
 #[derive(Debug, Clone, PartialEq)]
@@ -197,12 +187,12 @@ pub struct ComponentImplementation {
     pub prototype_bindings: Option<PrototypeBindings>,
     pub prototypes: PrototypeClause,
     pub subcomponents: SubcomponentClause,
-    pub internal_features: Vec<InternalFeature>,
-    pub processor_features: Vec<ProcessorFeature>,
+    //pub internal_features: Vec<InternalFeature>,
+    //pub processor_features: Vec<ProcessorFeature>,
     pub calls: CallSequenceClause,
     pub connections: ConnectionClause,
-    pub flows: FlowImplementationClause,
-    pub modes: Option<ModesClause>,
+    //pub flows: FlowImplementationClause,
+    //pub modes: Option<ModesClause>,
     pub properties: PropertyClause,
     pub annexes: Vec<AnnexSubclause>
 }
@@ -232,12 +222,12 @@ pub struct ComponentImplementationExtension {
     pub prototype_bindings: Option<PrototypeBindings>,
     pub prototypes: PrototypeClause,
     pub subcomponents: SubcomponentClause,
-    pub internal_features: Vec<InternalFeature>,
-    pub processor_features: Vec<ProcessorFeature>,
+    //pub internal_features: Vec<InternalFeature>,
+    //pub processor_features: Vec<ProcessorFeature>,
     pub calls: CallSequenceClause,
     pub connections: ConnectionClause,
-    pub flows: FlowImplementationClause,
-    pub modes: Option<ModesClause>,
+    //pub flows: FlowImplementationClause,
+    //pub modes: Option<ModesClause>,
     pub properties: PropertyClause,
     pub annexes: Vec<AnnexSubclause>
 }
@@ -273,14 +263,14 @@ pub enum ConnectionClause {
     Refinements(Vec<ConnectionRefinement>)
 }
 
-#[derive(Debug, Clone)]
-pub enum FlowImplementationClause {
-    None,
-    Empty,
-    Items(Vec<FlowImplementation>),
-    EndToEndFlows(Vec<EndToEndFlow>),
-    Refinements(Vec<FlowRefinement>)
-}
+// #[derive(Debug, Clone)]
+// pub enum FlowImplementationClause {
+//     None,
+//     Empty,
+//     Items(Vec<FlowImplementation>),
+//     EndToEndFlows(Vec<EndToEndFlow>),
+//     Refinements(Vec<FlowRefinement>)
+// }
 
 #[derive(Debug, Clone)]
 pub struct ConnectionRefinement {
@@ -288,11 +278,11 @@ pub struct ConnectionRefinement {
     pub refinement: Connection
 }
 
-#[derive(Debug, Clone)]
-pub struct FlowRefinement {
-    pub original_name: String,
-    pub refinement: FlowImplementation
-}
+// #[derive(Debug, Clone)]
+// pub struct FlowRefinement {
+//     pub original_name: String,
+//     pub refinement: FlowImplementation
+// }
 
 
 /* ========== 4.5 subComponent ========== */
@@ -302,8 +292,8 @@ pub struct Subcomponent {
     pub category: ComponentCategory,
     pub classifier: SubcomponentClassifier,
     pub array_spec: Option<ArraySpec>,
-    pub properties: Vec<SubcomponentProperty>,
-    pub modes: Option<ComponentInModes>
+    pub properties: Vec<Property>,
+    //pub modes: Option<ComponentInModes>
 }
 #[derive(Debug, Clone)]
 pub enum SubcomponentClassifier {
@@ -325,8 +315,8 @@ pub struct SubcomponentRefinement {
     pub category: ComponentCategory,
     pub classifier: Option<SubcomponentClassifier>, // refined to可能省略引用
     pub array_spec: Option<ArraySpec>,
-    pub properties: Vec<SubcomponentProperty>,
-    pub modes: Option<ComponentInModes>
+    pub properties: Vec<Property>,
+    //pub modes: Option<ComponentInModes>
 }
 /* ========== 数组维度定义 ========== */
 #[derive(Debug, Clone)]
@@ -350,12 +340,7 @@ pub struct ArrayElementImplementation {
     pub implementation: UniqueImplementationReference,
     pub prototype_bindings: Option<PrototypeBindings>
 }
-/* ========== TODO 属性关联 ========== */
-#[derive(Debug, Clone)]
-pub enum SubcomponentProperty {
-    Direct(PropertyAssociation),
-    Contained(ContainedPropertyAssociation)
-}
+
 
 /* ========== 4.7 Prototype ========== */
 /* ========== 基础原型定义 ========== */
@@ -384,6 +369,15 @@ pub struct ComponentPrototype {
 #[derive(Debug, Clone)]
 pub struct FeatureGroupPrototype {
     pub classifier: Option<UniqueFeatureGroupTypeReference>,
+}
+// 对应标准中的 `unique_feature_group_type_reference`
+#[derive(Debug, Clone)]
+pub struct UniqueFeatureGroupTypeReference {
+    /// 可选的包名前缀 `[ package_name :: ]`
+    pub package_prefix: Option<PackageName>,
+    
+    /// 特性组类型标识符 `feature_group_type_identifier`
+    pub identifier: String,
 }
 /* ========== 特性原型 ========== */
 #[derive(Debug, Clone)]
@@ -511,7 +505,7 @@ pub struct CallSequence {
     pub calls: Vec<SubprogramCall>,
     
     /// 调用序列属性 (call_sequence_property_association*)
-    pub properties: Vec<PropertyAssociation>,
+    pub properties: Vec<Property>,
     
     /// 模式约束 (in_modes)
     pub in_modes: Option<Vec<String>>,
@@ -527,7 +521,7 @@ pub struct SubprogramCall {
     pub called: CalledSubprogram,
     
     /// 调用属性 (subcomponent_call_property_association*)
-    pub properties: Vec<PropertyAssociation>,
+    pub properties: Vec<Property>,
 }
 
 /* ========== 被调用的子程序 ========== */
@@ -593,3 +587,312 @@ pub struct PortSpec {
     pub direction: PortDirection,
     pub port_type: PortType,
 }
+
+/*=================9 connection ============ */
+/* ========== 连接类型 ========== */
+#[derive(Debug, Clone)]
+pub enum Connection {
+    // 端口连接 (port_connection)
+    Port(PortConnection),
+    
+    // 参数连接 (parameter_connection)
+    Parameter(ParameterConnection),
+    
+    // 以下为其他连接类型（暂不实现）
+    // Feature(FeatureConnection),      // feature_connection
+    // Access(AccessConnection),       // access_connection
+    // FeatureGroup(FeatureGroupConnection), // feature_group_connection
+}
+
+/* ========== 端口连接符号 ========== */
+/// 对应标准中的 `connection_symbol`
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ConnectionSymbol {
+    ///  ->
+    Direct,
+    ///  <-> 
+    Didirect,
+}
+/* ========== port 口连接定义 ========== */
+/// 对应标准中的 `port_connection`
+#[derive(Debug, Clone)]
+pub struct PortConnection {
+    pub source: PortEndpoint,
+    pub destination: PortEndpoint,
+    pub connection_direction: ConnectionSymbol,
+}
+// 对应标准中的 `port_connection_reference`
+#[derive(Debug, Clone)]
+pub enum PortEndpoint {
+    /// 组件类型端口 (component_type_port_identifier)
+    ComponentPort(String),
+    
+    /// 子组件端口 (subcomponent_identifier.port_identifier)
+    SubcomponentPort {
+        subcomponent: String,
+        port: String,
+    },
+    
+    /// 特征组元素端口 (component_type_feature_group_identifier.element_port_identifier)
+    FeatureGroupPort {
+        feature_group: String,
+        element: String,
+    },
+    
+    /// 聚合数据端口元素 (component_type_port_identifier.data_subcomponent_identifier)
+    AggregateDataElement {
+        port: String,
+        data_element: String,
+    },
+    
+    /// 数据访问要求 (component_type_requires_data_access_identifier)
+    RequiresDataAccess(String),
+    
+    /// 数据子组件 (data_subcomponent_identifier)
+    DataSubcomponent(String),
+    
+    /// 子组件提供的数据访问 (subcomponent_identifier.provides_data_access_identifier)
+    SubcomponentDataAccess {
+        subcomponent: String,
+        access: String,
+    },
+    
+    /// 特征组数据访问元素 (component_type_feature_group_identifier.element_data_access_identifier)
+    FeatureGroupDataAccess {
+        feature_group: String,
+        element: String,
+    },
+    
+    /// 数据子组件嵌套访问 (data_subcomponent_identifier.data_subcomponent_identifier)
+    NestedDataAccess {
+        container: String,
+        element: String,
+    },
+    
+    /// 处理器端口 ([processor.]processor_port_identifier)
+    ProcessorPort {
+        processor: Option<String>, // None表示隐式当前处理器
+        port: String,
+    },
+    
+    /// 组件内部事件源 ([self.]internal_event_or_event_data_identifier)
+    InternalEvent {
+        self_ref: bool, // 是否显式使用"self."
+        identifier: String,
+    },
+}
+/* ========== 参数连接定义 ========== */
+/// 对应标准中的 `parameter_connection`
+#[derive(Debug, Clone)]
+pub struct ParameterConnection {
+    pub source: ParameterEndpoint,
+    pub destination: ParameterEndpoint,
+    pub connection_direction: ConnectionSymbol,
+}
+/* ========== 参数端点定义 ========== */
+/// 对应标准中的 `parameter_reference`
+#[derive(Debug, Clone)]
+pub enum ParameterEndpoint {
+    /// 线程/子程序类型参数 (component_type_parameter_identifier[.data_subcomponent_identifier])
+    ComponentParameter {
+        parameter: String,
+        data_subcomponent: Option<String>, // 可选数据子组件
+    },
+    
+    /// 子程序调用参数 (subprogram_call_identifier.parameter_identifier)
+    SubprogramCallParameter {
+        call_identifier: String,
+        parameter: String,
+    },
+    
+    /// 线程类型的数据/事件数据端口 (component_type_port_identifier[.data_subcomponent_identifier])
+    ThreadPort {
+        port: String,
+        data_subcomponent: Option<String>, // 可选数据元素
+    },
+    
+    /// 数据子组件 (data_subcomponent_identifier)
+    DataSubcomponent(String),
+    
+    /// 要求的数据访问 (requires_data_access_identifier)
+    RequiresDataAccess(String),
+    
+    /// 特征组的数据访问元素 (component_type_feature_group_identifier.element_data_access_identifier)
+    FeatureGroupDataAccess {
+        feature_group: String,
+        element: String,
+    },
+    
+    /// 特征组的端口/参数元素 (component_type_feature_group_identifier.element_port_or_parameter_identifier)
+    FeatureGroupElement {
+        feature_group: String,
+        element: String,
+    },
+}
+
+/*==============11 属性=============== */
+#[derive(Debug, Clone)]
+pub enum Property {
+    /// 基础属性关联 (basic_property_association)
+    BasicProperty(BasicPropertyAssociation),
+    SubcomponentProperty(BasicPropertyAssociation),//TODO:暂时使用basic代替
+    CallSequenceProperty(BasicPropertyAssociation),
+    // 未来可扩展其他属性类型：
+}
+
+
+/* ========== 基础属性关联 ========== */
+#[derive(Debug, Clone)]
+pub struct BasicPropertyAssociation {
+    /// 属性标识符 (unique_property_identifier)
+    pub identifier: PropertyIdentifier,
+    
+    /// 赋值操作符 => 或 +=>
+    pub operator: PropertyOperator,
+    
+    /// 是否为常量 [constant]
+    pub is_constant: bool,
+    
+    /// 属性值 (property_value)
+    pub value: PropertyValue,
+}
+#[derive(Debug, Clone)]
+pub struct PropertyIdentifier {
+    /// 可选的属性集前缀 [property_set_identifier::]
+    pub property_set: Option<String>,
+    pub name: String,
+}
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum PropertyOperator {
+    Assign,    // =>
+    Append,    // +=>
+}
+/* ========== 属性值系统 ========== */
+#[derive(Debug, Clone)]
+pub enum PropertyValue {
+    Single(PropertyExpression),      // single_property_value
+    List(Vec<PropertyListElement>),  // property_list_value
+}
+
+#[derive(Debug, Clone)]
+pub enum PropertyListElement {
+    Value(PropertyExpression),
+    NestedList(Vec<PropertyListElement>), // 支持嵌套列表
+}
+
+#[derive(Debug, Clone)]
+pub enum PropertyExpression {
+    // 基础类型
+    Boolean(BooleanTerm),
+    Real(SignedRealOrConstant),
+    Integer(SignedIntergerOrConstant),
+    String(StringTerm),
+    //Enumeration(EnumerationTerm),
+    //Unit(UnitTerm),
+    
+    // 范围类型
+    //IntegerRange(IntegerRangeTerm),
+    //RealRange(RealRangeTerm),
+    
+    // 复杂类型
+    //PropertyReference(PropertyTerm),
+    //ComponentClassifier(ComponentClassifierTerm),
+    //Reference(ReferenceTerm),
+    //Record(RecordTerm),
+    //Computed(ComputedTerm),
+}
+/* ========== 属性常量项 ========== */
+#[derive(Debug, Clone)]
+pub struct PropertyConstantTerm {
+    /// 可选的属性集前缀 ([property_set_identifier::])
+    pub property_set: Option<String>,
+    
+    /// 常量标识符 (real_property_constant_term)
+    pub name: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum BooleanTerm {
+    Literal(bool),          // boolean_value
+    Constant(PropertyConstantTerm), // boolean_property_constant_term
+}
+/* ========== 符号定义 ========== */
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Sign {
+    Plus,    // +
+    Minus,   // -
+}
+/* ========== 带符号实数或常量 ========== */
+/// 对应标准中的 `signed_aadlreal_or_constant`
+#[derive(Debug, Clone)]
+pub enum SignedRealOrConstant {
+    /// 带符号实数 (signed_aadlreal)
+    Real(SignedReal),
+    
+    /// 实数属性常量 ([sign] real_property_constant_term)
+    Constant {
+        sign: Option<Sign>,
+        constant: PropertyConstantTerm,
+    },
+}
+
+/* ========== 带符号实数 ========== */
+/// 对应标准中的 `signed_aadlreal`
+#[derive(Debug, Clone)]
+pub struct SignedReal {
+    /// 可选符号 ([sign])
+    pub sign: Option<Sign>,
+    
+    /// 实数字面量 (real_literal)
+    pub value: f64,
+    
+    /// 可选单位标识符 ([unit_identifier])
+    pub unit: Option<String>,
+}
+
+
+/* ========== 带符号整数或常量 ========== */
+/// 对应标准中的 `signed_aadlreal_or_constant`
+#[derive(Debug, Clone)]
+pub enum SignedIntergerOrConstant {
+    /// 带符号实数 (signed_aadlreal)
+    Real(SignedInteger),
+    
+    /// 实数属性常量 ([sign] real_property_constant_term)
+    Constant {
+        sign: Option<Sign>,
+        constant: PropertyConstantTerm,
+    },
+}
+
+/* ========== 带符号实数 ========== */
+/// 对应标准中的 `signed_aadlreal`
+#[derive(Debug, Clone)]
+pub struct SignedInteger {
+    /// 可选符号 ([sign])
+    pub sign: Option<Sign>,
+    
+    /// 实数字面量 (real_literal)
+    pub value: i64,
+    
+    /// 可选单位标识符 ([unit_identifier])
+    pub unit: Option<String>,
+}
+/// 字符串项 (string_term)
+#[derive(Debug, Clone)]
+pub enum StringTerm {
+    /// 字面量 (string_literal)
+    Literal(String),
+    
+    /// 字符串常量 (string_property_constant_term)
+    Constant(PropertyConstantTerm),
+}
+
+
+
+
+
+
+
+}//end mod aadl_ast_cj
+
