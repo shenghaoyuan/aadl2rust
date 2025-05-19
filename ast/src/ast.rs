@@ -16,12 +16,12 @@ impl PackageName {
 // 包可见性声明（with/renames）
 #[derive(Debug, Clone)]
 pub enum VisibilityDeclaration {
-    // with package1, package2, property_set;
+    // with package1, package2, property_set;对应 `with` 语法
     Import {
         packages: Vec<PackageName>,
         property_sets: Vec<String>,
     },
-    // renames package::component;
+    // renames package::component;对应 `renames` 语法
     Alias {
         new_name: String,
         original: QualifiedName,
@@ -56,7 +56,7 @@ pub enum PropertyClause {
 #[derive(Debug, Clone)]
 pub struct Package {
     pub name: PackageName,
-    pub visibility_decls: Vec<VisibilityDeclaration>,
+    pub visibility_decls: Vec<VisibilityDeclaration>, //声明当前包与其他包或属性集之间的依赖关系
     pub public_section: Option<PackageSection>,
     pub private_section: Option<PackageSection>,
     pub properties: PropertyClause,
@@ -77,7 +77,7 @@ pub enum AadlDeclaration {
 pub struct ComponentType {
     pub category: ComponentCategory,
     pub identifier: String,
-    pub prototypes: PrototypeClause,
+    pub prototypes: PrototypeClause,  //“原型”，暂没见过
     pub features: FeatureClause,
     //pub flows: FlowClause,
     //pub modes: Option<ModesClause>,

@@ -1,11 +1,52 @@
 mod ast;
 use ast::aadl_ast_cj::*;
 fn main() {
-    println!("Hello, world!");
+    let pkg = build_pingpong_package();
+
+    // 1. 输出包名
+    println!("=== Package Info ===");
+    println!("Name: {}", pkg.name.to_string());//自定义的to_string（）,
+
+    // 2. 输出导入的属性集
+    for decl in &pkg.visibility_decls {
+        match decl {
+            VisibilityDeclaration::Import { packages, property_sets } => {
+                println!("Imported packages: {:?}", packages);
+                println!("Imported property sets: {:?}", property_sets);
+            }
+            _ => {}
+        }
+    }
+
+    // 3. 输出公共声明数量
+    if let Some(public_section) = &pkg.public_section {
+        println!("Public section contains {} declarations:", public_section.declarations.len());
+        
+        // 4. 遍历所有公共声明
+        for decl in &public_section.declarations {
+            match decl {
+                AadlDeclaration::ComponentType(c) => {
+                    println!("- Component Type: {}", c.identifier);
+                }
+                AadlDeclaration::ComponentImplementation(impl_) => {
+                    println!("- Implementation: {}.{}", 
+                        impl_.name.type_identifier, 
+                        impl_.name.implementation_identifier);
+                }
+                // 其他类型的声明...
+                _ => {}
+            }
+        }
+    }
+
+    // 5. 输出私有声明（如果有）
+    if let Some(private_section) = &pkg.private_section {
+        println!("Private section contains {} declarations", private_section.declarations.len());
+    }
 }
 fn build_pingpong_package() -> Package {
     Package {
-        name: PackageName(vec!["ojr_pingpong_queued".to_string()]),
+        name: PackageName(vec!["ojr".to_string(),"pingpong".to_string(),"queued".to_string()]),
         visibility_decls: vec![VisibilityDeclaration::Import {
             packages: vec![],
             property_sets: vec!["Data_Model".to_string()],
@@ -239,7 +280,18 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("200 KByte".to_string()))),
+                            //value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("200 KByte".to_string()))),
+                            value: PropertyValue::Single(
+                                PropertyExpression::Integer(
+                                    SignedIntergerOrConstant::Real(
+                                        SignedInteger{
+                                        sign: Some(Sign::Plus),
+                                        value: 200,
+                                        unit: Some("KByte".to_string()),
+                                        }
+                                    )
+                                )
+                            )
                         }),
                     ]),
                     annexes: vec![],
@@ -295,7 +347,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("2000 Ms".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 2000,
+                                    unit: Some("Ms".to_string()),
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -304,7 +362,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("5".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 5,
+                                    unit: None,  // 优先级通常是无单位的纯数字
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -313,7 +377,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("40000 bytes".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 40000,
+                                    unit: Some("bytes".to_string()),
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -322,7 +392,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("40000 bytes".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 40000,
+                                    unit: Some("bytes".to_string()),
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -331,7 +407,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("40 bytes".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 40,
+                                    unit: Some("bytes".to_string()),
+                                })
+                            )),
                         }),
                     ]),
                     annexes: vec![],
@@ -495,7 +577,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("1000 Ms".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 1000,
+                                    unit: Some("Ms".to_string()),
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -504,7 +592,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("10".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 10,
+                                    unit: None,  // 优先级通常是无单位的纯数字
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -513,7 +607,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("40000 bytes".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 40000,
+                                    unit: Some("bytes".to_string()),
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -522,7 +622,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("40000 bytes".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 40000,
+                                    unit: Some("bytes".to_string()),
+                                })
+                            )),
                         }),
                         Property::BasicProperty(BasicPropertyAssociation {
                             identifier: PropertyIdentifier {
@@ -531,7 +637,13 @@ fn build_pingpong_package() -> Package {
                             },
                             operator: PropertyOperator::Assign,
                             is_constant: false,
-                            value: PropertyValue::Single(PropertyExpression::String(StringTerm::Literal("40 bytes".to_string()))),
+                            value: PropertyValue::Single(PropertyExpression::Integer(
+                                SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign: None,
+                                    value: 40,
+                                    unit: Some("bytes".to_string()),
+                                })
+                            )),
                         }),
                     ]),
                     annexes: vec![],
