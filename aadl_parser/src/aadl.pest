@@ -1,42 +1,191 @@
-// 定义空白和注释（静默忽略）
+// aadl.pest
+
+//匹配时，并非“贪心算法”，浅尝辄止
+// “|”该符号不能作为开头的首个符号
+
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" | "--" ~ (!"\n" ~ ANY)* }
 
 // 基础标识符规则
-identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | '_' .. '.')* }
-
-// 组件类型关键字
-component_type = { 
-    "system" | "processor" | "thread" | "data" | 
-    "memory" | "process" | "abstract" 
+identifier = @{ 
+    ASCII_ALPHA ~ 
+    //(ASCII_ALPHANUMERIC | '_' .. '.')*  // 不知道为什么不行
+    (ASCII_ALPHANUMERIC | '_' .. '_' | '.'..'.')*  
+}
+no_point_identifier = @{ 
+    ASCII_ALPHA ~ 
+    (ASCII_ALPHANUMERIC | '_' .. '_' )*  
 }
 
-//关键字
-keyword = {"implementation"}
+qualified_identifier = @{ (identifier ~ "::")* ~ identifier }
+package_name = { qualified_identifier }
+property_set_name = { identifier }
 
-// 子组件声明（似乎processor与process存在冲突，此处这样修改，丢掉了“processor”这个信息）
-subcomponent_decl = { 
-    identifier ~ ":" ~ ("processor" | component_type) ~ identifier ~ ";" 
+// 4.2 Package
+package_declaration = {
+    "package" ~ package_name ~
+    ("public" | "private")? ~
+    visibility_declarations* ~
+    package_sections ~
+    "end" ~ package_name ~ ";"
 }
 
-// 子组件块
-subcomponents_block = {
-    "subcomponents" ~
-    subcomponent_decl+ 
+visibility_declarations = {
+    "with" ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" |
+    identifier ~ "renames" ~ ("package" ~ package_name | qualified_identifier) ~ ("as" ~ identifier)? ~ ";"
 }
 
-// 组件声明
-component_decl = {
-    component_type ~ 
-    keyword? ~
-    identifier ~
-    subcomponents_block? ~
+package_sections = {
+    (("public" | "private")?  ~ declaration*)? 
+}
+
+declaration = {
+    component_type |
+    component_implementation |
+    annex_library
+}
+
+// 4.3 Component Types ，似乎processor与process存在冲突，暂时给processor取名cjprocessor
+// 上述问题已解决，把processor放在process之前
+component_category = {
+    "abstract" |
+    "data" | "subprogram" | "subprogram group" |
+    "thread" | "thread group" | "processor" |
+    "memory" | "process" | "bus" | "device" | "virtual processor" | "virtual bus" |
+    "system"
+}
+
+component_type = {
+    component_category ~ identifier ~
+    prototypes? ~
+    features? ~
+    properties? ~
+    annexes? ~
     "end" ~ identifier ~ ";"
 }
 
-// 文件结构
-file = {
-    SOI ~
-    component_decl* ~
-    EOI
+// 4.4 Component Implementations
+component_implementation = {
+    component_category ~ "implementation" ~ identifier ~ 
+    prototypes? ~
+    subcomponents? ~
+    calls? ~
+    connections? ~
+    properties? ~
+    annexes? ~
+    "end" ~ identifier ~ ";"
 }
+
+// 4.5 Subcomponents
+subcomponent = {
+    identifier ~ ":" ~ component_category ~ identifier ~
+    array_spec? ~
+    properties? ~
+    ";"
+}
+
+// 4.7 Prototypes
+prototype_declaration = {
+    identifier ~ ":" ~
+    ("component" ~ component_category ~ ("classifier" ~ qualified_identifier)?) |
+    ("feature" ~ ("in" | "out" | "in out")? ~ ("classifier" ~ qualified_identifier)?) |
+    ("feature group" ~ ("classifier" ~ qualified_identifier)?)
+}
+
+// 8 Features
+feature_declaration = {
+    identifier ~ ":" ~
+    ("in" | "out" | "in out")? ~
+    ("data port" | "event data port" | "event port" | "parameter") ~
+    identifier? ~
+    ";"
+}
+
+// 9 Connections
+connection = {
+    identifier ~ ":" ~ ("port" | "parameter") ~
+    (port_connection | parameter_connection) ~
+    ";"
+}
+
+port_connection = {
+    port_reference ~ ("->" | "<->") ~ port_reference
+}
+
+parameter_connection = {
+    parameter_reference ~ ("->" | "<->") ~ parameter_reference
+}
+
+// 11 Properties
+property_association = {
+    identifier ~ ( "::" ~ property_set_name)? ~
+    ("=>" | "+=>") ~
+    ("constant"? ~ property_value) ~
+    ("applies" ~ "to" ~ qualified_identifier_list)? ~
+    ";"
+}
+
+
+property_value = {
+    range_value | //优先于literal_value匹配
+    literal_value | //字面量
+    list_value |
+    reference_value 
+}
+
+literal_value = { (number | string_literal | boolean | enum_value ) ~ unit? } 
+range_value = { 
+    number ~ WHITESPACE* ~ unit ~ WHITESPACE* ~ 
+    ".." ~ WHITESPACE* ~ 
+    number ~ WHITESPACE* ~ unit 
+}
+list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
+reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" }
+
+number = @{ ("+" | "-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? } //带符号整数或浮点数
+unit = { no_point_identifier } //可选的单位
+string_literal = { 
+    "\"" ~ (!"\"" ~ ANY)* ~ "\"" | 
+    "(" ~ ("()" | ( !")" ~ ANY ) )* ~ ")" 
+}//双引号字符串或括号内容（如 "text" 或 (content)）
+//注意跳过("new PingPongType()") 内部的括号对
+
+boolean = { "true" | "false"}
+// 枚举值规则（覆盖AADL属性集预定义值）
+enum_value = @{
+    "Periodic" | "Sporadic" | "Timed" | 
+    "Event" | "Hybrid" 
+}
+
+// 5.2 Subprogram Calls
+call_sequence = {
+    identifier ~ ":" ~ "{" ~ subprogram_call+ ~ "}" ~ ";"
+}
+
+subprogram_call = {
+    identifier ~ ":" ~ "subprogram" ~ qualified_identifier ~ ";"
+}
+
+// Annexes
+annex_library = { "annex" ~ identifier? ~ "{" ~ ANY* ~ "}" ~ ";" }
+annex_subclause = { "annex" ~ identifier? ~ "{" ~ ANY* ~ "}" ~ ";" }
+
+// Helpers
+array_spec = { "[" ~ dimension ~ ("," ~ dimension)* ~ "]" }
+dimension = { number? }
+//mode_reference_list = { identifier ~ ("," ~ identifier)* }
+qualified_identifier_list = { qualified_identifier ~ ("," ~ qualified_identifier)* }
+port_reference = { (no_point_identifier ~ ".")? ~ no_point_identifier }
+parameter_reference = { (identifier ~ ".")? ~ identifier }
+
+// 子句可选性
+prototypes = { "prototypes" ~ (prototype_declaration+ | "none") }
+features = { "features" ~ (feature_declaration+ | "none") }
+properties = { "properties" ~ (property_association+ | "none") }
+annexes = { "annexes" ~ (annex_subclause+ | "none") }
+subcomponents = { "subcomponents" ~ (subcomponent+ | "none") }
+calls = { "calls" ~ (call_sequence+ | "none") }
+connections = { "connections" ~ (connection+ | "none") }
+
+
+file = { SOI ~ package_declaration ~ EOI }
