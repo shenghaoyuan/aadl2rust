@@ -31,8 +31,8 @@ package_declaration = {
 }
 
 visibility_declarations = {
-    "with" ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" |
-    identifier ~ "renames" ~ ("package" ~ package_name | qualified_identifier) ~ ("as" ~ identifier)? ~ ";"
+    ("with" ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" )|
+    (identifier ~ "renames" ~ ("package" ~ package_name | qualified_identifier) ~ ("as" ~ identifier)? ~ ";")
 }
 
 package_sections = {
@@ -94,26 +94,29 @@ prototype_declaration = {
 
 // 8 Features
 feature_declaration = {
-    identifier ~ ":" ~
-    ("in" | "out" | "in out")? ~
-    ("data port" | "event data port" | "event port" | "parameter") ~
-    identifier? ~
-    ";"
+    identifier ~ ":" ~ direction? ~ port_type ~ identifier? ~ ";"
 }
+
+direction = { "in out" | "in" | "out" } // 注意 "in out" 要放前面
+
+port_type = { "data port" | "event data port" | "event port" | "parameter" }
 
 // 9 Connections
 connection = {
-    identifier ~ ":" ~ ("port" | "parameter") ~
+    identifier ~ ":" ~ connection_type ~
     (port_connection | parameter_connection) ~
     ";"
 }
 
+connection_type = { "port" | "parameter" }
+connection_operator = { "->" | "<->" }
+
 port_connection = {
-    port_reference ~ ("->" | "<->") ~ port_reference
+    port_reference ~ connection_operator ~ port_reference
 }
 
 parameter_connection = {
-    parameter_reference ~ ("->" | "<->") ~ parameter_reference
+    parameter_reference ~ connection_operator ~ parameter_reference
 }
 
 // 11 Properties

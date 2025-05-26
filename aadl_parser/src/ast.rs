@@ -59,7 +59,7 @@ pub struct Package {
     pub visibility_decls: Vec<VisibilityDeclaration>, //声明当前包与其他包或属性集之间的依赖关系
     pub public_section: Option<PackageSection>,
     pub private_section: Option<PackageSection>,
-    pub properties: PropertyClause,
+    pub properties: PropertyClause, //暂时例子中，为空
 }
 
 #[derive(Debug, Clone)]
@@ -382,15 +382,10 @@ pub struct UniqueFeatureGroupTypeReference {
 /* ========== 特性原型 ========== */
 #[derive(Debug, Clone)]
 pub struct FeaturePrototype {
-    pub direction: Option<Direction>,  // in/out
+    pub direction: Option<PortDirection>,  // in/out
     pub classifier: Option<UniqueComponentClassifierReference>,
 }
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Direction {
-    In,
-    Out,
-    InOut,
-}
+
 /* ========== 原型精化 ========== */
 #[derive(Debug, Clone)]
 pub struct PrototypeRefinement {
