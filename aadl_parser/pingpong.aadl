@@ -36,7 +36,7 @@ pingpong renames package ojr_pingpong::queued;
 
   memory implementation mem.impl
   properties
-    Memory_Size => 200 KByte;
+    Memory_Size => constant +200 KByte;
   end mem.impl;
 
   thread sender

@@ -21,7 +21,7 @@ qualified_identifier = @{ (identifier ~ "::")* ~ identifier }
 package_name = { qualified_identifier }
 property_set_name = { identifier }
 
-// 4.2 Package
+// 4.2 Package TODO:这里的public和private信息被丢弃
 package_declaration = {
     "package" ~ package_name ~
     ("public" | "private")? ~
@@ -31,13 +31,17 @@ package_declaration = {
 }
 
 visibility_declarations = {
-    ("with" ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" )|
+    (WITH ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" )|
     (identifier ~ "renames" ~ ("package" ~ package_name | qualified_identifier) ~ ("as" ~ identifier)? ~ ";")
 }
+WITH = { "with" }
 
 package_sections = {
-    (("public" | "private")?  ~ declaration*)? 
+    ((PUBLIC | PRIVATE)?  ~ declaration*)? 
 }
+PUBLIC = { "public" }
+PRIVATE = { "private" }
+
 
 declaration = {
     component_type |
@@ -84,7 +88,7 @@ subcomponent = {
     ";"
 }
 
-// 4.7 Prototypes
+// 4.7 Prototypes TODO
 prototype_declaration = {
     identifier ~ ":" ~
     ("component" ~ component_category ~ ("classifier" ~ qualified_identifier)?) |
@@ -121,12 +125,17 @@ parameter_connection = {
 
 // 11 Properties
 property_association = {
-    identifier ~ ( "::" ~ property_set_name)? ~
-    ("=>" | "+=>") ~
-    ("constant"? ~ property_value) ~
-    ("applies" ~ "to" ~ qualified_identifier_list)? ~
+    identifier ~
+    ( "::" ~ property_set_name )? ~
+    property_operator ~
+    constant? ~ property_value ~
+    ( "applies" ~ "to" ~ qualified_identifier_list )? ~
     ";"
 }
+
+property_operator = { "=>" | "+=>" }
+
+constant = { "constant" }
 
 
 property_value = {
@@ -145,7 +154,11 @@ range_value = {
 list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
 reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" }
 
-number = @{ ("+" | "-")? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? } //带符号整数或浮点数
+sign = { "+" | "-" }
+dot = { "." }
+number = { sign? ~ numbervalue} //带符号整数或浮点数
+numbervalue = {ASCII_DIGIT+ ~ (dot ~ ASCII_DIGIT+)?}
+
 unit = { no_point_identifier } //可选的单位
 string_literal = { 
     "\"" ~ (!"\"" ~ ANY)* ~ "\"" | 

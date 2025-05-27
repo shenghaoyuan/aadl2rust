@@ -786,7 +786,7 @@ pub enum PropertyExpression {
     //Unit(UnitTerm),
     
     // 范围类型
-    //IntegerRange(IntegerRangeTerm),
+    IntegerRange(IntegerRangeTerm),
     //RealRange(RealRangeTerm),
     
     // 复杂类型
@@ -883,6 +883,17 @@ pub enum StringTerm {
     Constant(PropertyConstantTerm),
 }
 
+#[derive(Debug, Clone)]
+pub struct IntegerRangeTerm {
+    pub lower: StringWithUnit,
+    pub upper: StringWithUnit,
+}
+
+#[derive(Debug, Clone)]
+pub struct StringWithUnit {
+    pub value: String,      // 例如 "10"
+    pub unit: Option<String>, // 例如 "KByte"
+}
 
 
 

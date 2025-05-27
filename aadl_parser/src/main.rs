@@ -1,78 +1,3 @@
-/* 
-
-pub mod aadlight_parser;
-
-use aadlight_parser::AADLParser;
-use pest::{iterators::Pair, Parser};
-use std::fs;
-
-// fn print_pair(pair: Pair<aadlight_parser::Rule>, indent: usize) {
-//     println!(
-//         "{}{:?}: {:?}",
-//         "  ".repeat(indent),
-//         pair.as_rule(),
-//         pair.as_str()
-//     );
-//     for inner in pair.into_inner() {
-//         print_pair(inner, indent + 1);
-//     }
-// }
-
-fn print_pair(pair: Pair<aadlight_parser::Rule>, indent: usize) {
-    // 跳过空白和注释节点
-    match pair.as_rule() {
-        aadlight_parser::Rule::WHITESPACE | aadlight_parser::Rule::COMMENT => return,
-        _ => {
-            // 获取位置信息
-            let span = pair.as_span();
-            let (start_line, _) = span.start_pos().line_col();
-            let (end_line, _) = span.end_pos().line_col();
-            
-            // 格式化输出
-            let content = pair.as_str().trim();
-            let truncated_content = if content.len() > 30 {
-                format!("{}...", &content[..30])
-            } else {
-                content.to_string()
-            };
-            
-            println!(
-                "{}{:<25} {:<30} (lines {}-{})",
-                "  ".repeat(indent),
-                format!("{:?}:", pair.as_rule()),
-                truncated_content,
-                start_line,
-                end_line
-            );
-
-            // 递归处理子节点
-            for inner in pair.into_inner() {
-                print_pair(inner, indent + 1);
-            }
-        }
-    }
-}
-fn main() {
-    let path = "pingpong.aadl";
-    let aadl_input = match fs::read_to_string(path) {
-        Ok(content) => content,
-        Err(err) => {
-            eprintln!("读取文件失败: {}", err);
-            return;
-        }
-    };
-    match AADLParser::parse(aadlight_parser::Rule::file, &aadl_input) {
-        Ok(pairs) => {
-            for pair in pairs {
-                print_pair(pair, 0);
-            }
-        }
-        Err(e) => {
-            eprintln!("解析失败: {}", e);
-        }
-    }
-}
-*/
 pub mod aadlight_parser;
 mod ast;
 
@@ -113,13 +38,13 @@ impl AADLTransformer {
         // }
         for pair in pairs {
             //println!("顶层规则: {:?}, 内容: {}", pair.as_rule(), pair.as_str());
-            println!("  内部规则: {:?}", pair.as_rule());
+            //println!("  内部规则: {:?}", pair.as_rule());
 
             // 进入 file 规则内部，提取出真正的 package_declaration
             if pair.as_rule() == aadlight_parser::Rule::file {
                 for inner in pair.into_inner() {
                     //println!("  内部规则: {:?}, 内容: {}", inner.as_rule(), inner.as_str());
-                    println!("  内部规则: {:?}", inner.as_rule());
+                    //println!("  内部规则: {:?}", inner.as_rule());
                     if inner.as_rule() == aadlight_parser::Rule::package_declaration {
                         if let Some(pkg) = Self::transform_package(inner) {
                             packages.push(pkg);
@@ -134,10 +59,17 @@ impl AADLTransformer {
     }
     
     fn transform_package(pair: Pair<aadlight_parser::Rule>) -> Option<Package> {
+        //println!("=== 调试 package ===");
+        //println!("pair = Rule::{:?}", pair.as_rule());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?}", i, inner.as_rule());
+        // }
+
         let mut inner_iter = pair.into_inner();
         
         // 第一个元素应该是"package"关键字
-        let _ = inner_iter.next();
+        //let _ = inner_iter.next();
         
         let package_name = extract_package_name(inner_iter.next().unwrap());
         let mut visibility_decls = Vec::new();
@@ -175,10 +107,10 @@ impl AADLTransformer {
     fn transform_visibility_declaration(pair: Pair<aadlight_parser::Rule>) -> VisibilityDeclaration {
         // 首先收集所有内部项到向量中，这样我们可以多次遍历
         let items: Vec<_> = pair.into_inner().collect();
-        println!("🧩 解析到 {} 个 item:", items.len());
-        for (i, item) in items.iter().enumerate() {
-            println!("  [{}] Rule: {:?}, Text: {}", i, item.as_rule(), item.as_str());
-        }
+        // println!("🧩 解析到 {} 个 item:", items.len());
+        // for (i, item) in items.iter().enumerate() {
+        //     println!("  [{}] Rule: {:?}, Text: {}", i, item.as_rule(), item.as_str());
+        // }
 
 
         match items.first().unwrap().as_str() {
@@ -224,7 +156,14 @@ impl AADLTransformer {
     }
     
     fn transform_package_section(pair: Pair<aadlight_parser::Rule>) -> PackageSection {
-        let mut is_public = false;
+        // println!("=== 调试 package_section ===");
+        // println!("pair = Rule::{:?}", pair.as_rule());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?}", i, inner.as_rule());
+        // }
+
+        let mut is_public = true; //默认值是public
         let mut declarations = Vec::new();
         
         let mut inner_iter = pair.into_inner();
@@ -239,7 +178,7 @@ impl AADLTransformer {
                     is_public = false;
                 }
                 _ => {
-                    // 如果不是修饰符，则是一个声明，需要回退处理
+                    // 如果不是修饰符，则是说明其是一个声明
                     declarations.push(Self::transform_declaration(first));
                 }
             }
@@ -464,7 +403,7 @@ impl AADLTransformer {
             }
             "event port" => (PortType::Event, None),
             "parameter" => {
-                // TODO: 实现 parameter 处理
+                // TODO: 实现 parameter 处理,在AST中还没有定义
                 (PortType::Event, None)
             }
             other => panic!("Unknown port type: {}", other),
@@ -499,25 +438,34 @@ impl AADLTransformer {
     }
     
     fn transform_property_association(pair: Pair<aadlight_parser::Rule>) -> Property {
-        println!("=== 调试 property ===");
-        println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+        // println!("=== 调试 property ===");
+        // println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        // }
 
-        let mut inner_iter = pair.into_inner();
+        let mut inner_iter = pair.into_inner().peekable();
+
         let identifier = extract_identifier(inner_iter.next().unwrap());
-        
+
         let mut property_set = None;
-        if let Some(inner) = inner_iter.next() {
-            if inner.as_rule() == aadlight_parser::Rule::property_set_name {
-                property_set = Some(extract_identifier(inner));
-            }
+        if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::property_set_name) {
+            property_set = Some(extract_identifier(inner_iter.next().unwrap()));
         }
-        
-        let operator = match inner_iter.next().unwrap().as_str() {
+
+        let operator_pair = inner_iter.next().expect("Expected property operator");
+        let operator = match operator_pair.as_str() {
             "=>" => PropertyOperator::Assign,
             "+=>" => PropertyOperator::Append,
             _ => panic!("Unknown property operator"),
         };
-        
+        // === 处理 constant 标记 ===
+        let mut is_constant = false;
+        if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::constant) {
+            is_constant = true;
+            inner_iter.next(); // 消耗 constant
+        }
+        // 处理 property_value
         let value = Self::transform_property_value(inner_iter.next().unwrap());
         
         Property::BasicProperty(BasicPropertyAssociation {
@@ -526,30 +474,161 @@ impl AADLTransformer {
                 name: identifier,
             },
             operator,
-            is_constant: false, // TODO: Handle constant
+            is_constant, // TODO: Handle constant
             value,
         })
     }
     
+    //辅助函数
+    fn strip_string_literal(s: &str) -> String {
+        if s.starts_with('"') && s.ends_with('"') {
+            s[1..s.len() - 1].to_string()
+        } else if s.starts_with('(') && s.ends_with(')') {
+            s[1..s.len() - 1].to_string()
+        } else {
+            s.to_string()
+        }
+    }
+
     fn transform_property_value(pair: Pair<aadlight_parser::Rule>) -> PropertyValue {
+        // println!("=== 调试 property_value ===");
+        // println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        // }
+
         let inner = pair.into_inner().next().unwrap();
         match inner.as_rule() {
             aadlight_parser::Rule::range_value => {
+                // println!("=== 调试 range_value ===");
+                // println!("inner = Rule::{:?}, text = {}", inner.as_rule(), inner.as_str());
+                // for (i, inner2) in inner.clone().into_inner().enumerate() {
+                //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner2.as_rule(), inner2.as_str());
+                // }
+
                 let mut parts = inner.into_inner();
-                let lower = extract_identifier(parts.next().unwrap());
-                let _unit1 = parts.next();
-                let _dotdot = parts.next();
-                let upper = extract_identifier(parts.next().unwrap());
-                let _unit2 = parts.next();
+                let lower_val = extract_identifier(parts.next().unwrap());
+                let lower_unit = Some(parts.next().unwrap().as_str().trim().to_string());
+                let upper_val = extract_identifier(parts.next().unwrap());
+                let upper_unit = Some(parts.next().unwrap().as_str().trim().to_string());
                 
-                PropertyValue::List(vec![
-                    PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(lower))),
-                    PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(upper))),
-                ])
+                // PropertyValue::List(vec![
+                //     PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(lower))),
+                //     PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(upper))),
+                // ])
+                PropertyValue::List(vec![PropertyListElement::Value(
+                    PropertyExpression::IntegerRange(IntegerRangeTerm {
+                        lower: StringWithUnit {
+                            value: lower_val,
+                            unit: lower_unit,
+                        },
+                        upper: StringWithUnit {
+                            value: upper_val,
+                            unit: upper_unit,
+                        },
+                    }),
+                )])
             }
             aadlight_parser::Rule::literal_value => {
-                let value = inner.as_str().trim().to_string();
-                PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(value)))
+                // let value = inner.as_str().trim().to_string();
+                // PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(value)))
+                // println!("=== 调试 literal_value ===");
+                // println!("pair = Rule::{:?}, text = {}", inner.as_rule(), inner.as_str());
+                // for (i, inner2) in inner.clone().into_inner().enumerate() {
+                //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner2.as_rule(), inner2.as_str());
+                // }
+
+
+                let mut parts = inner.into_inner().peekable();
+
+                let first = parts.next().unwrap();
+                let unit = match parts.peek() {
+                    Some(p) if p.as_rule() == aadlight_parser::Rule::unit => {
+                        Some(extract_identifier(parts.next().unwrap()))
+                    }
+                    _ => None,
+                };
+                // println!("=== 调试 first ===");
+                // println!("first = Rule::{:?}, text = {}", first.as_rule(), first.as_str());
+                // for (i, inner2) in first.clone().into_inner().enumerate() {
+                //     println!("  innerfirst[{}]: Rule::{:?}, text = {}", i, inner2.as_rule(), inner2.as_str());
+                // }
+
+                match first.as_rule() {
+                    aadlight_parser::Rule::number => {
+                        let mut number_parts = first.into_inner().peekable();
+
+                        // 解析符号
+                        let sign = match number_parts.peek() {
+                            Some(p) if p.as_rule() == aadlight_parser::Rule::sign => {
+                                match number_parts.next().unwrap().as_str() {
+                                    "+" => Some(Sign::Plus),
+                                    "-" => Some(Sign::Minus),
+                                    _ => None,
+                                }
+                            }
+                            _ => None,
+                        };
+
+                        // 主数字部分
+                        let int_part = number_parts.next().unwrap().as_str().trim();
+
+                        // 判断是否为浮点数
+                        let expr = match number_parts.peek() {
+                            Some(p) if p.as_rule() == aadlight_parser::Rule::dot => {
+                                number_parts.next(); // consume dot
+                                let frac_part = number_parts.next().unwrap().as_str();
+                                let full = format!("{}.{}", int_part, frac_part);
+                                let value = full.parse::<f64>().unwrap();
+                                PropertyExpression::Real(SignedRealOrConstant::Real(SignedReal {
+                                    sign,
+                                    value,
+                                    unit: unit.clone(),
+                                }))
+                            }
+                            _ => {
+                                //println!("尝试 parse 的 int_part = '{}'", int_part);
+                                let value = int_part.parse::<i64>().unwrap();
+                                PropertyExpression::Integer(SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign,
+                                    value,
+                                    unit: unit.clone(),
+                                }))
+                            }
+                        };
+
+                        PropertyValue::Single(expr)
+                    }
+
+                    aadlight_parser::Rule::string_literal => {
+                        let raw = first.as_str();
+                        let value = Self::strip_string_literal(raw);
+
+                        PropertyValue::Single(PropertyExpression::String(
+                            StringTerm::Literal(value)
+                        ))
+                    }
+
+                    aadlight_parser::Rule::boolean => {
+                        let val = match first.as_str() {
+                            "true" => true,
+                            "false" => false,
+                            _ => panic!("Invalid boolean"),
+                        };
+
+                        PropertyValue::Single(PropertyExpression::Boolean(BooleanTerm::Literal(val)))
+                    }
+
+                    aadlight_parser::Rule::enum_value => {
+                        let value = first.as_str().to_string();
+
+                        PropertyValue::Single(PropertyExpression::String(
+                            StringTerm::Literal(value)
+                        ))
+                    }
+
+                    _ => panic!("Unknown literal_value inner rule: {:?}", first.as_rule()),
+                }
             }
             aadlight_parser::Rule::list_value => {
                 let mut elements = Vec::new();
@@ -569,7 +648,7 @@ impl AADLTransformer {
             _ => panic!("Unknown property value type"),
         }
     }
-    
+
     fn transform_annexes_clause(pair: Pair<aadlight_parser::Rule>) -> Vec<AnnexSubclause> {
         if pair.as_str().contains("none") {
             return Vec::new();
@@ -580,6 +659,13 @@ impl AADLTransformer {
     }
     
     fn transform_component_implementation(pair: Pair<aadlight_parser::Rule>) -> ComponentImplementation {
+        // println!("=== 调试 implementation ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+        
         let mut inner_iter = pair.into_inner();
         
         let category = match inner_iter.next().unwrap().as_str() {
@@ -592,7 +678,7 @@ impl AADLTransformer {
         };
         
         // Skip "implementation" keyword
-        let _ = inner_iter.next();
+        //let _ = inner_iter.next();
         
         let name_str = extract_identifier(inner_iter.next().unwrap());
         let mut name_parts = name_str.split('.');
@@ -646,6 +732,13 @@ impl AADLTransformer {
     }
     
     fn transform_subcomponents_clause(pair: Pair<aadlight_parser::Rule>) -> SubcomponentClause {
+        // println!("=== 调试 subcomponents ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+
         if pair.as_str().contains("none") {
             return SubcomponentClause::Empty;
         }
@@ -667,7 +760,7 @@ impl AADLTransformer {
     fn transform_subcomponent(pair: Pair<aadlight_parser::Rule>) -> Subcomponent {
         let mut inner_iter = pair.into_inner();
         let identifier = extract_identifier(inner_iter.next().unwrap());
-        let _colon = inner_iter.next();
+        //let _colon = inner_iter.next();
         
         let category = match inner_iter.next().unwrap().as_str() {
             "system" => ComponentCategory::System,
@@ -698,6 +791,7 @@ impl AADLTransformer {
     }
     
     fn transform_calls_clause(pair: Pair<aadlight_parser::Rule>) -> CallSequenceClause {
+
         if pair.as_str().contains("none") {
             return CallSequenceClause::Empty;
         }
@@ -717,10 +811,17 @@ impl AADLTransformer {
     }
     
     fn transform_call_sequence(pair: Pair<aadlight_parser::Rule>) -> CallSequence {
+        // println!("=== 调试 calls_sequence ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+
         let mut inner_iter = pair.into_inner();
         let identifier = extract_identifier(inner_iter.next().unwrap());
-        let _colon = inner_iter.next();
-        let _open_brace = inner_iter.next();
+        //let _colon = inner_iter.next();
+        //let _open_brace = inner_iter.next();
         
         let mut calls = Vec::new();
         while let Some(inner) = inner_iter.next() {
@@ -738,10 +839,17 @@ impl AADLTransformer {
     }
     
     fn transform_subprogram_call(pair: Pair<aadlight_parser::Rule>) -> SubprogramCall {
+        // println!("=== 调试 subprogram_call ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+
         let mut inner_iter = pair.into_inner();
         let identifier = extract_identifier(inner_iter.next().unwrap());
-        let _colon = inner_iter.next();
-        let _subprogram = inner_iter.next();
+        //let _colon = inner_iter.next();
+        //let _subprogram = inner_iter.next();
         
         let called = CalledSubprogram::Classifier(
             UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
@@ -780,12 +888,12 @@ impl AADLTransformer {
     }
     
     fn transform_connection(pair: Pair<aadlight_parser::Rule>) -> Connection {
-        println!("=== 调试 connection ===");
-        println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+        // println!("=== 调试 connection ===");
+        // println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
 
-        for (i, inner) in pair.clone().into_inner().enumerate() {
-            println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
-        }
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        // }
 
 
         let mut inner_iter = pair.into_inner();
@@ -887,7 +995,8 @@ fn main() {
     
     match AADLParser::parse(aadlight_parser::Rule::file, &aadl_input) {
         Ok(pairs) => {
-            println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count()); // 调试输出            
+            println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count()); // 调试输出
+
             // 转换到AST
             let ast = AADLTransformer::transform_file(pairs.clone().collect());
             println!("=== 转换得到 {} 个package ===", ast.len()); // 调试输出
@@ -896,6 +1005,7 @@ fn main() {
             println!("\n================================== AST ==================================");
             for package in ast {
                 println!("Package: {}", package.name.to_string());
+                //输出public的部分
                 if let Some(public_section) = package.public_section {
                     for decl in public_section.declarations {
                         match decl {
@@ -918,11 +1028,19 @@ fn main() {
                             }
                             AadlDeclaration::ComponentImplementation(impl_) => {
                                 println!("  Component Implementation: {} ({:?})", impl_.name.to_string(), impl_.category);
+                                
                                 if let SubcomponentClause::Items(subcomps) = impl_.subcomponents {
                                     for subcomp in subcomps {
                                         println!("    Subcomponent: {} {:?}", subcomp.identifier, subcomp.category);
                                     }
                                 }
+                                if let CallSequenceClause::Items(callitems) = impl_.calls {
+                                    for callitem in callitems {
+                                        println!("    Subcomponent: {} {:?}", callitem.identifier, callitem.calls);
+                                    }
+                                }
+                                
+                                
                                 if let ConnectionClause::Items(conns) = impl_.connections {
                                     for conn in conns {
                                         if let Connection::Port(port_conn) = conn {
@@ -945,10 +1063,10 @@ fn main() {
             }
             
             // 打印原始解析树
-            println!("\n================================== Parse Tree ==================================");
-            for pair in pairs {
-                print_pair(pair, 0);
-            }
+            // println!("\n================================== Parse Tree ==================================");
+            // for pair in pairs {
+            //     print_pair(pair, 0);
+            // }
         }
         Err(e) => {
             eprintln!("解析失败: {}", e);
