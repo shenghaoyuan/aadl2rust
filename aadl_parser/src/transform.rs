@@ -1,0 +1,951 @@
+use crate::aadlight_parser;
+use super::ast::aadl_ast_cj::*;
+use pest::{iterators::Pair};
+
+// 辅助函数：从 Pair 中提取标识符
+pub fn extract_identifier(pair: Pair<aadlight_parser::Rule>) -> String {
+    pair.as_str().trim().to_string()
+}
+
+// 辅助函数：从 Pair 中提取包名
+pub fn extract_package_name(pair: Pair<aadlight_parser::Rule>) -> PackageName {
+    PackageName(
+        pair.as_str()
+            .split("::")
+            .map(|s| s.trim().to_string())
+            .collect(),
+    )
+}
+
+// 主转换结构体
+pub struct AADLTransformer;
+
+impl AADLTransformer {
+    pub fn transform_file(pairs: Vec<Pair<aadlight_parser::Rule>>) -> Vec<Package> {
+        let mut packages = Vec::new();
+        
+        // for pair in pairs {
+        //     println!("处理规则: {:?}, 内容: {}", pair.as_rule(), pair.as_str());
+        //     if pair.as_rule() == aadlight_parser::Rule::package_declaration { //检查是否是package_declaration规则
+        //         if let Some(pkg) = Self::transform_package(pair) {
+        //             packages.push(pkg);
+        //         }
+        //     }
+        // }
+        for pair in pairs {
+            //println!("顶层规则: {:?}, 内容: {}", pair.as_rule(), pair.as_str());
+            //println!("  内部规则: {:?}", pair.as_rule());
+
+            // 进入 file 规则内部，提取出真正的 package_declaration
+            if pair.as_rule() == aadlight_parser::Rule::file {
+                for inner in pair.into_inner() {
+                    //println!("  内部规则: {:?}, 内容: {}", inner.as_rule(), inner.as_str());
+                    //println!("  内部规则: {:?}", inner.as_rule());
+                    if inner.as_rule() == aadlight_parser::Rule::package_declaration {
+                        if let Some(pkg) = Self::transform_package(inner) {
+                            packages.push(pkg);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        packages
+    }
+    
+    pub fn transform_package(pair: Pair<aadlight_parser::Rule>) -> Option<Package> {
+        //println!("=== 调试 package ===");
+        //println!("pair = Rule::{:?}", pair.as_rule());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?}", i, inner.as_rule());
+        // }
+
+        let mut inner_iter = pair.into_inner();
+        
+        // 第一个元素应该是"package"关键字
+        //let _ = inner_iter.next();
+        
+        let package_name = extract_package_name(inner_iter.next().unwrap());
+        let mut visibility_decls = Vec::new();
+        let mut public_section = None;
+        let mut private_section = None;
+        let mut properties = PropertyClause::ExplicitNone;
+        
+        while let Some(inner) = inner_iter.next() {
+            //println!("  内部规则: {:?}, 内容: {}", inner.as_rule(), inner.as_str());
+            match inner.as_rule() {
+                aadlight_parser::Rule::visibility_declarations => {
+                    visibility_decls.push(Self::transform_visibility_declaration(inner));
+                }
+                aadlight_parser::Rule::package_sections => {
+                    let section = Self::transform_package_section(inner);
+                    if section.is_public {
+                        public_section = Some(section);
+                    } else {
+                        private_section = Some(section);
+                    }
+                }
+                _ => {}
+            }
+        }
+        
+        Some(Package {
+            name: package_name,
+            visibility_decls,
+            public_section,
+            private_section,
+            properties,
+        })
+    }
+    
+    pub fn transform_visibility_declaration(pair: Pair<aadlight_parser::Rule>) -> VisibilityDeclaration {
+        // 首先收集所有内部项到向量中，这样我们可以多次遍历
+        let items: Vec<_> = pair.into_inner().collect();
+        // println!("🧩 解析到 {} 个 item:", items.len());
+        // for (i, item) in items.iter().enumerate() {
+        //     println!("  [{}] Rule: {:?}, Text: {}", i, item.as_rule(), item.as_str());
+        // }
+
+
+        match items.first().unwrap().as_str() {
+            "with" => {
+                // 处理 with 声明
+                let mut packages = Vec::new();
+                let mut property_sets = Vec::new();
+                
+                // 跳过第一个"with"项
+                for item in items.iter().skip(1) {
+                    match item.as_rule() {
+                        aadlight_parser::Rule::package_name => {
+                            packages.push(extract_package_name(item.clone()));
+                        }
+                        aadlight_parser::Rule::property_set_name => {
+                            property_sets.push(extract_identifier(item.clone()));
+                        }
+                        _ => {} // 忽略逗号等其他符号
+                    }
+                }
+                
+                VisibilityDeclaration::Import {
+                    packages,
+                    property_sets,
+                }
+            }
+            _ => {
+                let identifier = extract_identifier(items[0].clone());
+                //println!("🔎 尝试处理 renames 语句: {:?}", items);
+
+                let original = extract_package_name(items[1].clone());
+
+                VisibilityDeclaration::Alias {
+                    new_name: identifier.clone(),
+                    original: QualifiedName {
+                        package_prefix: None,
+                        identifier: original.0.join("::"),
+                    },
+                    is_package: true, // 假设现在只处理 package rename
+                }
+            }
+        }
+    }
+    
+    pub fn transform_package_section(pair: Pair<aadlight_parser::Rule>) -> PackageSection {
+        // println!("=== 调试 package_section ===");
+        // println!("pair = Rule::{:?}", pair.as_rule());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?}", i, inner.as_rule());
+        // }
+
+        let mut is_public = true; //默认值是public
+        let mut declarations = Vec::new();
+        
+        let mut inner_iter = pair.into_inner();
+        
+        // 检查第一个元素是否是 public/private 修饰符
+        if let Some(first) = inner_iter.next() {
+            match first.as_str() {
+                "public" => {
+                    is_public = true;
+                }
+                "private" => {
+                    is_public = false;
+                }
+                _ => {
+                    // 如果不是修饰符，则是说明其是一个声明
+                    declarations.push(Self::transform_declaration(first));
+                }
+            }
+        }
+        
+        // 处理剩余的声明
+        for inner in inner_iter {
+            match inner.as_rule() {
+                aadlight_parser::Rule::declaration => {
+                    declarations.push(Self::transform_declaration(inner));
+                }
+                _ => {} // 忽略其他规则
+            }
+        }
+        
+        PackageSection {
+            is_public,
+            declarations,
+        }
+    }
+    
+    pub fn transform_declaration(pair: Pair<aadlight_parser::Rule>) -> AadlDeclaration {
+        let inner = pair.into_inner().next().unwrap();
+        match inner.as_rule() {
+            aadlight_parser::Rule::component_type => {
+                AadlDeclaration::ComponentType(Self::transform_component_type(inner))
+            }
+            aadlight_parser::Rule::component_implementation => {
+                AadlDeclaration::ComponentImplementation(Self::transform_component_implementation(inner))
+            }
+            aadlight_parser::Rule::annex_library => {
+                AadlDeclaration::AnnexLibrary(AnnexLibrary {})
+            }
+            _ => panic!("Unsupported declaration type: {:?}", inner.as_rule()),
+        }
+    }
+    
+    pub fn transform_component_type(pair: Pair<aadlight_parser::Rule>) -> ComponentType {
+        let mut inner_iter = pair.into_inner();
+        
+        let category = match inner_iter.next().unwrap().as_str() {
+            "system" => ComponentCategory::System,
+            "process" => ComponentCategory::Process,
+            "thread" => ComponentCategory::Thread,
+            "data" => ComponentCategory::Data,
+            "subprogram" => ComponentCategory::Subprogram,
+            "processor" => ComponentCategory::Processor,
+            "memory" => ComponentCategory::Memory,
+            "device" => ComponentCategory::Device,
+            "bus" => ComponentCategory::Bus,
+            s => panic!("Unknown component category: {}", s),
+        };
+        
+        let identifier = extract_identifier(inner_iter.next().unwrap());
+        let mut prototypes = PrototypeClause::None;
+        let mut features = FeatureClause::None;
+        let mut properties = PropertyClause::ExplicitNone;
+        let mut annexes = Vec::new();
+        
+        while let Some(inner) = inner_iter.next() {
+            match inner.as_rule() {
+                aadlight_parser::Rule::prototypes => {
+                    prototypes = Self::transform_prototypes_clause(inner);
+                }
+                aadlight_parser::Rule::features => {
+                    features = Self::transform_features_clause(inner);
+                }
+                aadlight_parser::Rule::properties => {
+                    properties = Self::transform_properties_clause(inner);
+                }
+                aadlight_parser::Rule::annexes => {
+                    annexes = Self::transform_annexes_clause(inner);
+                }
+                _ => {}
+            }
+        }
+        
+        ComponentType {
+            category,
+            identifier,
+            prototypes,
+            features,
+            properties,
+            annexes,
+        }
+    }
+    
+    pub fn transform_prototypes_clause(pair: Pair<aadlight_parser::Rule>) -> PrototypeClause {
+        if pair.as_str().contains("none") {
+            return PrototypeClause::Empty;
+        }
+        
+        let mut prototypes = Vec::new();
+        for inner in pair.into_inner() {
+            if inner.as_rule() == aadlight_parser::Rule::prototype_declaration {
+                prototypes.push(Self::transform_prototype_declaration(inner));
+            }
+        }
+        
+        if prototypes.is_empty() {
+            PrototypeClause::None
+        } else {
+            PrototypeClause::Items(prototypes)
+        }
+    }
+    
+    pub fn transform_prototype_declaration(pair: Pair<aadlight_parser::Rule>) -> Prototype {
+        let mut inner_iter = pair.into_inner();
+        let _identifier = extract_identifier(inner_iter.next().unwrap());
+        let _colon = inner_iter.next();
+        let prototype_type = inner_iter.next().unwrap();
+        
+        match prototype_type.as_str() {
+            "component" => {
+                let category = match inner_iter.next().unwrap().as_str() {
+                    "system" => ComponentCategory::System,
+                    "process" => ComponentCategory::Process,
+                    "thread" => ComponentCategory::Thread,
+                    "data" => ComponentCategory::Data,
+                    "subprogram" => ComponentCategory::Subprogram,
+                    "processor" => ComponentCategory::Processor,
+                    "memory" => ComponentCategory::Memory,
+                    s => panic!("Unknown component prototype category: {}", s),
+                };
+                
+                Prototype::Component(ComponentPrototype {
+                    category,
+                    classifier: None, // TODO: Handle classifier
+                    is_array: false,  // TODO: Handle array spec
+                })
+            }
+            "feature" => {
+                Prototype::Feature(FeaturePrototype {
+                    direction: None, // TODO: Handle direction
+                    classifier: None, // TODO: Handle classifier
+                })
+            }
+            "feature group" => {
+                Prototype::FeatureGroup(FeatureGroupPrototype {
+                    classifier: None, // TODO: Handle classifier
+                })
+            }
+            _ => panic!("Unknown prototype type"),
+        }
+    }
+    
+    pub fn transform_features_clause(pair: Pair<aadlight_parser::Rule>) -> FeatureClause {
+        if pair.as_str().contains("none") {
+            return FeatureClause::Empty;
+        }
+        
+        let mut features = Vec::new();
+        for inner in pair.into_inner() {
+            if inner.as_rule() == aadlight_parser::Rule::feature_declaration {
+                features.push(Self::transform_feature_declaration(inner));
+            }
+        }
+        
+        if features.is_empty() {
+            FeatureClause::None
+        } else {
+            FeatureClause::Items(features)
+        }
+    }
+    
+    pub fn transform_feature_declaration(pair: Pair<aadlight_parser::Rule>) -> Feature {
+        let mut inner_iter = pair.into_inner();
+
+        let identifier = extract_identifier(inner_iter.next().unwrap()); // p
+        let mut direction: Option<PortDirection> = None;
+        let mut port_type: Option<&str> = None;
+        let mut type_name: Option<String> = None;
+
+        for inner in inner_iter {
+            match inner.as_rule() {
+                aadlight_parser::Rule::direction => {
+                    direction = match inner.as_str() {
+                        "in" => Some(PortDirection::In),
+                        "out" => Some(PortDirection::Out),
+                        "in out" => Some(PortDirection::InOut),
+                        _ => None,
+                    };
+                }
+                aadlight_parser::Rule::port_type => {
+                    port_type = Some(inner.as_str());
+                }
+                aadlight_parser::Rule::identifier => {
+                    type_name = Some(inner.as_str().to_string());
+                }
+                _ => {}
+            }
+        }
+
+        let (resolved_port_type, _classifier) = match port_type.expect("Missing port type") {
+            "data port" => {
+                let classifier = type_name.clone().map(|type_id| {
+                    PortDataTypeReference::Classifier(
+                        UniqueComponentClassifierReference::Type(UniqueImplementationReference {
+                            package_prefix: None,
+                            implementation_name: ImplementationName {
+                                type_identifier: type_id,
+                                implementation_identifier: String::new(),
+                            },
+                        })
+                    )
+                });
+                (PortType::Data { classifier: classifier.clone() }, classifier)
+            }
+            "event data port" => {
+                let classifier = type_name.clone().map(|type_id| {
+                    PortDataTypeReference::Classifier(
+                        UniqueComponentClassifierReference::Type(UniqueImplementationReference {
+                            package_prefix: None,
+                            implementation_name: ImplementationName {
+                                type_identifier: type_id,
+                                implementation_identifier: String::new(),
+                            },
+                        })
+                    )
+                });
+                (PortType::EventData { classifier: classifier.clone() }, classifier)
+            }
+            "event port" => (PortType::Event, None),
+            "parameter" => {
+                // TODO: 实现 parameter 处理,在AST中还没有定义
+                (PortType::Event, None)
+            }
+            other => panic!("Unknown port type: {}", other),
+        };
+
+        Feature::Port(PortSpec {
+            identifier,
+            direction: direction.unwrap_or_else(|| match resolved_port_type {
+                PortType::Data { .. } | PortType::EventData { .. } => PortDirection::InOut,
+                PortType::Event => PortDirection::In,
+            }),
+            port_type: resolved_port_type,
+        })
+    }
+    pub fn transform_properties_clause(pair: Pair<aadlight_parser::Rule>) -> PropertyClause {
+        if pair.as_str().contains("none") {
+            return PropertyClause::ExplicitNone;
+        }
+        
+        let mut properties = Vec::new();
+        for inner in pair.into_inner() {
+            if inner.as_rule() == aadlight_parser::Rule::property_association {
+                properties.push(Self::transform_property_association(inner));
+            }
+        }
+        
+        if properties.is_empty() {
+            PropertyClause::ExplicitNone
+        } else {
+            PropertyClause::Properties(properties)
+        }
+    }
+    
+    pub fn transform_property_association(pair: Pair<aadlight_parser::Rule>) -> Property {
+        // println!("=== 调试 property ===");
+        // println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        // }
+
+        let mut inner_iter = pair.into_inner().peekable();
+
+        let identifier = extract_identifier(inner_iter.next().unwrap());
+
+        let mut property_set = None;
+        if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::property_set_name) {
+            property_set = Some(extract_identifier(inner_iter.next().unwrap()));
+        }
+
+        let operator_pair = inner_iter.next().expect("Expected property operator");
+        let operator = match operator_pair.as_str() {
+            "=>" => PropertyOperator::Assign,
+            "+=>" => PropertyOperator::Append,
+            _ => panic!("Unknown property operator"),
+        };
+        // === 处理 constant 标记 ===
+        let mut is_constant = false;
+        if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::constant) {
+            is_constant = true;
+            inner_iter.next(); // 消耗 constant
+        }
+        // 处理 property_value
+        let value = Self::transform_property_value(inner_iter.next().unwrap());
+        
+        Property::BasicProperty(BasicPropertyAssociation {
+            identifier: PropertyIdentifier {
+                property_set,
+                name: identifier,
+            },
+            operator,
+            is_constant, // TODO: Handle constant
+            value,
+        })
+    }
+    
+    //辅助函数
+    pub fn strip_string_literal(s: &str) -> String {
+        if s.starts_with('"') && s.ends_with('"') {
+            s[1..s.len() - 1].to_string()
+        } else if s.starts_with('(') && s.ends_with(')') {
+            s[1..s.len() - 1].to_string()
+        } else {
+            s.to_string()
+        }
+    }
+
+    pub fn transform_property_value(pair: Pair<aadlight_parser::Rule>) -> PropertyValue {
+        // println!("=== 调试 property_value ===");
+        // println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        // }
+
+        let inner = pair.into_inner().next().unwrap();
+        match inner.as_rule() {
+            aadlight_parser::Rule::range_value => {
+                // println!("=== 调试 range_value ===");
+                // println!("inner = Rule::{:?}, text = {}", inner.as_rule(), inner.as_str());
+                // for (i, inner2) in inner.clone().into_inner().enumerate() {
+                //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner2.as_rule(), inner2.as_str());
+                // }
+
+                let mut parts = inner.into_inner();
+                let lower_val = extract_identifier(parts.next().unwrap());
+                let lower_unit = Some(parts.next().unwrap().as_str().trim().to_string());
+                let upper_val = extract_identifier(parts.next().unwrap());
+                let upper_unit = Some(parts.next().unwrap().as_str().trim().to_string());
+                
+                // PropertyValue::List(vec![
+                //     PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(lower))),
+                //     PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(upper))),
+                // ])
+                PropertyValue::List(vec![PropertyListElement::Value(
+                    PropertyExpression::IntegerRange(IntegerRangeTerm {
+                        lower: StringWithUnit {
+                            value: lower_val,
+                            unit: lower_unit,
+                        },
+                        upper: StringWithUnit {
+                            value: upper_val,
+                            unit: upper_unit,
+                        },
+                    }),
+                )])
+            }
+            aadlight_parser::Rule::literal_value => {
+                // let value = inner.as_str().trim().to_string();
+                // PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(value)))
+                // println!("=== 调试 literal_value ===");
+                // println!("pair = Rule::{:?}, text = {}", inner.as_rule(), inner.as_str());
+                // for (i, inner2) in inner.clone().into_inner().enumerate() {
+                //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner2.as_rule(), inner2.as_str());
+                // }
+
+
+                let mut parts = inner.into_inner().peekable();
+
+                let first = parts.next().unwrap();
+                let unit = match parts.peek() {
+                    Some(p) if p.as_rule() == aadlight_parser::Rule::unit => {
+                        Some(extract_identifier(parts.next().unwrap()))
+                    }
+                    _ => None,
+                };
+                // println!("=== 调试 first ===");
+                // println!("first = Rule::{:?}, text = {}", first.as_rule(), first.as_str());
+                // for (i, inner2) in first.clone().into_inner().enumerate() {
+                //     println!("  innerfirst[{}]: Rule::{:?}, text = {}", i, inner2.as_rule(), inner2.as_str());
+                // }
+
+                match first.as_rule() {
+                    aadlight_parser::Rule::number => {
+                        let mut number_parts = first.into_inner().peekable();
+
+                        // 解析符号
+                        let sign = match number_parts.peek() {
+                            Some(p) if p.as_rule() == aadlight_parser::Rule::sign => {
+                                match number_parts.next().unwrap().as_str() {
+                                    "+" => Some(Sign::Plus),
+                                    "-" => Some(Sign::Minus),
+                                    _ => None,
+                                }
+                            }
+                            _ => None,
+                        };
+
+                        // 主数字部分
+                        let int_part = number_parts.next().unwrap().as_str().trim();
+
+                        // 判断是否为浮点数
+                        let expr = match number_parts.peek() {
+                            Some(p) if p.as_rule() == aadlight_parser::Rule::dot => {
+                                number_parts.next(); // consume dot
+                                let frac_part = number_parts.next().unwrap().as_str();
+                                let full = format!("{}.{}", int_part, frac_part);
+                                let value = full.parse::<f64>().unwrap();
+                                PropertyExpression::Real(SignedRealOrConstant::Real(SignedReal {
+                                    sign,
+                                    value,
+                                    unit: unit.clone(),
+                                }))
+                            }
+                            _ => {
+                                //println!("尝试 parse 的 int_part = '{}'", int_part);
+                                let value = int_part.parse::<i64>().unwrap();
+                                PropertyExpression::Integer(SignedIntergerOrConstant::Real(SignedInteger {
+                                    sign,
+                                    value,
+                                    unit: unit.clone(),
+                                }))
+                            }
+                        };
+
+                        PropertyValue::Single(expr)
+                    }
+
+                    aadlight_parser::Rule::string_literal => {
+                        let raw = first.as_str();
+                        let value = Self::strip_string_literal(raw);
+
+                        PropertyValue::Single(PropertyExpression::String(
+                            StringTerm::Literal(value)
+                        ))
+                    }
+
+                    aadlight_parser::Rule::boolean => {
+                        let val = match first.as_str() {
+                            "true" => true,
+                            "false" => false,
+                            _ => panic!("Invalid boolean"),
+                        };
+
+                        PropertyValue::Single(PropertyExpression::Boolean(BooleanTerm::Literal(val)))
+                    }
+
+                    aadlight_parser::Rule::enum_value => {
+                        let value = first.as_str().to_string();
+
+                        PropertyValue::Single(PropertyExpression::String(
+                            StringTerm::Literal(value)
+                        ))
+                    }
+
+                    _ => panic!("Unknown literal_value inner rule: {:?}", first.as_rule()),
+                }
+            }
+            aadlight_parser::Rule::list_value => {
+                let mut elements = Vec::new();
+                for item in inner.into_inner() {
+                    elements.push(PropertyListElement::Value(
+                        PropertyExpression::String(StringTerm::Literal(extract_identifier(item)))),
+                    );
+                }
+                PropertyValue::List(elements)
+            }
+            aadlight_parser::Rule::reference_value => {
+                let qualified_id = inner.into_inner().next().unwrap();
+                PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(
+                    extract_identifier(qualified_id),
+                )))
+            }
+            _ => panic!("Unknown property value type"),
+        }
+    }
+
+    pub fn transform_annexes_clause(pair: Pair<aadlight_parser::Rule>) -> Vec<AnnexSubclause> {
+        if pair.as_str().contains("none") {
+            return Vec::new();
+        }
+        
+        // TODO: Properly handle annexes
+        Vec::new()
+    }
+    
+    pub fn transform_component_implementation(pair: Pair<aadlight_parser::Rule>) -> ComponentImplementation {
+        // println!("=== 调试 implementation ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+        
+        let mut inner_iter = pair.into_inner();
+        
+        let category = match inner_iter.next().unwrap().as_str() {
+            "system" => ComponentCategory::System,
+            "process" => ComponentCategory::Process,
+            "thread" => ComponentCategory::Thread,
+            "processor" => ComponentCategory::Processor,
+            "memory" => ComponentCategory::Memory,
+            s => panic!("Unknown component implementation category: {}", s),
+        };
+        
+        // Skip "implementation" keyword
+        //let _ = inner_iter.next();
+        
+        let name_str = extract_identifier(inner_iter.next().unwrap());
+        let mut name_parts = name_str.split('.');
+        let name = ImplementationName {
+            type_identifier: name_parts.next().unwrap().to_string(),
+            implementation_identifier: name_parts.next().unwrap_or("").to_string(),
+        };
+        
+        let mut prototypes = PrototypeClause::None;
+        let mut subcomponents = SubcomponentClause::None;
+        let mut calls = CallSequenceClause::None;
+        let mut connections = ConnectionClause::None;
+        let mut properties = PropertyClause::ExplicitNone;
+        let mut annexes = Vec::new();
+        
+        while let Some(inner) = inner_iter.next() {
+            match inner.as_rule() {
+                aadlight_parser::Rule::prototypes => {
+                    prototypes = Self::transform_prototypes_clause(inner);
+                }
+                aadlight_parser::Rule::subcomponents => {
+                    subcomponents = Self::transform_subcomponents_clause(inner);
+                }
+                aadlight_parser::Rule::calls => {
+                    calls = Self::transform_calls_clause(inner);
+                }
+                aadlight_parser::Rule::connections => {
+                    connections = Self::transform_connections_clause(inner);
+                }
+                aadlight_parser::Rule::properties => {
+                    properties = Self::transform_properties_clause(inner);
+                }
+                aadlight_parser::Rule::annexes => {
+                    annexes = Self::transform_annexes_clause(inner);
+                }
+                _ => {}
+            }
+        }
+        
+        ComponentImplementation {
+            category,
+            name,
+            prototype_bindings: None,
+            prototypes,
+            subcomponents,
+            calls,
+            connections,
+            properties,
+            annexes,
+        }
+    }
+    
+    pub fn transform_subcomponents_clause(pair: Pair<aadlight_parser::Rule>) -> SubcomponentClause {
+        // println!("=== 调试 subcomponents ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+
+        if pair.as_str().contains("none") {
+            return SubcomponentClause::Empty;
+        }
+        
+        let mut subcomponents = Vec::new();
+        for inner in pair.into_inner() {
+            if inner.as_rule() == aadlight_parser::Rule::subcomponent {
+                subcomponents.push(Self::transform_subcomponent(inner));
+            }
+        }
+        
+        if subcomponents.is_empty() {
+            SubcomponentClause::None
+        } else {
+            SubcomponentClause::Items(subcomponents)
+        }
+    }
+    
+    pub fn transform_subcomponent(pair: Pair<aadlight_parser::Rule>) -> Subcomponent {
+        let mut inner_iter = pair.into_inner();
+        let identifier = extract_identifier(inner_iter.next().unwrap());
+        //let _colon = inner_iter.next();
+        
+        let category = match inner_iter.next().unwrap().as_str() {
+            "system" => ComponentCategory::System,
+            "process" => ComponentCategory::Process,
+            "thread" => ComponentCategory::Thread,
+            "processor" => ComponentCategory::Processor,
+            "memory" => ComponentCategory::Memory,
+            s => panic!("Unknown subcomponent category: {}", s),
+        };
+        
+        let classifier = SubcomponentClassifier::ClassifierReference(
+            UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
+                package_prefix: None,
+                implementation_name: ImplementationName {
+                    type_identifier: extract_identifier(inner_iter.next().unwrap()),
+                    implementation_identifier: String::new(),
+                },
+            }),
+        );
+        
+        Subcomponent {
+            identifier,
+            category,
+            classifier,
+            array_spec: None, // TODO: Handle array spec
+            properties: Vec::new(), // TODO: Handle properties
+        }
+    }
+    
+    pub fn transform_calls_clause(pair: Pair<aadlight_parser::Rule>) -> CallSequenceClause {
+
+        if pair.as_str().contains("none") {
+            return CallSequenceClause::Empty;
+        }
+        
+        let mut call_sequences = Vec::new();
+        for inner in pair.into_inner() {
+            if inner.as_rule() == aadlight_parser::Rule::call_sequence {
+                call_sequences.push(Self::transform_call_sequence(inner));
+            }
+        }
+        
+        if call_sequences.is_empty() {
+            CallSequenceClause::None
+        } else {
+            CallSequenceClause::Items(call_sequences)
+        }
+    }
+    
+    pub fn transform_call_sequence(pair: Pair<aadlight_parser::Rule>) -> CallSequence {
+        // println!("=== 调试 calls_sequence ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+
+        let mut inner_iter = pair.into_inner();
+        let identifier = extract_identifier(inner_iter.next().unwrap());
+        //let _colon = inner_iter.next();
+        //let _open_brace = inner_iter.next();
+        
+        let mut calls = Vec::new();
+        while let Some(inner) = inner_iter.next() {
+            if inner.as_rule() == aadlight_parser::Rule::subprogram_call {
+                calls.push(Self::transform_subprogram_call(inner));
+            }
+        }
+        
+        CallSequence {
+            identifier,
+            calls,
+            properties: Vec::new(), // TODO: Handle properties
+            in_modes: None, // TODO: Handle modes
+        }
+    }
+    
+    pub fn transform_subprogram_call(pair: Pair<aadlight_parser::Rule>) -> SubprogramCall {
+        // println!("=== 调试 subprogram_call ===");
+        // println!("pair = Rule::{:?}------text = {}", pair.as_rule(),pair.as_str());
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     //println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        //     println!("  inner[{}]: Rule::{:?} text = {}", i, inner.as_rule(),inner.as_str());
+        // }
+
+        let mut inner_iter = pair.into_inner();
+        let identifier = extract_identifier(inner_iter.next().unwrap());
+        //let _colon = inner_iter.next();
+        //let _subprogram = inner_iter.next();
+        
+        let called = CalledSubprogram::Classifier(
+            UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
+                package_prefix: None,
+                implementation_name: ImplementationName {
+                    type_identifier: extract_identifier(inner_iter.next().unwrap()),
+                    implementation_identifier: String::new(),
+                },
+            }),
+        );
+        
+        SubprogramCall {
+            identifier,
+            called,
+            properties: Vec::new(), // TODO: Handle properties
+        }
+    }
+    
+    pub fn transform_connections_clause(pair: Pair<aadlight_parser::Rule>) -> ConnectionClause {
+        if pair.as_str().contains("none") {
+            return ConnectionClause::Empty;
+        }
+        
+        let mut connections = Vec::new();
+        for inner in pair.into_inner() {
+            if inner.as_rule() == aadlight_parser::Rule::connection {
+                connections.push(Self::transform_connection(inner));
+            }
+        }
+        
+        if connections.is_empty() {
+            ConnectionClause::None
+        } else {
+            ConnectionClause::Items(connections)
+        }
+    }
+    
+    pub fn transform_connection(pair: Pair<aadlight_parser::Rule>) -> Connection {
+        // println!("=== 调试 connection ===");
+        // println!("pair = Rule::{:?}, text = {}", pair.as_rule(), pair.as_str());
+
+        // for (i, inner) in pair.clone().into_inner().enumerate() {
+        //     println!("  inner[{}]: Rule::{:?}, text = {}", i, inner.as_rule(), inner.as_str());
+        // }
+
+
+        let mut inner_iter = pair.into_inner();
+        let _identifier = extract_identifier(inner_iter.next().unwrap());
+        //let _colon = inner_iter.next();
+        
+        let connection_type = inner_iter.next().unwrap();
+        let connection_body = inner_iter.next().unwrap(); // ✅ port_connection or parameter_connection
+
+        match connection_type.as_str() {
+            "port" => {
+            let mut port_iter = connection_body.into_inner();
+
+            let source = Self::transform_port_reference(port_iter.next().unwrap());
+            let direction = match port_iter.next().unwrap().as_str() {
+                "->" => ConnectionSymbol::Direct,
+                "<->" => ConnectionSymbol::Didirect,
+                _ => panic!("Unknown connection direction"),
+            };
+            let destination = Self::transform_port_reference(port_iter.next().unwrap());
+
+            Connection::Port(PortConnection {
+                source,
+                destination,
+                connection_direction: direction,
+            })
+        }
+            "parameter" => {
+                // TODO: Handle parameter connections
+                Connection::Parameter(ParameterConnection {
+                    source: ParameterEndpoint::ComponentParameter {
+                        parameter: "".to_string(),
+                        data_subcomponent: None,
+                    },
+                    destination: ParameterEndpoint::ComponentParameter {
+                        parameter: "".to_string(),
+                        data_subcomponent: None,
+                    },
+                    connection_direction: ConnectionSymbol::Direct,
+                })
+            }
+            _ => panic!("Unknown connection type"),
+        }
+    }
+    
+    pub fn transform_port_reference(pair: Pair<aadlight_parser::Rule>) -> PortEndpoint {
+        let reference = pair.as_str().trim();
+        if reference.contains('.') {
+            let mut parts = reference.split('.');
+            PortEndpoint::SubcomponentPort {
+                subcomponent: parts.next().unwrap().to_string(),
+                port: parts.next().unwrap().to_string(),
+            }
+        } else {
+            PortEndpoint::ComponentPort(reference.to_string())
+        }
+    }
+}
+
