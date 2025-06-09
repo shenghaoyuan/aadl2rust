@@ -26,3 +26,9 @@ use ast目前的问题:
 3. **属性应用范围**：原代码中的"applies to"语法在抽象语法中没有明确定义如何表示。
 4. **子程序调用序列**：原代码中的"{ c : subprogram sender_spg; }"语法在抽象语法中的表示方式需要更明确的定义。
 5. **数据端口和参数的区别**：在抽象语法中，参数和端口都使用了PortSpec来表示，可能需要更明确的区分。
+
+## syn_ast
+
+demo，尝试aadl_ast -> rust_ast -> rust code的流程。
+
+使用syn、quote、prettyplease。
