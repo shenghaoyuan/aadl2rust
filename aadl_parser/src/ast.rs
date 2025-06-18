@@ -59,7 +59,7 @@ pub struct Package {
     pub visibility_decls: Vec<VisibilityDeclaration>, //声明当前包与其他包或属性集之间的依赖关系
     pub public_section: Option<PackageSection>,
     pub private_section: Option<PackageSection>,
-    pub properties: PropertyClause, //暂时例子中，为空
+    pub properties: PropertyClause,                   //暂时例子中，为空
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +69,7 @@ pub enum AadlDeclaration {
     ComponentImplementation(ComponentImplementation),
     ComponentImplementationExtension(ComponentImplementationExtension),
     AnnexLibrary(AnnexLibrary)
+    //...
 }
 
 /* ========== 4.3 Component Types ========== */
@@ -77,7 +78,7 @@ pub enum AadlDeclaration {
 pub struct ComponentType {
     pub category: ComponentCategory,
     pub identifier: String,
-    pub prototypes: PrototypeClause,  //“原型”，暂没见过
+    pub prototypes: PrototypeClause,                //“原型”，暂没见过
     pub features: FeatureClause,
     //pub flows: FlowClause,
     //pub modes: Option<ModesClause>,

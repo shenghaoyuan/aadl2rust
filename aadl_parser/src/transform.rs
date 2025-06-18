@@ -2,6 +2,7 @@ use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};
 
+
 // 辅助函数：从 Pair 中提取标识符
 pub fn extract_identifier(pair: Pair<aadlight_parser::Rule>) -> String {
     pair.as_str().trim().to_string()
@@ -20,6 +21,7 @@ pub fn extract_package_name(pair: Pair<aadlight_parser::Rule>) -> PackageName {
 // 主转换结构体
 pub struct AADLTransformer;
 
+#[warn(unused_mut)]
 impl AADLTransformer {
     pub fn transform_file(pairs: Vec<Pair<aadlight_parser::Rule>>) -> Vec<Package> {
         let mut packages = Vec::new();
@@ -63,15 +65,11 @@ impl AADLTransformer {
         // }
 
         let mut inner_iter = pair.into_inner();
-        
-        // 第一个元素应该是"package"关键字
-        //let _ = inner_iter.next();
-        
         let package_name = extract_package_name(inner_iter.next().unwrap());
         let mut visibility_decls = Vec::new();
         let mut public_section = None;
         let mut private_section = None;
-        let mut properties = PropertyClause::ExplicitNone;
+        let properties = PropertyClause::ExplicitNone;
         
         while let Some(inner) = inner_iter.next() {
             //println!("  内部规则: {:?}, 内容: {}", inner.as_rule(), inner.as_str());

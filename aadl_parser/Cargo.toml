@@ -8,3 +8,11 @@ pest = "2.7"
 pest_derive = "2.7"
 
 prettyprint = "0.8"
+
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+quote = "1.0"
+prettyplease = "0.2"
+
+proc-macro2 = "1.0"
+
+chrono = "0.4" 

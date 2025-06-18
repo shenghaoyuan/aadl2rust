@@ -33,7 +33,7 @@ pub fn print_pair(pair: Pair<aadlight_parser::Rule>, indent: usize) {
     }
 }
 
-pub fn print_ast(ast: Vec<Package>) {
+pub fn print_ast(ast: &Vec<Package>) {
     for package in ast {
         println!("Package: {}", package.name.to_string());
 

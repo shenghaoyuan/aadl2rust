@@ -1,0 +1,218 @@
+// src/ir/intermediate_ast.rs
+use std::collections::HashMap;
+
+/// 轻量级Rust抽象语法树（模块级）
+#[derive(Debug, Default)]
+pub struct RustModule {
+    pub name: String,
+    pub docs: Vec<String>,
+    pub items: Vec<Item>,
+    pub attrs: Vec<Attribute>, // #[attributes]
+}
+
+/// 模块项定义
+#[derive(Debug)]
+pub enum Item {
+    Struct(StructDef),
+    Enum(EnumDef),
+    Function(FunctionDef),
+    Impl(ImplBlock),
+    Const(ConstDef),
+    TypeAlias(TypeAlias),
+    Use(UseStatement),
+    Mod(Box<RustModule>), // 嵌套模块
+}
+
+/// 结构体定义
+#[derive(Debug)]
+pub struct StructDef {
+    pub name: String,
+    pub fields: Vec<Field>,
+    pub generics: Vec<GenericParam>,
+    pub derives: Vec<String>, // #[derive(...)]
+    pub docs: Vec<String>,
+    pub vis: Visibility,
+}
+
+/// 枚举定义
+#[derive(Debug)]
+pub struct EnumDef {
+    pub name: String,
+    pub variants: Vec<Variant>,
+    pub generics: Vec<GenericParam>,
+    pub derives: Vec<String>,
+    pub docs: Vec<String>,
+    pub vis: Visibility,
+}
+
+/// 函数定义
+#[derive(Debug)]
+pub struct FunctionDef {
+    pub name: String,
+    pub params: Vec<Param>,
+    pub return_type: Type,
+    pub body: Block,
+    pub asyncness: bool,
+    pub vis: Visibility,
+    pub docs: Vec<String>,
+    pub attrs: Vec<Attribute>,
+}
+
+/// 实现块
+#[derive(Debug)]
+pub struct ImplBlock {
+    pub target: Type,
+    pub generics: Vec<GenericParam>,
+    pub items: Vec<ImplItem>,
+    pub trait_impl: Option<Type>, // 为哪个trait实现
+}
+
+/// 常量定义
+#[derive(Debug)]
+pub struct ConstDef {
+    pub name: String,
+    pub ty: Type,
+    pub value: Expr,
+    pub vis: Visibility,
+    pub docs: Vec<String>,
+}
+
+/// 类型别名
+#[derive(Debug)]
+pub struct TypeAlias {
+    pub name: String,
+    pub target: Type,
+    pub vis: Visibility,
+    pub docs: Vec<String>,
+}
+
+// ========== 基础类型定义 ========== //
+
+/// 类型表示
+#[derive(Debug, Clone)]
+pub enum Type {
+    Path(Vec<String>),           // std::vec::Vec
+    Named(String),               // i32, String
+    Generic(String, Vec<Type>),  // HashMap<K, V>
+    Reference(Box<Type>, bool),  // &mut T
+    Tuple(Vec<Type>),            // (T1, T2)
+    Slice(Box<Type>),            // [T]
+    Unit,                        // ()
+    Never,                       // !
+}
+
+/// 表达式
+#[derive(Debug)]
+pub enum Expr {
+    Ident(String),
+    Path(Vec<String>),
+    Literal(Literal),
+    Call(Box<Expr>, Vec<Expr>),
+    MethodCall(Box<Expr>, String, Vec<Expr>),
+    Block(Block),
+    Loop(Box<Block>),
+    Await(Box<Expr>),
+    Closure(Vec<String>, Box<Expr>),
+}
+
+/// 字面量
+#[derive(Debug)]
+pub enum Literal {
+    Int(i64),
+    Float(f64),
+    Str(String),
+    Bool(bool),
+    Char(char),
+}
+
+/// 代码块
+#[derive(Debug)]
+pub struct Block {
+    pub stmts: Vec<Statement>,
+    pub expr: Option<Box<Expr>>,
+}
+
+/// 语句
+#[derive(Debug)]
+pub enum Statement {
+    Let(LetStmt),
+    Expr(Expr),
+    Item(Box<Item>),
+}
+
+/// let绑定
+#[derive(Debug)]
+pub struct LetStmt {
+    pub name: String,
+    pub ty: Option<Type>,
+    pub init: Option<Expr>,
+}
+
+// ========== 辅助类型 ========== //
+
+#[derive(Debug)]
+pub enum Visibility {
+    Public,
+    Private,
+    Restricted(Vec<String>), // pub(in path)
+}
+
+#[derive(Debug)]
+pub struct Attribute {
+    pub name: String,
+    pub args: Vec<AttributeArg>,
+}
+
+#[derive(Debug)]
+pub enum AttributeArg {
+    Ident(String),
+    Literal(Literal),
+    KeyValue(String, Literal),
+}
+
+#[derive(Debug)]
+pub struct Field {
+    pub name: String,
+    pub ty: Type,
+    pub docs: Vec<String>,
+    pub attrs: Vec<Attribute>,
+}
+
+#[derive(Debug)]
+pub struct Variant {
+    pub name: String,
+    pub data: Option<Vec<Type>>, // Some for tuple variant
+    pub docs: Vec<String>,
+}
+
+#[derive(Debug)]
+pub struct GenericParam {
+    pub name: String,
+    pub bounds: Vec<String>, // trait bounds
+}
+
+#[derive(Debug)]
+pub struct Param {
+    pub name: String,
+    pub ty: Type,
+}
+
+#[derive(Debug)]
+pub enum ImplItem {
+    Method(FunctionDef),
+    AssocConst(String, Type, Expr),
+    AssocType(String, Type),
+}
+
+#[derive(Debug)]
+pub struct UseStatement {
+    pub path: Vec<String>,
+    pub kind: UseKind,
+}
+
+#[derive(Debug)]
+pub enum UseKind {
+    Simple,
+    Glob,    // {path}::*
+    Nested,  // {path}::{a, b}
+}

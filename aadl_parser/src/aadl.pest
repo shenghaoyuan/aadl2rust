@@ -21,9 +21,9 @@ qualified_identifier = @{ (identifier ~ "::")* ~ identifier }
 package_name = { qualified_identifier }
 property_set_name = { identifier }
 
-// 4.2 Package TODO:这里的public和private信息被丢弃
+// 4.2 Package 这里的public和private信息被丢弃
 package_declaration = {
-    "package" ~ package_name ~
+    "package" ~ package_name ~ 
     ("public" | "private")? ~
     visibility_declarations* ~
     package_sections ~
