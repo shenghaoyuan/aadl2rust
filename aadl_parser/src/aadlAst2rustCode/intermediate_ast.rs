@@ -27,11 +27,12 @@ pub enum Item {
 #[derive(Debug)]
 pub struct StructDef {
     pub name: String,
-    pub fields: Vec<Field>,
+    pub fields: Vec<Field>, //(对应aadl端口)
+    pub properties: Vec<StruProperty>, //存储属性
     pub generics: Vec<GenericParam>,
     pub derives: Vec<String>, // #[derive(...)]
     pub docs: Vec<String>,
-    pub vis: Visibility,
+    pub vis: Visibility, //控制结构体的可见性
 }
 
 /// 枚举定义
@@ -86,6 +87,12 @@ pub struct TypeAlias {
     pub docs: Vec<String>,
 }
 
+#[derive(Debug)]
+pub struct StruProperty {
+    pub name: String,
+    pub value: StruPropertyValue,
+    pub docs: Vec<String>, // 属性文档
+}
 // ========== 基础类型定义 ========== //
 
 /// 类型表示
@@ -123,6 +130,17 @@ pub enum Literal {
     Str(String),
     Bool(bool),
     Char(char),
+}
+
+
+#[derive(Debug)]
+pub enum StruPropertyValue {
+    Integer(i64),
+    Float(f64),
+    String(String),
+    Boolean(bool),
+    Duration(u64, String),      // (值, 单位)
+    Range(i64, i64, Option<String>), // (最小值, 最大值, 单位)
 }
 
 /// 代码块

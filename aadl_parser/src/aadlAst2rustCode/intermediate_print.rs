@@ -116,12 +116,91 @@ impl RustCodeGenerator {
         }
 
         self.indent();
+    
+        // 1. 生成端口字段
         for field in &s.fields {
             self.generate_field(field);
+        }
+
+        // 2. 生成属性字段（不初始化）
+        if !s.properties.is_empty() {
+            self.writeln("\n    // --- AADL属性 ---");
+            for prop in &s.properties {
+                self.writeln(&format!(
+                    "pub {}: {}, {}",
+                    prop.name.to_lowercase(),
+                    self.type_for_property(&prop.value),
+                    prop.docs.join("\n")
+                ));
+            }
         }
         self.dedent();
         self.writeln("}");
         self.writeln("");
+
+        // 3. 生成对应的impl块，完成初始化
+        self.generate_properties_impl(s);
+    }
+
+    /// 生成属性初始化impl块
+    fn generate_properties_impl(&mut self, s: &StructDef) {
+        if s.properties.is_empty() {
+            return;
+        }
+
+        self.writeln(&format!("impl {} {{", s.name));
+        self.writeln("    /// 创建组件并初始化AADL属性");
+        self.write("    pub fn new(");
+        
+        // 生成构造函数参数（只包含端口字段）
+        // 这样能够在之后构造 SenderThread 时，把一个真实可用的通道发送端 Sender<i32> 传进来，当然也可以通过直接访问pub的p来设置
+        let port_args = s.fields.iter()
+            .map(|f| format!("{}: {}", f.name, self.type_to_string(&f.ty)))
+            .collect::<Vec<_>>()
+            .join(", ");
+        self.write(&port_args);
+        
+        self.writeln(") -> Self {");
+        self.writeln("        Self {");
+        
+        // 端口字段初始化
+        for field in &s.fields {
+            self.writeln(&format!("            {},", field.name));
+        }
+        
+        // 属性字段初始化
+        for prop in &s.properties {
+            let init_value = match &prop.value {
+                StruPropertyValue::Boolean(b) => b.to_string(),
+                StruPropertyValue::Integer(i) => i.to_string(),
+                StruPropertyValue::Float(f) => f.to_string(),
+                StruPropertyValue::String(s) => format!("\"{}\".to_string()", s),
+                StruPropertyValue::Duration(val, _) => val.to_string(),
+                StruPropertyValue::Range(min, max, _) => format!("({}, {})", min, max),
+            };
+            self.writeln(&format!(
+                "            {}: {}, // {}",
+                prop.name.to_lowercase(),
+                init_value,
+                prop.docs[0].trim_start_matches("/// ")
+            ));
+        }
+        
+        self.writeln("        }");
+        self.writeln("    }");
+        self.writeln("}");
+    }
+
+    /// 根据属性值推断Rust类型
+    fn type_for_property(&self, value: &StruPropertyValue) -> String {
+        match value {
+            StruPropertyValue::Boolean(_) => "bool".to_string(),
+            StruPropertyValue::Integer(_) => "i64".to_string(),
+            StruPropertyValue::Float(_) => "f64".to_string(),
+            StruPropertyValue::String(_) => "String".to_string(),
+            StruPropertyValue::Duration(_, _) => "u64".to_string(),
+            StruPropertyValue::Range(_, _, _) => "(i64, i64)".to_string(),
+        }
     }
 
     fn generate_field(&mut self, field: &Field) {
@@ -132,7 +211,7 @@ impl RustCodeGenerator {
             self.generate_attribute(attr);
         }
         self.writeln(&format!(
-            "{}: {},",
+            "pub {}: {},",
             field.name,
             self.type_to_string(&field.ty)
         ));

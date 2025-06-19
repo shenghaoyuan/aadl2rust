@@ -1,25 +1,10 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-06-18 19:27:03
+// 生成时间: 2025-06-19 19:07:08
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-
-/// AADL System component
-#[derive(Debug, Clone)]
-pub struct root {
-}
-
-/// AADL Processor component
-#[derive(Debug, Clone)]
-pub struct cpu {
-}
-
-/// AADL Process component
-#[derive(Debug, Clone)]
-pub struct proc {
-}
 
 /// Initialize proc.impl
 pub  fn init_proc() -> () {
@@ -29,19 +14,35 @@ pub  fn init_proc() -> () {
     thread::spawn.unwrap(|sender| sender.run());
 }
 
-/// AADL Memory component
-#[derive(Debug, Clone)]
-pub struct mem {
-}
-
 /// AADL Thread: sender
-/// Period: 2000ms
 #[derive(Debug, Clone)]
 pub struct senderThread {
     /// Port: p Out
-    p: mpsc::Sender<Integer>,
+    pub p: mpsc::Sender<i32>,
+    
+    // --- AADL属性 ---
+    pub dispatch_protocol: String, /// AADL属性: Dispatch_Protocol
+    pub period: i64, /// AADL属性: Period
+    pub priority: i64, /// AADL属性: Priority
+    pub data_size: i64, /// AADL属性: Data_Size
+    pub stack_size: i64, /// AADL属性: Stack_Size
+    pub code_size: i64, /// AADL属性: Code_Size
 }
 
+impl senderThread {
+    /// 创建组件并初始化AADL属性
+    pub fn new(p: mpsc::Sender<i32>) -> Self {
+        Self {
+            p,
+            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
+            period: 2000, // AADL属性: Period
+            priority: 5, // AADL属性: Priority
+            data_size: 40000, // AADL属性: Data_Size
+            stack_size: 40000, // AADL属性: Stack_Size
+            code_size: 40, // AADL属性: Code_Size
+        }
+    }
+}
 impl senderThread {
     /// Thread execution entry point
     /// Period: 2000ms
@@ -63,18 +64,39 @@ pub  fn init_sender() -> () {
 
 /// Port handler for result
 /// Direction: Out
-pub  async fn handle_result(port: mpsc::Sender::()) -> () {
+pub  async fn handle_result(port: mpsc::Sender<()>) -> () {
     // Handle port: result;
 }
 
 /// AADL Thread: receiver
-/// Period: 1000ms
 #[derive(Debug, Clone)]
 pub struct receiverThread {
     /// Port: p In
-    p: mpsc::Sender<Integer>,
+    pub p: mpsc::Receiver<i32>,
+    
+    // --- AADL属性 ---
+    pub dispatch_protocol: String, /// AADL属性: Dispatch_Protocol
+    pub period: i64, /// AADL属性: Period
+    pub priority: i64, /// AADL属性: Priority
+    pub data_size: i64, /// AADL属性: Data_Size
+    pub stack_size: i64, /// AADL属性: Stack_Size
+    pub code_size: i64, /// AADL属性: Code_Size
 }
 
+impl receiverThread {
+    /// 创建组件并初始化AADL属性
+    pub fn new(p: mpsc::Receiver<i32>) -> Self {
+        Self {
+            p,
+            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
+            period: 1000, // AADL属性: Period
+            priority: 10, // AADL属性: Priority
+            data_size: 40000, // AADL属性: Data_Size
+            stack_size: 40000, // AADL属性: Stack_Size
+            code_size: 40, // AADL属性: Code_Size
+        }
+    }
+}
 impl receiverThread {
     /// Thread execution entry point
     /// Period: 1000ms
@@ -96,7 +118,7 @@ pub  fn init_receiver() -> () {
 
 /// Port handler for input
 /// Direction: In
-pub  async fn handle_input(port: mpsc::Sender::()) -> () {
+pub  async fn handle_input(port: mpsc::Receiver<()>) -> () {
     // Handle port: input;
 }
 

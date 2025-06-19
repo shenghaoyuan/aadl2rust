@@ -78,39 +78,6 @@ fn main() {
     //println!("{:#?}", ast);
     
 }
-    
-// pub fn generate_rust_code(aadl_pkg: &Package) -> () {
-//     // 第一级转换：语义转换
-//     let rust_ast = AadlConverter::default().convert_package(aadl_pkg);
-//     println!("\n==================================== IntermediateRoot ===================================");
-//     println!("{:#?}",rust_ast);
-    
-//     let mut generator = RustCodeGenerator::new();
-//     let mut printer = RustPrinter::new();
-//     if let Err(e) = printer.print_root(&rust_ast){
-//         eprint!("格式化错误cj:{}",e);
-//         return;
-//     }
-
-//     match printer.into_code() {
-//         Ok(code) => {
-//             println!("{}",code);
-            
-//             // 写入文件
-//             if let Err(e) = fs::write("output.rs", code) {
-//                 eprintln!("写入文件失败: {}", e);
-//             } else {
-//                 println!("代码已成功写入 output.rs 文件");
-//             }
-//         } 
-//         Err(errors) => {
-//             eprint!("转换错误cj:");
-//             for error in errors{
-//                 eprint!("- {}",error);
-//             }
-//         }
-//     }
-// }
 
 pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     // 第一级转换：语义转换

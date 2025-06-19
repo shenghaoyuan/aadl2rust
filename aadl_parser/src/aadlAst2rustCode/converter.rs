@@ -64,7 +64,7 @@ impl AadlConverter {
             AadlDeclaration::ComponentImplementation(impl_) => {
                 self.convert_implementation(impl_, module);
             }
-            _ => {} // 忽略其他声明类型
+            _ => {} // TODO:忽略其他声明类型
         }
     }
 
@@ -73,7 +73,7 @@ impl AadlConverter {
             ComponentCategory::Data => self.convert_data_component(comp),
             ComponentCategory::Thread => self.convert_thread_component(comp),
             ComponentCategory::Subprogram => self.convert_subprogram(comp),
-            _ => self.convert_generic_component(comp),
+            _ => Vec::default(), //TODO:进程、系统还需要处理
         }
     }
 
@@ -112,11 +112,12 @@ impl AadlConverter {
         // 1. 结构体定义
         let struct_def = StructDef {
             name: format!("{}Thread", comp.identifier),
-            fields: self.convert_features(&comp.features),
+            fields: self.convert_features(&comp.features),  //特征列表
+            properties: self.convert_properties(comp),      // 属性列表
             generics: Vec::new(),
             derives: vec!["Debug".to_string(), "Clone".to_string()],
             docs: self.create_component_docs(comp),
-            vis: Visibility::Public,
+            vis: Visibility::Public, //默认public
         };
         items.push(Item::Struct(struct_def));
 
@@ -135,8 +136,8 @@ impl AadlConverter {
             for feature in feature_items {
                 if let Feature::Port(port) = feature {
                     fields.push(Field {
-                        name: port.identifier.clone(),
-                        ty: self.convert_port_type(&port.port_type),
+                        name: port.identifier.clone().to_lowercase(),
+                        ty: self.convert_port_type(&port),
                         docs: vec![format!("/// Port: {} {:?}", port.identifier, port.direction)],
                         attrs: Vec::new(),
                     });
@@ -147,32 +148,171 @@ impl AadlConverter {
         fields
     }
 
-    fn convert_port_type(&self, port_type: &PortType) -> Type {
-        match port_type {
-            PortType::Data { classifier } => {
-                let inner = classifier.as_ref()
+    fn convert_port_type(&self, port: &PortSpec) -> Type {
+        // 确定通道类型（Sender/Receiver）
+        let channel_type = match port.direction {
+            PortDirection::In => "mpsc::Receiver",
+            PortDirection::Out => "mpsc::Sender",
+            PortDirection::InOut => "mpsc::Sender", //TODO:std::mpsc不支持双向通道，暂时这样写
+        };
+
+        // 确定内部数据类型
+        let inner_type = match &port.port_type {
+            PortType::Data { classifier } | PortType::EventData { classifier } => {
+                classifier.as_ref()
                     .map(|c| self.classifier_to_type(c))
-                    .unwrap_or(Type::Named("()".to_string()));
-                Type::Generic("mpsc::Sender".to_string(), vec![inner])
+                    .unwrap_or(Type::Named("()".to_string()))
             }
-            PortType::Event => Type::Path(vec!["mpsc::Sender".to_string(), "()".to_string()]),
-            PortType::EventData { classifier } => {
-                let inner = classifier.as_ref()
-                    .map(|c| self.classifier_to_type(c))
-                    .unwrap_or(Type::Named("()".to_string()));
-                Type::Generic("mpsc::Sender".to_string(), vec![inner])
-            }
-        }
+            PortType::Event => Type::Named("()".to_string()), // 事件端口固定使用单元类型
+        };
+
+        // 组合成最终类型
+        Type::Generic(channel_type.to_string(), vec![inner_type])
     }
 
     fn classifier_to_type(&self, classifier: &PortDataTypeReference) -> Type {
         match classifier {
-            PortDataTypeReference::Classifier(UniqueComponentClassifierReference::Type(r)) => {
-                Type::Named(r.implementation_name.type_identifier.clone())
-            }
+            PortDataTypeReference::Classifier(
+                    UniqueComponentClassifierReference::Type(ref type_ref)
+                ) => {
+                    // 优先查找我们所自定义类型映射规则
+                    self.type_mappings.get(&type_ref.implementation_name.type_identifier)
+                        .cloned()
+                        .unwrap_or_else(|| {
+                            Type::Named(type_ref.implementation_name.type_identifier.clone())
+                        })
+                    
+                }
             _ => Type::Named("()".to_string()),
         }
     }
+
+    /// 转换AADL属性为Property列表
+    fn convert_properties(&self, comp: &ComponentType) -> Vec<StruProperty> {
+        // 通用属性转换方法
+        let mut result = Vec::new();
+        
+        if let PropertyClause::Properties(props) = &comp.properties {
+            for prop in props {
+                if let Some(converted) = self.convert_single_property(prop) {
+                    result.push(converted);
+                }
+            }
+        }
+        
+        result
+        // let mut properties = Vec::new();
+
+        // // 1. 转换周期属性
+        // if let Some(period) = self.extract_period(comp) {
+        //     properties.push(StruProperty {
+        //         name: "period".to_string(),
+        //         value: StruPropertyValue::Duration(period),
+        //         docs: vec![format!("/// 执行周期: {}ms", period)], //TODO:暂时写死是毫秒
+        //     });
+        // }
+
+        // // 3. TODO:可扩展其他属性转换...
+        // properties
+    }
+    /// 转换单个属性
+    fn convert_single_property(&self, prop: &Property) -> Option<StruProperty> {
+        let Property::BasicProperty(bp) = prop else {
+            return None; // 跳过非基础属性
+        };
+
+        let docs = vec![format!("/// AADL属性: {}", bp.identifier.name)];
+        
+        Some(StruProperty {
+            name: bp.identifier.name.clone(),
+            value: self.parse_property_value(&bp.value)?,
+            docs,
+        })
+    }
+
+    /// 解析AADL属性值到Rust类型
+    fn parse_property_value(&self, value: &PropertyValue) -> Option<StruPropertyValue> {
+        match value {
+            PropertyValue::Single(expr) => self.parse_property_expression(expr),
+            _ => None, // 忽略其他复杂属性
+        }
+    }
+
+    /// 解析属性表达式为StruPropertyValue
+    fn parse_property_expression(&self, expr: &PropertyExpression) -> Option<StruPropertyValue> {
+        match expr {
+            // 基础类型处理
+            PropertyExpression::Boolean(boolean_term) => {
+                self.parse_boolean_term(boolean_term)
+            }
+            PropertyExpression::Real(real_term) => {
+                self.parse_real_term(real_term)
+            }
+            PropertyExpression::Integer(integer_term) => {
+                self.parse_integer_term(integer_term)
+            }
+            PropertyExpression::String(string_term) => {
+                self.parse_string_term(string_term)
+            }
+            
+            // 范围类型处理
+            PropertyExpression::IntegerRange(range_term) => {
+                Some(StruPropertyValue::Range(
+                    range_term.lower.value.parse().ok()?,
+                    range_term.upper.value.parse().ok()?,
+                    range_term.lower.unit.clone()
+                ))
+            }
+            
+            // 其他复杂类型暂不处理
+            _ => None,
+        }
+    }
+
+    // 布尔项解析
+    fn parse_boolean_term(&self, term: &BooleanTerm) -> Option<StruPropertyValue> {
+        match term {
+            BooleanTerm::Literal(b) => Some(StruPropertyValue::Boolean(*b)),
+            BooleanTerm::Constant(_) => None, // 常量需要查表解析，此处简化
+        }
+    }
+
+    // 实数项解析
+    fn parse_real_term(&self, term: &SignedRealOrConstant) -> Option<StruPropertyValue> {
+        match term {
+            SignedRealOrConstant::Real(signed_real) => {
+                let value = signed_real.sign.as_ref().map_or(1.0, |s| match s {
+                    Sign::Plus => 1.0,
+                    Sign::Minus => -1.0,
+                }) * signed_real.value;
+                Some(StruPropertyValue::Float(value))
+            }
+            SignedRealOrConstant::Constant { .. } => None, // TODO:常量需要查表
+        }
+    }
+
+    // 整数项解析
+    fn parse_integer_term(&self, term: &SignedIntergerOrConstant) -> Option<StruPropertyValue> {
+        match term {
+            SignedIntergerOrConstant::Real(signed_int) => {
+                let value = signed_int.sign.as_ref().map_or(1, |s| match s {
+                    Sign::Plus => 1,
+                    Sign::Minus => -1,
+                }) * signed_int.value;
+                Some(StruPropertyValue::Integer(value))
+            }
+            SignedIntergerOrConstant::Constant { .. } => None, // 常量需要查表
+        }
+    }
+
+    // 字符串项解析
+    fn parse_string_term(&self, term: &StringTerm) -> Option<StruPropertyValue> {
+        match term {
+            StringTerm::Literal(s) => Some(StruPropertyValue::String(s.clone())),
+            StringTerm::Constant(_) => None, // 常量需要查表
+        }
+    }
+    
 
     fn create_thread_impl(&self, comp: &ComponentType) -> Option<ImplBlock> {
         let period = self.extract_period(comp)?;
@@ -265,7 +405,7 @@ impl AadlConverter {
                         name: format!("handle_{}", port.identifier),
                         params: vec![Param {
                             name: "port".to_string(),
-                            ty: self.convert_port_type(&port.port_type),
+                            ty: self.convert_port_type(&port),
                         }],
                         return_type: Type::Unit,
                         body: Block {
@@ -291,6 +431,7 @@ impl AadlConverter {
         vec![Item::Struct(StructDef {
             name: comp.identifier.clone(),
             fields: Vec::new(),
+            properties: Vec::new(),
             generics: Vec::new(),
             derives: vec!["Debug".to_string(), "Clone".to_string()],
             docs: vec![format!("/// AADL {:?} component", comp.category)],
@@ -367,10 +508,6 @@ impl AadlConverter {
             "/// AADL {:?}: {}",
             comp.category, comp.identifier
         )];
-
-        if let Some(period) = self.extract_period(comp) {
-            docs.push(format!("/// Period: {}ms", period));
-        }
 
         docs
     }
