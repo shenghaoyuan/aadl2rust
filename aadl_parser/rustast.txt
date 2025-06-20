@@ -1,0 +1,737 @@
+RustModule {
+    name: "ojr_pingpong_queued",
+    docs: [
+        "/// Auto-generated from AADL package: ojr_pingpong::queued",
+    ],
+    items: [
+        Struct(
+            StructDef {
+                name: "procProcess",
+                fields: [
+                    Field {
+                        name: "the_sender",
+                        ty: Named(
+                            "senderThread",
+                        ),
+                        docs: [
+                            "/// Subcomponent: the_sender",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "the_receiver",
+                        ty: Named(
+                            "receiverThread",
+                        ),
+                        docs: [
+                            "/// Subcomponent: the_receiver",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "/// Process implementation: proc",
+                    "/// Auto-generated from AADL",
+                ],
+                vis: Public,
+            },
+        ),
+        Impl(
+            ImplBlock {
+                target: Named(
+                    "procProcess",
+                ),
+                generics: [],
+                items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Let(
+                                        LetStmt {
+                                            name: "mut the_sender",
+                                            ty: Some(
+                                                Named(
+                                                    "senderThread",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "senderThread",
+                                                            "new",
+                                                        ],
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            name: "mut the_receiver",
+                                            ty: Some(
+                                                Named(
+                                                    "receiverThread",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "receiverThread",
+                                                            "new",
+                                                        ],
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "mpsc",
+                                                            "channel",
+                                                        ],
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "the_sender.p",
+                                            ),
+                                            "send",
+                                            [
+                                                Ident(
+                                                    "channel.0",
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "the_receiver.p",
+                                            ),
+                                            "receive",
+                                            [
+                                                Ident(
+                                                    "channel.1",
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "Self { the_sender, the_receiver }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "/// Creates a new process instance",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                    Method(
+                        FunctionDef {
+                            name: "start",
+                            params: [
+                                Param {
+                                    name: "self",
+                                    ty: Reference(
+                                        Named(
+                                            "Self",
+                                        ),
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        MethodCall(
+                                            Path(
+                                                [
+                                                    "thread",
+                                                    "Builder",
+                                                    "new",
+                                                ],
+                                            ),
+                                            "spawn",
+                                            [
+                                                Closure(
+                                                    [
+                                                        "the_sender",
+                                                    ],
+                                                    MethodCall(
+                                                        Ident(
+                                                            "the_sender",
+                                                        ),
+                                                        "run",
+                                                        [],
+                                                    ),
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Path(
+                                                [
+                                                    "thread",
+                                                    "Builder",
+                                                    "new",
+                                                ],
+                                            ),
+                                            "spawn",
+                                            [
+                                                Closure(
+                                                    [
+                                                        "the_receiver",
+                                                    ],
+                                                    MethodCall(
+                                                        Ident(
+                                                            "the_receiver",
+                                                        ),
+                                                        "run",
+                                                        [],
+                                                    ),
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "/// Starts all threads in the process",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                trait_impl: None,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "senderThread",
+                fields: [
+                    Field {
+                        name: "p",
+                        ty: Generic(
+                            "mpsc::Sender",
+                            [
+                                Named(
+                                    "i32",
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "/// Port: p Out",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [
+                    StruProperty {
+                        name: "Dispatch_Protocol",
+                        value: String(
+                            "Periodic",
+                        ),
+                        docs: [
+                            "/// AADL属性: Dispatch_Protocol",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Period",
+                        value: Integer(
+                            2000,
+                        ),
+                        docs: [
+                            "/// AADL属性: Period",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Priority",
+                        value: Integer(
+                            5,
+                        ),
+                        docs: [
+                            "/// AADL属性: Priority",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Data_Size",
+                        value: Integer(
+                            40000,
+                        ),
+                        docs: [
+                            "/// AADL属性: Data_Size",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Stack_Size",
+                        value: Integer(
+                            40000,
+                        ),
+                        docs: [
+                            "/// AADL属性: Stack_Size",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Code_Size",
+                        value: Integer(
+                            40,
+                        ),
+                        docs: [
+                            "/// AADL属性: Code_Size",
+                        ],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                    "Clone",
+                ],
+                docs: [
+                    "/// AADL Thread: sender",
+                ],
+                vis: Public,
+            },
+        ),
+        Impl(
+            ImplBlock {
+                target: Named(
+                    "senderThread",
+                ),
+                generics: [],
+                items: [
+                    Method(
+                        FunctionDef {
+                            name: "run",
+                            params: [
+                                Param {
+                                    name: "self",
+                                    ty: Reference(
+                                        Named(
+                                            "senderThread",
+                                        ),
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Let(
+                                        LetStmt {
+                                            name: "interval",
+                                            ty: Some(
+                                                Path(
+                                                    [
+                                                        "tokio",
+                                                        "time",
+                                                        "Interval",
+                                                    ],
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "tokio",
+                                                            "time",
+                                                            "interval",
+                                                        ],
+                                                    ),
+                                                    [
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "Duration",
+                                                                    "from_millis",
+                                                                ],
+                                                            ),
+                                                            [
+                                                                Literal(
+                                                                    Int(
+                                                                        2000,
+                                                                    ),
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        Loop(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        MethodCall(
+                                                            Ident(
+                                                                "interval",
+                                                            ),
+                                                            "tick",
+                                                            [],
+                                                        ),
+                                                    ),
+                                                    Expr(
+                                                        Await(
+                                                            Ident(
+                                                                "_",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: true,
+                            vis: Public,
+                            docs: [
+                                "/// Thread execution entry point",
+                                "/// Period: 2000ms",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                trait_impl: None,
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "handle_result",
+                params: [
+                    Param {
+                        name: "port",
+                        ty: Generic(
+                            "mpsc::Sender",
+                            [
+                                Named(
+                                    "()",
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+                return_type: Unit,
+                body: Block {
+                    stmts: [
+                        Expr(
+                            Ident(
+                                "// Handle port: result",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: true,
+                vis: Public,
+                docs: [
+                    "/// Port handler for result",
+                    "/// Direction: Out",
+                ],
+                attrs: [],
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "receiverThread",
+                fields: [
+                    Field {
+                        name: "p",
+                        ty: Generic(
+                            "mpsc::Receiver",
+                            [
+                                Named(
+                                    "i32",
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "/// Port: p In",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [
+                    StruProperty {
+                        name: "Dispatch_Protocol",
+                        value: String(
+                            "Periodic",
+                        ),
+                        docs: [
+                            "/// AADL属性: Dispatch_Protocol",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Period",
+                        value: Integer(
+                            1000,
+                        ),
+                        docs: [
+                            "/// AADL属性: Period",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Priority",
+                        value: Integer(
+                            10,
+                        ),
+                        docs: [
+                            "/// AADL属性: Priority",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Data_Size",
+                        value: Integer(
+                            40000,
+                        ),
+                        docs: [
+                            "/// AADL属性: Data_Size",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Stack_Size",
+                        value: Integer(
+                            40000,
+                        ),
+                        docs: [
+                            "/// AADL属性: Stack_Size",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Code_Size",
+                        value: Integer(
+                            40,
+                        ),
+                        docs: [
+                            "/// AADL属性: Code_Size",
+                        ],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                    "Clone",
+                ],
+                docs: [
+                    "/// AADL Thread: receiver",
+                ],
+                vis: Public,
+            },
+        ),
+        Impl(
+            ImplBlock {
+                target: Named(
+                    "receiverThread",
+                ),
+                generics: [],
+                items: [
+                    Method(
+                        FunctionDef {
+                            name: "run",
+                            params: [
+                                Param {
+                                    name: "self",
+                                    ty: Reference(
+                                        Named(
+                                            "receiverThread",
+                                        ),
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Let(
+                                        LetStmt {
+                                            name: "interval",
+                                            ty: Some(
+                                                Path(
+                                                    [
+                                                        "tokio",
+                                                        "time",
+                                                        "Interval",
+                                                    ],
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "tokio",
+                                                            "time",
+                                                            "interval",
+                                                        ],
+                                                    ),
+                                                    [
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "Duration",
+                                                                    "from_millis",
+                                                                ],
+                                                            ),
+                                                            [
+                                                                Literal(
+                                                                    Int(
+                                                                        1000,
+                                                                    ),
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        Loop(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        MethodCall(
+                                                            Ident(
+                                                                "interval",
+                                                            ),
+                                                            "tick",
+                                                            [],
+                                                        ),
+                                                    ),
+                                                    Expr(
+                                                        Await(
+                                                            Ident(
+                                                                "_",
+                                                            ),
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: true,
+                            vis: Public,
+                            docs: [
+                                "/// Thread execution entry point",
+                                "/// Period: 1000ms",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                trait_impl: None,
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "handle_input",
+                params: [
+                    Param {
+                        name: "port",
+                        ty: Generic(
+                            "mpsc::Receiver",
+                            [
+                                Named(
+                                    "()",
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+                return_type: Unit,
+                body: Block {
+                    stmts: [
+                        Expr(
+                            Ident(
+                                "// Handle port: input",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: true,
+                vis: Public,
+                docs: [
+                    "/// Port handler for input",
+                    "/// Direction: In",
+                ],
+                attrs: [],
+            },
+        ),
+        TypeAlias(
+            TypeAlias {
+                name: "Integer",
+                target: Named(
+                    "()",
+                ),
+                vis: Public,
+                docs: [
+                    "/// AADL Data Type: Integer",
+                ],
+            },
+        ),
+    ],
+    attrs: [],
+}

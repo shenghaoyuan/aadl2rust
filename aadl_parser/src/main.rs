@@ -71,8 +71,6 @@ fn main() {
             eprintln!("解析失败: {}", e);
         }
     }
-    let code = "fn hello() { println!(\"Hello, world!\"); }";
-    let ast: ItemFn = parse_str(code).unwrap();
     
     // 打印整个 AST 的调试信息
     //println!("{:#?}", ast);
@@ -85,11 +83,12 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
 
     let rust_module = converter.convert_package(&aadl_pkg);
     println!("\n==================================== rust_module ===================================");
-    println!("{:#?}",rust_module);
+    //println!("{:#?}",rust_module);
+    fs::write("rustast.txt", format!("{:#?}", rust_module)).unwrap();
     
     let mut code_generator = RustCodeGenerator::new();
     let rust_code = code_generator.generate_module_code(&rust_module);
-    println!("{}", rust_code);
+    //println!("{}", rust_code);
 
     // 写入文件
             if let Err(e) = fs::write("output.rs", rust_code) {

@@ -765,12 +765,15 @@ impl AADLTransformer {
             s => panic!("Unknown subcomponent category: {}", s),
         };
         
+        let name_str = extract_identifier(inner_iter.next().unwrap());
+        let mut name_parts = name_str.split(".");
         let classifier = SubcomponentClassifier::ClassifierReference(
             UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
                 package_prefix: None,
                 implementation_name: ImplementationName {
-                    type_identifier: extract_identifier(inner_iter.next().unwrap()),
-                    implementation_identifier: String::new(),
+                    type_identifier: name_parts.next().unwrap().to_string(),
+                    //implementation_identifier: String::new(),
+                    implementation_identifier:name_parts.next().unwrap_or("").to_string(),
                 },
             }),
         );

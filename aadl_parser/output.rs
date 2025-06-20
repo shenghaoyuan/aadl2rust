@@ -1,17 +1,62 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-06-19 19:07:08
+// 生成时间: 2025-06-20 20:14:16
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-/// Initialize proc.impl
-pub  fn init_proc() -> () {
-    let sender = SenderThread::new();
-    let receiver = ReceiverThread::new();
-    // Connect SubcomponentPort { subcomponent: "the_sender", port: "p" } to SubcomponentPort { subcomponent: "the_receiver", port: "p" };
-    thread::spawn.unwrap(|sender| sender.run());
+/// Process implementation: proc
+/// Auto-generated from AADL
+#[derive(Debug)]
+pub struct procProcess {
+    /// Subcomponent: the_sender
+    #[allow(dead_code)]
+    pub the_sender: senderThread,
+    /// Subcomponent: the_receiver
+    #[allow(dead_code)]
+    pub the_receiver: receiverThread,
+}
+
+impl procProcess {
+    impl procProcess {
+        /// Creates a new process instance
+        pub  fn new() -> Self {
+            let mut the_sender: senderThread = senderThread::new();
+            let mut the_receiver: receiverThread = receiverThread::new();
+            let channel = mpsc::channel();
+            /// bulid connection: 
+                the_sender.p = channel.0;
+            /// bulid connection: 
+                the_receiver.p = channel.1;
+            Self { the_sender, the_receiver };
+        }
+        
+        /// Starts all threads in the process
+        pub  fn start(self: &mut  Self) -> () {
+            thread::Builder::new.spawn(|the_sender| the_sender.run());
+            thread::Builder::new.spawn(|the_receiver| the_receiver.run());
+        }
+        
+    }
+    /// Creates a new process instance
+    pub  fn new() -> Self {
+        let mut the_sender: senderThread = senderThread::new();
+        let mut the_receiver: receiverThread = receiverThread::new();
+        let channel = mpsc::channel();
+        /// bulid connection: 
+            the_sender.p = channel.0;
+        /// bulid connection: 
+            the_receiver.p = channel.1;
+        Self { the_sender, the_receiver };
+    }
+    
+    /// Starts all threads in the process
+    pub  fn start(self: &mut  Self) -> () {
+        thread::Builder::new.spawn(|the_sender| the_sender.run());
+        thread::Builder::new.spawn(|the_receiver| the_receiver.run());
+    }
+    
 }
 
 /// AADL Thread: sender
@@ -53,13 +98,6 @@ impl senderThread {
         ;
     }
     
-}
-
-/// Initialize sender.impl
-pub  fn init_sender() -> () {
-    let sender = SenderThread::new();
-    let receiver = ReceiverThread::new();
-    thread::spawn.unwrap(|sender| sender.run());
 }
 
 /// Port handler for result
@@ -107,13 +145,6 @@ impl receiverThread {
         ;
     }
     
-}
-
-/// Initialize receiver.impl
-pub  fn init_receiver() -> () {
-    let sender = SenderThread::new();
-    let receiver = ReceiverThread::new();
-    thread::spawn.unwrap(|sender| sender.run());
 }
 
 /// Port handler for input

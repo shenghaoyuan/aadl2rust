@@ -122,8 +122,8 @@ impl RustCodeGenerator {
             self.generate_field(field);
         }
 
-        // 2. 生成属性字段（不初始化）
-        if !s.properties.is_empty() {
+        // 如果是进程结构体则不生成属性字段
+        if !s.name.ends_with("Process") && !s.properties.is_empty() {
             self.writeln("\n    // --- AADL属性 ---");
             for prop in &s.properties {
                 self.writeln(&format!(
@@ -138,8 +138,8 @@ impl RustCodeGenerator {
         self.writeln("}");
         self.writeln("");
 
-        // 3. 生成对应的impl块，完成初始化
         self.generate_properties_impl(s);
+        
     }
 
     /// 生成属性初始化impl块
@@ -248,6 +248,17 @@ impl RustCodeGenerator {
         self.writeln("{");
         self.indent();
         
+        // 判断是否为进程实现
+        let is_process = match &i.target {
+            Type::Named(name) => name.ends_with("Process"),
+            _ => false
+        };
+        
+        // 特殊处理进程的new方法
+        if is_process {
+            self.generate_process_impl(i) ;
+        }
+
         for item in &i.items {
             match item {
                 ImplItem::Method(m) => self.generate_function(m),
@@ -265,6 +276,30 @@ impl RustCodeGenerator {
         self.dedent();
         self.writeln("}");
         self.writeln("");
+    }
+
+    fn generate_process_impl(&mut self, impl_block: &ImplBlock) {
+        self.writeln(&format!("impl {} {{", self.type_to_string(&impl_block.target)));
+        self.indent();
+
+        // TODO:动态生成new方法
+        if let Some(new_method) = impl_block.items.iter().find(|i| matches!(i, ImplItem::Method(f) if f.name == "new")) {
+            if let ImplItem::Method(func) = new_method {
+                self.generate_function(func);
+            }
+        }
+
+        // 动态生成其他方法
+        for item in &impl_block.items {
+            if let ImplItem::Method(func) = item {
+                if func.name != "new" {
+                    self.generate_function(func);
+                }
+            }
+        }
+
+        self.dedent();
+        self.writeln("}");
     }
 
     fn generate_function(&mut self, f: &FunctionDef) {
@@ -331,6 +366,24 @@ impl RustCodeGenerator {
                 self.writeln(";");
             }
             Statement::Expr(expr) => {
+                // 处理连接建立的表达式
+                if let Expr::MethodCall(receiver, method, args) = expr {
+                    if method == "send" || method == "receive" {
+                        self.writeln("/// bulid connection: ");
+                        self.write("    ");
+                        self.generate_expr(receiver);
+                        self.write(" = ");
+
+                        for (i, arg) in args.iter().enumerate() {
+                            if i > 0 { self.write(", "); }
+                            self.generate_expr(arg);
+                        }
+                        self.writeln(";");
+
+                        return;
+                    }
+                }
+                // 普通表达式处理
                 self.generate_expr(expr);
                 self.writeln(";");
             }

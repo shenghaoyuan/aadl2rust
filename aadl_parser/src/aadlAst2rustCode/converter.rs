@@ -3,7 +3,7 @@ use crate::ast::aadl_ast_cj::*;
 use super::{
     intermediate_ast::*,
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, default};
 
 /// AADL到Rust中间表示的转换器
 pub struct AadlConverter {
@@ -62,7 +62,7 @@ impl AadlConverter {
                 module.items.extend(self.convert_component(comp));
             }
             AadlDeclaration::ComponentImplementation(impl_) => {
-                self.convert_implementation(impl_, module);
+                module.items.extend(self.convert_implementation(impl_));
             }
             _ => {} // TODO:忽略其他声明类型
         }
@@ -439,68 +439,255 @@ impl AadlConverter {
         })]
     }
 
-    fn convert_implementation(&self, impl_: &ComponentImplementation, module: &mut RustModule) {
-        if let ConnectionClause::Items(connections) = &impl_.connections {
-            let init_func = self.create_initialization_function(impl_.name.clone(), connections);
-            module.items.push(Item::Function(init_func));
+    fn convert_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+        match impl_.category {
+            ComponentCategory::Process => self.convert_process_implementation(impl_),
+            _ => Vec::default(), // 默认实现
         }
     }
 
-    fn create_initialization_function(&self, impl_name: ImplementationName, connections: &[Connection]) -> FunctionDef {
+    fn convert_process_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+        let mut items = Vec::new();
+        
+        // 1. 生成进程结构体
+        let struct_def = StructDef {
+            name: format!{"{}Process",impl_.name.type_identifier.to_lowercase()},
+            fields: self.get_process_fields(impl_),
+            properties: Vec::new(),
+            generics: Vec::new(),
+            derives: vec!["Debug".to_string()],
+            docs: vec![
+                format!("/// Process implementation: {}", impl_.name.type_identifier),
+                "/// Auto-generated from AADL".to_string(),
+            ],
+            vis: Visibility::Public,
+        };
+        items.push(Item::Struct(struct_def));
+        
+        // 2. 生成实现块
+        items.push(Item::Impl(self.create_process_impl_block(impl_)));
+        
+        items
+    }
+
+    fn get_process_fields(&self, impl_: &ComponentImplementation) -> Vec<Field> {
+        let mut fields = Vec::new();
+        
+        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            for sub in subcomponents {
+                let type_name = match &sub.classifier {
+                    SubcomponentClassifier::ClassifierReference(
+                        UniqueComponentClassifierReference::Implementation(unirf)) => {
+                        // 直接使用子组件标识符 + "Thread"
+                        format!("{}", unirf.implementation_name.type_identifier.to_lowercase())
+                    },
+                    _ => "UnsupportedComponent".to_string()
+                };
+
+                fields.push(Field {
+                    name: sub.identifier.clone().to_lowercase(),
+                    ty: Type::Named(format!("{}Thread", type_name)),
+                    docs: vec![format!("/// Subcomponent: {}", sub.identifier)],
+                    attrs: vec![Attribute {
+                        name: "allow".to_string(),
+                        args: vec![AttributeArg::Ident("dead_code".to_string())],
+                    }],
+                });
+            }
+        }
+        
+        fields
+    }
+
+    fn create_process_impl_block(&self, impl_: &ComponentImplementation) -> ImplBlock {
+        let mut items = Vec::new();
+        
+        // 添加new方法
+        items.push(ImplItem::Method(FunctionDef {
+            name: "new".to_string(),
+            params: Vec::new(),
+            return_type: Type::Named("Self".to_string()),
+            body: self.create_process_new_body(impl_),
+            asyncness: false,
+            vis: Visibility::Public,
+            docs: vec!["/// Creates a new process instance".to_string()],
+            attrs: Vec::new(),
+        }));
+        
+        // 添加start方法
+        items.push(ImplItem::Method(FunctionDef {
+            name: "start".to_string(),
+            params: vec![Param {
+                name: "self".to_string(),
+                ty: Type::Reference(Box::new(Type::Named("Self".to_string())), true),
+            }],
+            return_type: Type::Unit,
+            body: self.create_process_start_body(impl_),
+            asyncness: false,
+            vis: Visibility::Public,
+            docs: vec!["/// Starts all threads in the process".to_string()],
+            attrs: Vec::new(),
+        }));
+        
+        ImplBlock {
+            target: Type::Named(format!{"{}Process",impl_.name.type_identifier.clone().to_lowercase()}),
+            generics: Vec::new(),
+            items,
+            trait_impl: None,
+        }
+    }
+
+    fn create_process_new_body(&self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
+        
+        // 1. 创建子组件实例
+        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            for sub in subcomponents {
+                let type_name = match &sub.classifier {
+                    SubcomponentClassifier::ClassifierReference(
+                        UniqueComponentClassifierReference::Type(type_ref)
+                    ) => type_ref.implementation_name.type_identifier.clone(),
+                    SubcomponentClassifier::ClassifierReference(
+                        UniqueComponentClassifierReference::Implementation(impl_ref)
+                    ) => impl_ref.implementation_name.type_identifier.clone(),
+                    SubcomponentClassifier::Prototype(_) => {
+                        "UnsupportedPrototype".to_string()
+                    }
+                };
 
-        // 创建线程实例
-        stmts.push(Statement::Let(LetStmt {
-            name: "sender".to_string(),
-            ty: None,
-            init: Some(Expr::Call(
-                Box::new(Expr::Path(vec!["SenderThread".to_string(), "new".to_string()])),
-                Vec::new(),
-            )),
-        }));
+                let var_name = sub.identifier.clone().to_lowercase();
+                stmts.push(Statement::Let(LetStmt {
+                    name: format!("mut {}", var_name),
+                    ty: Some(Type::Named(format!("{}Thread", type_name))),
+                    init: Some(Expr::Call(
+                        Box::new(Expr::Path(vec![
+                            format!("{}Thread", type_name),
+                            "new".to_string()
+                        ])),
+                        Vec::new(),
+                    )),
+                }));
+            }
+        }
+        
+        // 2. 建立连接
+        if let ConnectionClause::Items(connections) = &impl_.connections {
+            for conn in connections {
+                if let Connection::Port(port_conn) = conn {
+                    stmts.extend(self.create_channel_connection(port_conn));
+                }
+            }
+        }
+        
+        // 3. 返回结构体实例
+        let fields = if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            subcomponents.iter()
+                .map(|s| s.identifier.clone().to_lowercase())
+                .collect::<Vec<_>>()
+                .join(", ")
+        } else {
+            String::new()
+        };
+        
+        stmts.push(Statement::Expr(Expr::Ident(
+            format!("Self {{ {} }}", fields)
+        )));
+        
+        Block {
+            stmts,
+            expr: None,
+        }
+    }
 
-        stmts.push(Statement::Let(LetStmt {
-            name: "receiver".to_string(),
-            ty: None,
-            init: Some(Expr::Call(
-                Box::new(Expr::Path(vec!["ReceiverThread".to_string(), "new".to_string()])),
-                Vec::new(),
-            )),
-        }));
-
-        // 建立连接
-        for conn in connections {
-            if let Connection::Port(PortConnection { source, destination, .. }) = conn {
-                stmts.push(Statement::Expr(Expr::Ident(
-                    format!("// Connect {:?} to {:?}", source, destination),
+    fn create_process_start_body(&self, impl_: &ComponentImplementation) -> Block {
+        let mut stmts = Vec::new();
+        
+        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            for sub in subcomponents {
+                let var_name = sub.identifier.clone().to_lowercase();
+                stmts.push(Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Path(vec!["thread".to_string(), "Builder".to_string(), "new".to_string()])),
+                    "spawn".to_string(),
+                    vec![
+                        Expr::Closure(
+                            vec![var_name.clone()],
+                            Box::new(Expr::MethodCall(
+                                Box::new(Expr::Ident(var_name)),
+                                "run".to_string(),
+                                Vec::new(),
+                            )),
+                        )
+                    ],
                 )));
             }
         }
-
-        // 启动线程
-        stmts.push(Statement::Expr(Expr::MethodCall(
-            Box::new(Expr::Path(vec!["thread".to_string(), "spawn".to_string()])),
-            "unwrap".to_string(),
-            vec![Expr::Closure(
-                vec!["sender".to_string()],
-                Box::new(Expr::MethodCall(
-                    Box::new(Expr::Ident("sender".to_string())),
-                    "run".to_string(),
-                    Vec::new(),
-                )),
-            )],
-        )));
-
-        FunctionDef {
-            name: format!("init_{}", impl_name.type_identifier),
-            params: Vec::new(),
-            return_type: Type::Unit,
-            body: Block { stmts, expr: None },
-            asyncness: false,
-            vis: Visibility::Public,
-            docs: vec![format!("/// Initialize {}", impl_name.to_string())],
-            attrs: Vec::new(),
+        
+        Block {
+            stmts,
+            expr: None,
         }
+    }
+
+    fn create_channel_connection(&self, conn: &PortConnection) -> Vec<Statement> {
+        let mut stmts = Vec::new();
+        
+        // 这里简化处理，实际应根据连接类型创建适当的channel
+        stmts.push(Statement::Let(LetStmt {
+            name: "channel".to_string(),
+            ty: None, //这里的通道类型由编译器自动推导
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(vec!["mpsc".to_string(), "channel".to_string()])),
+                Vec::new(),
+            )),
+        }));
+        
+        // 处理源端和目标端
+        match (&conn.source, &conn.destination) {
+            (
+                PortEndpoint::SubcomponentPort { subcomponent: src_comp, port: src_port },
+                PortEndpoint::SubcomponentPort { subcomponent: dst_comp, port: dst_port }
+            ) => {
+                // 分配发送端
+                stmts.push(Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Ident(format!("{}.{}", src_comp, src_port))),
+                    "send".to_string(),  //这个关键字的固定的，例如cnx: port the_sender.p -> the_receiver.p;，前者发送，后者接收
+                    vec![Expr::Ident("channel.0".to_string())],
+                )));
+                
+                // 分配接收端
+                stmts.push(Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Ident(format!("{}.{}", dst_comp, dst_port))),
+                    "receive".to_string(),
+                    vec![Expr::Ident("channel.1".to_string())],
+                )));
+            }
+            (
+                PortEndpoint::ComponentPort(port_name),
+                PortEndpoint::SubcomponentPort { subcomponent: dst_comp, port: dst_port }
+            ) => {
+                // 处理组件端口到子组件端口的连接
+                stmts.push(Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Ident(port_name.clone())),
+                    "send".to_string(),
+                    vec![Expr::Ident("channel.0".to_string())],
+                )));
+                
+                stmts.push(Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Ident(format!("{}.{}", dst_comp, dst_port))),
+                    "receive".to_string(),
+                    vec![Expr::Ident("channel.1".to_string())],
+                )));
+            }
+            // 可以继续添加其他端点类型的组合处理
+            _ => {
+                // 对于不支持的连接类型，生成TODO注释
+                stmts.push(Statement::Expr(Expr::Ident(
+                    format!("// TODO: Unsupported connection type: {:?} -> {:?}", conn.source, conn.destination)
+                )));
+            }
+        }
+        
+        stmts
     }
 
     fn create_component_docs(&self, comp: &ComponentType) -> Vec<String> {
