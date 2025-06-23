@@ -108,11 +108,17 @@ pub enum Type {
     Never,                       // !
 }
 
+#[derive(Debug,Clone)]
+pub enum PathType {
+    Namespace,  // 用 :: 分隔 (如 std::thread)
+    Member,     // 用 . 分隔 (如 self.field)
+}
+
 /// 表达式
 #[derive(Debug)]
 pub enum Expr {
     Ident(String),
-    Path(Vec<String>),
+    Path(Vec<String>,PathType),
     Literal(Literal),
     Call(Box<Expr>, Vec<Expr>),
     MethodCall(Box<Expr>, String, Vec<Expr>),
@@ -120,7 +126,20 @@ pub enum Expr {
     Loop(Box<Block>),
     Await(Box<Expr>),
     Closure(Vec<String>, Box<Expr>),
+    BuilderChain(Vec<BuilderMethod>), // 新增：表示(进程在创建线程时)构建器链式调用
 }
+
+//区分.name()、.stack_size()等不同构建器方法
+#[derive(Debug)]
+pub enum BuilderMethod {
+    Named(String), // 如.name("thread_name")
+    StackSize(Box<Expr>), // 如.stack_size(expr)
+    Spawn {
+        closure: Box<Expr>,
+        move_kw: bool, // 将move语义放在BuilderMethod中
+    },
+}
+
 
 /// 字面量
 #[derive(Debug)]

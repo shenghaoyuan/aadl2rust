@@ -1,7 +1,7 @@
 RustModule {
     name: "ojr_pingpong_queued",
     docs: [
-        "/// Auto-generated from AADL package: ojr_pingpong::queued",
+        "// Auto-generated from AADL package: ojr_pingpong::queued",
     ],
     items: [
         Struct(
@@ -14,7 +14,7 @@ RustModule {
                             "senderThread",
                         ),
                         docs: [
-                            "/// Subcomponent: the_sender",
+                            "// Subcomponent: the_sender",
                         ],
                         attrs: [
                             Attribute {
@@ -33,7 +33,7 @@ RustModule {
                             "receiverThread",
                         ),
                         docs: [
-                            "/// Subcomponent: the_receiver",
+                            "// Subcomponent: the_receiver",
                         ],
                         attrs: [
                             Attribute {
@@ -53,8 +53,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "/// Process implementation: proc",
-                    "/// Auto-generated from AADL",
+                    "// Process implementation: proc",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -90,6 +90,7 @@ RustModule {
                                                             "senderThread",
                                                             "new",
                                                         ],
+                                                        Namespace,
                                                     ),
                                                     [],
                                                 ),
@@ -111,6 +112,7 @@ RustModule {
                                                             "receiverThread",
                                                             "new",
                                                         ],
+                                                        Namespace,
                                                     ),
                                                     [],
                                                 ),
@@ -128,6 +130,7 @@ RustModule {
                                                             "mpsc",
                                                             "channel",
                                                         ],
+                                                        Namespace,
                                                     ),
                                                     [],
                                                 ),
@@ -141,8 +144,18 @@ RustModule {
                                             ),
                                             "send",
                                             [
-                                                Ident(
-                                                    "channel.0",
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
                                                 ),
                                             ],
                                         ),
@@ -154,8 +167,18 @@ RustModule {
                                             ),
                                             "receive",
                                             [
-                                                Ident(
-                                                    "channel.1",
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
                                                 ),
                                             ],
                                         ),
@@ -171,7 +194,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "/// Creates a new process instance",
+                                "// Creates a new process instance",
                             ],
                             attrs: [],
                         },
@@ -195,54 +218,82 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         MethodCall(
-                                            Path(
+                                            BuilderChain(
                                                 [
-                                                    "thread",
-                                                    "Builder",
-                                                    "new",
+                                                    Named(
+                                                        "\"the_sender\".to_string()",
+                                                    ),
+                                                    StackSize(
+                                                        Path(
+                                                            [
+                                                                "self",
+                                                                "the_sender",
+                                                                "stack_size",
+                                                            ],
+                                                            Member,
+                                                        ),
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "the_sender",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
                                                 ],
                                             ),
-                                            "spawn",
-                                            [
-                                                Closure(
-                                                    [
-                                                        "the_sender",
-                                                    ],
-                                                    MethodCall(
-                                                        Ident(
-                                                            "the_sender",
-                                                        ),
-                                                        "run",
-                                                        [],
-                                                    ),
-                                                ),
-                                            ],
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
                                         MethodCall(
-                                            Path(
+                                            BuilderChain(
                                                 [
-                                                    "thread",
-                                                    "Builder",
-                                                    "new",
+                                                    Named(
+                                                        "\"the_receiver\".to_string()",
+                                                    ),
+                                                    StackSize(
+                                                        Path(
+                                                            [
+                                                                "self",
+                                                                "the_receiver",
+                                                                "stack_size",
+                                                            ],
+                                                            Member,
+                                                        ),
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "the_receiver",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
                                                 ],
                                             ),
-                                            "spawn",
-                                            [
-                                                Closure(
-                                                    [
-                                                        "the_receiver",
-                                                    ],
-                                                    MethodCall(
-                                                        Ident(
-                                                            "the_receiver",
-                                                        ),
-                                                        "run",
-                                                        [],
-                                                    ),
-                                                ),
-                                            ],
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                 ],
@@ -251,7 +302,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "/// Starts all threads in the process",
+                                "// Starts all threads in the process",
                             ],
                             attrs: [],
                         },
@@ -267,15 +318,20 @@ RustModule {
                     Field {
                         name: "p",
                         ty: Generic(
-                            "mpsc::Sender",
+                            "Option",
                             [
-                                Named(
-                                    "i32",
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "i32",
+                                        ),
+                                    ],
                                 ),
                             ],
                         ),
                         docs: [
-                            "/// Port: p Out",
+                            "// Port: p Out",
                         ],
                         attrs: [],
                     },
@@ -287,7 +343,7 @@ RustModule {
                             "Periodic",
                         ),
                         docs: [
-                            "/// AADL属性: Dispatch_Protocol",
+                            "// AADL属性: Dispatch_Protocol",
                         ],
                     },
                     StruProperty {
@@ -296,7 +352,7 @@ RustModule {
                             2000,
                         ),
                         docs: [
-                            "/// AADL属性: Period",
+                            "// AADL属性: Period",
                         ],
                     },
                     StruProperty {
@@ -305,7 +361,7 @@ RustModule {
                             5,
                         ),
                         docs: [
-                            "/// AADL属性: Priority",
+                            "// AADL属性: Priority",
                         ],
                     },
                     StruProperty {
@@ -314,7 +370,7 @@ RustModule {
                             40000,
                         ),
                         docs: [
-                            "/// AADL属性: Data_Size",
+                            "// AADL属性: Data_Size",
                         ],
                     },
                     StruProperty {
@@ -323,7 +379,7 @@ RustModule {
                             40000,
                         ),
                         docs: [
-                            "/// AADL属性: Stack_Size",
+                            "// AADL属性: Stack_Size",
                         ],
                     },
                     StruProperty {
@@ -332,7 +388,7 @@ RustModule {
                             40,
                         ),
                         docs: [
-                            "/// AADL属性: Code_Size",
+                            "// AADL属性: Code_Size",
                         ],
                     },
                 ],
@@ -342,7 +398,7 @@ RustModule {
                     "Clone",
                 ],
                 docs: [
-                    "/// AADL Thread: sender",
+                    "// AADL Thread: sender",
                 ],
                 vis: Public,
             },
@@ -391,6 +447,7 @@ RustModule {
                                                             "time",
                                                             "interval",
                                                         ],
+                                                        Namespace,
                                                     ),
                                                     [
                                                         Call(
@@ -399,6 +456,7 @@ RustModule {
                                                                     "Duration",
                                                                     "from_millis",
                                                                 ],
+                                                                Namespace,
                                                             ),
                                                             [
                                                                 Literal(
@@ -444,8 +502,8 @@ RustModule {
                             asyncness: true,
                             vis: Public,
                             docs: [
-                                "/// Thread execution entry point",
-                                "/// Period: 2000ms",
+                                "// Thread execution entry point",
+                                "// Period: 2000ms",
                             ],
                             attrs: [],
                         },
@@ -461,10 +519,15 @@ RustModule {
                     Param {
                         name: "port",
                         ty: Generic(
-                            "mpsc::Sender",
+                            "Option",
                             [
-                                Named(
-                                    "()",
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "()",
+                                        ),
+                                    ],
                                 ),
                             ],
                         ),
@@ -484,8 +547,8 @@ RustModule {
                 asyncness: true,
                 vis: Public,
                 docs: [
-                    "/// Port handler for result",
-                    "/// Direction: Out",
+                    "// Port handler for result",
+                    "// Direction: Out",
                 ],
                 attrs: [],
             },
@@ -497,15 +560,20 @@ RustModule {
                     Field {
                         name: "p",
                         ty: Generic(
-                            "mpsc::Receiver",
+                            "Option",
                             [
-                                Named(
-                                    "i32",
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "i32",
+                                        ),
+                                    ],
                                 ),
                             ],
                         ),
                         docs: [
-                            "/// Port: p In",
+                            "// Port: p In",
                         ],
                         attrs: [],
                     },
@@ -517,7 +585,7 @@ RustModule {
                             "Periodic",
                         ),
                         docs: [
-                            "/// AADL属性: Dispatch_Protocol",
+                            "// AADL属性: Dispatch_Protocol",
                         ],
                     },
                     StruProperty {
@@ -526,7 +594,7 @@ RustModule {
                             1000,
                         ),
                         docs: [
-                            "/// AADL属性: Period",
+                            "// AADL属性: Period",
                         ],
                     },
                     StruProperty {
@@ -535,7 +603,7 @@ RustModule {
                             10,
                         ),
                         docs: [
-                            "/// AADL属性: Priority",
+                            "// AADL属性: Priority",
                         ],
                     },
                     StruProperty {
@@ -544,7 +612,7 @@ RustModule {
                             40000,
                         ),
                         docs: [
-                            "/// AADL属性: Data_Size",
+                            "// AADL属性: Data_Size",
                         ],
                     },
                     StruProperty {
@@ -553,7 +621,7 @@ RustModule {
                             40000,
                         ),
                         docs: [
-                            "/// AADL属性: Stack_Size",
+                            "// AADL属性: Stack_Size",
                         ],
                     },
                     StruProperty {
@@ -562,7 +630,7 @@ RustModule {
                             40,
                         ),
                         docs: [
-                            "/// AADL属性: Code_Size",
+                            "// AADL属性: Code_Size",
                         ],
                     },
                 ],
@@ -572,7 +640,7 @@ RustModule {
                     "Clone",
                 ],
                 docs: [
-                    "/// AADL Thread: receiver",
+                    "// AADL Thread: receiver",
                 ],
                 vis: Public,
             },
@@ -621,6 +689,7 @@ RustModule {
                                                             "time",
                                                             "interval",
                                                         ],
+                                                        Namespace,
                                                     ),
                                                     [
                                                         Call(
@@ -629,6 +698,7 @@ RustModule {
                                                                     "Duration",
                                                                     "from_millis",
                                                                 ],
+                                                                Namespace,
                                                             ),
                                                             [
                                                                 Literal(
@@ -674,8 +744,8 @@ RustModule {
                             asyncness: true,
                             vis: Public,
                             docs: [
-                                "/// Thread execution entry point",
-                                "/// Period: 1000ms",
+                                "// Thread execution entry point",
+                                "// Period: 1000ms",
                             ],
                             attrs: [],
                         },
@@ -691,10 +761,15 @@ RustModule {
                     Param {
                         name: "port",
                         ty: Generic(
-                            "mpsc::Receiver",
+                            "Option",
                             [
-                                Named(
-                                    "()",
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "()",
+                                        ),
+                                    ],
                                 ),
                             ],
                         ),
@@ -714,8 +789,8 @@ RustModule {
                 asyncness: true,
                 vis: Public,
                 docs: [
-                    "/// Port handler for input",
-                    "/// Direction: In",
+                    "// Port handler for input",
+                    "// Direction: In",
                 ],
                 attrs: [],
             },
@@ -728,7 +803,7 @@ RustModule {
                 ),
                 vis: Public,
                 docs: [
-                    "/// AADL Data Type: Integer",
+                    "// AADL Data Type: Integer",
                 ],
             },
         ),

@@ -3,7 +3,7 @@ use super::intermediate_ast::*;
 use std::fmt::{self, Write};
 use chrono::Local;
 
-/// Rust代码生成器
+// Rust代码生成器
 pub struct RustCodeGenerator {
     buffer: String,
     indent_level: usize,
@@ -17,7 +17,7 @@ impl RustCodeGenerator {
         }
     }
 
-    /// 主入口：生成完整模块代码
+    // 主入口：生成完整模块代码
     pub fn generate_module_code(&mut self, module: &RustModule) -> String {
         self.buffer.clear();
         
@@ -37,14 +37,14 @@ impl RustCodeGenerator {
         self.buffer.clone()
     }
 
-    /// 生成多个项
+    // 生成多个项
     fn generate_items(&mut self, items: &[Item]) {
         for item in items {
             self.generate_item(item);
         }
     }
 
-    /// 生成单个项
+    // 生成单个项
     fn generate_item(&mut self, item: &Item) {
         match item {
             Item::Struct(s) => self.generate_struct(s),
@@ -142,30 +142,31 @@ impl RustCodeGenerator {
         
     }
 
-    /// 生成属性初始化impl块
+    // 生成属性初始化impl块
     fn generate_properties_impl(&mut self, s: &StructDef) {
         if s.properties.is_empty() {
             return;
         }
 
         self.writeln(&format!("impl {} {{", s.name));
-        self.writeln("    /// 创建组件并初始化AADL属性");
+        self.writeln("    // 创建组件并初始化AADL属性");
         self.write("    pub fn new(");
         
         // 生成构造函数参数（只包含端口字段）
         // 这样能够在之后构造 SenderThread 时，把一个真实可用的通道发送端 Sender<i32> 传进来，当然也可以通过直接访问pub的p来设置
-        let port_args = s.fields.iter()
-            .map(|f| format!("{}: {}", f.name, self.type_to_string(&f.ty)))
-            .collect::<Vec<_>>()
-            .join(", ");
-        self.write(&port_args);
+        // 已删除，设置端口为option，初始化时不需要传入参数
+        // let port_args = s.fields.iter()
+        //     .map(|f| format!("{}: {}", f.name, self.type_to_string(&f.ty)))
+        //     .collect::<Vec<_>>()
+        //     .join(", ");
+        // self.write(&port_args);
         
         self.writeln(") -> Self {");
         self.writeln("        Self {");
         
         // 端口字段初始化
         for field in &s.fields {
-            self.writeln(&format!("            {},", field.name));
+            self.writeln(&format!("            {}: None,", field.name));
         }
         
         // 属性字段初始化
@@ -182,7 +183,7 @@ impl RustCodeGenerator {
                 "            {}: {}, // {}",
                 prop.name.to_lowercase(),
                 init_value,
-                prop.docs[0].trim_start_matches("/// ")
+                prop.docs[0].trim_start_matches("// ")
             ));
         }
         
@@ -191,7 +192,7 @@ impl RustCodeGenerator {
         self.writeln("}");
     }
 
-    /// 根据属性值推断Rust类型
+    // 根据属性值推断Rust类型
     fn type_for_property(&self, value: &StruPropertyValue) -> String {
         match value {
             StruPropertyValue::Boolean(_) => "bool".to_string(),
@@ -247,17 +248,6 @@ impl RustCodeGenerator {
         
         self.writeln("{");
         self.indent();
-        
-        // 判断是否为进程实现
-        let is_process = match &i.target {
-            Type::Named(name) => name.ends_with("Process"),
-            _ => false
-        };
-        
-        // 特殊处理进程的new方法
-        if is_process {
-            self.generate_process_impl(i) ;
-        }
 
         for item in &i.items {
             match item {
@@ -278,30 +268,6 @@ impl RustCodeGenerator {
         self.writeln("");
     }
 
-    fn generate_process_impl(&mut self, impl_block: &ImplBlock) {
-        self.writeln(&format!("impl {} {{", self.type_to_string(&impl_block.target)));
-        self.indent();
-
-        // TODO:动态生成new方法
-        if let Some(new_method) = impl_block.items.iter().find(|i| matches!(i, ImplItem::Method(f) if f.name == "new")) {
-            if let ImplItem::Method(func) = new_method {
-                self.generate_function(func);
-            }
-        }
-
-        // 动态生成其他方法
-        for item in &impl_block.items {
-            if let ImplItem::Method(func) = item {
-                if func.name != "new" {
-                    self.generate_function(func);
-                }
-            }
-        }
-
-        self.dedent();
-        self.writeln("}");
-    }
-
     fn generate_function(&mut self, f: &FunctionDef) {
         // 文档注释
         for doc in &f.docs {
@@ -315,7 +281,7 @@ impl RustCodeGenerator {
         
         // 函数签名
         self.write(&format!(
-            "{} {}fn {}",
+            "{}{}fn {}",
             self.visibility(&f.vis),
             if f.asyncness { "async " } else { "" },
             f.name
@@ -369,7 +335,7 @@ impl RustCodeGenerator {
                 // 处理连接建立的表达式
                 if let Expr::MethodCall(receiver, method, args) = expr {
                     if method == "send" || method == "receive" {
-                        self.writeln("/// bulid connection: ");
+                        self.writeln("// bulid connection: ");
                         self.write("    ");
                         self.generate_expr(receiver);
                         self.write(" = ");
@@ -394,9 +360,14 @@ impl RustCodeGenerator {
     fn generate_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Ident(id) => self.write(id),
-            Expr::Path(path) => {
+            Expr::Path(path,path_type) => {
+                let separator = match path_type {
+                    PathType::Namespace => "::",
+                    PathType::Member => ".",
+                };
+                
                 for (i, part) in path.iter().enumerate() {
-                    if i > 0 { self.write("::"); }
+                    if i > 0 { self.write(separator); }
                     self.write(part);
                 }
             }
@@ -434,6 +405,30 @@ impl RustCodeGenerator {
                 self.generate_expr(expr);
                 self.write(".await");
             }
+            //进程中创建线程的调用链，暂时写死
+            Expr::BuilderChain(methods) => {
+                self.writeln("thread::Builder::new()");
+                for method in methods {
+                    match method {
+                        BuilderMethod::Named(name) => {
+                            self.writeln(&format!("    .name({})", name));
+                        },
+                        BuilderMethod::StackSize(expr) => {
+                            self.write("    .stack_size(");
+                            self.generate_expr(expr);
+                            self.writeln(" as usize)");
+                        },
+                        BuilderMethod::Spawn { closure, move_kw } => {
+                            self.write("    .spawn(");
+                            if *move_kw {
+                                self.write("move ");
+                            }
+                            self.generate_expr(closure);
+                            self.write(")");
+                        }
+                    }
+                }
+            },
             Expr::Closure(params, body) => {
                 self.write("|");
                 for (i, param) in params.iter().enumerate() {
@@ -441,8 +436,18 @@ impl RustCodeGenerator {
                     self.write(param);
                 }
                 self.write("| ");
-                self.generate_expr(body);
-            }
+                
+                // 特殊处理单表达式闭包体
+                match body.as_ref() {
+                    Expr::Block(_) => self.generate_expr(body),
+                    _ => {
+                        self.write("{ ");
+                        self.generate_expr(body);
+                        self.write(" }");
+                    }
+                }
+            },
+            //_ => self.write(""),
         }
     }
 

@@ -5,7 +5,7 @@ use super::{
 };
 use std::{collections::HashMap, default};
 
-/// AADL到Rust中间表示的转换器
+// AADL到Rust中间表示的转换器
 pub struct AadlConverter {
     type_mappings: HashMap<String, Type>,
     port_handlers: HashMap<String, PortHandlerConfig>,
@@ -31,11 +31,11 @@ impl Default for AadlConverter {
 }
 
 impl AadlConverter {
-    /// 主转换入口
+    // 主转换入口
     pub fn convert_package(&self, pkg: &Package) -> RustModule {
         let mut module = RustModule {
             name: pkg.name.0.join("_").to_lowercase(),
-            docs: vec![format!("/// Auto-generated from AADL package: {}", pkg.name.0.join("::"))],
+            docs: vec![format!("// Auto-generated from AADL package: {}", pkg.name.0.join("::"))],
             ..Default::default()
         };
 
@@ -83,7 +83,7 @@ impl AadlConverter {
             name: comp.identifier.clone(),
             target: target_type,
             vis: Visibility::Public,
-            docs: vec![format!("/// AADL Data Type: {}", comp.identifier)],
+            docs: vec![format!("// AADL Data Type: {}", comp.identifier)],
         })]
     }
 
@@ -138,7 +138,7 @@ impl AadlConverter {
                     fields.push(Field {
                         name: port.identifier.clone().to_lowercase(),
                         ty: self.convert_port_type(&port),
-                        docs: vec![format!("/// Port: {} {:?}", port.identifier, port.direction)],
+                        docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
                         attrs: Vec::new(),
                     });
                 }
@@ -167,7 +167,16 @@ impl AadlConverter {
         };
 
         // 组合成最终类型
-        Type::Generic(channel_type.to_string(), vec![inner_type])
+        //Type::Generic(channel_type.to_string(), vec![inner_type])
+        Type::Generic(
+            "Option".to_string(),
+            vec![
+                Type::Generic(
+                    channel_type.to_string(),
+                    vec![inner_type]
+                )
+            ]
+        )
     }
 
     fn classifier_to_type(&self, classifier: &PortDataTypeReference) -> Type {
@@ -187,7 +196,7 @@ impl AadlConverter {
         }
     }
 
-    /// 转换AADL属性为Property列表
+    // 转换AADL属性为Property列表
     fn convert_properties(&self, comp: &ComponentType) -> Vec<StruProperty> {
         // 通用属性转换方法
         let mut result = Vec::new();
@@ -201,27 +210,15 @@ impl AadlConverter {
         }
         
         result
-        // let mut properties = Vec::new();
-
-        // // 1. 转换周期属性
-        // if let Some(period) = self.extract_period(comp) {
-        //     properties.push(StruProperty {
-        //         name: "period".to_string(),
-        //         value: StruPropertyValue::Duration(period),
-        //         docs: vec![format!("/// 执行周期: {}ms", period)], //TODO:暂时写死是毫秒
-        //     });
-        // }
-
-        // // 3. TODO:可扩展其他属性转换...
         // properties
     }
-    /// 转换单个属性
+    // 转换单个属性
     fn convert_single_property(&self, prop: &Property) -> Option<StruProperty> {
         let Property::BasicProperty(bp) = prop else {
             return None; // 跳过非基础属性
         };
 
-        let docs = vec![format!("/// AADL属性: {}", bp.identifier.name)];
+        let docs = vec![format!("// AADL属性: {}", bp.identifier.name)];
         
         Some(StruProperty {
             name: bp.identifier.name.clone(),
@@ -230,7 +227,7 @@ impl AadlConverter {
         })
     }
 
-    /// 解析AADL属性值到Rust类型
+    // 解析AADL属性值到Rust类型
     fn parse_property_value(&self, value: &PropertyValue) -> Option<StruPropertyValue> {
         match value {
             PropertyValue::Single(expr) => self.parse_property_expression(expr),
@@ -238,7 +235,7 @@ impl AadlConverter {
         }
     }
 
-    /// 解析属性表达式为StruPropertyValue
+    // 解析属性表达式为StruPropertyValue
     fn parse_property_expression(&self, expr: &PropertyExpression) -> Option<StruPropertyValue> {
         match expr {
             // 基础类型处理
@@ -334,8 +331,8 @@ impl AadlConverter {
                 asyncness: true,
                 vis: Visibility::Public,
                 docs: vec![
-                    "/// Thread execution entry point".to_string(),
-                    format!("/// Period: {}ms", period),
+                    "// Thread execution entry point".to_string(),
+                    format!("// Period: {}ms", period),
                 ],
                 attrs: Vec::new(),
             })],
@@ -368,9 +365,9 @@ impl AadlConverter {
                     name: "interval".to_string(),
                     ty: Some(Type::Path(vec!["tokio".to_string(), "time".to_string(), "Interval".to_string()])),
                     init: Some(Expr::Call(
-                        Box::new(Expr::Path(vec!["tokio".to_string(), "time".to_string(), "interval".to_string()])),
+                        Box::new(Expr::Path(vec!["tokio".to_string(), "time".to_string(), "interval".to_string()],PathType::Namespace)),
                         vec![Expr::Call(
-                            Box::new(Expr::Path(vec!["Duration".to_string(), "from_millis".to_string()])),
+                            Box::new(Expr::Path(vec!["Duration".to_string(), "from_millis".to_string()],PathType::Namespace)),
                             vec![Expr::Literal(Literal::Int(period_ms as i64))],
                         )],
                     )),
@@ -415,8 +412,8 @@ impl AadlConverter {
                         asyncness: matches!(port.port_type, PortType::Event | PortType::EventData { .. }),
                         vis: Visibility::Public,
                         docs: vec![
-                            format!("/// Port handler for {}", port.identifier),
-                            format!("/// Direction: {:?}", port.direction),
+                            format!("// Port handler for {}", port.identifier),
+                            format!("// Direction: {:?}", port.direction),
                         ],
                         attrs: Vec::new(),
                     }));
@@ -434,7 +431,7 @@ impl AadlConverter {
             properties: Vec::new(),
             generics: Vec::new(),
             derives: vec!["Debug".to_string(), "Clone".to_string()],
-            docs: vec![format!("/// AADL {:?} component", comp.category)],
+            docs: vec![format!("// AADL {:?} component", comp.category)],
             vis: Visibility::Public,
         })]
     }
@@ -457,8 +454,8 @@ impl AadlConverter {
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
             docs: vec![
-                format!("/// Process implementation: {}", impl_.name.type_identifier),
-                "/// Auto-generated from AADL".to_string(),
+                format!("// Process implementation: {}", impl_.name.type_identifier),
+                "// Auto-generated from AADL".to_string(),
             ],
             vis: Visibility::Public,
         };
@@ -487,7 +484,7 @@ impl AadlConverter {
                 fields.push(Field {
                     name: sub.identifier.clone().to_lowercase(),
                     ty: Type::Named(format!("{}Thread", type_name)),
-                    docs: vec![format!("/// Subcomponent: {}", sub.identifier)],
+                    docs: vec![format!("// Subcomponent: {}", sub.identifier)],
                     attrs: vec![Attribute {
                         name: "allow".to_string(),
                         args: vec![AttributeArg::Ident("dead_code".to_string())],
@@ -510,7 +507,7 @@ impl AadlConverter {
             body: self.create_process_new_body(impl_),
             asyncness: false,
             vis: Visibility::Public,
-            docs: vec!["/// Creates a new process instance".to_string()],
+            docs: vec!["// Creates a new process instance".to_string()],
             attrs: Vec::new(),
         }));
         
@@ -525,7 +522,7 @@ impl AadlConverter {
             body: self.create_process_start_body(impl_),
             asyncness: false,
             vis: Visibility::Public,
-            docs: vec!["/// Starts all threads in the process".to_string()],
+            docs: vec!["// Starts all threads in the process".to_string()],
             attrs: Vec::new(),
         }));
         
@@ -563,7 +560,7 @@ impl AadlConverter {
                         Box::new(Expr::Path(vec![
                             format!("{}Thread", type_name),
                             "new".to_string()
-                        ])),
+                        ],PathType::Namespace)),
                         Vec::new(),
                     )),
                 }));
@@ -605,27 +602,40 @@ impl AadlConverter {
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
                 let var_name = sub.identifier.clone().to_lowercase();
+                
+                // 构建线程闭包（使用move语义）
+                let closure = Expr::Closure(
+                    Vec::new(), // 无参数
+                    Box::new(Expr::MethodCall(
+                        Box::new(Expr::Path(vec!["self".to_string(), var_name.clone()],PathType::Member)),
+                        "run".to_string(),
+                        Vec::new(),
+                    ))
+                );
+
+                // 构建线程构建器表达式链
+                let builder_chain = vec![
+                    BuilderMethod::Named(format!("\"{}\".to_string()", var_name)),
+                    BuilderMethod::StackSize(Box::new(Expr::Path(vec![
+                        "self".to_string(),
+                        var_name.clone(),
+                        "stack_size".to_string()
+                    ],PathType::Member))),
+                    BuilderMethod::Spawn {
+                        closure: Box::new(closure),
+                        move_kw: true,
+                    },
+                ];
+                
                 stmts.push(Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Path(vec!["thread".to_string(), "Builder".to_string(), "new".to_string()])),
-                    "spawn".to_string(),
-                    vec![
-                        Expr::Closure(
-                            vec![var_name.clone()],
-                            Box::new(Expr::MethodCall(
-                                Box::new(Expr::Ident(var_name)),
-                                "run".to_string(),
-                                Vec::new(),
-                            )),
-                        )
-                    ],
+                    Box::new(Expr::BuilderChain(builder_chain)),
+                    "unwrap".to_string(),
+                    Vec::new(),
                 )));
             }
         }
         
-        Block {
-            stmts,
-            expr: None,
-        }
+        Block { stmts, expr: None }
     }
 
     fn create_channel_connection(&self, conn: &PortConnection) -> Vec<Statement> {
@@ -636,7 +646,7 @@ impl AadlConverter {
             name: "channel".to_string(),
             ty: None, //这里的通道类型由编译器自动推导
             init: Some(Expr::Call(
-                Box::new(Expr::Path(vec!["mpsc".to_string(), "channel".to_string()])),
+                Box::new(Expr::Path(vec!["mpsc".to_string(), "channel".to_string()],PathType::Namespace)),
                 Vec::new(),
             )),
         }));
@@ -651,14 +661,26 @@ impl AadlConverter {
                 stmts.push(Statement::Expr(Expr::MethodCall(
                     Box::new(Expr::Ident(format!("{}.{}", src_comp, src_port))),
                     "send".to_string(),  //这个关键字的固定的，例如cnx: port the_sender.p -> the_receiver.p;，前者发送，后者接收
-                    vec![Expr::Ident("channel.0".to_string())],
+                    //vec![Expr::Ident("channel.0".to_string())],
+                    vec![
+                        Expr::Call(
+                            Box::new(Expr::Path(vec!["Some".to_string()],PathType::Member)),
+                            vec![Expr::Ident("channel.0".to_string())],
+                        )
+                    ],
                 )));
                 
                 // 分配接收端
                 stmts.push(Statement::Expr(Expr::MethodCall(
                     Box::new(Expr::Ident(format!("{}.{}", dst_comp, dst_port))),
                     "receive".to_string(),
-                    vec![Expr::Ident("channel.1".to_string())],
+                    //vec![Expr::Ident("channel.1".to_string())],
+                    vec![
+                        Expr::Call(
+                            Box::new(Expr::Path(vec!["Some".to_string()],PathType::Member)),
+                            vec![Expr::Ident("channel.1".to_string())],
+                        )
+                    ],
                 )));
             }
             (
@@ -692,7 +714,7 @@ impl AadlConverter {
 
     fn create_component_docs(&self, comp: &ComponentType) -> Vec<String> {
         let mut docs = vec![format!(
-            "/// AADL {:?}: {}",
+            "// AADL {:?}: {}",
             comp.category, comp.identifier
         )];
 
