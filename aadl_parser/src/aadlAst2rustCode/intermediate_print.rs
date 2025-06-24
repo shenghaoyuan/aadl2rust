@@ -196,11 +196,11 @@ impl RustCodeGenerator {
     fn type_for_property(&self, value: &StruPropertyValue) -> String {
         match value {
             StruPropertyValue::Boolean(_) => "bool".to_string(),
-            StruPropertyValue::Integer(_) => "i64".to_string(),
+            StruPropertyValue::Integer(_) => "u64".to_string(), //基本上都是正数，就不采用i64
             StruPropertyValue::Float(_) => "f64".to_string(),
             StruPropertyValue::String(_) => "String".to_string(),
             StruPropertyValue::Duration(_, _) => "u64".to_string(),
-            StruPropertyValue::Range(_, _, _) => "(i64, i64)".to_string(),
+            StruPropertyValue::Range(_, _, _) => "(u64, u64)".to_string(),
         }
     }
 
@@ -335,7 +335,7 @@ impl RustCodeGenerator {
                 // 处理连接建立的表达式
                 if let Expr::MethodCall(receiver, method, args) = expr {
                     if method == "send" || method == "receive" {
-                        self.writeln("// bulid connection: ");
+                        self.writeln("// build connection: ");
                         self.write("    ");
                         self.generate_expr(receiver);
                         self.write(" = ");

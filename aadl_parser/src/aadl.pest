@@ -3,7 +3,7 @@
 //匹配时，并非“贪心算法”，浅尝辄止
 // “|”该符号不能作为开头的首个符号
 
-WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" | COMMENT }
 COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" | "--" ~ (!"\n" ~ ANY)* }
 
 // 基础标识符规则
@@ -147,9 +147,9 @@ property_value = {
 
 literal_value = { (number | string_literal | boolean | enum_value ) ~ unit? } 
 range_value = { 
-    number ~ WHITESPACE* ~ unit ~ WHITESPACE* ~ 
+    number ~ WHITESPACE* ~ unit? ~ WHITESPACE* ~ 
     ".." ~ WHITESPACE* ~ 
-    number ~ WHITESPACE* ~ unit 
+    number ~ WHITESPACE* ~ unit? 
 }
 list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
 reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" }
@@ -169,8 +169,8 @@ string_literal = {
 boolean = { "true" | "false"}
 // 枚举值规则（覆盖AADL属性集预定义值）
 enum_value = @{
-    "Periodic" | "Sporadic" | "Timed" | 
-    "Event" | "Hybrid" 
+    "Periodic" | "Sporadic" | "Timed" | "Event" | "Hybrid" |
+    "native"
 }
 
 // 5.2 Subprogram Calls
@@ -195,13 +195,13 @@ port_reference = { (no_point_identifier ~ ".")? ~ no_point_identifier }
 parameter_reference = { (identifier ~ ".")? ~ identifier }
 
 // 子句可选性
-prototypes = { "prototypes" ~ (prototype_declaration+ | "none") }
-features = { "features" ~ (feature_declaration+ | "none") }
-properties = { "properties" ~ (property_association+ | "none") }
-annexes = { "annexes" ~ (annex_subclause+ | "none") }
-subcomponents = { "subcomponents" ~ (subcomponent+ | "none") }
-calls = { "calls" ~ (call_sequence+ | "none") }
-connections = { "connections" ~ (connection+ | "none") }
+prototypes = { "prototypes" ~ (prototype_declaration+ | "") }
+features = { "features" ~ (feature_declaration+ | "") }
+properties = { "properties" ~ (property_association+ | "") }
+annexes = { "annexes" ~ (annex_subclause+ | "") }
+subcomponents = { "subcomponents" ~ (subcomponent+ | "") }
+calls = { "calls" ~ (call_sequence+ | "") }
+connections = { "connections" ~ (connection+ | "") }
 
 
 file = { SOI ~ package_declaration ~ EOI }

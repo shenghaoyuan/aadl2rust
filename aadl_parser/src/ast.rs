@@ -72,6 +72,13 @@ pub enum AadlDeclaration {
     //...
 }
 
+#[derive(Debug)]
+//合并类型，为了在某些函数的入口参数处起到“多态”的效果
+pub enum ComponentRef<'a> {
+    Type(&'a ComponentType),
+    Impl(&'a ComponentImplementation),
+}
+
 /* ========== 4.3 Component Types ========== */
 // 组件类型定义 
 #[derive(Debug, Clone)]

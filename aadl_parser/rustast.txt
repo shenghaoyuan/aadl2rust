@@ -1,20 +1,20 @@
 RustModule {
-    name: "ojr_pingpong_queued",
+    name: "ping_local",
     docs: [
-        "// Auto-generated from AADL package: ojr_pingpong::queued",
+        "// Auto-generated from AADL package: PING_Local",
     ],
     items: [
         Struct(
             StructDef {
-                name: "procProcess",
+                name: "aProcess",
                 fields: [
                     Field {
-                        name: "the_sender",
+                        name: "pinger",
                         ty: Named(
-                            "senderThread",
+                            "pThread",
                         ),
                         docs: [
-                            "// Subcomponent: the_sender",
+                            "// Subcomponent: Pinger",
                         ],
                         attrs: [
                             Attribute {
@@ -28,12 +28,12 @@ RustModule {
                         ],
                     },
                     Field {
-                        name: "the_receiver",
+                        name: "ping_me",
                         ty: Named(
-                            "receiverThread",
+                            "qThread",
                         ),
                         docs: [
-                            "// Subcomponent: the_receiver",
+                            "// Subcomponent: Ping_Me",
                         ],
                         attrs: [
                             Attribute {
@@ -53,7 +53,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// Process implementation: proc",
+                    "// Process implementation: A",
                     "// Auto-generated from AADL",
                 ],
                 vis: Public,
@@ -62,7 +62,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "procProcess",
+                    "aProcess",
                 ),
                 generics: [],
                 items: [
@@ -77,17 +77,17 @@ RustModule {
                                 stmts: [
                                     Let(
                                         LetStmt {
-                                            name: "mut the_sender",
+                                            name: "mut pinger",
                                             ty: Some(
                                                 Named(
-                                                    "senderThread",
+                                                    "pThread",
                                                 ),
                                             ),
                                             init: Some(
                                                 Call(
                                                     Path(
                                                         [
-                                                            "senderThread",
+                                                            "pThread",
                                                             "new",
                                                         ],
                                                         Namespace,
@@ -99,17 +99,17 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            name: "mut the_receiver",
+                                            name: "mut ping_me",
                                             ty: Some(
                                                 Named(
-                                                    "receiverThread",
+                                                    "qThread",
                                                 ),
                                             ),
                                             init: Some(
                                                 Call(
                                                     Path(
                                                         [
-                                                            "receiverThread",
+                                                            "qThread",
                                                             "new",
                                                         ],
                                                         Namespace,
@@ -140,7 +140,7 @@ RustModule {
                                     Expr(
                                         MethodCall(
                                             Ident(
-                                                "the_sender.p",
+                                                "pinger.data_source",
                                             ),
                                             "send",
                                             [
@@ -163,7 +163,7 @@ RustModule {
                                     Expr(
                                         MethodCall(
                                             Ident(
-                                                "the_receiver.p",
+                                                "ping_me.data_sink",
                                             ),
                                             "receive",
                                             [
@@ -185,7 +185,7 @@ RustModule {
                                     ),
                                     Expr(
                                         Ident(
-                                            "Self { the_sender, the_receiver }",
+                                            "Self { pinger, ping_me }",
                                         ),
                                     ),
                                 ],
@@ -221,13 +221,13 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"the_sender\".to_string()",
+                                                        "\"pinger\".to_string()",
                                                     ),
                                                     StackSize(
                                                         Path(
                                                             [
                                                                 "self",
-                                                                "the_sender",
+                                                                "pinger",
                                                                 "stack_size",
                                                             ],
                                                             Member,
@@ -240,7 +240,7 @@ RustModule {
                                                                 Path(
                                                                     [
                                                                         "self",
-                                                                        "the_sender",
+                                                                        "pinger",
                                                                     ],
                                                                     Member,
                                                                 ),
@@ -261,13 +261,13 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"the_receiver\".to_string()",
+                                                        "\"ping_me\".to_string()",
                                                     ),
                                                     StackSize(
                                                         Path(
                                                             [
                                                                 "self",
-                                                                "the_receiver",
+                                                                "ping_me",
                                                                 "stack_size",
                                                             ],
                                                             Member,
@@ -280,7 +280,7 @@ RustModule {
                                                                 Path(
                                                                     [
                                                                         "self",
-                                                                        "the_receiver",
+                                                                        "ping_me",
                                                                     ],
                                                                     Member,
                                                                 ),
@@ -311,12 +311,24 @@ RustModule {
                 trait_impl: None,
             },
         ),
-        Struct(
-            StructDef {
-                name: "senderThread",
-                fields: [
-                    Field {
-                        name: "p",
+        TypeAlias(
+            TypeAlias {
+                name: "Simple_Type",
+                target: Named(
+                    "()",
+                ),
+                vis: Public,
+                docs: [
+                    "// AADL Data Type: Simple_Type",
+                ],
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "handle_Data_Source",
+                params: [
+                    Param {
+                        name: "port",
                         ty: Generic(
                             "Option",
                             [
@@ -324,19 +336,110 @@ RustModule {
                                     "mpsc::Sender",
                                     [
                                         Named(
-                                            "i32",
+                                            "()",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+                return_type: Unit,
+                body: Block {
+                    stmts: [
+                        Expr(
+                            Ident(
+                                "// Handle port: Data_Source",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: true,
+                vis: Public,
+                docs: [
+                    "// Port handler for Data_Source",
+                    "// Direction: Out",
+                ],
+                attrs: [],
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "handle_Data_Sink",
+                params: [
+                    Param {
+                        name: "port",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "()",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                    },
+                ],
+                return_type: Unit,
+                body: Block {
+                    stmts: [
+                        Expr(
+                            Ident(
+                                "// Handle port: Data_Sink",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: true,
+                vis: Public,
+                docs: [
+                    "// Port handler for Data_Sink",
+                    "// Direction: In",
+                ],
+                attrs: [],
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "pThread",
+                fields: [
+                    Field {
+                        name: "data_source",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "Simple_Type",
                                         ),
                                     ],
                                 ),
                             ],
                         ),
                         docs: [
-                            "// Port: p Out",
+                            "// Port: Data_Source Out",
                         ],
                         attrs: [],
                     },
                 ],
                 properties: [
+                    StruProperty {
+                        name: "Recover_Entrypoint_Source_Text",
+                        value: String(
+                            "recover",
+                        ),
+                        docs: [
+                            "// AADL属性: Recover_Entrypoint_Source_Text",
+                        ],
+                    },
                     StruProperty {
                         name: "Dispatch_Protocol",
                         value: String(
@@ -356,39 +459,30 @@ RustModule {
                         ],
                     },
                     StruProperty {
+                        name: "Deadline",
+                        value: Integer(
+                            2000,
+                        ),
+                        docs: [
+                            "// AADL属性: Deadline",
+                        ],
+                    },
+                    StruProperty {
                         name: "Priority",
                         value: Integer(
-                            5,
+                            2,
                         ),
                         docs: [
                             "// AADL属性: Priority",
                         ],
                     },
                     StruProperty {
-                        name: "Data_Size",
+                        name: "Dispatch_Offset",
                         value: Integer(
-                            40000,
+                            500,
                         ),
                         docs: [
-                            "// AADL属性: Data_Size",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Stack_Size",
-                        value: Integer(
-                            40000,
-                        ),
-                        docs: [
-                            "// AADL属性: Stack_Size",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Code_Size",
-                        value: Integer(
-                            40,
-                        ),
-                        docs: [
-                            "// AADL属性: Code_Size",
+                            "// AADL属性: Dispatch_Offset",
                         ],
                     },
                 ],
@@ -398,167 +492,17 @@ RustModule {
                     "Clone",
                 ],
                 docs: [
-                    "// AADL Thread: sender",
+                    "// AADL Thread: p",
                 ],
                 vis: Public,
-            },
-        ),
-        Impl(
-            ImplBlock {
-                target: Named(
-                    "senderThread",
-                ),
-                generics: [],
-                items: [
-                    Method(
-                        FunctionDef {
-                            name: "run",
-                            params: [
-                                Param {
-                                    name: "self",
-                                    ty: Reference(
-                                        Named(
-                                            "senderThread",
-                                        ),
-                                        true,
-                                    ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Let(
-                                        LetStmt {
-                                            name: "interval",
-                                            ty: Some(
-                                                Path(
-                                                    [
-                                                        "tokio",
-                                                        "time",
-                                                        "Interval",
-                                                    ],
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "tokio",
-                                                            "time",
-                                                            "interval",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "Duration",
-                                                                    "from_millis",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Literal(
-                                                                    Int(
-                                                                        2000,
-                                                                    ),
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Expr(
-                                        Loop(
-                                            Block {
-                                                stmts: [
-                                                    Expr(
-                                                        MethodCall(
-                                                            Ident(
-                                                                "interval",
-                                                            ),
-                                                            "tick",
-                                                            [],
-                                                        ),
-                                                    ),
-                                                    Expr(
-                                                        Await(
-                                                            Ident(
-                                                                "_",
-                                                            ),
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                expr: None,
-                            },
-                            asyncness: true,
-                            vis: Public,
-                            docs: [
-                                "// Thread execution entry point",
-                                "// Period: 2000ms",
-                            ],
-                            attrs: [],
-                        },
-                    ),
-                ],
-                trait_impl: None,
-            },
-        ),
-        Function(
-            FunctionDef {
-                name: "handle_result",
-                params: [
-                    Param {
-                        name: "port",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "()",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    },
-                ],
-                return_type: Unit,
-                body: Block {
-                    stmts: [
-                        Expr(
-                            Ident(
-                                "// Handle port: result",
-                            ),
-                        ),
-                    ],
-                    expr: None,
-                },
-                asyncness: true,
-                vis: Public,
-                docs: [
-                    "// Port handler for result",
-                    "// Direction: Out",
-                ],
-                attrs: [],
             },
         ),
         Struct(
             StructDef {
-                name: "receiverThread",
+                name: "qThread",
                 fields: [
                     Field {
-                        name: "p",
+                        name: "data_sink",
                         ty: Generic(
                             "Option",
                             [
@@ -566,14 +510,14 @@ RustModule {
                                     "mpsc::Receiver",
                                     [
                                         Named(
-                                            "i32",
+                                            "Simple_Type",
                                         ),
                                     ],
                                 ),
                             ],
                         ),
                         docs: [
-                            "// Port: p In",
+                            "// Port: Data_Sink In",
                         ],
                         attrs: [],
                     },
@@ -582,7 +526,7 @@ RustModule {
                     StruProperty {
                         name: "Dispatch_Protocol",
                         value: String(
-                            "Periodic",
+                            "Sporadic",
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
@@ -591,46 +535,28 @@ RustModule {
                     StruProperty {
                         name: "Period",
                         value: Integer(
-                            1000,
+                            10,
                         ),
                         docs: [
                             "// AADL属性: Period",
                         ],
                     },
                     StruProperty {
-                        name: "Priority",
+                        name: "deadline",
                         value: Integer(
                             10,
                         ),
                         docs: [
+                            "// AADL属性: deadline",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Priority",
+                        value: Integer(
+                            1,
+                        ),
+                        docs: [
                             "// AADL属性: Priority",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Data_Size",
-                        value: Integer(
-                            40000,
-                        ),
-                        docs: [
-                            "// AADL属性: Data_Size",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Stack_Size",
-                        value: Integer(
-                            40000,
-                        ),
-                        docs: [
-                            "// AADL属性: Stack_Size",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Code_Size",
-                        value: Integer(
-                            40,
-                        ),
-                        docs: [
-                            "// AADL属性: Code_Size",
                         ],
                     },
                 ],
@@ -640,171 +566,9 @@ RustModule {
                     "Clone",
                 ],
                 docs: [
-                    "// AADL Thread: receiver",
+                    "// AADL Thread: q",
                 ],
                 vis: Public,
-            },
-        ),
-        Impl(
-            ImplBlock {
-                target: Named(
-                    "receiverThread",
-                ),
-                generics: [],
-                items: [
-                    Method(
-                        FunctionDef {
-                            name: "run",
-                            params: [
-                                Param {
-                                    name: "self",
-                                    ty: Reference(
-                                        Named(
-                                            "receiverThread",
-                                        ),
-                                        true,
-                                    ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Let(
-                                        LetStmt {
-                                            name: "interval",
-                                            ty: Some(
-                                                Path(
-                                                    [
-                                                        "tokio",
-                                                        "time",
-                                                        "Interval",
-                                                    ],
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "tokio",
-                                                            "time",
-                                                            "interval",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "Duration",
-                                                                    "from_millis",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Literal(
-                                                                    Int(
-                                                                        1000,
-                                                                    ),
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Expr(
-                                        Loop(
-                                            Block {
-                                                stmts: [
-                                                    Expr(
-                                                        MethodCall(
-                                                            Ident(
-                                                                "interval",
-                                                            ),
-                                                            "tick",
-                                                            [],
-                                                        ),
-                                                    ),
-                                                    Expr(
-                                                        Await(
-                                                            Ident(
-                                                                "_",
-                                                            ),
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                expr: None,
-                            },
-                            asyncness: true,
-                            vis: Public,
-                            docs: [
-                                "// Thread execution entry point",
-                                "// Period: 1000ms",
-                            ],
-                            attrs: [],
-                        },
-                    ),
-                ],
-                trait_impl: None,
-            },
-        ),
-        Function(
-            FunctionDef {
-                name: "handle_input",
-                params: [
-                    Param {
-                        name: "port",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "()",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    },
-                ],
-                return_type: Unit,
-                body: Block {
-                    stmts: [
-                        Expr(
-                            Ident(
-                                "// Handle port: input",
-                            ),
-                        ),
-                    ],
-                    expr: None,
-                },
-                asyncness: true,
-                vis: Public,
-                docs: [
-                    "// Port handler for input",
-                    "// Direction: In",
-                ],
-                attrs: [],
-            },
-        ),
-        TypeAlias(
-            TypeAlias {
-                name: "Integer",
-                target: Named(
-                    "()",
-                ),
-                vis: Public,
-                docs: [
-                    "// AADL Data Type: Integer",
-                ],
             },
         ),
     ],

@@ -502,10 +502,24 @@ impl AADLTransformer {
 
                 let mut parts = inner.into_inner();
                 let lower_val = extract_identifier(parts.next().unwrap());
-                let lower_unit = Some(parts.next().unwrap().as_str().trim().to_string());
-                let upper_val = extract_identifier(parts.next().unwrap());
-                let upper_unit = Some(parts.next().unwrap().as_str().trim().to_string());
+                //let lower_unit = Some(parts.next().unwrap().as_str().trim().to_string());
+                // 解析下限单位（变为可选，例如优先级它没有单位）
+                let lower_unit = if parts.peek().map_or(false, |p| p.as_rule() == aadlight_parser::Rule::unit) {
+                    Some(parts.next().unwrap().as_str().trim().to_string())
+                } else {
+                    None
+                };
                 
+                let upper_val = extract_identifier(parts.next().unwrap());
+                //let upper_unit = Some(parts.next().unwrap().as_str().trim().to_string());
+                // 解析上限单位（可选）
+                let upper_unit = if parts.peek().map_or(false, |p| p.as_rule() == aadlight_parser::Rule::unit) {
+                    Some(parts.next().unwrap().as_str().trim().to_string())
+                } else {
+                    None
+                };
+
+
                 // PropertyValue::List(vec![
                 //     PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(lower))),
                 //     PropertyListElement::Value(PropertyExpression::String(StringTerm::Literal(upper))),

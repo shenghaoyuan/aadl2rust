@@ -1,8 +1,8 @@
 // src/ir/intermediate_ast.rs
-use std::collections::HashMap;
+use std::{clone, collections::HashMap};
 
 /// 轻量级Rust抽象语法树（模块级）
-#[derive(Debug, Default)]
+#[derive(Debug, Default,Clone)]
 pub struct RustModule {
     pub name: String,
     pub docs: Vec<String>,
@@ -11,7 +11,7 @@ pub struct RustModule {
 }
 
 /// 模块项定义
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Item {
     Struct(StructDef),
     Enum(EnumDef),
@@ -24,7 +24,7 @@ pub enum Item {
 }
 
 /// 结构体定义
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct StructDef {
     pub name: String,
     pub fields: Vec<Field>, //(对应aadl端口)
@@ -36,7 +36,7 @@ pub struct StructDef {
 }
 
 /// 枚举定义
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct EnumDef {
     pub name: String,
     pub variants: Vec<Variant>,
@@ -47,7 +47,7 @@ pub struct EnumDef {
 }
 
 /// 函数定义
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct FunctionDef {
     pub name: String,
     pub params: Vec<Param>,
@@ -60,7 +60,7 @@ pub struct FunctionDef {
 }
 
 /// 实现块
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct ImplBlock {
     pub target: Type,
     pub generics: Vec<GenericParam>,
@@ -69,7 +69,7 @@ pub struct ImplBlock {
 }
 
 /// 常量定义
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct ConstDef {
     pub name: String,
     pub ty: Type,
@@ -79,7 +79,7 @@ pub struct ConstDef {
 }
 
 /// 类型别名
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct TypeAlias {
     pub name: String,
     pub target: Type,
@@ -87,7 +87,7 @@ pub struct TypeAlias {
     pub docs: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct StruProperty {
     pub name: String,
     pub value: StruPropertyValue,
@@ -115,7 +115,7 @@ pub enum PathType {
 }
 
 /// 表达式
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Expr {
     Ident(String),
     Path(Vec<String>,PathType),
@@ -130,7 +130,7 @@ pub enum Expr {
 }
 
 //区分.name()、.stack_size()等不同构建器方法
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum BuilderMethod {
     Named(String), // 如.name("thread_name")
     StackSize(Box<Expr>), // 如.stack_size(expr)
@@ -142,7 +142,7 @@ pub enum BuilderMethod {
 
 
 /// 字面量
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Literal {
     Int(i64),
     Float(f64),
@@ -152,7 +152,7 @@ pub enum Literal {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum StruPropertyValue {
     Integer(i64),
     Float(f64),
@@ -163,14 +163,14 @@ pub enum StruPropertyValue {
 }
 
 /// 代码块
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Block {
     pub stmts: Vec<Statement>,
     pub expr: Option<Box<Expr>>,
 }
 
 /// 语句
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Statement {
     Let(LetStmt),
     Expr(Expr),
@@ -178,7 +178,7 @@ pub enum Statement {
 }
 
 /// let绑定
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct LetStmt {
     pub name: String,
     pub ty: Option<Type>,
@@ -187,27 +187,27 @@ pub struct LetStmt {
 
 // ========== 辅助类型 ========== //
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum Visibility {
     Public,
     Private,
     Restricted(Vec<String>), // pub(in path)
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Attribute {
     pub name: String,
     pub args: Vec<AttributeArg>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum AttributeArg {
     Ident(String),
     Literal(Literal),
     KeyValue(String, Literal),
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Field {
     pub name: String,
     pub ty: Type,
@@ -215,39 +215,39 @@ pub struct Field {
     pub attrs: Vec<Attribute>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Variant {
     pub name: String,
     pub data: Option<Vec<Type>>, // Some for tuple variant
     pub docs: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct GenericParam {
     pub name: String,
     pub bounds: Vec<String>, // trait bounds
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Param {
     pub name: String,
     pub ty: Type,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum ImplItem {
     Method(FunctionDef),
     AssocConst(String, Type, Expr),
     AssocType(String, Type),
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct UseStatement {
     pub path: Vec<String>,
     pub kind: UseKind,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub enum UseKind {
     Simple,
     Glob,    // {path}::*

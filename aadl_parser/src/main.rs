@@ -10,6 +10,7 @@ use core::error;
 use std::fs;
 use printmessage::*;
 use aadlAst2rustCode::intermediate_print::*;
+use aadlAst2rustCode::merge_utils::*;
 
 
 
@@ -18,7 +19,8 @@ use syn::{parse_str,ItemFn};
 use crate::{ast::aadl_ast_cj::Package, aadlAst2rustCode::converter::AadlConverter};
 
 fn main() {
-    let path = "pingpong.aadl";
+    let path = "pingpong_ocarina.aadl";
+    //let path = "pingpong.aadl";
     let aadl_input = match fs::read_to_string(path) {
         Ok(content) => content,
         Err(err) => {
@@ -84,17 +86,18 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     let rust_module = converter.convert_package(&aadl_pkg);
     println!("\n==================================== rust_module ===================================");
     //println!("{:#?}",rust_module);
-    fs::write("rustast.txt", format!("{:#?}", rust_module)).unwrap();
+    let merge_rust_module = merge_item_defs(rust_module);
+    fs::write("rustast.txt", format!("{:#?}", merge_rust_module)).unwrap();
     
     let mut code_generator = RustCodeGenerator::new();
-    let rust_code = code_generator.generate_module_code(&rust_module);
+    let rust_code = code_generator.generate_module_code(&merge_rust_module);
     //println!("{}", rust_code);
 
     // 写入文件
-            if let Err(e) = fs::write("output.rs", rust_code) {
+            if let Err(e) = fs::write("output_ocarina.rs", rust_code) {
                 eprintln!("写入文件失败: {}", e);
             } else {
-                println!("代码已成功写入 output.rs 文件");
+                println!("代码已成功写入文件");
             }
     
 }

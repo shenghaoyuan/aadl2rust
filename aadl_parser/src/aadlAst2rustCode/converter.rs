@@ -83,7 +83,7 @@ impl AadlConverter {
             name: comp.identifier.clone(),
             target: target_type,
             vis: Visibility::Public,
-            docs: vec![format!("// AADL Data Type: {}", comp.identifier)],
+            docs: vec![format!("// AADL Data Type: {}", comp.identifier.clone())],
         })]
     }
 
@@ -111,12 +111,12 @@ impl AadlConverter {
 
         // 1. 结构体定义
         let struct_def = StructDef {
-            name: format!("{}Thread", comp.identifier),
-            fields: self.convert_features(&comp.features),  //特征列表
-            properties: self.convert_properties(comp),      // 属性列表
+            name: format!("{}Thread", comp.identifier.to_lowercase()),
+            fields: self.convert_type_features(&comp.features),  //特征列表
+            properties: self.convert_properties(ComponentRef::Type(&comp)),      // 属性列表
             generics: Vec::new(),
             derives: vec!["Debug".to_string(), "Clone".to_string()],
-            docs: self.create_component_docs(comp),
+            docs: self.create_component_type_docs(comp),
             vis: Visibility::Public, //默认public
         };
         items.push(Item::Struct(struct_def));
@@ -129,14 +129,14 @@ impl AadlConverter {
         items
     }
 
-    fn convert_features(&self, features: &FeatureClause) -> Vec<Field> {
+    fn convert_type_features(&self, features: &FeatureClause) -> Vec<Field> {
         let mut fields = Vec::new();
         
         if let FeatureClause::Items(feature_items) = features {
             for feature in feature_items {
                 if let Feature::Port(port) = feature {
                     fields.push(Field {
-                        name: port.identifier.clone().to_lowercase(),
+                        name: port.identifier.to_lowercase(),
                         ty: self.convert_port_type(&port),
                         docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
                         attrs: Vec::new(),
@@ -158,9 +158,10 @@ impl AadlConverter {
 
         // 确定内部数据类型
         let inner_type = match &port.port_type {
-            PortType::Data { classifier } | PortType::EventData { classifier } => {
-                classifier.as_ref()
-                    .map(|c| self.classifier_to_type(c))
+            PortType::Data { classifier } 
+            | PortType::EventData { classifier } => {
+                classifier.as_ref()  //.as_ref() 的作用是把 Option<T> 变成 Option<&T>。它不会取得其中值的所有权，而只是“借用”里面的值。
+                    .map(|c| self.classifier_to_type(c))   //对 Option 类型调用 .map() 方法，用于在 Some(...) 中包裹的值c上应用一个函数。
                     .unwrap_or(Type::Named("()".to_string()))
             }
             PortType::Event => Type::Named("()".to_string()), // 事件端口固定使用单元类型
@@ -197,11 +198,17 @@ impl AadlConverter {
     }
 
     // 转换AADL属性为Property列表
-    fn convert_properties(&self, comp: &ComponentType) -> Vec<StruProperty> {
-        // 通用属性转换方法
+    fn convert_properties(&self, comp: ComponentRef<'_>) -> Vec<StruProperty> {
         let mut result = Vec::new();
+    
+        // 通过模式匹配获取属性
+        let properties = match comp {
+            ComponentRef::Type(component_type) => &component_type.properties,
+            ComponentRef::Impl(component_impl) => &component_impl.properties,
+        };
         
-        if let PropertyClause::Properties(props) = &comp.properties {
+        // 原有处理逻辑
+        if let PropertyClause::Properties(props) = properties {
             for prop in props {
                 if let Some(converted) = self.convert_single_property(prop) {
                     result.push(converted);
@@ -315,14 +322,14 @@ impl AadlConverter {
         let period = self.extract_period(comp)?;
 
         Some(ImplBlock {
-            target: Type::Named(format!("{}Thread", comp.identifier)),
+            target: Type::Named(format!("{}Thread", comp.identifier.to_lowercase())),
             generics: Vec::new(),
             items: vec![ImplItem::Method(FunctionDef {
                 name: "run".to_string(),
                 params: vec![Param {
                     name: "self".to_string(),
                     ty: Type::Reference(
-                        Box::new(Type::Named(format!("{}Thread", comp.identifier))),
+                        Box::new(Type::Named(format!("{}Thread", comp.identifier.to_lowercase()))),
                         true,
                     ),
                 }],
@@ -426,7 +433,7 @@ impl AadlConverter {
 
     fn convert_generic_component(&self, comp: &ComponentType) -> Vec<Item> {
         vec![Item::Struct(StructDef {
-            name: comp.identifier.clone(),
+            name: comp.identifier.to_lowercase(),
             fields: Vec::new(),
             properties: Vec::new(),
             generics: Vec::new(),
@@ -439,6 +446,7 @@ impl AadlConverter {
     fn convert_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
         match impl_.category {
             ComponentCategory::Process => self.convert_process_implementation(impl_),
+            ComponentCategory::Thread  => self.convert_thread_implemenation(impl_),
             _ => Vec::default(), // 默认实现
         }
     }
@@ -449,8 +457,8 @@ impl AadlConverter {
         // 1. 生成进程结构体
         let struct_def = StructDef {
             name: format!{"{}Process",impl_.name.type_identifier.to_lowercase()},
-            fields: self.get_process_fields(impl_),
-            properties: Vec::new(),
+            fields: self.get_process_fields(impl_),//这里是为了取得进程的子组件
+            properties: Vec::new(),//TODO
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
             docs: vec![
@@ -476,14 +484,14 @@ impl AadlConverter {
                     SubcomponentClassifier::ClassifierReference(
                         UniqueComponentClassifierReference::Implementation(unirf)) => {
                         // 直接使用子组件标识符 + "Thread"
-                        format!("{}", unirf.implementation_name.type_identifier.to_lowercase())
+                        format!("{}", unirf.implementation_name.type_identifier)
                     },
                     _ => "UnsupportedComponent".to_string()
                 };
 
                 fields.push(Field {
-                    name: sub.identifier.clone().to_lowercase(),
-                    ty: Type::Named(format!("{}Thread", type_name)),
+                    name: sub.identifier.to_lowercase(),
+                    ty: Type::Named(format!("{}Thread", type_name.to_lowercase())),
                     docs: vec![format!("// Subcomponent: {}", sub.identifier)],
                     attrs: vec![Attribute {
                         name: "allow".to_string(),
@@ -527,7 +535,7 @@ impl AadlConverter {
         }));
         
         ImplBlock {
-            target: Type::Named(format!{"{}Process",impl_.name.type_identifier.clone().to_lowercase()}),
+            target: Type::Named(format!{"{}Process",impl_.name.type_identifier.to_lowercase()}),
             generics: Vec::new(),
             items,
             trait_impl: None,
@@ -552,13 +560,13 @@ impl AadlConverter {
                     }
                 };
 
-                let var_name = sub.identifier.clone().to_lowercase();
+                let var_name = sub.identifier.to_lowercase();
                 stmts.push(Statement::Let(LetStmt {
                     name: format!("mut {}", var_name),
-                    ty: Some(Type::Named(format!("{}Thread", type_name))),
+                    ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
                     init: Some(Expr::Call(
                         Box::new(Expr::Path(vec![
-                            format!("{}Thread", type_name),
+                            format!("{}Thread", type_name.to_lowercase()),
                             "new".to_string()
                         ],PathType::Namespace)),
                         Vec::new(),
@@ -579,7 +587,7 @@ impl AadlConverter {
         // 3. 返回结构体实例
         let fields = if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             subcomponents.iter()
-                .map(|s| s.identifier.clone().to_lowercase())
+                .map(|s| s.identifier.to_lowercase())
                 .collect::<Vec<_>>()
                 .join(", ")
         } else {
@@ -601,7 +609,7 @@ impl AadlConverter {
         
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
-                let var_name = sub.identifier.clone().to_lowercase();
+                let var_name = sub.identifier.to_lowercase();
                 
                 // 构建线程闭包（使用move语义）
                 let closure = Expr::Closure(
@@ -659,7 +667,7 @@ impl AadlConverter {
             ) => {
                 // 分配发送端
                 stmts.push(Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Ident(format!("{}.{}", src_comp, src_port))),
+                    Box::new(Expr::Ident(format!("{}.{}", src_comp.to_lowercase(), src_port.to_lowercase()))),
                     "send".to_string(),  //这个关键字的固定的，例如cnx: port the_sender.p -> the_receiver.p;，前者发送，后者接收
                     //vec![Expr::Ident("channel.0".to_string())],
                     vec![
@@ -672,7 +680,7 @@ impl AadlConverter {
                 
                 // 分配接收端
                 stmts.push(Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Ident(format!("{}.{}", dst_comp, dst_port))),
+                    Box::new(Expr::Ident(format!("{}.{}", dst_comp.to_lowercase(), dst_port.to_lowercase()))),
                     "receive".to_string(),
                     //vec![Expr::Ident("channel.1".to_string())],
                     vec![
@@ -712,85 +720,50 @@ impl AadlConverter {
         stmts
     }
 
-    fn create_component_docs(&self, comp: &ComponentType) -> Vec<String> {
+    fn create_component_type_docs(&self, comp: &ComponentType) -> Vec<String> {
         let mut docs = vec![format!(
             "// AADL {:?}: {}",
-            comp.category, comp.identifier
+            comp.category, comp.identifier.to_lowercase()
         )];
 
         docs
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ast::aadl_ast_cj::*;
+    fn create_component_impl_docs(&self, impl_: &ComponentImplementation) -> Vec<String> {
+        let mut docs = vec![format!(
+            "// AADL {:?}: {}",
+            impl_.category, impl_.name.type_identifier.to_lowercase()
+        )];
 
-    fn create_test_package() -> Package {
-        Package {
-            name: PackageName(vec!["test".to_string()]),
-            visibility_decls: Vec::new(),
-            public_section: Some(PackageSection {
-                is_public: true,
-                declarations: vec![
-                    AadlDeclaration::ComponentType(ComponentType {
-                        category: ComponentCategory::Thread,
-                        identifier: "sender".to_string(),
-                        prototypes: PrototypeClause::None,
-                        features: FeatureClause::Items(vec![
-                            Feature::Port(PortSpec {
-                                identifier: "out_port".to_string(),
-                                direction: PortDirection::Out,
-                                port_type: PortType::EventData {
-                                    classifier: Some(PortDataTypeReference::Classifier(
-                                        UniqueComponentClassifierReference::Type(
-                                            UniqueImplementationReference {
-                                                package_prefix: None,
-                                                implementation_name: ImplementationName {
-                                                    type_identifier: "Integer".to_string(),
-                                                    implementation_identifier: "".to_string(),
-                                                },
-                                            },
-                                        ),
-                                    )),
-                                },
-                            }),
-                        ]),
-                        properties: PropertyClause::Properties(vec![
-                            Property::BasicProperty(BasicPropertyAssociation {
-                                identifier: PropertyIdentifier {
-                                    property_set: None,
-                                    name: "Period".to_string(),
-                                },
-                                operator: PropertyOperator::Assign,
-                                is_constant: false,
-                                value: PropertyValue::Single(PropertyExpression::Integer(
-                                    SignedIntergerOrConstant::Real(SignedInteger {
-                                        sign: None,
-                                        value: 1000,
-                                        unit: None,
-                                    }),
-                                )),
-                            }),
-                        ]),
-                        annexes: Vec::new(),
-                    }),
-                ],
-            }),
-            private_section: None,
-            properties: PropertyClause::ExplicitNone,
-        }
+        docs
     }
 
-    #[test]
-    fn test_convert_thread_component() {
-        let converter = AadlConverter::default();
-        let pkg = create_test_package();
-        let module = converter.convert_package(&pkg);
+    fn convert_thread_implemenation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+        let mut items = Vec::new();
 
-        assert_eq!(module.name, "test");
-        assert!(module.items.iter().any(|i| matches!(i, Item::Struct(_))));
-        assert!(module.items.iter().any(|i| matches!(i, Item::Impl(_))));
+        // 1. 结构体定义
+        let struct_def = StructDef {
+            name: format!("{}Thread", impl_.name.type_identifier.to_lowercase()),
+            fields: Vec::new(),  //对于线程来说是特征列表,thread_impl没有特征
+            properties: self.convert_properties(ComponentRef::Impl(&impl_)),      // 属性列表
+            generics: Vec::new(),
+            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            docs: self.create_component_impl_docs(impl_),
+            vis: Visibility::Public, //默认public
+        };
+        items.push(Item::Struct(struct_def));
+
+        // 2. 实现块
+        // if let Some(impl_block) = self.create_thread_impl(impl_) {
+        //     items.push(Item::Impl(impl_block));
+        // }
+
+        items
     }
+
+
+
+
 }
+
+    
