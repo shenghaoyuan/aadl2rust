@@ -3,9 +3,17 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-// 导入自动生成的C绑定
-mod c_bindings;
-use c_bindings::*;
+#[allow(non_snake_case)]
+#[allow(non_camel_case_types)]
+#[allow(non_upper_case_globals)]
+include!(concat!(env!("OUT_DIR"), "/c_bindings.rs"));
+
+// === C函数绑定 ===
+extern "C" {
+    pub fn user_do_ping_spg(val: *mut i32);
+    pub fn user_ping_spg(val: i32);
+    pub fn recover();
+}
 
 // === 安全封装C函数 ===
 pub mod sender_spg {
@@ -26,9 +34,9 @@ pub mod receiver_spg {
     }
 }
 
-pub fn recover() {
+pub fn recover_wrapper() {
     unsafe {
-        super::recover();
+        recover();
     }
 }
 
@@ -121,20 +129,23 @@ impl PingPongProcess {
         }
     }
 
-    pub fn start(self) {
+    pub fn start(mut self) {
+        let mut sender = self.the_sender;
+        let mut receiver = self.the_receiver;
+
         thread::Builder::new()
             .name("the_sender".to_string())
-            .stack_size(self.the_sender.stack_size as usize)
+            .stack_size(sender.stack_size as usize)
             .spawn(move || {
-                self.the_sender.run();
+                sender.run();
             })
             .unwrap();
 
         thread::Builder::new()
             .name("the_receiver".to_string())
-            .stack_size(self.the_receiver.stack_size as usize)
+            .stack_size(receiver.stack_size as usize)
             .spawn(move || {
-                self.the_receiver.run();
+                receiver.run();
             })
             .unwrap();
     }

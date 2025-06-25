@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "include/ping.h"
+#include "ping.h"
 
 int p = 0;
 
