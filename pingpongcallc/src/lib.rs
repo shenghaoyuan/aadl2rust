@@ -6,14 +6,7 @@ use std::time::{Duration, Instant};
 #[allow(non_snake_case)]
 #[allow(non_camel_case_types)]
 #[allow(non_upper_case_globals)]
-include!(concat!(env!("OUT_DIR"), "/c_bindings.rs"));
-
-// === C函数绑定 ===
-extern "C" {
-    pub fn user_do_ping_spg(val: *mut i32);
-    pub fn user_ping_spg(val: i32);
-    pub fn recover();
-}
+include!(concat!(env!("OUT_DIR"), "/c_bindings.rs")); //绑定的函数通过 include! 注入到根模块
 
 // === 安全封装C函数 ===
 pub mod sender_spg {

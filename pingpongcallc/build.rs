@@ -1,33 +1,23 @@
-extern crate bindgen;
-extern crate cc;
-
 fn main() {
     println!("cargo:rerun-if-changed=c_src/ping.c");
     println!("cargo:rerun-if-changed=include/ping.h");
 
-    // 编译C代码
-    let mut build = cc::Build::new();
-    build
+    // 1. 编译C代码（跨平台优化）
+    cc::Build::new()
         .file("c_src/ping.c")
-        .include("include")            // 添加 include 路径
-        .flag("/std:c11");
+        .include("include")
+        .flag_if_supported("/std:c11")  // 自动跳过不支持此flag的平台
+        .flag_if_supported("/TC")       // 同上，替代cfg判断
+        .compile("ping");
 
-    if cfg!(target_os = "windows") {
-        build.flag("/TC");
-    }
-
-    build.compile("ping");
-
-    // 生成Rust绑定
-    let bindings = bindgen::Builder::default()
+    // 2. 生成Rust绑定（简化配置）
+    bindgen::Builder::default()
         .header("include/ping.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .clang_arg("-Iinclude")  // 加头文件路径
         .generate()
-        .expect("Unable to generate bindings");
-
-    let out_path = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("c_bindings.rs"))
-        .expect("Couldn't write bindings!");
+        .expect("生成绑定失败")
+        .write_to_file(
+            std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).join("c_bindings.rs")
+        )
+        .expect("写入绑定文件失败");
 }
