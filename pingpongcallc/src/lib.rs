@@ -8,22 +8,23 @@ use std::time::{Duration, Instant};
 #[allow(non_upper_case_globals)]
 include!(concat!(env!("OUT_DIR"), "/c_bindings.rs")); //绑定的函数通过 include! 注入到根模块
 
+pub type Simple_Type = custom_int;
 // === 安全封装C函数 ===
 pub mod sender_spg {
-    pub fn send(val: &mut i32) {
+    use super::{Simple_Type,user_do_ping_spg};
+    pub fn send(val: &mut Simple_Type) {
         unsafe {
-            super::user_do_ping_spg(val);
+            user_do_ping_spg(val);
         }
     }
 }
 
 pub mod receiver_spg {
-    pub fn receive(val: i32) {
-        if val != 0 {
-            unsafe {
-                super::user_ping_spg(val);
-            }
-        }
+    use super::{Simple_Type,user_ping_spg};
+    pub fn receive(val: Simple_Type) {
+        unsafe {
+            user_ping_spg(val);
+        };
     }
 }
 
@@ -36,7 +37,7 @@ pub fn recover_wrapper() {
 // === 线程定义 ===
 pub struct TheSenderThread {
     id: u32,
-    sender: Option<mpsc::Sender<i32>>,
+    sender: Option<mpsc::Sender<Simple_Type>>,
     pub stack_size: i64,
     pub period: u64,
 }
@@ -70,7 +71,7 @@ impl TheSenderThread {
 
 pub struct TheReceiverThread {
     id: u32,
-    receiver: Option<mpsc::Receiver<i32>>,
+    receiver: Option<mpsc::Receiver<Simple_Type>>,
     pub stack_size: i64,
     pub period: u64,
 }

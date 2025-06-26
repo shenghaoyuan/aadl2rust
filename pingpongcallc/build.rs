@@ -8,7 +8,7 @@ fn main() {
         .include("include")
         .flag_if_supported("/std:c11")  // 自动跳过不支持此flag的平台
         .flag_if_supported("/TC")       // 同上，替代cfg判断
-        .compile("ping");
+        .compile("c_lib");
 
     // 2. 生成Rust绑定（简化配置）
     bindgen::Builder::default()
