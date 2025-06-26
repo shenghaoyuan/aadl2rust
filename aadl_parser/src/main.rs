@@ -3,6 +3,7 @@ mod ast;
 pub mod transform;
 pub mod printmessage;
 mod aadlAst2rustCode;
+//mod output_ocarina;
 
 use aadlight_parser::AADLParser;
 use pest::{Parser};
@@ -11,6 +12,7 @@ use std::fs;
 use printmessage::*;
 use aadlAst2rustCode::intermediate_print::*;
 use aadlAst2rustCode::merge_utils::*;
+use aadlAst2rustCode::generate_build::*;
 
 
 
@@ -50,7 +52,7 @@ fn main() {
             //
             println!("\n====================================test ===================================");
             for Package in & ast{
-                let rust_code = generate_rust_code2(&Package);
+                generate_rust_code2(&Package);
                 //println!("{}",rust_code);
             }
             
@@ -93,11 +95,11 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     let rust_code = code_generator.generate_module_code(&merge_rust_module);
     //println!("{}", rust_code);
 
-    // 写入文件
-            if let Err(e) = fs::write("output_ocarina.rs", rust_code) {
-                eprintln!("写入文件失败: {}", e);
-            } else {
-                println!("代码已成功写入文件");
-            }
+    // 生成 build.rs
+    // let build_rs_content = generate_build_rs(&merge_rust_module);
+    // fs::write("build.rs", build_rs_content).expect("Failed to write build.rs");
+    
+    // 同时保存主Rust代码
+    fs::write("generate_main.rs", rust_code).expect("Failed to write main.rs");
     
 }

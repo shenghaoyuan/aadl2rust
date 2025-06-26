@@ -2,12 +2,13 @@
 use std::{clone, collections::HashMap};
 
 /// 轻量级Rust抽象语法树（模块级）
-#[derive(Debug, Default,Clone)]
+#[derive(Debug,Clone)]
 pub struct RustModule {
     pub name: String,
     pub docs: Vec<String>,
     pub items: Vec<Item>,
     pub attrs: Vec<Attribute>, // #[attributes]
+    pub vis: Visibility, //控制结构体的可见性
 }
 
 /// 模块项定义
@@ -101,7 +102,7 @@ pub enum Type {
     Path(Vec<String>),           // std::vec::Vec
     Named(String),               // i32, String
     Generic(String, Vec<Type>),  // HashMap<K, V>
-    Reference(Box<Type>, bool),  // &mut T
+    Reference(Box<Type>, bool),  // &mut T ,bool代表是否可变&mut
     Tuple(Vec<Type>),            // (T1, T2)
     Slice(Box<Type>),            // [T]
     Unit,                        // ()
@@ -127,13 +128,14 @@ pub enum Expr {
     Await(Box<Expr>),
     Closure(Vec<String>, Box<Expr>),
     BuilderChain(Vec<BuilderMethod>), // 新增：表示(进程在创建线程时)构建器链式调用
+    Unsafe(Box<Block>),  // 新增 unsafe 表达式支持
 }
 
 //区分.name()、.stack_size()等不同构建器方法
 #[derive(Debug,Clone)]
 pub enum BuilderMethod {
     Named(String), // 如.name("thread_name")
-    StackSize(Box<Expr>), // 如.stack_size(expr)
+    //StackSize(Box<Expr>), // TODO .stack_size(expr)
     Spawn {
         closure: Box<Expr>,
         move_kw: bool, // 将move语义放在BuilderMethod中
@@ -251,5 +253,5 @@ pub struct UseStatement {
 pub enum UseKind {
     Simple,
     Glob,    // {path}::*
-    Nested,  // {path}::{a, b}
+    Nested(Vec<String>),  // {path}::{a, b}
 }

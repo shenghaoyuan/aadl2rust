@@ -19,7 +19,7 @@ struct PortHandlerConfig {
 impl Default for AadlConverter {
     fn default() -> Self {
         let mut type_mappings = HashMap::new();
-        type_mappings.insert("Integer".to_string(), Type::Named("i32".to_string()));
+        type_mappings.insert("Integer".to_string(), Type::Named("u32".to_string()));
         type_mappings.insert("String".to_string(), Type::Named("String".to_string()));
         type_mappings.insert("Boolean".to_string(), Type::Named("bool".to_string()));
 
@@ -36,7 +36,10 @@ impl AadlConverter {
         let mut module = RustModule {
             name: pkg.name.0.join("_").to_lowercase(),
             docs: vec![format!("// Auto-generated from AADL package: {}", pkg.name.0.join("::"))],
-            ..Default::default()
+            //..Default::default()
+            items: Default::default(),
+            attrs: Default::default(),
+            vis: Visibility::Public
         };
 
         // 处理公共声明
@@ -91,12 +94,12 @@ impl AadlConverter {
         if let PropertyClause::Properties(props) = &comp.properties {
             for prop in props {
                 if let Property::BasicProperty(bp) = prop {
-                    if bp.identifier.name == "Data_Representation" {
+                    if bp.identifier.name.to_lowercase() == "type_source_name" {
                         if let PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(str_val))) = &bp.value {
                             
                                 return self.type_mappings.get(&str_val.to_string())
                                     .cloned()
-                                    .unwrap_or(Type::Named("()".to_string()));
+                                    .unwrap_or_else(|| Type::Named(str_val.to_string()));//没有在 type_mappings 中找到对应映射时，直接使用这个原始值作为类型名
                             
                         }
                     }
@@ -115,7 +118,7 @@ impl AadlConverter {
             fields: self.convert_type_features(&comp.features),  //特征列表
             properties: self.convert_properties(ComponentRef::Type(&comp)),      // 属性列表
             generics: Vec::new(),
-            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            derives: vec!["Debug".to_string()],
             docs: self.create_component_type_docs(comp),
             vis: Visibility::Public, //默认public
         };
@@ -351,7 +354,7 @@ impl AadlConverter {
         if let PropertyClause::Properties(props) = &comp.properties {
             for prop in props {
                 if let Property::BasicProperty(bp) = prop {
-                    if bp.identifier.name == "Period" {
+                    if bp.identifier.name.to_lowercase() == "period" {
                         if let PropertyValue::Single(PropertyExpression::Integer(
                             SignedIntergerOrConstant::Real(int_val),
                         )) = &bp.value
@@ -402,6 +405,11 @@ impl AadlConverter {
     fn convert_subprogram(&self, comp: &ComponentType) -> Vec<Item> {
         let mut items = Vec::new();
 
+        // 检查是否是C语言绑定的子程序
+        if let Some(c_func_name) = self.extract_c_function_name(comp) {
+            return self.generate_c_function_wrapper(comp, &c_func_name);
+        }
+
         if let FeatureClause::Items(features) = &comp.features {
             for feature in features {
                 if let Feature::Port(port) = feature {
@@ -431,13 +439,184 @@ impl AadlConverter {
         items
     }
 
+    fn extract_c_function_name(&self, comp: &ComponentType) -> Option<String> {
+        if let PropertyClause::Properties(props) = &comp.properties {
+            for prop in props {
+                if let Property::BasicProperty(bp) = prop {
+                    if bp.identifier.name.to_lowercase() == "source_name" {
+                        if let PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(name))) = &bp.value {
+                            return Some(name.clone());
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn generate_c_function_wrapper(&self, comp: &ComponentType, c_func_name: &str) -> Vec<Item> {
+        //获取C程序源文件文件名
+        let source_files = self.extract_source_files(comp);
+
+        let mut items = Vec::new();
+        let mut functions = Vec::new();
+        let mut types_to_import = std::collections::HashSet::new();
+
+        // 处理每个参数特征
+        if let FeatureClause::Items(features) = &comp.features {
+            for feature in features {
+                if let Feature::Port(port) = feature {
+                    
+                    let (func_name, param_type) = match port.direction {
+                        PortDirection::Out => (
+                            "send",
+                            Type::Reference(Box::new(self.convert_paramport_type(port)), true)
+                        ),
+                        PortDirection::In => (
+                            "receive", 
+                            Type::Reference(Box::new(self.convert_paramport_type(port)), false)
+                        ),
+                        _ => continue, // 
+                    };
+
+                    // 收集需要导入的类型
+                    if let Type::Named(type_name) = &self.convert_paramport_type(port) {
+                        if !self.is_rust_primitive_type(type_name) {
+                            types_to_import.insert(type_name.clone());
+                        }
+                    }
+
+                    // 创建包装函数
+                    functions.push(FunctionDef {
+                        name: func_name.to_string(),
+                        params: vec![Param {
+                            name: port.identifier.to_string().to_lowercase(),
+                            ty: param_type,
+                        }],
+                        return_type: Type::Unit,
+                        body: Block {
+                            stmts: vec![Statement::Expr(Expr::Unsafe(Box::new(Block {
+                                stmts: vec![Statement::Expr(Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec![c_func_name.to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    vec![Expr::Ident(port.identifier.to_string().to_lowercase())],
+                                ))],
+                                expr: None,
+                            })))],
+                            expr: None,
+                        },
+                        asyncness: false,
+                        vis: Visibility::Public,
+                        docs: vec![
+                            format!("// Wrapper for C function {}", c_func_name),
+                            format!("// Original AADL port: {}", port.identifier),
+                        ],
+                        attrs: Vec::new(),
+                    });
+                    
+                }
+            }
+        }
+
+        // 创建模块
+        if !functions.is_empty() {
+            let mut docs = vec![
+                format!("// Auto-generated from AADL subprogram: {}", comp.identifier),
+                format!("// C binding to: {}", c_func_name),
+            ];
+            //在注释中添加C程序源文件文件名
+            if !source_files.is_empty() {
+                docs.push(format!("// source_files: {}", source_files.join(", ")));
+            }
+
+            // 构建use语句
+            let mut imports = vec![c_func_name.to_string()];
+            imports.extend(types_to_import.into_iter());
+            
+            let use_stmt = Item::Use(UseStatement {
+                path: vec!["super".to_string()],
+                kind: UseKind::Nested(imports),
+            });
+
+            // 构建模块内容：先添加use语句，再添加函数
+            let mut module_items = vec![use_stmt];
+            module_items.extend(functions.into_iter().map(Item::Function));
+
+            let module = RustModule {
+                name: comp.identifier.to_lowercase(),
+                docs: docs,
+                //items: functions.into_iter().map(Item::Function).collect(),
+                items: module_items,
+                attrs: Default::default(),
+                vis: Visibility::Public
+            };
+            items.push(Item::Mod(Box::new(module)));
+        }
+
+        items
+    }
+
+    fn extract_source_files(&self, comp: &ComponentType) -> Vec<String> {
+        let mut source_files = Vec::new();
+        
+        if let PropertyClause::Properties(props) = &comp.properties {
+            for prop in props {
+                if let Property::BasicProperty(bp) = prop {
+                    if bp.identifier.name.to_lowercase() == "source_text" {
+                        match &bp.value {
+                            PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(text))) => {
+                                source_files.push(text.clone());
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+        }
+        
+        source_files
+    }
+
+    //TODO:这是由于subprogram的feature中的参数连接，暂时还是使用端口连接（在aadl_ast中未定义参数连接方式），这里写死参数链接的类型
+    fn convert_paramport_type(&self, port: &PortSpec) -> Type {
+        // 直接提取分类器类型，不加任何包装
+        match &port.port_type {
+            PortType::Data { classifier } | 
+                PortType::EventData { classifier } => {
+                classifier.as_ref()
+                    .map(|c| self.classifier_to_type(c))
+                    .unwrap_or_else(|| {
+                        // 默认类型处理，可以根据需要调整
+                        match port.direction {
+                            PortDirection::Out => Type::Named("i32".to_string()),
+                            _ => Type::Named("()".to_string()),
+                        }
+                    })
+            }
+            PortType::Event => Type::Named("()".to_string()),
+            // 其他类型不需要处理，因为此函数仅在参数连接时调用
+        }
+    }
+
+    // 辅助函数：判断是否为Rust原生类型
+    fn is_rust_primitive_type(&self,type_name: &str) -> bool {
+        matches!(
+            type_name,
+            "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
+            "u8" | "u16" | "u32" | "u64" | "u128" | "usize" |
+            "f32" | "f64" | "bool" | "char" | "str" | "String"
+        )
+    }
+
     fn convert_generic_component(&self, comp: &ComponentType) -> Vec<Item> {
         vec![Item::Struct(StructDef {
             name: comp.identifier.to_lowercase(),
             fields: Vec::new(),
             properties: Vec::new(),
             generics: Vec::new(),
-            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            derives: vec!["Debug".to_string()],
             docs: vec![format!("// AADL {:?} component", comp.category)],
             vis: Visibility::Public,
         })]
@@ -595,7 +774,7 @@ impl AadlConverter {
         };
         
         stmts.push(Statement::Expr(Expr::Ident(
-            format!("Self {{ {} }}", fields)
+            format!("return Self {{ {} }}  //显式return", fields)
         )));
         
         Block {
@@ -624,11 +803,11 @@ impl AadlConverter {
                 // 构建线程构建器表达式链
                 let builder_chain = vec![
                     BuilderMethod::Named(format!("\"{}\".to_string()", var_name)),
-                    BuilderMethod::StackSize(Box::new(Expr::Path(vec![
-                        "self".to_string(),
-                        var_name.clone(),
-                        "stack_size".to_string()
-                    ],PathType::Member))),
+                    // BuilderMethod::StackSize(Box::new(Expr::Path(vec![
+                    //     "self".to_string(),
+                    //     var_name.clone(),
+                    //     "stack_size".to_string()
+                    // ],PathType::Member))),
                     BuilderMethod::Spawn {
                         closure: Box::new(closure),
                         move_kw: true,
@@ -747,7 +926,7 @@ impl AadlConverter {
             fields: Vec::new(),  //对于线程来说是特征列表,thread_impl没有特征
             properties: self.convert_properties(ComponentRef::Impl(&impl_)),      // 属性列表
             generics: Vec::new(),
-            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            derives: vec!["Debug".to_string()],
             docs: self.create_component_impl_docs(impl_),
             vis: Visibility::Public, //默认public
         };

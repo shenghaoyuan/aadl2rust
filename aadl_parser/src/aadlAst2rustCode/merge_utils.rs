@@ -58,6 +58,7 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
         docs: module.docs,
         items,
         attrs: module.attrs,
+        vis: module.vis,
     }
 }
 

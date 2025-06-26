@@ -29,6 +29,8 @@ impl RustCodeGenerator {
         self.writeln("use std::sync::mpsc;");
         self.writeln("use std::thread;");
         self.writeln("use std::time::{Duration, Instant};");
+        self.writeln("include!(concat!(env!(\"OUT_DIR\"), \"/c_bindings.rs\"));"); //绑定的函数通过 include! 注入到根模块
+
         self.writeln("");
 
         // 生成模块内容
@@ -59,6 +61,15 @@ impl RustCodeGenerator {
     }
 
     fn generate_nested_module(&mut self, m: &RustModule) {
+        // 生成模块声明行
+        match &m.vis {
+            Visibility::Public => self.write("pub "),
+            Visibility::Private => (), // 私有模块不添加修饰符
+            Visibility::Restricted(paths) => {
+                self.write(&format!("pub(in {} ) ", paths.join("::")))
+            }
+        }
+
         self.writeln(&format!("mod {} {{", m.name));
         self.indent();
         
@@ -413,11 +424,11 @@ impl RustCodeGenerator {
                         BuilderMethod::Named(name) => {
                             self.writeln(&format!("    .name({})", name));
                         },
-                        BuilderMethod::StackSize(expr) => {
-                            self.write("    .stack_size(");
-                            self.generate_expr(expr);
-                            self.writeln(" as usize)");
-                        },
+                        // BuilderMethod::StackSize(expr) => {
+                        //     self.write("    .stack_size(");
+                        //     self.generate_expr(expr);
+                        //     self.writeln(" as usize)");
+                        // },
                         BuilderMethod::Spawn { closure, move_kw } => {
                             self.write("    .spawn(");
                             if *move_kw {
@@ -447,6 +458,23 @@ impl RustCodeGenerator {
                     }
                 }
             },
+            Expr::Unsafe(block) => {
+                self.write("unsafe ");
+                // 根据块的内容决定格式化方式
+                if block.stmts.len() == 1 && block.expr.is_none() {
+                    // 单语句的 unsafe 块，使用紧凑格式
+                    self.write("{ ");
+                    self.generate_block(block);
+                    self.write(" }");
+                } else {
+                    // 多语句的 unsafe 块，使用展开格式
+                    self.writeln("{");
+                    self.indent();
+                    self.generate_block(block);
+                    self.dedent();
+                    self.write("}");
+                }
+            }
             //_ => self.write(""),
         }
     }
@@ -545,16 +573,26 @@ impl RustCodeGenerator {
     }
 
     fn generate_use(&mut self, u: &UseStatement) {
-        self.write("use ");
-        for (i, part) in u.path.iter().enumerate() {
+    self.write("use ");
+    
+    // 生成路径部分 (如 "super" 或 "std::collections")
+    for (i, part) in u.path.iter().enumerate() {
             if i > 0 { self.write("::"); }
             self.write(part);
         }
         
+        // 生成不同种类的use语句
         match &u.kind {
             UseKind::Simple => self.writeln(";"),
             UseKind::Glob => self.writeln("::*;"),
-            UseKind::Nested => self.writeln("::{*};")
+            UseKind::Nested(items) => {
+                self.write("::{");
+                for (i, item) in items.iter().enumerate() {
+                    if i > 0 { self.write(", "); }
+                    self.write(item);
+                }
+                self.writeln("};");
+            }
         }
     }
 
@@ -593,7 +631,7 @@ impl RustCodeGenerator {
                 s
             }
             Type::Reference(inner, mutable) => {
-                format!("&{} {}", if *mutable { "mut " } else { "" }, self.type_to_string(inner))
+                format!("{}{}", if *mutable { "&mut " } else { "" }, self.type_to_string(inner))
             }
             Type::Tuple(types) => {
                 let mut s = "(".to_string();

@@ -185,7 +185,7 @@ RustModule {
                                     ),
                                     Expr(
                                         Ident(
-                                            "Self { pinger, ping_me }",
+                                            "return Self { pinger, ping_me }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -223,16 +223,6 @@ RustModule {
                                                     Named(
                                                         "\"pinger\".to_string()",
                                                     ),
-                                                    StackSize(
-                                                        Path(
-                                                            [
-                                                                "self",
-                                                                "pinger",
-                                                                "stack_size",
-                                                            ],
-                                                            Member,
-                                                        ),
-                                                    ),
                                                     Spawn {
                                                         closure: Closure(
                                                             [],
@@ -262,16 +252,6 @@ RustModule {
                                                 [
                                                     Named(
                                                         "\"ping_me\".to_string()",
-                                                    ),
-                                                    StackSize(
-                                                        Path(
-                                                            [
-                                                                "self",
-                                                                "ping_me",
-                                                                "stack_size",
-                                                            ],
-                                                            Member,
-                                                        ),
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
@@ -315,7 +295,7 @@ RustModule {
             TypeAlias {
                 name: "Simple_Type",
                 target: Named(
-                    "()",
+                    "custom_int",
                 ),
                 vis: Public,
                 docs: [
@@ -323,86 +303,164 @@ RustModule {
                 ],
             },
         ),
-        Function(
-            FunctionDef {
-                name: "handle_Data_Source",
-                params: [
-                    Param {
-                        name: "port",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "()",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    },
-                ],
-                return_type: Unit,
-                body: Block {
-                    stmts: [
-                        Expr(
-                            Ident(
-                                "// Handle port: Data_Source",
-                            ),
-                        ),
-                    ],
-                    expr: None,
-                },
-                asyncness: true,
-                vis: Public,
+        Mod(
+            RustModule {
+                name: "do_ping_spg",
                 docs: [
-                    "// Port handler for Data_Source",
-                    "// Direction: Out",
+                    "// Auto-generated from AADL subprogram: Do_Ping_Spg",
+                    "// C binding to: user_do_ping_spg",
+                    "// source_files: \"ping.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "user_do_ping_spg",
+                                    "Simple_Type",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "send",
+                            params: [
+                                Param {
+                                    name: "data_source",
+                                    ty: Reference(
+                                        Named(
+                                            "Simple_Type",
+                                        ),
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "user_do_ping_spg",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "data_source",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function user_do_ping_spg",
+                                "// Original AADL port: Data_Source",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                 ],
                 attrs: [],
+                vis: Public,
             },
         ),
-        Function(
-            FunctionDef {
-                name: "handle_Data_Sink",
-                params: [
-                    Param {
-                        name: "port",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "()",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    },
-                ],
-                return_type: Unit,
-                body: Block {
-                    stmts: [
-                        Expr(
-                            Ident(
-                                "// Handle port: Data_Sink",
-                            ),
-                        ),
-                    ],
-                    expr: None,
-                },
-                asyncness: true,
-                vis: Public,
+        Mod(
+            RustModule {
+                name: "ping_spg",
                 docs: [
-                    "// Port handler for Data_Sink",
-                    "// Direction: In",
+                    "// Auto-generated from AADL subprogram: Ping_Spg",
+                    "// C binding to: user_ping_spg",
+                    "// source_files: \"ping.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "user_ping_spg",
+                                    "Simple_Type",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "receive",
+                            params: [
+                                Param {
+                                    name: "data_sink",
+                                    ty: Reference(
+                                        Named(
+                                            "Simple_Type",
+                                        ),
+                                        false,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "user_ping_spg",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "data_sink",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function user_ping_spg",
+                                "// Original AADL port: Data_Sink",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                 ],
                 attrs: [],
+                vis: Public,
             },
         ),
         Struct(
@@ -489,7 +547,6 @@ RustModule {
                 generics: [],
                 derives: [
                     "Debug",
-                    "Clone",
                 ],
                 docs: [
                     "// AADL Thread: p",
@@ -563,7 +620,6 @@ RustModule {
                 generics: [],
                 derives: [
                     "Debug",
-                    "Clone",
                 ],
                 docs: [
                     "// AADL Thread: q",
@@ -573,4 +629,5 @@ RustModule {
         ),
     ],
     attrs: [],
+    vis: Public,
 }

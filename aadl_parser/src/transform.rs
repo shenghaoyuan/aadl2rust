@@ -367,7 +367,7 @@ impl AADLTransformer {
         }
 
         let (resolved_port_type, _classifier) = match port_type.expect("Missing port type") {
-            "data port" => {
+            "data port" | "parameter" => {
                 let classifier = type_name.clone().map(|type_id| {
                     PortDataTypeReference::Classifier(
                         UniqueComponentClassifierReference::Type(UniqueImplementationReference {
@@ -395,11 +395,11 @@ impl AADLTransformer {
                 });
                 (PortType::EventData { classifier: classifier.clone() }, classifier)
             }
-            "event port" => (PortType::Event, None),
-            "parameter" => {
-                // TODO: 实现 parameter 处理,在AST中还没有定义
-                (PortType::Event, None)
-            }
+            "event port" => (PortType::Event, None), //TODO
+            // "parameter" => {
+            //     // TODO: 实现 parameter 处理,在AST中还没有定义
+            //     (PortType::Event, None)
+            // }
             other => panic!("Unknown port type: {}", other),
         };
 

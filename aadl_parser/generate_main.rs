@@ -1,10 +1,11 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-06-24 20:25:12
+// 生成时间: 2025-06-26 20:36:38
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
+include!(concat!(env!("OUT_DIR"), "/c_bindings.rs"));
 
 // Process implementation: A
 // Auto-generated from AADL
@@ -28,40 +29,54 @@ impl aProcess {
             pinger.data_source = Some(channel.0);
         // build connection: 
             ping_me.data_sink = Some(channel.1);
-        Self { pinger, ping_me };
+        return Self { pinger, ping_me }  //显式return;
     }
     
     // Starts all threads in the process
-    pub fn start(self: &mut  Self) -> () {
+    pub fn start(self: &mut Self) -> () {
         thread::Builder::new()
             .name("pinger".to_string())
-            .stack_size(self.pinger.stack_size as usize)
             .spawn(move || { self.pinger.run() }).unwrap();
         thread::Builder::new()
             .name("ping_me".to_string())
-            .stack_size(self.ping_me.stack_size as usize)
             .spawn(move || { self.ping_me.run() }).unwrap();
     }
     
 }
 
 // AADL Data Type: Simple_Type
-pub type Simple_Type = ();
+pub type Simple_Type = custom_int;
 
-// Port handler for Data_Source
-// Direction: Out
-pub async fn handle_Data_Source(port: Option<mpsc::Sender<()>>) -> () {
-    // Handle port: Data_Source;
+pub mod do_ping_spg {
+    // Auto-generated from AADL subprogram: Do_Ping_Spg
+    // C binding to: user_do_ping_spg
+    // source_files: "ping.c"
+    use super::{user_do_ping_spg, Simple_Type};
+    // Wrapper for C function user_do_ping_spg
+    // Original AADL port: Data_Source
+    pub fn send(data_source: &mut Simple_Type) -> () {
+        unsafe { user_do_ping_spg(data_source);
+         };
+    }
+    
 }
 
-// Port handler for Data_Sink
-// Direction: In
-pub async fn handle_Data_Sink(port: Option<mpsc::Receiver<()>>) -> () {
-    // Handle port: Data_Sink;
+pub mod ping_spg {
+    // Auto-generated from AADL subprogram: Ping_Spg
+    // C binding to: user_ping_spg
+    // source_files: "ping.c"
+    use super::{user_ping_spg, Simple_Type};
+    // Wrapper for C function user_ping_spg
+    // Original AADL port: Data_Sink
+    pub fn receive(data_sink: Simple_Type) -> () {
+        unsafe { user_ping_spg(data_sink);
+         };
+    }
+    
 }
 
 // AADL Thread: p
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct pThread {
     // Port: Data_Source Out
     pub data_source: Option<mpsc::Sender<Simple_Type>>,
@@ -90,7 +105,7 @@ impl pThread {
     }
 }
 // AADL Thread: q
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct qThread {
     // Port: Data_Sink In
     pub data_sink: Option<mpsc::Receiver<Simple_Type>>,
