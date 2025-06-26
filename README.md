@@ -32,3 +32,7 @@ use ast目前的问题:
 demo，尝试aadl_ast -> rust_ast -> rust code的流程。
 
 使用syn、quote、prettyplease。
+
+## pingpongcallc
+
+手写的在rust项目中调用c程序，可参考Notion中**Rust中调用C代码**。
