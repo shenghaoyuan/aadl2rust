@@ -163,15 +163,6 @@ impl RustCodeGenerator {
         self.writeln("    // 创建组件并初始化AADL属性");
         self.write("    pub fn new(");
         
-        // 生成构造函数参数（只包含端口字段）
-        // 这样能够在之后构造 SenderThread 时，把一个真实可用的通道发送端 Sender<i32> 传进来，当然也可以通过直接访问pub的p来设置
-        // 已删除，设置端口为option，初始化时不需要传入参数
-        // let port_args = s.fields.iter()
-        //     .map(|f| format!("{}: {}", f.name, self.type_to_string(&f.ty)))
-        //     .collect::<Vec<_>>()
-        //     .join(", ");
-        // self.write(&port_args);
-        
         self.writeln(") -> Self {");
         self.writeln("        Self {");
         
@@ -332,7 +323,11 @@ impl RustCodeGenerator {
     fn generate_statement(&mut self, stmt: &Statement) {
         match stmt {
             Statement::Let(ls) => {
-                self.write(&format!("let {}", ls.name));
+                self.write(&format!(
+                    "{} {}",
+                    if ls.ifmut { "let mut" } else { "let" },
+                    ls.name
+                ));
                 if let Some(ty) = &ls.ty {
                     self.write(&format!(": {}", self.type_to_string(ty)));
                 }
@@ -343,7 +338,7 @@ impl RustCodeGenerator {
                 self.writeln(";");
             }
             Statement::Expr(expr) => {
-                // 处理连接建立的表达式
+                // 处理连接建立的表达式 TODO
                 if let Expr::MethodCall(receiver, method, args) = expr {
                     if method == "send" || method == "receive" {
                         self.writeln("// build connection: ");
@@ -394,7 +389,7 @@ impl RustCodeGenerator {
             }
             Expr::MethodCall(receiver, method, args) => {
                 self.generate_expr(receiver);
-                self.write(&format!(".{}(", method));
+                self.write(&format!("{}(", method));
                 for (i, arg) in args.iter().enumerate() {
                     if i > 0 { self.write(", "); }
                     self.generate_expr(arg);
@@ -409,8 +404,11 @@ impl RustCodeGenerator {
                 self.write("}");
             }
             Expr::Loop(block) => {
-                self.write("loop ");
+                self.writeln("loop {");
+                self.indent();
                 self.generate_block(block);
+                self.dedent();
+                self.write("}");
             }
             Expr::Await(expr) => {
                 self.generate_expr(expr);
@@ -475,6 +473,36 @@ impl RustCodeGenerator {
                     self.write("}");
                 }
             }
+            Expr::If { condition, then_branch, else_branch } => {
+                self.write("if ");
+                self.generate_expr(condition);
+                self.write(" ");
+                self.generate_block(then_branch);
+                
+                if let Some(else_branch) = else_branch {
+                    self.write(" else ");
+                    self.generate_block(else_branch);
+                }
+            }
+            Expr::IfLet { pattern, value, then_branch, else_branch } => {
+            self.write("if let ");
+            self.write(pattern);
+            self.write(" = ");
+            self.generate_expr(value);
+            self.write(" {\n");
+            self.indent();
+            self.generate_block(then_branch);
+            self.dedent();
+            self.write("}");
+            
+            if let Some(else_branch) = else_branch {
+                self.write(" else {\n");
+                self.indent();
+                self.generate_block(else_branch);
+                self.dedent();
+                self.write("}");
+            }
+        }
             //_ => self.write(""),
         }
     }

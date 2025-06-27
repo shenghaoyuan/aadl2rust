@@ -123,9 +123,8 @@ impl AadlConverter {
             vis: Visibility::Public, //默认public
         };
         items.push(Item::Struct(struct_def));
-
         // 2. 实现块
-        if let Some(impl_block) = self.create_thread_impl(comp) {
+        if let Some(impl_block) = self.create_threadtype_impl(comp) {
             items.push(Item::Impl(impl_block));
         }
 
@@ -321,9 +320,9 @@ impl AadlConverter {
     }
     
 
-    fn create_thread_impl(&self, comp: &ComponentType) -> Option<ImplBlock> {
+    fn create_threadtype_impl(&self, comp: &ComponentType) -> Option<ImplBlock> {
+        // 如果未提取到 period，说明不是周期性函数(也可能是period在实现中不在原型里)，则提前返回 None
         let period = self.extract_period(comp)?;
-
         Some(ImplBlock {
             target: Type::Named(format!("{}Thread", comp.identifier.to_lowercase())),
             generics: Vec::new(),
@@ -372,6 +371,7 @@ impl AadlConverter {
         Block {
             stmts: vec![
                 Statement::Let(LetStmt {
+                    ifmut: false,
                     name: "interval".to_string(),
                     ty: Some(Type::Path(vec!["tokio".to_string(), "time".to_string(), "Interval".to_string()])),
                     init: Some(Expr::Call(
@@ -741,6 +741,7 @@ impl AadlConverter {
 
                 let var_name = sub.identifier.to_lowercase();
                 stmts.push(Statement::Let(LetStmt {
+                    ifmut: false,
                     name: format!("mut {}", var_name),
                     ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
                     init: Some(Expr::Call(
@@ -830,6 +831,7 @@ impl AadlConverter {
         
         // 这里简化处理，实际应根据连接类型创建适当的channel
         stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
             name: "channel".to_string(),
             ty: None, //这里的通道类型由编译器自动推导
             init: Some(Expr::Call(
@@ -932,14 +934,254 @@ impl AadlConverter {
         };
         items.push(Item::Struct(struct_def));
 
-        // 2. 实现块
-        // if let Some(impl_block) = self.create_thread_impl(impl_) {
-        //     items.push(Item::Impl(impl_block));
-        // }
+        // 2. 实现块（包含run方法）
+        let impl_block = ImplBlock {
+            target: Type::Named(format!("{}Thread", impl_.name.type_identifier.to_lowercase())),
+            generics: Vec::new(),
+            items: vec![
+                // run方法
+                ImplItem::Method(FunctionDef {
+                    name: "run".to_string(),
+                    params: vec![Param {
+                        name: "self".to_string(),
+                        ty: Type::Reference(Box::new(Type::Named("Self".to_string())), true),
+                    }],
+                    return_type: Type::Unit,
+                    body: self.create_thread_run_body(impl_),
+                    asyncness: false,
+                    vis: Visibility::Public,
+                    docs: vec![
+                        "// Thread execution entry point".to_string(),
+                        format!("// Period: {:?} ms", 
+                            self.extract_property_value(impl_, "period")),
+                    ],
+                    attrs: Vec::new(),
+                }),
+            ],
+            trait_impl: None,
+        };
+        items.push(Item::Impl(impl_block));
 
         items
     }
 
+    fn create_thread_run_body(&self, impl_: &ComponentImplementation) -> Block {
+        let mut stmts = Vec::new();
+        
+        // 1. 周期设置
+        let period = self.extract_property_value(impl_, "period").unwrap_or(2000);
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "period".to_string(),
+            ty: Some(Type::Path(vec!["std".to_string(), "time".to_string(), "Duration".to_string()])),
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(
+                    vec!["Duration".to_string(), "from_millis".to_string()],
+                    PathType::Namespace,
+                )),
+                vec![Expr::Literal(Literal::Int(period as i64))],
+            )),
+        }));
+
+        // 2. 处理子程序调用（使用 IfLet 结构）
+        let subprogram_calls = self.extract_subprogram_calls(impl_);
+        let mut port_handling_stmts = Vec::new();
+
+        for (param_name, subprogram_name, field_name) in subprogram_calls {
+            // 构建 then 分支的语句
+            let mut then_stmts = Vec::new();
+            
+            // let mut val = 0;
+            then_stmts.push(Statement::Let(LetStmt {
+                name: "val".to_string(),
+                ty: None,
+                init: Some(Expr::Literal(Literal::Int(0))),
+                ifmut: true,  // 标记为可变
+            }));
+            
+            // do_ping_spg::send(val);
+            then_stmts.push(Statement::Expr(Expr::Call(
+                Box::new(Expr::Path(
+                    vec![subprogram_name.clone(), "send".to_string()],
+                    PathType::Namespace,
+                )),
+                vec![Expr::Ident("val".to_string())],
+            )));
+            
+            // sender.send(val).unwrap();
+            then_stmts.push(Statement::Expr(Expr::MethodCall(
+                Box::new(Expr::Ident("sender".to_string())),
+                "send".to_string(),
+                vec![Expr::Ident("val".to_string())],
+            )));
+
+            // 构建 IfLet 表达式
+            port_handling_stmts.push(Statement::Expr(Expr::IfLet {
+                pattern: "Some(sender)".to_string(),
+                value: Box::new(Expr::Path(
+                    vec!["self".to_string(), field_name],
+                    PathType::Member,
+                )),
+                then_branch: Block {
+                    stmts: then_stmts,
+                    expr: None,
+                },
+                else_branch: None,
+            }));
+        }
+
+        // 3. 主循环
+        stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
+            stmts: vec![
+                Statement::Let(LetStmt {
+                    ifmut: false,
+                    name: "start".to_string(),
+                    ty: None,
+                    init: Some(Expr::Call(
+                        Box::new(Expr::Path(
+                            vec!["Instant".to_string(), "now".to_string()],
+                            PathType::Namespace,
+                        )),
+                        Vec::new(),
+                    )),
+                }),
+                
+                // 子程序调用处理块
+                Statement::Expr(Expr::Block(Block {
+                    stmts: port_handling_stmts,
+                    expr: None,
+                })),
+                
+                Statement::Let(LetStmt {
+                    ifmut: false,
+                    name: "elapsed".to_string(),
+                    ty: None,
+                    init: Some(Expr::MethodCall(
+                        Box::new(Expr::Ident("start.".to_string())),
+                        "elapsed".to_string(),
+                        Vec::new(),
+                    )),
+                }),
+                Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Path(
+                        vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                        PathType::Namespace,
+                    )),
+                    "".to_string(),
+                    vec![Expr::MethodCall(
+                        Box::new(Expr::Ident("period.".to_string())),
+                        "saturating_sub".to_string(),
+                        vec![Expr::Ident("elapsed".to_string())],
+                    )],
+                )),
+            ],
+            expr: None,
+        }))));
+
+        Block { stmts, expr: None }
+    }
+
+    // 辅助函数：提取属性值
+    fn extract_property_value(&self, impl_: &ComponentImplementation, name: &str) -> Option<u64> {
+        let target_name = name.to_lowercase();
+        for prop in self.convert_properties(ComponentRef::Impl(impl_)) {
+            if prop.name.to_lowercase() == target_name {
+                match prop.value {
+                    StruPropertyValue::Integer(val) => return Some(val as u64),
+                    StruPropertyValue::Duration(val, unit) => {
+                        println!("Warning: Found duration {} {} for property {}, expected integer", 
+                            val, unit, name);
+                        return Some(val); // 假设duration的数值部分可用
+                    },
+                    _ => {
+                        println!("Warning: Property {} has unsupported type", name);
+                        return None;
+                    }
+                }
+            }
+        }
+        None
+    }
+    //连接关系解析函数
+    fn extract_subprogram_calls(&self, impl_: &ComponentImplementation) -> Vec<(String, String, String)> {
+        let mut calls = Vec::new();
+        
+        // 解析calls部分
+        if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
+            for call_clause in calls_clause {
+                for subprocall in &call_clause.calls{
+                    if let CalledSubprogram::Classifier(UniqueComponentClassifierReference::Implementation(temp)) = &subprocall.called {
+                        let subprogram_name = temp.implementation_name.type_identifier.to_lowercase();
+                        let subprogram_identifier = subprocall.identifier.to_lowercase();
+                        //解析connections部分
+                        if let ConnectionClause::Items(connections) = &impl_.connections {
+                            for conn in connections {
+                                if let Connection::Parameter(port_conn) = conn {
+                                    if let ParameterEndpoint::SubprogramCallParameter { call_identifier, parameter } = &port_conn.source {
+                                        let sou_parameter = parameter.to_lowercase();
+                                        if subprogram_identifier == call_identifier.to_lowercase() {
+                                            if let ParameterEndpoint::ComponentParameter { parameter, data_subcomponent } = &port_conn.destination{
+                                                let des_comp = parameter.to_lowercase();
+                                                calls.push((
+                                                    sou_parameter.to_lowercase(),  // 子程序端口名
+                                                    subprogram_name.to_lowercase(),      // 子程序名
+                                                    des_comp.to_lowercase() // 线程端口名
+                                                ));
+                                            }
+                                            
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        calls
+    }
+    // fn extract_subprogram_calls(&self, impl_: &ComponentImplementation) -> Vec<(String, String, String)> {
+    //     let mut calls = Vec::new();
+        
+    //     if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
+    //         for call_clause in calls_clause {
+    //             for subprocall in &call_clause.calls {
+    //                 if let CalledSubprogram::Classifier(UniqueComponentClassifierReference::Type(type_ref)) = &subprocall.called {
+    //                     let subprogram_name = type_ref.implementation_name.type_identifier.to_lowercase();
+    //                     let call_identifier = subprocall.identifier.to_lowercase();
+                        
+    //                     if let ConnectionClause::Items(connections) = &impl_.connections {
+    //                         for conn in connections {
+    //                             if let Connection::Parameter(param_conn) = conn {
+    //                                 // 匹配参数连接的源和目标
+    //                                 if let ParameterEndpoint::SubprogramCallParameter { 
+    //                                     call_identifier: src_call_id, 
+    //                                     parameter: src_param 
+    //                                 } = &param_conn.source {
+    //                                     if *src_call_id == call_identifier {
+    //                                         if let ParameterEndpoint::ComponentParameter { 
+    //                                             parameter: _,
+    //                                             data_subcomponent: Some(dst_comp) 
+    //                                         } = &param_conn.destination {
+    //                                             calls.push((
+    //                                                 src_param.to_lowercase(),  // 参数名
+    //                                                 subprogram_name.clone(),   // 子程序名
+    //                                                 dst_comp.to_lowercase()    // 线程字段名
+    //                                             ));
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+        
+    //     calls
+    // }
 
 
 

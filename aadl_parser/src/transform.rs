@@ -933,17 +933,20 @@ impl AADLTransformer {
             })
         }
             "parameter" => {
-                // TODO: Handle parameter connections
+                let mut port_iter = connection_body.into_inner();
+
+                let source = Self::transform_parameterport_reference(port_iter.next().unwrap());
+                let direction = match port_iter.next().unwrap().as_str() {
+                    "->" => ConnectionSymbol::Direct,
+                    "<->" => ConnectionSymbol::Didirect,
+                    _ => panic!("Unknown connection direction"),
+                };
+                let destination = Self::transform_parameterport_reference(port_iter.next().unwrap());
+                println!("{:?}  {:?}cjcjcjcjcjjcjcjcjc",source,destination);
                 Connection::Parameter(ParameterConnection {
-                    source: ParameterEndpoint::ComponentParameter {
-                        parameter: "".to_string(),
-                        data_subcomponent: None,
-                    },
-                    destination: ParameterEndpoint::ComponentParameter {
-                        parameter: "".to_string(),
-                        data_subcomponent: None,
-                    },
-                    connection_direction: ConnectionSymbol::Direct,
+                    source,
+                    destination,
+                    connection_direction: direction,
                 })
             }
             _ => panic!("Unknown connection type"),
@@ -960,6 +963,20 @@ impl AADLTransformer {
             }
         } else {
             PortEndpoint::ComponentPort(reference.to_string())
+        }
+    }
+
+    pub fn transform_parameterport_reference(pair: Pair<aadlight_parser::Rule>) -> ParameterEndpoint {
+        let reference = pair.as_str().trim();
+        if reference.contains('.') {
+            let mut parts = reference.split('.');
+            ParameterEndpoint::SubprogramCallParameter { 
+                call_identifier: parts.next().unwrap().to_string(), 
+                parameter: parts.next().unwrap().to_string() } 
+        } else {
+            ParameterEndpoint::ComponentParameter { 
+                parameter: reference.to_string(), 
+                data_subcomponent: (None) }
         }
     }
 }

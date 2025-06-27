@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-06-26 20:36:38
+// 生成时间: 2025-06-27 19:00:23
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
@@ -36,10 +36,10 @@ impl aProcess {
     pub fn start(self: &mut Self) -> () {
         thread::Builder::new()
             .name("pinger".to_string())
-            .spawn(move || { self.pinger.run() }).unwrap();
+            .spawn(move || { self.pingerrun() })unwrap();
         thread::Builder::new()
             .name("ping_me".to_string())
-            .spawn(move || { self.ping_me.run() }).unwrap();
+            .spawn(move || { self.ping_merun() })unwrap();
     }
     
 }
@@ -104,6 +104,28 @@ impl pThread {
         }
     }
 }
+impl pThread {
+    // Thread execution entry point
+    // Period: Some(2000) ms
+    pub fn run(self: &mut Self) -> () {
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+                if let Some(sender) = self.data_source {
+                    let mut val = 0;
+                    do_ping_spg::send(val);
+                    // build connection: 
+                        sender = val;
+                };
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
+}
+
 // AADL Thread: q
 #[derive(Debug)]
 pub struct qThread {
@@ -129,3 +151,19 @@ impl qThread {
         }
     }
 }
+impl qThread {
+    // Thread execution entry point
+    // Period: Some(10) ms
+    pub fn run(self: &mut Self) -> () {
+        let period: std::time::Duration = Duration::from_millis(10);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
+}
+

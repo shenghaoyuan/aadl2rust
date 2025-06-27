@@ -129,6 +129,17 @@ pub enum Expr {
     Closure(Vec<String>, Box<Expr>),
     BuilderChain(Vec<BuilderMethod>), // 新增：表示(进程在创建线程时)构建器链式调用
     Unsafe(Box<Block>),  // 新增 unsafe 表达式支持
+    If {
+        condition: Box<Expr>,
+        then_branch: Block,
+        else_branch: Option<Block>,
+    },//条件表达式
+    IfLet {
+        pattern: String,
+        value: Box<Expr>,
+        then_branch: Block,
+        else_branch: Option<Block>,
+    }
 }
 
 //区分.name()、.stack_size()等不同构建器方法
@@ -182,6 +193,7 @@ pub enum Statement {
 /// let绑定
 #[derive(Debug,Clone)]
 pub struct LetStmt {
+    pub ifmut: bool,
     pub name: String,
     pub ty: Option<Type>,
     pub init: Option<Expr>,

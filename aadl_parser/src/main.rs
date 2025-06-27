@@ -88,6 +88,7 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     let rust_module = converter.convert_package(&aadl_pkg);
     println!("\n==================================== rust_module ===================================");
     //println!("{:#?}",rust_module);
+    fs::write("rustast0.txt", format!("{:#?}", rust_module)).unwrap();
     let merge_rust_module = merge_item_defs(rust_module);
     fs::write("rustast.txt", format!("{:#?}", merge_rust_module)).unwrap();
     

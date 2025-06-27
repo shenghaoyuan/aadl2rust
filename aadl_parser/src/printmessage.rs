@@ -78,12 +78,21 @@ pub fn print_ast(ast: &Vec<Package>) {
                         }
                         if let ConnectionClause::Items(conns) = &impl_.connections {
                             for conn in conns {
-                                if let Connection::Port(port_conn) = conn {
-                                    println!(
-                                        "    Connection: {:?} -> {:?}",
-                                        port_conn.source, port_conn.destination
-                                    );
+                                match conn {
+                                    Connection::Port(port_conn) =>{
+                                        println!(
+                                            "    Connection: {:?} -> {:?}",
+                                            port_conn.source, port_conn.destination
+                                        );
+                                    }
+                                    Connection::Parameter(parameter_conn) => {
+                                        println!(
+                                            "    Connection: {:?} -> {:?}",
+                                            parameter_conn.source, parameter_conn.destination
+                                        );
+                                    }
                                 }
+                                
                             }
                         }
                         if let PropertyClause::Properties(props) = &impl_.properties {

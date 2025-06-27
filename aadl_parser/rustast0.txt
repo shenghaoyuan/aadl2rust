@@ -491,6 +491,21 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: p",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "pThread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Recover_Entrypoint_Source_Text",
@@ -795,6 +810,21 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: q",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "qThread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
