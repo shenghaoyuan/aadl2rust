@@ -102,7 +102,7 @@ pub enum Type {
     Path(Vec<String>),           // std::vec::Vec
     Named(String),               // i32, String
     Generic(String, Vec<Type>),  // HashMap<K, V>
-    Reference(Box<Type>, bool),  // &mut T ,bool代表是否可变&mut
+    Reference(Box<Type>, bool, bool),  // &mut T ,第一个bool代表是否是引用，第二个bool代码是否可变mut
     Tuple(Vec<Type>),            // (T1, T2)
     Slice(Box<Type>),            // [T]
     Unit,                        // ()
@@ -139,7 +139,9 @@ pub enum Expr {
         value: Box<Expr>,
         then_branch: Block,
         else_branch: Option<Block>,
-    }
+    },
+    Reference(Box<Expr>,bool,bool),    // &expr,第一位标志&,第二位标志mut
+
 }
 
 //区分.name()、.stack_size()等不同构建器方法

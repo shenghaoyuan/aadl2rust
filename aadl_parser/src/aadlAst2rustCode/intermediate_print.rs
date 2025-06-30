@@ -1,7 +1,7 @@
 // src/ir/intermediate_print.rs
 use super::intermediate_ast::*;
-use std::fmt::{self, Write};
 use chrono::Local;
+use std::fmt::{self, Write};
 
 // Rust代码生成器
 pub struct RustCodeGenerator {
@@ -20,10 +20,13 @@ impl RustCodeGenerator {
     // 主入口：生成完整模块代码
     pub fn generate_module_code(&mut self, module: &RustModule) -> String {
         self.buffer.clear();
-        
+
         // 文件头
         self.writeln("// 自动生成的 Rust 代码 - 来自 AADL 模型");
-        self.writeln(&format!("// 生成时间: {}", Local::now().format("%Y-%m-%d %H:%M:%S")));
+        self.writeln(&format!(
+            "// 生成时间: {}",
+            Local::now().format("%Y-%m-%d %H:%M:%S")
+        ));
         self.writeln("");
         self.writeln("#![allow(unused_imports)]");
         self.writeln("use std::sync::mpsc;");
@@ -65,14 +68,12 @@ impl RustCodeGenerator {
         match &m.vis {
             Visibility::Public => self.write("pub "),
             Visibility::Private => (), // 私有模块不添加修饰符
-            Visibility::Restricted(paths) => {
-                self.write(&format!("pub(in {} ) ", paths.join("::")))
-            }
+            Visibility::Restricted(paths) => self.write(&format!("pub(in {} ) ", paths.join("::"))),
         }
 
         self.writeln(&format!("mod {} {{", m.name));
         self.indent();
-        
+
         // 模块级文档和属性
         for doc in &m.docs {
             self.writeln(doc);
@@ -80,10 +81,10 @@ impl RustCodeGenerator {
         for attr in &m.attrs {
             self.generate_attribute(attr);
         }
-        
+
         // 模块内容
         self.generate_items(&m.items);
-        
+
         self.dedent();
         self.writeln("}");
         self.writeln("");
@@ -99,7 +100,9 @@ impl RustCodeGenerator {
         if !s.derives.is_empty() {
             self.write("#[derive(");
             for (i, derive) in s.derives.iter().enumerate() {
-                if i > 0 { self.write(", "); }
+                if i > 0 {
+                    self.write(", ");
+                }
                 self.write(derive);
             }
             self.writeln(")]");
@@ -107,18 +110,22 @@ impl RustCodeGenerator {
 
         // 结构体定义
         self.write(&format!("{}struct {} ", self.visibility(&s.vis), s.name));
-        
+
         if s.generics.is_empty() {
             self.writeln("{");
         } else {
             self.write("<");
             for (i, generic) in s.generics.iter().enumerate() {
-                if i > 0 { self.write(", "); }
+                if i > 0 {
+                    self.write(", ");
+                }
                 self.write(&generic.name);
                 if !generic.bounds.is_empty() {
                     self.write(": ");
                     for (j, bound) in generic.bounds.iter().enumerate() {
-                        if j > 0 { self.write(" + "); }
+                        if j > 0 {
+                            self.write(" + ");
+                        }
                         self.write(bound);
                     }
                 }
@@ -127,7 +134,7 @@ impl RustCodeGenerator {
         }
 
         self.indent();
-    
+
         // 1. 生成端口字段
         for field in &s.fields {
             self.generate_field(field);
@@ -150,7 +157,6 @@ impl RustCodeGenerator {
         self.writeln("");
 
         self.generate_properties_impl(s);
-        
     }
 
     // 生成属性初始化impl块
@@ -162,15 +168,15 @@ impl RustCodeGenerator {
         self.writeln(&format!("impl {} {{", s.name));
         self.writeln("    // 创建组件并初始化AADL属性");
         self.write("    pub fn new(");
-        
+
         self.writeln(") -> Self {");
         self.writeln("        Self {");
-        
+
         // 端口字段初始化
         for field in &s.fields {
             self.writeln(&format!("            {}: None,", field.name));
         }
-        
+
         // 属性字段初始化
         for prop in &s.properties {
             let init_value = match &prop.value {
@@ -188,7 +194,7 @@ impl RustCodeGenerator {
                 prop.docs[0].trim_start_matches("// ")
             ));
         }
-        
+
         self.writeln("        }");
         self.writeln("    }");
         self.writeln("}");
@@ -222,32 +228,36 @@ impl RustCodeGenerator {
 
     fn generate_impl(&mut self, i: &ImplBlock) {
         self.write("impl");
-        
+
         // 泛型参数
         if !i.generics.is_empty() {
             self.write("<");
             for (idx, generic) in i.generics.iter().enumerate() {
-                if idx > 0 { self.write(", "); }
+                if idx > 0 {
+                    self.write(", ");
+                }
                 self.write(&generic.name);
                 if !generic.bounds.is_empty() {
                     self.write(": ");
                     for (j, bound) in generic.bounds.iter().enumerate() {
-                        if j > 0 { self.write(" + "); }
+                        if j > 0 {
+                            self.write(" + ");
+                        }
                         self.write(bound);
                     }
                 }
             }
             self.write(">");
         }
-        
+
         // 目标类型
         self.write(&format!(" {} ", self.type_to_string(&i.target)));
-        
+
         // trait实现
         if let Some(trait_ty) = &i.trait_impl {
             self.write(&format!("for {} ", self.type_to_string(trait_ty)));
         }
-        
+
         self.writeln("{");
         self.indent();
 
@@ -264,7 +274,7 @@ impl RustCodeGenerator {
                 }
             }
         }
-        
+
         self.dedent();
         self.writeln("}");
         self.writeln("");
@@ -275,12 +285,12 @@ impl RustCodeGenerator {
         for doc in &f.docs {
             self.writeln(doc);
         }
-        
+
         // 属性
         for attr in &f.attrs {
             self.generate_attribute(attr);
         }
-        
+
         // 函数签名
         self.write(&format!(
             "{}{}fn {}",
@@ -288,18 +298,28 @@ impl RustCodeGenerator {
             if f.asyncness { "async " } else { "" },
             f.name
         ));
-        
+
         // 参数
         self.write("(");
         for (i, param) in f.params.iter().enumerate() {
-            if i > 0 { self.write(", "); }
-            self.write(&format!("{}: {}", param.name, self.type_to_string(&param.ty)));
+            if i > 0 {
+                self.write(", ");
+            }
+            if param.name.is_empty() {
+                self.write(&self.type_to_string(&param.ty));
+            } else {
+                self.write(&format!(
+                    "{}: {}",
+                    param.name,
+                    self.type_to_string(&param.ty)
+                ));
+            }
         }
         self.write(")");
-        
+
         // 返回类型
         self.write(&format!(" -> {}", self.type_to_string(&f.return_type)));
-        
+
         // 函数体
         self.writeln(" {");
         self.indent();
@@ -313,7 +333,7 @@ impl RustCodeGenerator {
         for stmt in &block.stmts {
             self.generate_statement(stmt);
         }
-        
+
         if let Some(expr) = &block.expr {
             self.generate_expr(expr);
             self.writeln(";");
@@ -347,7 +367,9 @@ impl RustCodeGenerator {
                         self.write(" = ");
 
                         for (i, arg) in args.iter().enumerate() {
-                            if i > 0 { self.write(", "); }
+                            if i > 0 {
+                                self.write(", ");
+                            }
                             self.generate_expr(arg);
                         }
                         self.writeln(";");
@@ -366,14 +388,16 @@ impl RustCodeGenerator {
     fn generate_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Ident(id) => self.write(id),
-            Expr::Path(path,path_type) => {
+            Expr::Path(path, path_type) => {
                 let separator = match path_type {
                     PathType::Namespace => "::",
                     PathType::Member => ".",
                 };
-                
+
                 for (i, part) in path.iter().enumerate() {
-                    if i > 0 { self.write(separator); }
+                    if i > 0 {
+                        self.write(separator);
+                    }
                     self.write(part);
                 }
             }
@@ -382,16 +406,23 @@ impl RustCodeGenerator {
                 self.generate_expr(callee);
                 self.write("(");
                 for (i, arg) in args.iter().enumerate() {
-                    if i > 0 { self.write(", "); }
+                    if i > 0 {
+                        self.write(", ");
+                    }
                     self.generate_expr(arg);
                 }
                 self.write(")");
             }
             Expr::MethodCall(receiver, method, args) => {
                 self.generate_expr(receiver);
-                self.write(&format!("{}(", method));
+                if !method.is_empty() {
+                    self.write(&format!(".{}", method));
+                }
+                self.write("(");
                 for (i, arg) in args.iter().enumerate() {
-                    if i > 0 { self.write(", "); }
+                    if i > 0 {
+                        self.write(", ");
+                    }
                     self.generate_expr(arg);
                 }
                 self.write(")");
@@ -421,7 +452,7 @@ impl RustCodeGenerator {
                     match method {
                         BuilderMethod::Named(name) => {
                             self.writeln(&format!("    .name({})", name));
-                        },
+                        }
                         // BuilderMethod::StackSize(expr) => {
                         //     self.write("    .stack_size(");
                         //     self.generate_expr(expr);
@@ -437,15 +468,17 @@ impl RustCodeGenerator {
                         }
                     }
                 }
-            },
+            }
             Expr::Closure(params, body) => {
                 self.write("|");
                 for (i, param) in params.iter().enumerate() {
-                    if i > 0 { self.write(", "); }
+                    if i > 0 {
+                        self.write(", ");
+                    }
                     self.write(param);
                 }
                 self.write("| ");
-                
+
                 // 特殊处理单表达式闭包体
                 match body.as_ref() {
                     Expr::Block(_) => self.generate_expr(body),
@@ -455,7 +488,7 @@ impl RustCodeGenerator {
                         self.write(" }");
                     }
                 }
-            },
+            }
             Expr::Unsafe(block) => {
                 self.write("unsafe ");
                 // 根据块的内容决定格式化方式
@@ -473,37 +506,54 @@ impl RustCodeGenerator {
                     self.write("}");
                 }
             }
-            Expr::If { condition, then_branch, else_branch } => {
+            Expr::If {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
                 self.write("if ");
                 self.generate_expr(condition);
                 self.write(" ");
                 self.generate_block(then_branch);
-                
+
                 if let Some(else_branch) = else_branch {
                     self.write(" else ");
                     self.generate_block(else_branch);
                 }
             }
-            Expr::IfLet { pattern, value, then_branch, else_branch } => {
-            self.write("if let ");
-            self.write(pattern);
-            self.write(" = ");
-            self.generate_expr(value);
-            self.write(" {\n");
-            self.indent();
-            self.generate_block(then_branch);
-            self.dedent();
-            self.write("}");
-            
-            if let Some(else_branch) = else_branch {
-                self.write(" else {\n");
+            Expr::IfLet {
+                pattern,
+                value,
+                then_branch,
+                else_branch,
+            } => {
+                self.write("if let ");
+                self.write(pattern);
+                self.write(" = ");
+                self.generate_expr(value);
+                self.write(" {\n");
                 self.indent();
-                self.generate_block(else_branch);
+                self.generate_block(then_branch);
                 self.dedent();
                 self.write("}");
+
+                if let Some(else_branch) = else_branch {
+                    self.write(" else {\n");
+                    self.indent();
+                    self.generate_block(else_branch);
+                    self.dedent();
+                    self.write("}");
+                }
             }
-        }
-            //_ => self.write(""),
+            Expr::Reference(inner_expr, is_reference, mutable) => {
+                if *is_reference {
+                    self.write("&");
+                }
+                if *mutable {
+                    self.write("mut ");
+                }
+                self.generate_expr(inner_expr);
+            } //_ => self.write(""),
         }
     }
 
@@ -534,36 +584,42 @@ impl RustCodeGenerator {
         for doc in &e.docs {
             self.writeln(doc);
         }
-        
+
         if !e.derives.is_empty() {
             self.write("#[derive(");
             for (i, derive) in e.derives.iter().enumerate() {
-                if i > 0 { self.write(", "); }
+                if i > 0 {
+                    self.write(", ");
+                }
                 self.write(derive);
             }
             self.writeln(")]");
         }
-        
+
         self.write(&format!("{}enum {} ", self.visibility(&e.vis), e.name));
-        
+
         if e.generics.is_empty() {
             self.writeln("{");
         } else {
             self.write("<");
             for (i, generic) in e.generics.iter().enumerate() {
-                if i > 0 { self.write(", "); }
+                if i > 0 {
+                    self.write(", ");
+                }
                 self.write(&generic.name);
                 if !generic.bounds.is_empty() {
                     self.write(": ");
                     for (j, bound) in generic.bounds.iter().enumerate() {
-                        if j > 0 { self.write(" + "); }
+                        if j > 0 {
+                            self.write(" + ");
+                        }
                         self.write(bound);
                     }
                 }
             }
             self.writeln("> {");
         }
-        
+
         self.indent();
         for variant in &e.variants {
             for doc in &variant.docs {
@@ -573,7 +629,9 @@ impl RustCodeGenerator {
             if let Some(types) = &variant.data {
                 self.write("(");
                 for (i, ty) in types.iter().enumerate() {
-                    if i > 0 { self.write(", "); }
+                    if i > 0 {
+                        self.write(", ");
+                    }
                     self.write(&self.type_to_string(ty));
                 }
                 self.write(")");
@@ -601,14 +659,16 @@ impl RustCodeGenerator {
     }
 
     fn generate_use(&mut self, u: &UseStatement) {
-    self.write("use ");
-    
-    // 生成路径部分 (如 "super" 或 "std::collections")
-    for (i, part) in u.path.iter().enumerate() {
-            if i > 0 { self.write("::"); }
+        self.write("use ");
+
+        // 生成路径部分 (如 "super" 或 "std::collections")
+        for (i, part) in u.path.iter().enumerate() {
+            if i > 0 {
+                self.write("::");
+            }
             self.write(part);
         }
-        
+
         // 生成不同种类的use语句
         match &u.kind {
             UseKind::Simple => self.writeln(";"),
@@ -616,7 +676,9 @@ impl RustCodeGenerator {
             UseKind::Nested(items) => {
                 self.write("::{");
                 for (i, item) in items.iter().enumerate() {
-                    if i > 0 { self.write(", "); }
+                    if i > 0 {
+                        self.write(", ");
+                    }
                     self.write(item);
                 }
                 self.writeln("};");
@@ -629,7 +691,9 @@ impl RustCodeGenerator {
         if !attr.args.is_empty() {
             self.write("(");
             for (i, arg) in attr.args.iter().enumerate() {
-                if i > 0 { self.write(", "); }
+                if i > 0 {
+                    self.write(", ");
+                }
                 match arg {
                     AttributeArg::Ident(id) => self.write(id),
                     AttributeArg::Literal(lit) => self.generate_literal(lit),
@@ -652,22 +716,33 @@ impl RustCodeGenerator {
                 let mut s = name.clone();
                 s.push('<');
                 for (i, param) in params.iter().enumerate() {
-                    if i > 0 { s.push_str(", "); }
+                    if i > 0 {
+                        s.push_str(", ");
+                    }
                     s.push_str(&self.type_to_string(param));
                 }
                 s.push('>');
                 s
             }
-            Type::Reference(inner, mutable) => {
-                format!("{}{}", if *mutable { "&mut " } else { "" }, self.type_to_string(inner))
+            Type::Reference(inner, is_reference, mutable) => {
+                format!(
+                    "{}{}{}",
+                    if *is_reference { "&" } else { "" },
+                    if *mutable { "mut " } else { "" },
+                    self.type_to_string(inner)
+                )
             }
             Type::Tuple(types) => {
                 let mut s = "(".to_string();
                 for (i, ty) in types.iter().enumerate() {
-                    if i > 0 { s.push_str(", "); }
+                    if i > 0 {
+                        s.push_str(", ");
+                    }
                     s.push_str(&self.type_to_string(ty));
                 }
-                if types.len() == 1 { s.push(','); }
+                if types.len() == 1 {
+                    s.push(',');
+                }
                 s.push(')');
                 s
             }

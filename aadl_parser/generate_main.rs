@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-06-27 19:00:23
+// 生成时间: 2025-06-30 17:24:10
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
@@ -33,13 +33,13 @@ impl aProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: &mut Self) -> () {
+    pub fn start(self: Self) -> () {
         thread::Builder::new()
             .name("pinger".to_string())
-            .spawn(move || { self.pingerrun() })unwrap();
+            .spawn(move || { self.pinger.run() }).unwrap();
         thread::Builder::new()
             .name("ping_me".to_string())
-            .spawn(move || { self.ping_merun() })unwrap();
+            .spawn(move || { self.ping_me.run() }).unwrap();
     }
     
 }
@@ -107,16 +107,15 @@ impl pThread {
 impl pThread {
     // Thread execution entry point
     // Period: Some(2000) ms
-    pub fn run(self: &mut Self) -> () {
+    pub fn run(mut self) -> () {
         let period: std::time::Duration = Duration::from_millis(2000);
         loop {
             let start = Instant::now();
             {
-                if let Some(sender) = self.data_source {
+                if let Some(sender) = &self.data_source {
                     let mut val = 0;
-                    do_ping_spg::send(val);
-                    // build connection: 
-                        sender = val;
+                    do_ping_spg::send(&mut val);
+                    sender.send(val).unwrap();
                 };
             };
             let elapsed = start.elapsed();
@@ -154,11 +153,15 @@ impl qThread {
 impl qThread {
     // Thread execution entry point
     // Period: Some(10) ms
-    pub fn run(self: &mut Self) -> () {
+    pub fn run(mut self) -> () {
         let period: std::time::Duration = Duration::from_millis(10);
         loop {
             let start = Instant::now();
             {
+                if let Some(receiver) = &self.data_sink {
+                    let val = receiver.recv().unwrap();
+                    ping_spg::receive(val);
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

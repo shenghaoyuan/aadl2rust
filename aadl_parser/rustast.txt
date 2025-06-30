@@ -208,11 +208,8 @@ RustModule {
                             params: [
                                 Param {
                                     name: "self",
-                                    ty: Reference(
-                                        Named(
-                                            "Self",
-                                        ),
-                                        true,
+                                    ty: Named(
+                                        "Self",
                                     ),
                                 },
                             ],
@@ -339,6 +336,7 @@ RustModule {
                                             "Simple_Type",
                                         ),
                                         true,
+                                        true,
                                     ),
                                 },
                             ],
@@ -418,6 +416,7 @@ RustModule {
                                         Named(
                                             "Simple_Type",
                                         ),
+                                        false,
                                         false,
                                     ),
                                 },
@@ -569,11 +568,12 @@ RustModule {
                             name: "run",
                             params: [
                                 Param {
-                                    name: "self",
+                                    name: "",
                                     ty: Reference(
                                         Named(
-                                            "Self",
+                                            "self",
                                         ),
+                                        false,
                                         true,
                                     ),
                                 },
@@ -644,12 +644,16 @@ RustModule {
                                                                     Expr(
                                                                         IfLet {
                                                                             pattern: "Some(sender)",
-                                                                            value: Path(
-                                                                                [
-                                                                                    "self",
-                                                                                    "data_source",
-                                                                                ],
-                                                                                Member,
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "data_source",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
                                                                             ),
                                                                             then_branch: Block {
                                                                                 stmts: [
@@ -677,23 +681,31 @@ RustModule {
                                                                                                 Namespace,
                                                                                             ),
                                                                                             [
-                                                                                                Ident(
-                                                                                                    "val",
+                                                                                                Reference(
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                    true,
+                                                                                                    true,
                                                                                                 ),
                                                                                             ],
                                                                                         ),
                                                                                     ),
                                                                                     Expr(
                                                                                         MethodCall(
-                                                                                            Ident(
-                                                                                                "sender",
-                                                                                            ),
-                                                                                            "send",
-                                                                                            [
+                                                                                            MethodCall(
                                                                                                 Ident(
-                                                                                                    "val",
+                                                                                                    "sender",
                                                                                                 ),
-                                                                                            ],
+                                                                                                "send",
+                                                                                                [
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                ],
+                                                                                            ),
+                                                                                            "unwrap",
+                                                                                            [],
                                                                                         ),
                                                                                     ),
                                                                                 ],
@@ -715,7 +727,7 @@ RustModule {
                                                             init: Some(
                                                                 MethodCall(
                                                                     Ident(
-                                                                        "start.",
+                                                                        "start",
                                                                     ),
                                                                     "elapsed",
                                                                     [],
@@ -737,7 +749,7 @@ RustModule {
                                                             [
                                                                 MethodCall(
                                                                     Ident(
-                                                                        "period.",
+                                                                        "period",
                                                                     ),
                                                                     "saturating_sub",
                                                                     [
@@ -855,11 +867,12 @@ RustModule {
                             name: "run",
                             params: [
                                 Param {
-                                    name: "self",
+                                    name: "",
                                     ty: Reference(
                                         Named(
-                                            "Self",
+                                            "self",
                                         ),
+                                        false,
                                         true,
                                     ),
                                 },
@@ -926,7 +939,66 @@ RustModule {
                                                     Expr(
                                                         Block(
                                                             Block {
-                                                                stmts: [],
+                                                                stmts: [
+                                                                    Expr(
+                                                                        IfLet {
+                                                                            pattern: "Some(receiver)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "data_sink",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
+                                                                            ),
+                                                                            then_branch: Block {
+                                                                                stmts: [
+                                                                                    Let(
+                                                                                        LetStmt {
+                                                                                            ifmut: false,
+                                                                                            name: "val",
+                                                                                            ty: None,
+                                                                                            init: Some(
+                                                                                                MethodCall(
+                                                                                                    MethodCall(
+                                                                                                        Ident(
+                                                                                                            "receiver",
+                                                                                                        ),
+                                                                                                        "recv",
+                                                                                                        [],
+                                                                                                    ),
+                                                                                                    "unwrap",
+                                                                                                    [],
+                                                                                                ),
+                                                                                            ),
+                                                                                        },
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Call(
+                                                                                            Path(
+                                                                                                [
+                                                                                                    "ping_spg",
+                                                                                                    "receive",
+                                                                                                ],
+                                                                                                Namespace,
+                                                                                            ),
+                                                                                            [
+                                                                                                Ident(
+                                                                                                    "val",
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                            else_branch: None,
+                                                                        },
+                                                                    ),
+                                                                ],
                                                                 expr: None,
                                                             },
                                                         ),
@@ -939,7 +1011,7 @@ RustModule {
                                                             init: Some(
                                                                 MethodCall(
                                                                     Ident(
-                                                                        "start.",
+                                                                        "start",
                                                                     ),
                                                                     "elapsed",
                                                                     [],
@@ -961,7 +1033,7 @@ RustModule {
                                                             [
                                                                 MethodCall(
                                                                     Ident(
-                                                                        "period.",
+                                                                        "period",
                                                                     ),
                                                                     "saturating_sub",
                                                                     [

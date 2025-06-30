@@ -1,7 +1,7 @@
-use pingpongcallc::PingPongProcess;
+use pingpongcallc::aProcess;
 
 fn main() {
-    let process = PingPongProcess::new();
+    let process = aProcess::new();
     process.start();
 
     // 主线程阻塞
