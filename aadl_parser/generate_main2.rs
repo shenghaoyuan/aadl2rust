@@ -1,11 +1,25 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-13 14:24:24
+// 生成时间: 2025-08-14 19:51:55
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
+use libc::{
+    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
+    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
+};
 include!(concat!(env!("OUT_DIR"), "/c_bindings.rs"));
+
+// ---------------- cpu ----------------
+fn set_thread_affinity(cpu: usize) {
+    unsafe {
+        let mut cpuset: cpu_set_t = std::mem::zeroed();
+        CPU_ZERO(&mut cpuset);
+        CPU_SET(cpu, &mut cpuset);
+        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);
+    }
+}
 
 pub mod hello_spg_1 {
     // Auto-generated from AADL subprogram: Hello_Spg_1

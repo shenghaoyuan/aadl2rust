@@ -123,13 +123,12 @@ parameter_connection = {
     parameter_reference ~ connection_operator ~ parameter_reference
 }
 
-// 11 Properties
+// 11 Properties 这里其实合并了property_association和contained_property_association（有applies子句，移动到了property_value的reference_value里）
 property_association = {
     identifier ~
     ( "::" ~ property_set_name )? ~
     property_operator ~
     constant? ~ property_value ~
-    ( "applies" ~ "to" ~ qualified_identifier_list )? ~
     ";"
 }
 
@@ -152,7 +151,7 @@ range_value = {
     number ~ WHITESPACE* ~ unit? 
 }
 list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
-reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" }
+reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" ~ ( "applies" ~ "to" ~ qualified_identifier )? }
 
 sign = { "+" | "-" }
 dot = { "." }

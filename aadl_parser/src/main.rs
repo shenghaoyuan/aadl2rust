@@ -101,8 +101,8 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     //println!("{}", rust_code);
 
     // 生成 build.rs
-    let build_rs_content = generate_build_rs(&merge_rust_module);
-    fs::write("build.rs", build_rs_content).expect("Failed to write build.rs");
+    //let build_rs_content = generate_build_rs(&merge_rust_module);
+    //fs::write("build.rs", build_rs_content).expect("Failed to write build.rs");
 
     // 同时保存主Rust代码
     fs::write("generate_main2.rs", rust_code).expect("Failed to write main.rs");

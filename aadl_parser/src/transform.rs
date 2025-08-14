@@ -1,3 +1,5 @@
+//pest解析后的结果转换为aadlAst
+
 use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};
@@ -648,10 +650,22 @@ impl AADLTransformer {
                 PropertyValue::List(elements)
             }
             aadlight_parser::Rule::reference_value => {
-                let qualified_id = inner.into_inner().next().unwrap();
-                PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(
-                    extract_identifier(qualified_id),
-                )))
+                let mut ref_parts = inner.into_inner();
+                let referenced_id = extract_identifier(ref_parts.next().unwrap());
+                
+                // 检查是否有 applies to 子句
+                let mut applies_to = None;
+                while let Some(part) = ref_parts.next() {
+                    if part.as_rule() == aadlight_parser::Rule::qualified_identifier {
+                        applies_to = Some(extract_identifier(part));
+                        break;
+                    }
+                }
+                
+                PropertyValue::Single(PropertyExpression::Reference(ReferenceTerm { 
+                    identifier: referenced_id,
+                    applies_to,
+                }))
             }
             _ => panic!("Unknown property value type"),
         }
@@ -664,6 +678,25 @@ impl AADLTransformer {
         
         // TODO: Properly handle annexes
         Vec::new()
+    }
+
+    /// 从属性中提取CPU绑定信息
+    fn extract_cpu_binding(properties: &PropertyClause) -> Option<CpuBinding> {
+        if let PropertyClause::Properties(props) = properties {
+            for prop in props {
+                if let Property::BasicProperty(bp) = prop {
+                    if bp.identifier.name == "Actual_Processor_Binding" {
+                        if let PropertyValue::Single(PropertyExpression::Reference(ref_term)) = &bp.value {
+                            return Some(CpuBinding {
+                                cpu_identifier: ref_term.identifier.clone(),
+                                target_component: ref_term.applies_to.clone(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        None
     }
     
     pub fn transform_component_implementation(pair: Pair<aadlight_parser::Rule>) -> ComponentImplementation {
@@ -726,6 +759,9 @@ impl AADLTransformer {
             }
         }
         
+        // 提取CPU绑定信息
+        let cpu_binding = Self::extract_cpu_binding(&properties);
+        
         ComponentImplementation {
             category,
             name,
@@ -736,6 +772,7 @@ impl AADLTransformer {
             connections,
             properties,
             annexes,
+            cpu_binding,
         }
     }
     

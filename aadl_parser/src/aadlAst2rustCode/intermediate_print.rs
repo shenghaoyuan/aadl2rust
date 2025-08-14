@@ -32,8 +32,25 @@ impl RustCodeGenerator {
         self.writeln("use std::sync::mpsc;");
         self.writeln("use std::thread;");
         self.writeln("use std::time::{Duration, Instant};");
+        self.writeln("use std::collections::HashMap;");
+        self.writeln("use libc::{");
+        self.writeln("    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,");
+        self.writeln("    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,");
+        self.writeln("};");
         self.writeln("include!(concat!(env!(\"OUT_DIR\"), \"/c_bindings.rs\"));"); //绑定的函数通过 include! 注入到根模块
 
+        self.writeln("");
+
+        // 添加CPU亲和性设置函数
+        self.writeln("// ---------------- cpu ----------------");
+        self.writeln("fn set_thread_affinity(cpu: usize) {");
+        self.writeln("    unsafe {");
+        self.writeln("        let mut cpuset: cpu_set_t = std::mem::zeroed();");
+        self.writeln("        CPU_ZERO(&mut cpuset);");
+        self.writeln("        CPU_SET(cpu, &mut cpuset);");
+        self.writeln("        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);");
+        self.writeln("    }");
+        self.writeln("}");
         self.writeln("");
 
         // 生成模块内容
@@ -141,7 +158,7 @@ impl RustCodeGenerator {
         }
 
         // 如果是进程结构体则不生成属性字段
-        if !s.name.ends_with("Process") && !s.properties.is_empty() {
+        if !s.name.ends_with("Process") && !s.name.ends_with("System") && !s.properties.is_empty() {
             self.writeln("\n    // --- AADL属性 ---");
             for prop in &s.properties {
                 self.writeln(&format!(
@@ -157,6 +174,16 @@ impl RustCodeGenerator {
         self.writeln("");
 
         self.generate_properties_impl(s);
+        
+        // 如果是进程结构体，添加获取CPU编号的方法
+        if s.name.ends_with("Process") {
+            self.generate_cpu_binding_method(s);
+        }
+        
+        // 如果是系统结构体，添加CPU映射初始化
+        if s.name.ends_with("System") {
+            self.generate_system_cpu_mapping_init(s);
+        }
     }
 
     // 生成属性初始化impl块
@@ -781,5 +808,32 @@ impl RustCodeGenerator {
         if self.indent_level > 0 {
             self.indent_level -= 1;
         }
+    }
+    
+    // 为进程结构体生成CPU绑定方法
+    fn generate_cpu_binding_method(&mut self, s: &StructDef) {
+        self.writeln(&format!("impl {} {{", s.name));
+        self.writeln("    // 获取进程绑定的CPU编号");
+        self.writeln("    pub fn get_cpu_binding(&self) -> usize {");
+        self.writeln("        // 这里应该从AADL属性中获取CPU绑定信息");
+        self.writeln("        // 暂时返回默认值0，后续可以根据AADL属性动态设置");
+        self.writeln("        0");
+        self.writeln("    }");
+        self.writeln("}");
+        self.writeln("");
+    }
+    
+    // 为系统结构体生成CPU映射初始化
+    fn generate_system_cpu_mapping_init(&mut self, s: &StructDef) {
+        self.writeln(&format!("impl {} {{", s.name));
+        self.writeln("    // 初始化CPU映射");
+        self.writeln("    pub fn init_cpu_mapping(&mut self) {");
+        self.writeln("        // 根据AADL属性设置CPU映射");
+        self.writeln("        // 这里可以根据需要设置具体的CPU编号");
+        self.writeln("        self.cpu_mapping.insert(\"node_a\".to_string(), 0);");
+        self.writeln("        self.cpu_mapping.insert(\"cpu\".to_string(), 0);");
+        self.writeln("    }");
+        self.writeln("}");
+        self.writeln("");
     }
 }

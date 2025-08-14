@@ -196,6 +196,8 @@ pub mod aadl_ast_cj {
         //pub modes: Option<ModesClause>,
         pub properties: PropertyClause,
         pub annexes: Vec<AnnexSubclause>,
+        /// CPU绑定信息，用于实时调度
+        pub cpu_binding: Option<CpuBinding>,
     }
 
     // 组件实现名称（type_id.impl_id）
@@ -241,6 +243,15 @@ pub mod aadl_ast_cj {
     pub struct UniqueImplementationReference {
         pub package_prefix: Option<PackageName>,
         pub implementation_name: ImplementationName,
+    }
+
+    /// CPU绑定信息，用于实时调度
+    #[derive(Debug, Clone)]
+    pub struct CpuBinding {
+        /// 绑定的CPU标识符（如 "cpu"）
+        pub cpu_identifier: String,
+        /// 绑定的目标组件（如 "node_a"）
+        pub target_component: Option<String>,
     }
 
     // 子句类型定义
@@ -780,7 +791,7 @@ pub mod aadl_ast_cj {
         // 复杂类型
         //PropertyReference(PropertyTerm),
         //ComponentClassifier(ComponentClassifierTerm),
-        //Reference(ReferenceTerm),
+        Reference(ReferenceTerm),
         //Record(RecordTerm),
         //Computed(ComputedTerm),
     }
@@ -880,5 +891,15 @@ pub mod aadl_ast_cj {
     pub struct StringWithUnit {
         pub value: String,        // 例如 "10"
         pub unit: Option<String>, // 例如 "KByte"
+    }
+
+    /* ========== 最小引用定义，支持 reference(identifier) ========== */
+    /// AADL: reference ( contained_model_element_path )
+    /// 为满足 `reference (cpu) applies to node_a` 的需求，保存引用标识符和可选的 applies_to 目标。
+    #[derive(Debug, Clone)]
+    pub struct ReferenceTerm {
+        pub identifier: String,
+        /// 可选的 applies to 子句，如 `applies to node_a`
+        pub applies_to: Option<String>,
     }
 } //end mod aadl_ast_cj
