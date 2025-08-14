@@ -19,8 +19,9 @@ use syn::{parse_str, ItemFn};
 use crate::{aadlAst2rustCode::converter::AadlConverter, ast::aadl_ast_cj::Package};
 
 fn main() {
-    let path = "pingpong_ocarina.aadl";
+    //let path = "AADLSource/pingpong_ocarina.aadl";
     //let path = "pingpong.aadl";
+    let path = "AADLSource/rma.aadl";
     let aadl_input = match fs::read_to_string(path) {
         Ok(content) => content,
         Err(err) => {
@@ -92,6 +93,7 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     //println!("{:#?}",rust_module);
     fs::write("rustast0.txt", format!("{:#?}", rust_module)).unwrap();
     let merge_rust_module = merge_item_defs(rust_module);
+    //let merge_rust_module=rust_module.clone();
     fs::write("rustast.txt", format!("{:#?}", merge_rust_module)).unwrap();
 
     let mut code_generator = RustCodeGenerator::new();
@@ -99,9 +101,9 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
     //println!("{}", rust_code);
 
     // 生成 build.rs
-    // let build_rs_content = generate_build_rs(&merge_rust_module);
-    // fs::write("build.rs", build_rs_content).expect("Failed to write build.rs");
+    let build_rs_content = generate_build_rs(&merge_rust_module);
+    fs::write("build.rs", build_rs_content).expect("Failed to write build.rs");
 
     // 同时保存主Rust代码
-    fs::write("generate_main.rs", rust_code).expect("Failed to write main.rs");
+    fs::write("generate_main2.rs", rust_code).expect("Failed to write main.rs");
 }

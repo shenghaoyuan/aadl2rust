@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-06-30 17:24:10
+// 生成时间: 2025-08-13 13:25:52
 
 #![allow(unused_imports)]
 use std::sync::mpsc;

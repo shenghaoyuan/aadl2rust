@@ -530,8 +530,39 @@ impl AadlConverter {
             }
         }
 
+
+        // 如果没有通信端口，创建直接调用C函数的包装器
+        if functions.is_empty() {
+            functions.push(FunctionDef {
+                name: "execute".to_string(),
+                params: Vec::new(),
+                return_type: Type::Unit,
+                body: Block {
+                    stmts: vec![Statement::Expr(Expr::Unsafe(Box::new(Block {
+                        stmts: vec![Statement::Expr(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec![c_func_name.to_string()],
+                                PathType::Namespace,
+                            )),
+                            Vec::new(),
+                        ))],
+                        expr: None,
+                    })))],
+                    expr: None,
+                },
+                asyncness: false,
+                vis: Visibility::Public,
+                docs: vec![
+                    format!("// Direct execution wrapper for C function {}", c_func_name),
+                    "// This component has no communication ports".to_string(),
+                ],
+                attrs: Vec::new(),
+            });
+        }
         // 创建模块
-        if !functions.is_empty() {
+        //if !functions.is_empty() 
+
+        {
             let mut docs = vec![
                 format!(
                     "// Auto-generated from AADL subprogram: {}",
@@ -1045,7 +1076,7 @@ impl AadlConverter {
         }));
 
         // 2. 处理子程序调用（使用 IfLet 结构）
-        let subprogram_calls = self.extract_subprogram_calls(impl_);
+        let subprogram_calls = self.extract_subprogram_calls(impl_);//这个函数是针对子程序有对外的连接关系，其在提取这种关系
         let mut port_handling_stmts = Vec::new();
 
         for (param_port_name, subprogram_name, thread_port_name, is_send) in subprogram_calls {
@@ -1150,6 +1181,19 @@ impl AadlConverter {
                     else_branch: None,
                 }));
             }
+        }
+
+        //20250813新增，处理无端口的子程序调用
+        // 新增：处理无端口的子程序调用
+        let subprogram_calls_no_ports = self.extract_subprogram_calls_no_ports(impl_);
+        for subprogram_name in subprogram_calls_no_ports {
+            port_handling_stmts.push(Statement::Expr(Expr::Call(
+                Box::new(Expr::Path(
+                    vec![subprogram_name.clone(), "execute".to_string()],
+                    PathType::Namespace,
+                )),
+                Vec::new(),
+            )));
         }
 
         // 3. 主循环
@@ -1297,6 +1341,52 @@ impl AadlConverter {
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        calls
+    }
+    
+    // 20250813新增辅助函数：提取没有参数端口的子程序调用
+    fn extract_subprogram_calls_no_ports(&self, impl_: &ComponentImplementation) -> Vec<String> {
+        let mut calls = Vec::new();
+
+        if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
+            for call_clause in calls_clause {
+                for subprocall in &call_clause.calls {
+                    if let CalledSubprogram::Classifier(
+                        UniqueComponentClassifierReference::Implementation(temp),
+                    ) = &subprocall.called
+                    {
+                        let subprogram_name = temp.implementation_name.type_identifier.to_lowercase();
+                        
+                        // 检查是否有参数连接
+                        let has_connections = if let ConnectionClause::Items(connections) = &impl_.connections {
+                            connections.iter().any(|conn| {
+                                if let Connection::Parameter(port_conn) = conn {
+                                    match (&port_conn.source, &port_conn.destination) {
+                                        (
+                                            ParameterEndpoint::SubprogramCallParameter { call_identifier, .. },
+                                            _,
+                                        ) | (
+                                            _,
+                                            ParameterEndpoint::SubprogramCallParameter { call_identifier, .. },
+                                        ) => call_identifier.to_lowercase() == subprocall.identifier.to_lowercase(),
+                                        _ => false,
+                                    }
+                                } else {
+                                    false
+                                }
+                            })
+                        } else {
+                            false
+                        };
+
+                        if !has_connections {
+                            calls.push(subprogram_name);
                         }
                     }
                 }

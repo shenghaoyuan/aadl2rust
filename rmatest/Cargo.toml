@@ -1,0 +1,12 @@
+[package]
+name = "rmatest"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[build-dependencies]
+cc = { version = "1.0", features = ["parallel"] }
+bindgen = "0.65"
+
+[dependencies]
+libc = "0.2"
