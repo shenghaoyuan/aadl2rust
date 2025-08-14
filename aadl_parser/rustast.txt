@@ -137,7 +137,18 @@ RustModule {
         Struct(
             StructDef {
                 name: "taskThread",
-                fields: [],
+                fields: [
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "usize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
@@ -354,7 +365,18 @@ RustModule {
         Struct(
             StructDef {
                 name: "task2Thread",
-                fields: [],
+                fields: [
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "usize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
@@ -610,6 +632,16 @@ RustModule {
                             },
                         ],
                     },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "usize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
                 ],
                 properties: [],
                 generics: [],
@@ -633,7 +665,14 @@ RustModule {
                     Method(
                         FunctionDef {
                             name: "new",
-                            params: [],
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "usize",
+                                    ),
+                                },
+                            ],
                             return_type: Named(
                                 "Self",
                             ),
@@ -657,7 +696,11 @@ RustModule {
                                                         ],
                                                         Namespace,
                                                     ),
-                                                    [],
+                                                    [
+                                                        Ident(
+                                                            "cpu_id",
+                                                        ),
+                                                    ],
                                                 ),
                                             ),
                                         },
@@ -680,14 +723,18 @@ RustModule {
                                                         ],
                                                         Namespace,
                                                     ),
-                                                    [],
+                                                    [
+                                                        Ident(
+                                                            "cpu_id",
+                                                        ),
+                                                    ],
                                                 ),
                                             ),
                                         },
                                     ),
                                     Expr(
                                         Ident(
-                                            "return Self { task1, task2 }  //显式return",
+                                            "return Self { task1, task2, cpu_id }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -795,50 +842,12 @@ RustModule {
                 name: "rmaSystem",
                 fields: [
                     Field {
-                        name: "node_a",
+                        name: "processes",
                         ty: Named(
-                            "node_aThread",
+                            "Vec<(String, usize)>",
                         ),
                         docs: [
-                            "// Subcomponent: node_a",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
-                    Field {
-                        name: "cpu",
-                        ty: Named(
-                            "cpuThread",
-                        ),
-                        docs: [
-                            "// Subcomponent: cpu",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
-                    Field {
-                        name: "cpu_mapping",
-                        ty: Named(
-                            "HashMap<String, usize>",
-                        ),
-                        docs: [
-                            "// CPU mapping: component_name -> cpu_id",
+                            "// 进程和CPU的对应关系",
                         ],
                         attrs: [],
                     },
@@ -849,8 +858,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// System implementation: rma",
-                    "// Auto-generated from AADL",
+                    "// AADL System: rma",
                 ],
                 vis: Public,
             },
@@ -871,78 +879,9 @@ RustModule {
                             ),
                             body: Block {
                                 stmts: [
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "mut node_a",
-                                            ty: Some(
-                                                Named(
-                                                    "node_aThread",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "node_aThread",
-                                                            "new",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "mut cpu",
-                                            ty: Some(
-                                                Named(
-                                                    "cpuThread",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "cpuThread",
-                                                            "new",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "cpu_mapping",
-                                            ty: Some(
-                                                Named(
-                                                    "HashMap<String, usize>",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "HashMap",
-                                                            "new",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
                                         Ident(
-                                            "return Self { node_a, cpu, cpu_mapping }  //显式return",
+                                            "Self { processes: vec![(\"node_a\".to_string(), 0)] }",
                                         ),
                                     ),
                                 ],
@@ -951,7 +890,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// Creates a new system instance",
+                                "// 创建系统实例",
                             ],
                             attrs: [],
                         },
@@ -971,57 +910,8 @@ RustModule {
                             body: Block {
                                 stmts: [
                                     Expr(
-                                        MethodCall(
-                                            Path(
-                                                [
-                                                    "self",
-                                                    "node_a",
-                                                ],
-                                                Member,
-                                            ),
-                                            "run",
-                                            [
-                                                MethodCall(
-                                                    Ident(
-                                                        "self.cpu_mapping",
-                                                    ),
-                                                    "get",
-                                                    [
-                                                        Literal(
-                                                            Str(
-                                                                "node_a",
-                                                            ),
-                                                        ),
-                                                    ],
-                                                ),
-                                            ],
-                                        ),
-                                    ),
-                                    Expr(
-                                        MethodCall(
-                                            Path(
-                                                [
-                                                    "self",
-                                                    "cpu",
-                                                ],
-                                                Member,
-                                            ),
-                                            "run",
-                                            [
-                                                MethodCall(
-                                                    Ident(
-                                                        "self.cpu_mapping",
-                                                    ),
-                                                    "get",
-                                                    [
-                                                        Literal(
-                                                            Str(
-                                                                "cpu",
-                                                            ),
-                                                        ),
-                                                    ],
-                                                ),
-                                            ],
+                                        Ident(
+                                            "// TODO: 遍历processes，为每个进程调用start函数并传递CPU参数",
                                         ),
                                     ),
                                 ],
@@ -1030,7 +920,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// Runs the system by starting all processes",
+                                "// 运行系统，启动所有进程",
                             ],
                             attrs: [],
                         },

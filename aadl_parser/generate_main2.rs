@@ -1,11 +1,10 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-14 20:51:55
+// 生成时间: 2025-08-14 22:22:16
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-use std::collections::HashMap;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -53,6 +52,8 @@ pub mod hello_spg_2 {
 // AADL Thread: task
 #[derive(Debug)]
 pub struct taskThread {
+    // 新增 CPU ID
+    pub cpu_id: usize,
     
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
@@ -65,6 +66,7 @@ impl taskThread {
     // 创建组件并初始化AADL属性
     pub fn new() -> Self {
         Self {
+            cpu_id: None,
             dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
             priority: 1, // AADL属性: Priority
             period: 1000, // AADL属性: Period
@@ -92,6 +94,8 @@ impl taskThread {
 // AADL Thread: task2
 #[derive(Debug)]
 pub struct task2Thread {
+    // 新增 CPU ID
+    pub cpu_id: usize,
     
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
@@ -104,6 +108,7 @@ impl task2Thread {
     // 创建组件并初始化AADL属性
     pub fn new() -> Self {
         Self {
+            cpu_id: None,
             dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
             priority: 2, // AADL属性: Priority
             period: 500, // AADL属性: Period
@@ -138,23 +143,16 @@ pub struct node_aProcess {
     // Subcomponent: Task2
     #[allow(dead_code)]
     pub task2: task2Thread,
-}
-
-impl node_aProcess {
-    // 获取进程绑定的CPU编号
-    pub fn get_cpu_binding(&self) -> usize {
-        // 这里应该从AADL属性中获取CPU绑定信息
-        // 暂时返回默认值0，后续可以根据AADL属性动态设置
-        0
-    }
+    // 新增 CPU ID
+    pub cpu_id: usize,
 }
 
 impl node_aProcess {
     // Creates a new process instance
-    pub fn new() -> Self {
-        let mut task1: taskThread = taskThread::new();
-        let mut task2: task2Thread = task2Thread::new();
-        return Self { task1, task2 }  //显式return;
+    pub fn new(cpu_id: usize) -> Self {
+        let mut task1: taskThread = taskThread::new(cpu_id);
+        let mut task2: task2Thread = task2Thread::new(cpu_id);
+        return Self { task1, task2, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
@@ -169,43 +167,22 @@ impl node_aProcess {
     
 }
 
-// System implementation: rma
-// Auto-generated from AADL
+// AADL System: rma
 #[derive(Debug)]
 pub struct rmaSystem {
-    // Subcomponent: node_a
-    #[allow(dead_code)]
-    pub node_a: node_aThread,
-    // Subcomponent: cpu
-    #[allow(dead_code)]
-    pub cpu: cpuThread,
-    // CPU mapping: component_name -> cpu_id
-    pub cpu_mapping: HashMap<String, usize>,
+    // 进程和CPU的对应关系
+    pub processes: Vec<(String, usize)>,
 }
 
 impl rmaSystem {
-    // 初始化CPU映射
-    pub fn init_cpu_mapping(&mut self) {
-        // 根据AADL属性设置CPU映射
-        // 这里可以根据需要设置具体的CPU编号
-        self.cpu_mapping.insert("node_a".to_string(), 0);
-        self.cpu_mapping.insert("cpu".to_string(), 0);
-    }
-}
-
-impl rmaSystem {
-    // Creates a new system instance
+    // 创建系统实例
     pub fn new() -> Self {
-        let mut node_a: node_aThread = node_aThread::new();
-        let mut cpu: cpuThread = cpuThread::new();
-        let cpu_mapping: HashMap<String, usize> = HashMap::new();
-        return Self { node_a, cpu, cpu_mapping }  //显式return;
+        Self { processes: vec![("node_a".to_string(), 0)] };
     }
     
-    // Runs the system by starting all processes
+    // 运行系统，启动所有进程
     pub fn run(self: Self) -> () {
-        self.node_a.run(self.cpu_mapping.get("node_a"));
-        self.cpu.run(self.cpu_mapping.get("cpu"));
+        // TODO: 遍历processes，为每个进程调用start函数并传递CPU参数;
     }
     
 }

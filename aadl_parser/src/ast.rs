@@ -196,8 +196,6 @@ pub mod aadl_ast_cj {
         //pub modes: Option<ModesClause>,
         pub properties: PropertyClause,
         pub annexes: Vec<AnnexSubclause>,
-        /// CPU绑定信息，用于实时调度
-        pub cpu_binding: Option<CpuBinding>,
     }
 
     // 组件实现名称（type_id.impl_id）
@@ -243,15 +241,6 @@ pub mod aadl_ast_cj {
     pub struct UniqueImplementationReference {
         pub package_prefix: Option<PackageName>,
         pub implementation_name: ImplementationName,
-    }
-
-    /// CPU绑定信息，用于实时调度
-    #[derive(Debug, Clone)]
-    pub struct CpuBinding {
-        /// 绑定的CPU标识符（如 "cpu"）
-        pub cpu_identifier: String,
-        /// 绑定的目标组件（如 "node_a"）
-        pub target_component: Option<String>,
     }
 
     // 子句类型定义

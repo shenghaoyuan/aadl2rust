@@ -679,25 +679,6 @@ impl AADLTransformer {
         // TODO: Properly handle annexes
         Vec::new()
     }
-
-    /// 从属性中提取CPU绑定信息
-    fn extract_cpu_binding(properties: &PropertyClause) -> Option<CpuBinding> {
-        if let PropertyClause::Properties(props) = properties {
-            for prop in props {
-                if let Property::BasicProperty(bp) = prop {
-                    if bp.identifier.name == "Actual_Processor_Binding" {
-                        if let PropertyValue::Single(PropertyExpression::Reference(ref_term)) = &bp.value {
-                            return Some(CpuBinding {
-                                cpu_identifier: ref_term.identifier.clone(),
-                                target_component: ref_term.applies_to.clone(),
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        None
-    }
     
     pub fn transform_component_implementation(pair: Pair<aadlight_parser::Rule>) -> ComponentImplementation {
         // println!("=== 调试 implementation ===");
@@ -759,9 +740,6 @@ impl AADLTransformer {
             }
         }
         
-        // 提取CPU绑定信息
-        let cpu_binding = Self::extract_cpu_binding(&properties);
-        
         ComponentImplementation {
             category,
             name,
@@ -772,7 +750,6 @@ impl AADLTransformer {
             connections,
             properties,
             annexes,
-            cpu_binding,
         }
     }
     

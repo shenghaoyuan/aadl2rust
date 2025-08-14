@@ -78,7 +78,8 @@ impl AadlConverter {
             ComponentCategory::Data => self.convert_data_component(comp),
             ComponentCategory::Thread => self.convert_thread_component(comp),
             ComponentCategory::Subprogram => self.convert_subprogram(comp),
-            _ => Vec::default(), //TODO:进程、系统还需要处理
+            ComponentCategory::System => self.convert_system_component(comp),
+            _ => Vec::default(), //TODO:进程还需要处理
         }
     }
 
@@ -119,9 +120,18 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
+        let mut fields = self.convert_type_features(&comp.features); //特征列表
+        // 添加 CPU ID 字段
+        fields.push(Field {
+            name: "cpu_id".to_string(),
+            ty: Type::Named("usize".to_string()),
+            docs: vec!["// 新增 CPU ID".to_string()],
+            attrs: Vec::new(),
+        });
+        
         let struct_def = StructDef {
             name: format!("{}Thread", comp.identifier.to_lowercase()),
-            fields: self.convert_type_features(&comp.features), //特征列表
+            fields, //特征列表
             properties: self.convert_properties(ComponentRef::Type(&comp)), // 属性列表
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
@@ -135,6 +145,79 @@ impl AadlConverter {
         }
 
         items
+    }
+
+    fn convert_system_component(&self, comp: &ComponentType) -> Vec<Item> {
+        let mut items = Vec::new();
+
+        // 1. 结构体定义
+        let mut fields = vec![
+            Field {
+                name: "processes".to_string(),
+                ty: Type::Named("Vec<(String, usize)>".to_string()), // (进程名, CPU编号)
+                docs: vec!["// 进程和CPU的对应关系".to_string()],
+                attrs: Vec::new(),
+            },
+        ];
+        
+        let struct_def = StructDef {
+            name: format!("{}System", comp.identifier.to_lowercase()),
+            fields,
+            properties: self.convert_properties(ComponentRef::Type(&comp)),
+            generics: Vec::new(),
+            derives: vec!["Debug".to_string()],
+            docs: vec![format!("// AADL System: {}", comp.identifier)],
+            vis: Visibility::Public,
+        };
+        items.push(Item::Struct(struct_def));
+
+        // 2. 实现块
+        items.push(Item::Impl(self.create_system_impl_block(comp)));
+
+        items
+    }
+
+    fn create_system_impl_block(&self, comp: &ComponentType) -> ImplBlock {
+        ImplBlock {
+            target: Type::Named(format!("{}System", comp.identifier.to_lowercase())),
+            generics: Vec::new(),
+            items: vec![
+                ImplItem::Method(FunctionDef {
+                    name: "new".to_string(),
+                    params: Vec::new(),
+                    return_type: Type::Named("Self".to_string()),
+                    body: Block {
+                        stmts: vec![
+                            Statement::Expr(Expr::Ident(format!("Self {{ processes: vec![(\"node_a\".to_string(), 0)] }}"))),
+                        ],
+                        expr: None,
+                    },
+                    asyncness: false,
+                    vis: Visibility::Public,
+                    docs: vec!["// 创建系统实例".to_string()],
+                    attrs: Vec::new(),
+                }),
+                ImplItem::Method(FunctionDef {
+                    name: "run".to_string(),
+                    params: vec![Param {
+                        name: "self".to_string(),
+                        ty: Type::Named("Self".to_string()),
+                    }],
+                    return_type: Type::Unit,
+                    body: Block {
+                        stmts: vec![
+                            Statement::Expr(Expr::Ident("// TODO: 遍历processes，为每个进程调用start函数并传递CPU参数".to_string())),
+                        ],
+                        expr: None,
+                    },
+                    asyncness: false,
+                    vis: Visibility::Public,
+                    docs: vec!["// 运行系统，启动所有进程".to_string()],
+                    attrs: Vec::new(),
+                }),
+            ],
+            trait_impl: None,
+        }
     }
 
     fn convert_type_features(&self, features: &FeatureClause) -> Vec<Field> {
@@ -672,9 +755,18 @@ impl AadlConverter {
     }
 
     fn convert_generic_component(&self, comp: &ComponentType) -> Vec<Item> {
+        let mut fields = Vec::new();
+        // 添加 CPU ID 字段
+        fields.push(Field {
+            name: "cpu_id".to_string(),
+            ty: Type::Named("usize".to_string()),
+            docs: vec!["// 新增 CPU ID".to_string()],
+            attrs: Vec::new(),
+        });
+        
         vec![Item::Struct(StructDef {
             name: comp.identifier.to_lowercase(),
-            fields: Vec::new(),
+            fields,
             properties: Vec::new(),
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
@@ -685,7 +777,6 @@ impl AadlConverter {
 
     fn convert_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
         match impl_.category {
-            ComponentCategory::System => self.convert_system_implementation(impl_),
             ComponentCategory::Process => self.convert_process_implementation(impl_),
             ComponentCategory::Thread => self.convert_thread_implemenation(impl_),
             _ => Vec::default(), // 默认实现
@@ -696,9 +787,18 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 生成进程结构体
+        let mut fields = self.get_process_fields(impl_); //这里是为了取得进程的子组件
+        // 添加 CPU ID 字段
+        fields.push(Field {
+            name: "cpu_id".to_string(),
+            ty: Type::Named("usize".to_string()),
+            docs: vec!["// 新增 CPU ID".to_string()],
+            attrs: Vec::new(),
+        });
+        
         let struct_def = StructDef {
             name: format! {"{}Process",impl_.name.type_identifier.to_lowercase()},
-            fields: self.get_process_fields(impl_), //这里是为了取得进程的子组件
+            fields, //这里是为了取得进程的子组件
             properties: Vec::new(),                 //TODO
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
@@ -712,30 +812,6 @@ impl AadlConverter {
 
         // 2. 生成实现块
         items.push(Item::Impl(self.create_process_impl_block(impl_)));
-
-        items
-    }
-
-    fn convert_system_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
-        let mut items = Vec::new();
-
-        // 1. 生成系统结构体
-        let struct_def = StructDef {
-            name: format! {"{}System",impl_.name.type_identifier.to_lowercase()},
-            fields: self.get_system_fields(impl_), // 获取系统的子组件
-            properties: Vec::new(),
-            generics: Vec::new(),
-            derives: vec!["Debug".to_string()],
-            docs: vec![
-                format!("// System implementation: {}", impl_.name.type_identifier),
-                "// Auto-generated from AADL".to_string(),
-            ],
-            vis: Visibility::Public,
-        };
-        items.push(Item::Struct(struct_def));
-
-        // 2. 生成实现块
-        items.push(Item::Impl(self.create_system_impl_block(impl_)));
 
         items
     }
@@ -767,58 +843,6 @@ impl AadlConverter {
             }
         }
 
-        // 添加CPU ID字段
-        if let Some(cpu_binding) = &impl_.cpu_binding {
-            fields.push(Field {
-                name: "cpu_id".to_string(),
-                ty: Type::Named("usize".to_string()),
-                docs: vec![format!("// CPU binding: {}", cpu_binding.cpu_identifier)],
-                attrs: Vec::new(),
-            });
-        }
-
-        fields
-    }
-
-    fn get_system_fields(&self, impl_: &ComponentImplementation) -> Vec<Field> {
-        let mut fields = Vec::new();
-
-        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
-            for sub in subcomponents {
-                let type_name = match &sub.classifier {
-                    SubcomponentClassifier::ClassifierReference(
-                        UniqueComponentClassifierReference::Implementation(unirf),
-                    ) => {
-                        // 根据子组件类型生成不同的字段类型
-                        match unirf.implementation_name.type_identifier.to_lowercase().as_str() {
-                            s if s.ends_with("process") => format!("{}Process", s),
-                            s if s.ends_with("system") => format!("{}System", s),
-                            _ => format!("{}Thread", unirf.implementation_name.type_identifier.to_lowercase()),
-                        }
-                    }
-                    _ => "UnsupportedComponent".to_string(),
-                };
-
-                fields.push(Field {
-                    name: sub.identifier.to_lowercase(),
-                    ty: Type::Named(type_name),
-                    docs: vec![format!("// Subcomponent: {}", sub.identifier)],
-                    attrs: vec![Attribute {
-                        name: "allow".to_string(),
-                        args: vec![AttributeArg::Ident("dead_code".to_string())],
-                    }],
-                });
-            }
-        }
-
-        // 添加CPU映射字段
-        fields.push(Field {
-            name: "cpu_mapping".to_string(),
-            ty: Type::Named("HashMap<String, usize>".to_string()),
-            docs: vec!["// CPU mapping: component_name -> cpu_id".to_string()],
-            attrs: Vec::new(),
-        });
-
         fields
     }
 
@@ -828,7 +852,10 @@ impl AadlConverter {
         // 添加new方法
         items.push(ImplItem::Method(FunctionDef {
             name: "new".to_string(),
-            params: Vec::new(),
+            params: vec![Param {
+                name: "cpu_id".to_string(),
+                ty: Type::Named("usize".to_string()),
+            }],
             return_type: Type::Named("Self".to_string()),
             body: self.create_process_new_body(impl_),
             asyncness: false,
@@ -854,44 +881,6 @@ impl AadlConverter {
 
         ImplBlock {
             target: Type::Named(format! {"{}Process",impl_.name.type_identifier.to_lowercase()}),
-            generics: Vec::new(),
-            items,
-            trait_impl: None,
-        }
-    }
-
-    fn create_system_impl_block(&self, impl_: &ComponentImplementation) -> ImplBlock {
-        let mut items = Vec::new();
-
-        // 添加new方法
-        items.push(ImplItem::Method(FunctionDef {
-            name: "new".to_string(),
-            params: Vec::new(),
-            return_type: Type::Named("Self".to_string()),
-            body: self.create_system_new_body(impl_),
-            asyncness: false,
-            vis: Visibility::Public,
-            docs: vec!["// Creates a new system instance".to_string()],
-            attrs: Vec::new(),
-        }));
-
-        // 添加run方法
-        items.push(ImplItem::Method(FunctionDef {
-            name: "run".to_string(),
-            params: vec![Param {
-                name: "self".to_string(),
-                ty: Type::Named("Self".to_string()),
-            }],
-            return_type: Type::Unit,
-            body: self.create_system_run_body(impl_),
-            asyncness: false,
-            vis: Visibility::Public,
-            docs: vec!["// Runs the system by starting all processes".to_string()],
-            attrs: Vec::new(),
-        }));
-
-        ImplBlock {
-            target: Type::Named(format! {"{}System",impl_.name.type_identifier.to_lowercase()}),
             generics: Vec::new(),
             items,
             trait_impl: None,
@@ -927,7 +916,7 @@ impl AadlConverter {
                             ],
                             PathType::Namespace,
                         )),
-                        Vec::new(),
+                        vec![Expr::Ident("cpu_id".to_string())],
                     )),
                 }));
             }
@@ -953,9 +942,16 @@ impl AadlConverter {
             String::new()
         };
 
+        // 构建完整的字段列表，包括 cpu_id
+        let all_fields = if fields.is_empty() {
+            "cpu_id".to_string()
+        } else {
+            format!("{}, cpu_id", fields)
+        };
+
         stmts.push(Statement::Expr(Expr::Ident(format!(
             "return Self {{ {} }}  //显式return",
-            fields
+            all_fields
         ))));
 
         Block { stmts, expr: None }
@@ -1122,9 +1118,18 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
+        let mut fields = Vec::new(); //对于线程来说是特征列表,thread_impl没有特征
+        // 添加 CPU ID 字段
+        fields.push(Field {
+            name: "cpu_id".to_string(),
+            ty: Type::Named("usize".to_string()),
+            docs: vec!["// 新增 CPU ID".to_string()],
+            attrs: Vec::new(),
+        });
+        
         let struct_def = StructDef {
             name: format!("{}Thread", impl_.name.type_identifier.to_lowercase()),
-            fields: Vec::new(), //对于线程来说是特征列表,thread_impl没有特征
+            fields, //对于线程来说是特征列表,thread_impl没有特征
             properties: self.convert_properties(ComponentRef::Impl(&impl_)), // 属性列表
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
@@ -1464,133 +1469,6 @@ impl AadlConverter {
         }
 
         calls
-    }
-
-    fn create_system_new_body(&self, impl_: &ComponentImplementation) -> Block {
-        let mut stmts = Vec::new();
-
-        // 1. 创建子组件实例
-        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
-            for sub in subcomponents {
-                let type_name = match &sub.classifier {
-                    SubcomponentClassifier::ClassifierReference(
-                        UniqueComponentClassifierReference::Type(type_ref),
-                    ) => type_ref.implementation_name.type_identifier.clone(),
-                    SubcomponentClassifier::ClassifierReference(
-                        UniqueComponentClassifierReference::Implementation(impl_ref),
-                    ) => impl_ref.implementation_name.type_identifier.clone(),
-                    SubcomponentClassifier::Prototype(_) => "UnsupportedPrototype".to_string(),
-                };
-
-                let var_name = sub.identifier.to_lowercase();
-                let struct_type = match type_name.to_lowercase().as_str() {
-                    s if s.ends_with("process") => format!("{}Process", s),
-                    s if s.ends_with("system") => format!("{}System", s),
-                    _ => format!("{}Thread", type_name.to_lowercase()),
-                };
-
-                stmts.push(Statement::Let(LetStmt {
-                    ifmut: false,
-                    name: format!("mut {}", var_name),
-                    ty: Some(Type::Named(struct_type.clone())),
-                    init: Some(Expr::Call(
-                        Box::new(Expr::Path(
-                            vec![struct_type, "new".to_string()],
-                            PathType::Namespace,
-                        )),
-                        Vec::new(),
-                    )),
-                }));
-            }
-        }
-
-        // 2. 创建CPU映射
-        stmts.push(Statement::Let(LetStmt {
-            ifmut: false,
-            name: "cpu_mapping".to_string(),
-            ty: Some(Type::Named("HashMap<String, usize>".to_string())),
-            init: Some(Expr::Call(
-                Box::new(Expr::Path(
-                    vec!["HashMap".to_string(), "new".to_string()],
-                    PathType::Namespace,
-                )),
-                Vec::new(),
-            )),
-        }));
-
-        // 3. 返回结构体实例
-        let fields = if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
-            let mut field_list = subcomponents
-                .iter()
-                .map(|s| s.identifier.to_lowercase())
-                .collect::<Vec<_>>();
-            field_list.push("cpu_mapping".to_string());
-            field_list.join(", ")
-        } else {
-            "cpu_mapping".to_string()
-        };
-
-        stmts.push(Statement::Expr(Expr::Ident(format!(
-            "return Self {{ {} }}  //显式return",
-            fields
-        ))));
-
-        Block { stmts, expr: None }
-    }
-
-    fn create_system_run_body(&self, impl_: &ComponentImplementation) -> Block {
-        let mut stmts = Vec::new();
-
-        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
-            for sub in subcomponents {
-                let var_name = sub.identifier.to_lowercase();
-                
-                // 获取该组件的CPU ID
-                let cpu_id_expr = Expr::MethodCall(
-                    Box::new(Expr::Ident("self.cpu_mapping".to_string())),
-                    "get".to_string(),
-                    vec![Expr::Literal(Literal::Str(var_name.clone()))],
-                );
-
-                // 调用组件的start方法，传递CPU ID
-                let start_call = match sub.identifier.to_lowercase().as_str() {
-                    s if s.ends_with("process") => {
-                        Expr::MethodCall(
-                            Box::new(Expr::Path(
-                                vec!["self".to_string(), var_name.clone()],
-                                PathType::Member,
-                            )),
-                            "start".to_string(),
-                            vec![cpu_id_expr],
-                        )
-                    }
-                    s if s.ends_with("system") => {
-                        Expr::MethodCall(
-                            Box::new(Expr::Path(
-                                vec!["self".to_string(), var_name.clone()],
-                                PathType::Member,
-                            )),
-                            "run".to_string(),
-                            vec![cpu_id_expr],
-                        )
-                    }
-                    _ => {
-                        Expr::MethodCall(
-                            Box::new(Expr::Path(
-                                vec!["self".to_string(), var_name.clone()],
-                                PathType::Member,
-                            )),
-                            "run".to_string(),
-                            vec![cpu_id_expr],
-                        )
-                    }
-                };
-
-                stmts.push(Statement::Expr(start_call));
-            }
-        }
-
-        Block { stmts, expr: None }
     }
     
     // 20250813新增辅助函数：提取没有参数端口的子程序调用
