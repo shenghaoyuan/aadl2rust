@@ -1,49 +1,48 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-13 14:12:56
+// 生成时间: 2025-08-14 13:52:09
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-include!(concat!(env!("OUT_DIR"), "/c_bindings.rs"));
+include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
 pub mod hello_spg_1 {
     // Auto-generated from AADL subprogram: Hello_Spg_1
     // C binding to: user_hello_spg_1
     // source_files: "hello.c"
-    use super::{user_hello_spg_1};
+    use super::user_hello_spg_1;
     // Direct execution wrapper for C function user_hello_spg_1
     // This component has no communication ports
     pub fn execute() -> () {
-        unsafe { user_hello_spg_1();
-         };
+        unsafe {
+            user_hello_spg_1();
+        };
     }
-    
 }
 
 pub mod hello_spg_2 {
     // Auto-generated from AADL subprogram: Hello_Spg_2
     // C binding to: user_hello_spg_2
     // source_files: "hello.c"
-    use super::{user_hello_spg_2};
+    use super::user_hello_spg_2;
     // Direct execution wrapper for C function user_hello_spg_2
     // This component has no communication ports
     pub fn execute() -> () {
-        unsafe { user_hello_spg_2();
-         };
+        unsafe {
+            user_hello_spg_2();
+        };
     }
-    
 }
 
 // AADL Thread: task
 #[derive(Debug)]
 pub struct taskThread {
-    
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
+    pub priority: u64,             // AADL属性: Priority
+    pub period: u64,               // AADL属性: Period
+    pub deadline: u64,             // AADL属性: Deadline
 }
 
 impl taskThread {
@@ -51,9 +50,9 @@ impl taskThread {
     pub fn new() -> Self {
         Self {
             dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 1, // AADL属性: Priority
-            period: 1000, // AADL属性: Period
-            deadline: 1000, // AADL属性: Deadline
+            priority: 1,                               // AADL属性: Priority
+            period: 1000,                              // AADL属性: Period
+            deadline: 1000,                            // AADL属性: Deadline
         }
     }
 }
@@ -69,20 +68,18 @@ impl taskThread {
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));
-        };
+        }
     }
-    
 }
 
 // AADL Thread: task2
 #[derive(Debug)]
 pub struct task2Thread {
-    
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
+    pub priority: u64,             // AADL属性: Priority
+    pub period: u64,               // AADL属性: Period
+    pub deadline: u64,             // AADL属性: Deadline
 }
 
 impl task2Thread {
@@ -90,9 +87,9 @@ impl task2Thread {
     pub fn new() -> Self {
         Self {
             dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 2, // AADL属性: Priority
-            period: 500, // AADL属性: Period
-            deadline: 500, // AADL属性: Deadline
+            priority: 2,                               // AADL属性: Priority
+            period: 500,                               // AADL属性: Period
+            deadline: 500,                             // AADL属性: Deadline
         }
     }
 }
@@ -108,9 +105,8 @@ impl task2Thread {
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));
-        };
+        }
     }
-    
 }
 
 // Process implementation: node_a
@@ -130,18 +126,18 @@ impl node_aProcess {
     pub fn new() -> Self {
         let mut task1: taskThread = taskThread::new();
         let mut task2: task2Thread = task2Thread::new();
-        return Self { task1, task2 }  //显式return;
+        return Self { task1, task2 }; //显式return;
     }
-    
+
     // Starts all threads in the process
     pub fn start(self: Self) -> () {
         thread::Builder::new()
             .name("task1".to_string())
-            .spawn(move || { self.task1.run() }).unwrap();
+            .spawn(move || self.task1.run())
+            .unwrap();
         thread::Builder::new()
             .name("task2".to_string())
-            .spawn(move || { self.task2.run() }).unwrap();
+            .spawn(move || self.task2.run())
+            .unwrap();
     }
-    
 }
-
