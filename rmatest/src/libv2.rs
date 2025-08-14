@@ -5,10 +5,7 @@
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
-use libc::{
-    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
-    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
-};
+use libc::{pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO};
 
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
@@ -26,22 +23,7 @@ pub mod hello_spg_2 {
     }
 }
 
-// ---------------- cpu ----------------
-fn set_thread_affinity(cpu: usize) {
-    unsafe {
-        let mut cpuset: cpu_set_t = std::mem::zeroed();
-        CPU_ZERO(&mut cpuset);
-        CPU_SET(cpu, &mut cpuset);
-        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);
-        //pid：进程或线程 ID。0 表示当前线程（Linux pthread 的特性）。
-
-        // cpusetsize：CPU 集合结构的大小（字节数）。
-
-        // mask：指向 cpu_set_t 的指针，表示允许该线程运行的 CPU 核心集合。
-    }
-}
-
-// ---------------- AADL Thread: task ----------------
+// AADL Thread: task
 #[derive(Debug)]
 pub struct taskThread {
     pub dispatch_protocol: String,
@@ -54,7 +36,7 @@ impl taskThread {
     pub fn new() -> Self {
         Self {
             dispatch_protocol: "Periodic".to_string(),
-            priority: 1, // low优先级
+            priority: 80, // 设置高优先级
             period: 1000,
             deadline: 1000,
         }
@@ -69,8 +51,6 @@ impl taskThread {
             }
         }
 
-        set_thread_affinity(0); // 限制在 CPU 0
-
         let period = Duration::from_millis(self.period);
         loop {
             let start = Instant::now();
@@ -83,7 +63,7 @@ impl taskThread {
     }
 }
 
-// ---------------- AADL Thread: task2 ----------------
+// AADL Thread: task2
 #[derive(Debug)]
 pub struct task2Thread {
     pub dispatch_protocol: String,
@@ -96,8 +76,8 @@ impl task2Thread {
     pub fn new() -> Self {
         Self {
             dispatch_protocol: "Periodic".to_string(),
-            priority: 2, // 高优先级
-            period: 500,
+            priority: 70, // 次高优先级
+            period: 5000,
             deadline: 500,
         }
     }
@@ -111,8 +91,6 @@ impl task2Thread {
             }
         }
 
-        set_thread_affinity(0); // 限制在 CPU 0
-
         let period = Duration::from_millis(self.period);
         loop {
             let start = Instant::now();
@@ -125,7 +103,7 @@ impl task2Thread {
     }
 }
 
-// ---------------- Process implementation: node_a ----------------
+// Process implementation: node_a
 #[derive(Debug)]
 pub struct node_aProcess {
     #[allow(dead_code)]
