@@ -1,10 +1,11 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-14 19:51:55
+// 生成时间: 2025-08-14 20:51:55
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
+use std::collections::HashMap;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -140,6 +141,15 @@ pub struct node_aProcess {
 }
 
 impl node_aProcess {
+    // 获取进程绑定的CPU编号
+    pub fn get_cpu_binding(&self) -> usize {
+        // 这里应该从AADL属性中获取CPU绑定信息
+        // 暂时返回默认值0，后续可以根据AADL属性动态设置
+        0
+    }
+}
+
+impl node_aProcess {
     // Creates a new process instance
     pub fn new() -> Self {
         let mut task1: taskThread = taskThread::new();
@@ -155,6 +165,47 @@ impl node_aProcess {
         thread::Builder::new()
             .name("task2".to_string())
             .spawn(move || { self.task2.run() }).unwrap();
+    }
+    
+}
+
+// System implementation: rma
+// Auto-generated from AADL
+#[derive(Debug)]
+pub struct rmaSystem {
+    // Subcomponent: node_a
+    #[allow(dead_code)]
+    pub node_a: node_aThread,
+    // Subcomponent: cpu
+    #[allow(dead_code)]
+    pub cpu: cpuThread,
+    // CPU mapping: component_name -> cpu_id
+    pub cpu_mapping: HashMap<String, usize>,
+}
+
+impl rmaSystem {
+    // 初始化CPU映射
+    pub fn init_cpu_mapping(&mut self) {
+        // 根据AADL属性设置CPU映射
+        // 这里可以根据需要设置具体的CPU编号
+        self.cpu_mapping.insert("node_a".to_string(), 0);
+        self.cpu_mapping.insert("cpu".to_string(), 0);
+    }
+}
+
+impl rmaSystem {
+    // Creates a new system instance
+    pub fn new() -> Self {
+        let mut node_a: node_aThread = node_aThread::new();
+        let mut cpu: cpuThread = cpuThread::new();
+        let cpu_mapping: HashMap<String, usize> = HashMap::new();
+        return Self { node_a, cpu, cpu_mapping }  //显式return;
+    }
+    
+    // Runs the system by starting all processes
+    pub fn run(self: Self) -> () {
+        self.node_a.run(self.cpu_mapping.get("node_a"));
+        self.cpu.run(self.cpu_mapping.get("cpu"));
     }
     
 }

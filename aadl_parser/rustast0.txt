@@ -820,6 +820,255 @@ RustModule {
                 trait_impl: None,
             },
         ),
+        Struct(
+            StructDef {
+                name: "rmaSystem",
+                fields: [
+                    Field {
+                        name: "node_a",
+                        ty: Named(
+                            "node_aThread",
+                        ),
+                        docs: [
+                            "// Subcomponent: node_a",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "cpu",
+                        ty: Named(
+                            "cpuThread",
+                        ),
+                        docs: [
+                            "// Subcomponent: cpu",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "cpu_mapping",
+                        ty: Named(
+                            "HashMap<String, usize>",
+                        ),
+                        docs: [
+                            "// CPU mapping: component_name -> cpu_id",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// System implementation: rma",
+                    "// Auto-generated from AADL",
+                ],
+                vis: Public,
+            },
+        ),
+        Impl(
+            ImplBlock {
+                target: Named(
+                    "rmaSystem",
+                ),
+                generics: [],
+                items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "mut node_a",
+                                            ty: Some(
+                                                Named(
+                                                    "node_aThread",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "node_aThread",
+                                                            "new",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "mut cpu",
+                                            ty: Some(
+                                                Named(
+                                                    "cpuThread",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "cpuThread",
+                                                            "new",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "cpu_mapping",
+                                            ty: Some(
+                                                Named(
+                                                    "HashMap<String, usize>",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "HashMap",
+                                                            "new",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "return Self { node_a, cpu, cpu_mapping }  //显式return",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Creates a new system instance",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                    Method(
+                        FunctionDef {
+                            name: "run",
+                            params: [
+                                Param {
+                                    name: "self",
+                                    ty: Named(
+                                        "Self",
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        MethodCall(
+                                            Path(
+                                                [
+                                                    "self",
+                                                    "node_a",
+                                                ],
+                                                Member,
+                                            ),
+                                            "run",
+                                            [
+                                                MethodCall(
+                                                    Ident(
+                                                        "self.cpu_mapping",
+                                                    ),
+                                                    "get",
+                                                    [
+                                                        Literal(
+                                                            Str(
+                                                                "node_a",
+                                                            ),
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Path(
+                                                [
+                                                    "self",
+                                                    "cpu",
+                                                ],
+                                                Member,
+                                            ),
+                                            "run",
+                                            [
+                                                MethodCall(
+                                                    Ident(
+                                                        "self.cpu_mapping",
+                                                    ),
+                                                    "get",
+                                                    [
+                                                        Literal(
+                                                            Str(
+                                                                "cpu",
+                                                            ),
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Runs the system by starting all processes",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                trait_impl: None,
+            },
+        ),
     ],
     attrs: [],
     vis: Public,
