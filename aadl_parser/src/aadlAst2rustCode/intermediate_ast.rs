@@ -141,6 +141,7 @@ pub enum Expr {
         else_branch: Option<Block>,
     },
     Reference(Box<Expr>,bool,bool),    // &expr,第一位标志&,第二位标志mut
+    BinaryOp(Box<Expr>, String, Box<Expr>), // left op right, 如 a != 0
 
 }
 

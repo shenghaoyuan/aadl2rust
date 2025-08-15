@@ -36,17 +36,17 @@ impl RustCodeGenerator {
         self.writeln("    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,");
         self.writeln("    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,");
         self.writeln("};");
-        self.writeln("include!(concat!(env!(\"OUT_DIR\"), \"/c_bindings.rs\"));"); //绑定的函数通过 include! 注入到根模块
+        self.writeln("include!(concat!(env!(\"OUT_DIR\"), \"/aadl_c_bindings.rs\"));"); //绑定的函数通过 include! 注入到根模块
 
         self.writeln("");
 
         // 添加CPU亲和性设置函数
         self.writeln("// ---------------- cpu ----------------");
-        self.writeln("fn set_thread_affinity(cpu: usize) {");
+        self.writeln("fn set_thread_affinity(cpu: isize) {");
         self.writeln("    unsafe {");
         self.writeln("        let mut cpuset: cpu_set_t = std::mem::zeroed();");
         self.writeln("        CPU_ZERO(&mut cpuset);");
-        self.writeln("        CPU_SET(cpu, &mut cpuset);");
+        self.writeln("        CPU_SET(cpu as usize, &mut cpuset);");
         self.writeln("        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);");
         self.writeln("    }");
         self.writeln("}");
@@ -183,14 +183,18 @@ impl RustCodeGenerator {
 
         self.writeln(&format!("impl {} {{", s.name));
         self.writeln("    // 创建组件并初始化AADL属性");
-        self.write("    pub fn new(");
+        self.write("    pub fn new(cpu_id: isize");
 
         self.writeln(") -> Self {");
         self.writeln("        Self {");
 
-        // 端口字段初始化
+        // 端口字段初始化，新增了针对cpu_id的特殊处理，将其作为特性
         for field in &s.fields {
-            self.writeln(&format!("            {}: None,", field.name));
+            if field.name == "cpu_id" {
+                self.writeln("            cpu_id: cpu_id,");
+            } else {
+                self.writeln(&format!("            {}: None,", field.name));
+            }
         }
 
         // 属性字段初始化
@@ -530,11 +534,20 @@ impl RustCodeGenerator {
                 self.write("if ");
                 self.generate_expr(condition);
                 self.write(" ");
+                self.writeln("{");
+                self.indent();
                 self.generate_block(then_branch);
+                self.dedent();
+                self.write("}");
+                
 
                 if let Some(else_branch) = else_branch {
                     self.write(" else ");
+                    self.writeln("{");
+                    self.indent();
                     self.generate_block(else_branch);
+                    self.dedent();
+                    self.write("}");
                 }
             }
             Expr::IfLet {
@@ -569,7 +582,15 @@ impl RustCodeGenerator {
                     self.write("mut ");
                 }
                 self.generate_expr(inner_expr);
-            } //_ => self.write(""),
+            }
+            Expr::BinaryOp(left, op, right) => {
+                self.generate_expr(left);
+                self.write(" ");
+                self.write(op);
+                self.write(" ");
+                self.generate_expr(right);
+            }
+            //_ => self.write(""),
         }
     }
 

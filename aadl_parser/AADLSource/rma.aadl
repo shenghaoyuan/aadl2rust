@@ -97,6 +97,7 @@ public
   system implementation rma.impl
   subcomponents
     node_a : process node_a.impl;
+    --node_b : process node_b.impl;
     cpu	   : processor cpu.impl;
   properties
     Actual_Processor_Binding => reference (cpu) applies to node_a;

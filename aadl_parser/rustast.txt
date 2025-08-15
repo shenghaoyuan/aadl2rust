@@ -141,10 +141,10 @@ RustModule {
                     Field {
                         name: "cpu_id",
                         ty: Named(
-                            "usize",
+                            "isize",
                         ),
                         docs: [
-                            "// 新增 CPU ID",
+                            "// 结构体新增 CPU ID",
                         ],
                         attrs: [],
                     },
@@ -222,6 +222,157 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: 1 }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        Path(
+                                                                            [
+                                                                                "SCHED_FIFO",
+                                                                            ],
+                                                                            Namespace,
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "taskThread: Failed to set thread priority: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                    Expr(
+                                        If {
+                                            condition: BinaryOp(
+                                                Path(
+                                                    [
+                                                        "self",
+                                                        "cpu_id",
+                                                    ],
+                                                    Member,
+                                                ),
+                                                ">",
+                                                Literal(
+                                                    Int(
+                                                        -1,
+                                                    ),
+                                                ),
+                                            ),
+                                            then_branch: Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "set_thread_affinity",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "cpu_id",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                            else_branch: None,
+                                        },
+                                    ),
                                     Let(
                                         LetStmt {
                                             ifmut: false,
@@ -369,10 +520,10 @@ RustModule {
                     Field {
                         name: "cpu_id",
                         ty: Named(
-                            "usize",
+                            "isize",
                         ),
                         docs: [
-                            "// 新增 CPU ID",
+                            "// 结构体新增 CPU ID",
                         ],
                         attrs: [],
                     },
@@ -450,6 +601,157 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: 2 }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        Path(
+                                                                            [
+                                                                                "SCHED_FIFO",
+                                                                            ],
+                                                                            Namespace,
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "task2Thread: Failed to set thread priority: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                    Expr(
+                                        If {
+                                            condition: BinaryOp(
+                                                Path(
+                                                    [
+                                                        "self",
+                                                        "cpu_id",
+                                                    ],
+                                                    Member,
+                                                ),
+                                                ">",
+                                                Literal(
+                                                    Int(
+                                                        -1,
+                                                    ),
+                                                ),
+                                            ),
+                                            then_branch: Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "set_thread_affinity",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "cpu_id",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                            else_branch: None,
+                                        },
+                                    ),
                                     Let(
                                         LetStmt {
                                             ifmut: false,
@@ -635,7 +937,7 @@ RustModule {
                     Field {
                         name: "cpu_id",
                         ty: Named(
-                            "usize",
+                            "isize",
                         ),
                         docs: [
                             "// 新增 CPU ID",
@@ -669,7 +971,7 @@ RustModule {
                                 Param {
                                     name: "cpu_id",
                                     ty: Named(
-                                        "usize",
+                                        "isize",
                                     ),
                                 },
                             ],
@@ -844,7 +1146,7 @@ RustModule {
                     Field {
                         name: "processes",
                         ty: Named(
-                            "Vec<(String, usize)>",
+                            "Vec<(String, isize)>",
                         ),
                         docs: [
                             "// 进程和CPU的对应关系",
@@ -881,7 +1183,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "Self { processes: vec![(\"node_a\".to_string(), 0)] }",
+                                            "return Self { processes: vec![(\"node_a\".to_string(), 0)] }",
                                         ),
                                     ),
                                 ],
@@ -911,7 +1213,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "// TODO: 遍历processes，为每个进程调用start函数并传递CPU参数",
+                                            "for (proc_name, cpu_id) in self.processes {\n        match proc_name.as_str() {\n            \"node_a\" => {\n                    let proc = node_aProcess::new(cpu_id);\n                    proc.start();\n                },\n            _ => { eprintln!(\"Unknown process: {}\", proc_name); }\n           }\n        }",
                                         ),
                                     ),
                                 ],

@@ -124,8 +124,8 @@ impl AadlConverter {
         // 添加 CPU ID 字段
         fields.push(Field {
             name: "cpu_id".to_string(),
-            ty: Type::Named("usize".to_string()),
-            docs: vec!["// 新增 CPU ID".to_string()],
+            ty: Type::Named("isize".to_string()),
+            docs: vec!["// 结构体新增 CPU ID".to_string()],
             attrs: Vec::new(),
         });
         
@@ -154,7 +154,7 @@ impl AadlConverter {
         let mut fields = vec![
             Field {
                 name: "processes".to_string(),
-                ty: Type::Named("Vec<(String, usize)>".to_string()), // (进程名, CPU编号)
+                ty: Type::Named("Vec<(String, isize)>".to_string()), // (进程名, CPU编号)
                 docs: vec!["// 进程和CPU的对应关系".to_string()],
                 attrs: Vec::new(),
             },
@@ -171,27 +171,19 @@ impl AadlConverter {
         };
         items.push(Item::Struct(struct_def));
 
-        // 2. 实现块
-        items.push(Item::Impl(self.create_system_impl_block(comp)));
-
         items
     }
 
-    fn create_system_impl_block(&self, comp: &ComponentType) -> ImplBlock {
+    fn create_system_impl_block(&self, impl_: &ComponentImplementation) -> ImplBlock {
         ImplBlock {
-            target: Type::Named(format!("{}System", comp.identifier.to_lowercase())),
+            target: Type::Named(format!("{}System", impl_.name.type_identifier.to_lowercase())),
             generics: Vec::new(),
             items: vec![
                 ImplItem::Method(FunctionDef {
                     name: "new".to_string(),
                     params: Vec::new(),
                     return_type: Type::Named("Self".to_string()),
-                    body: Block {
-                        stmts: vec![
-                            Statement::Expr(Expr::Ident(format!("Self {{ processes: vec![(\"node_a\".to_string(), 0)] }}"))),
-                        ],
-                        expr: None,
-                    },
+                    body: self.create_system_new_body(impl_),
                     asyncness: false,
                     vis: Visibility::Public,
                     docs: vec!["// 创建系统实例".to_string()],
@@ -204,12 +196,7 @@ impl AadlConverter {
                         ty: Type::Named("Self".to_string()),
                     }],
                     return_type: Type::Unit,
-                    body: Block {
-                        stmts: vec![
-                            Statement::Expr(Expr::Ident("// TODO: 遍历processes，为每个进程调用start函数并传递CPU参数".to_string())),
-                        ],
-                        expr: None,
-                    },
+                    body: self.create_system_run_body(impl_),
                     asyncness: false,
                     vis: Visibility::Public,
                     docs: vec!["// 运行系统，启动所有进程".to_string()],
@@ -759,7 +746,7 @@ impl AadlConverter {
         // 添加 CPU ID 字段
         fields.push(Field {
             name: "cpu_id".to_string(),
-            ty: Type::Named("usize".to_string()),
+            ty: Type::Named("isize".to_string()),
             docs: vec!["// 新增 CPU ID".to_string()],
             attrs: Vec::new(),
         });
@@ -779,8 +766,18 @@ impl AadlConverter {
         match impl_.category {
             ComponentCategory::Process => self.convert_process_implementation(impl_),
             ComponentCategory::Thread => self.convert_thread_implemenation(impl_),
+            ComponentCategory::System => self.convert_system_implementation(impl_),
             _ => Vec::default(), // 默认实现
         }
+    }
+
+    fn convert_system_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+        let mut items = Vec::new();
+
+        // 生成系统实现块
+        items.push(Item::Impl(self.create_system_impl_block(impl_)));
+
+        items
     }
 
     fn convert_process_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
@@ -791,7 +788,7 @@ impl AadlConverter {
         // 添加 CPU ID 字段
         fields.push(Field {
             name: "cpu_id".to_string(),
-            ty: Type::Named("usize".to_string()),
+            ty: Type::Named("isize".to_string()),
             docs: vec!["// 新增 CPU ID".to_string()],
             attrs: Vec::new(),
         });
@@ -854,7 +851,7 @@ impl AadlConverter {
             name: "new".to_string(),
             params: vec![Param {
                 name: "cpu_id".to_string(),
-                ty: Type::Named("usize".to_string()),
+                ty: Type::Named("isize".to_string()),
             }],
             return_type: Type::Named("Self".to_string()),
             body: self.create_process_new_body(impl_),
@@ -1118,14 +1115,14 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
-        let mut fields = Vec::new(); //对于线程来说是特征列表,thread_impl没有特征
+        let fields = Vec::new(); //对于线程来说是特征列表,thread_impl没有特征
         // 添加 CPU ID 字段
-        fields.push(Field {
-            name: "cpu_id".to_string(),
-            ty: Type::Named("usize".to_string()),
-            docs: vec!["// 新增 CPU ID".to_string()],
-            attrs: Vec::new(),
-        });
+        // fields.push(Field {
+        //     name: "cpu_id".to_string(),
+        //     ty: Type::Named("isize".to_string()),
+        //     docs: vec!["// 新增 CPU ID".to_string()],
+        //     attrs: Vec::new(),
+        // });
         
         let struct_def = StructDef {
             name: format!("{}Thread", impl_.name.type_identifier.to_lowercase()),
@@ -1176,6 +1173,105 @@ impl AadlConverter {
 
     fn create_thread_run_body(&self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
+
+        // 0. 线程优先级设置（如果存在priority属性）
+        if let Some(priority) = self.extract_property_value(impl_, "priority") {
+            // 添加优先级设置代码 - 使用unsafe块和完整的错误处理
+            stmts.push(Statement::Expr(Expr::Unsafe(Box::new(Block {
+                stmts: vec![
+                    // let mut param = sched_param { sched_priority: self.priority as i32 };
+                    Statement::Let(LetStmt {
+                        ifmut: true,
+                        name: "param".to_string(),
+                        ty: Some(Type::Named("sched_param".to_string())),
+                        init: Some(Expr::Ident(format!("sched_param {{ sched_priority: {} }}", priority as i32))),
+                    }),
+                    // let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+                    Statement::Let(LetStmt {
+                        ifmut: false,
+                        name: "ret".to_string(),
+                        ty: None,
+                        init: Some(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec!["pthread_setschedparam".to_string()],
+                                PathType::Namespace,
+                            )),
+                            vec![
+                                Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["pthread_self".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    Vec::new(),
+                                ),
+                                Expr::Path(
+                                    vec!["SCHED_FIFO".to_string()],
+                                    PathType::Namespace,
+                                ),
+                                Expr::Reference(
+                                    Box::new(Expr::Ident("param".to_string())),
+                                    true,
+                                    true,
+                                ),
+                            ],
+                        )),
+                    }),
+                    // if ret != 0 { eprintln!("..."); }
+                    Statement::Expr(Expr::If {
+                        condition: Box::new(Expr::BinaryOp(
+                            Box::new(Expr::Ident("ret".to_string())),
+                            "!=".to_string(),
+                            Box::new(Expr::Literal(Literal::Int(0))),
+                        )),
+                        then_branch: Block {
+                            stmts: vec![
+                                Statement::Expr(Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["eprintln!".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    vec![
+                                        Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority: {{}}", impl_.name.type_identifier.to_lowercase()))),
+                                        Expr::Ident("ret".to_string()),
+                                    ],
+                                )),
+                            ],
+                            expr: None,
+                        },
+                        else_branch: None,
+                    }),
+                ],
+                expr: None,
+            }))));
+        }
+
+        // 0.5. CPU亲和性设置（如果cpu_id > 0）
+        stmts.push(Statement::Expr(Expr::If {
+            condition: Box::new(Expr::BinaryOp(
+                Box::new(Expr::Path(
+                    vec!["self".to_string(), "cpu_id".to_string()],
+                    PathType::Member,
+                )),
+                ">".to_string(),
+                Box::new(Expr::Literal(Literal::Int(-1))),
+            )),
+            then_branch: Block {
+                stmts: vec![
+                    Statement::Expr(Expr::Call(
+                        Box::new(Expr::Path(
+                            vec!["set_thread_affinity".to_string()],
+                            PathType::Namespace,
+                        )),
+                        vec![Expr::Path(
+                            vec!["self".to_string(), "cpu_id".to_string()],
+                            PathType::Member,
+                        )],
+                    )),
+                ],
+                expr: None,
+            },
+            else_branch: None,
+        }));
 
         // 1. 周期设置
         let period = self.extract_property_value(impl_, "period").unwrap_or(2000);
@@ -1557,4 +1653,117 @@ impl AadlConverter {
 
     //     calls
     // }
+    
+    // 提取系统实现中的处理器绑定信息
+    fn extract_processor_bindings(&self, impl_: &ComponentImplementation) -> Vec<(String, String)> {
+        let mut bindings = Vec::new();
+        
+        if let PropertyClause::Properties(properties) = &impl_.properties {
+            for property in properties {
+                if let Property::BasicProperty(basic_prop) = property {
+                    if basic_prop.identifier.name == "Actual_Processor_Binding" {
+                        if let PropertyValue::Single(PropertyExpression::Reference(ref_term)) = &basic_prop.value {
+                            if let Some(applies_to) = &ref_term.applies_to {
+                                // 格式: (进程名, CPU标识符)
+                                bindings.push((applies_to.clone(), ref_term.identifier.clone()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        bindings
+    }
+    // 创建系统实例中new()方法
+    fn create_system_new_body(&self, impl_: &ComponentImplementation) -> Block {
+        let processor_bindings = self.extract_processor_bindings(impl_);
+        let mut stmts = Vec::new();
+        
+        // 收集系统内的进程子组件，默认 cpu_id 为 -1
+        let mut process_order: Vec<String> = Vec::new();
+        let mut proc_to_cpu: HashMap<String, isize> = HashMap::new();
+        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            for sub in subcomponents {
+                if sub.category == ComponentCategory::Process {
+                    let proc_name = sub.identifier.clone();
+                    if !proc_to_cpu.contains_key(&proc_name) {
+                        process_order.push(proc_name.clone());
+                        proc_to_cpu.insert(proc_name, -1);
+                    }
+                }
+            }
+        }
+
+        // 在默认设置所有的进程cpu后，去查看cpu绑定的属性，覆盖绑定了处理器的进程 cpu_id
+        let mut cpu_counter = 0; //从0开始设置cpu的编号
+        let mut cpu_name_to_num = std::collections::HashMap::new();
+
+        for (proc_name, cpu_name) in processor_bindings {
+            // 如果是新CPU名，就分配一个编号
+            let cpu_num = *cpu_name_to_num
+                .entry(cpu_name.clone())
+                .or_insert_with(|| {
+                    let id = cpu_counter;
+                    cpu_counter += 1;
+                    id
+                });
+
+            if !proc_to_cpu.contains_key(&proc_name) {
+                process_order.push(proc_name.clone());
+            }
+            proc_to_cpu.insert(proc_name, cpu_num);
+        }
+        
+        // 生成 vec![(proc, cpu)]
+        let mut processes_vec: Vec<String> = Vec::new();
+        for name in process_order {
+            let cpu = *proc_to_cpu.get(&name).unwrap_or(&-1);
+            processes_vec.push(format!("(\"{}\".to_string(), {})", name, cpu));
+        }
+        
+        let processes_str = format!("vec![{}]", processes_vec.join(", "));
+        
+        stmts.push(Statement::Expr(Expr::Ident(format!("return Self {{ processes: {} }}", processes_str))));
+        
+        Block { stmts, expr: None }
+    }
+    
+    // 创建系统实例中run()方法,目前有些硬编码的方式
+    fn create_system_run_body(&self, impl_: &ComponentImplementation) -> Block {
+        let mut stmts = Vec::new();
+
+        // 收集系统内所有进程子组件的名称
+        let mut process_names: Vec<String> = Vec::new();
+        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            for sub in subcomponents {
+                if sub.category == ComponentCategory::Process {
+                    process_names.push(sub.identifier.clone());
+                }
+            }
+        }
+
+        // 生成 match 分支
+        let mut arms: Vec<String> = Vec::new();
+        for proc_name in &process_names {
+            let type_name = format!("{}Process", proc_name.to_lowercase());
+            arms.push(format!(
+                "\"{pn}\" => {{\n                    let proc = {ty}::new(cpu_id);\n                    proc.start();\n                }}",
+                pn = proc_name,
+                ty = type_name
+            ));
+        }
+        // 默认分支
+        arms.push("_ => { eprintln!(\"Unknown process: {}\", proc_name); }".to_string());
+
+        // 拼接完整的 for + match 代码块
+        let for_block = format!(
+            "for (proc_name, cpu_id) in self.processes {{\n        match proc_name.as_str() {{\n            {}\n           }}\n        }}",
+            arms.join(",\n            ")
+        );
+
+        stmts.push(Statement::Expr(Expr::Ident(for_block)));
+
+        Block { stmts, expr: None }
+    }
 }
