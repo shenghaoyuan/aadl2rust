@@ -1661,7 +1661,7 @@ impl AadlConverter {
         if let PropertyClause::Properties(properties) = &impl_.properties {
             for property in properties {
                 if let Property::BasicProperty(basic_prop) = property {
-                    if basic_prop.identifier.name == "Actual_Processor_Binding" {
+                    if basic_prop.identifier.name.to_lowercase() == "actual_processor_binding" {
                         if let PropertyValue::Single(PropertyExpression::Reference(ref_term)) = &basic_prop.value {
                             if let Some(applies_to) = &ref_term.applies_to {
                                 // 格式: (进程名, CPU标识符)

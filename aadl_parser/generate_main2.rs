@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-15 17:33:02
+// 生成时间: 2025-08-15 17:42:48
 
 #![allow(unused_imports)]
 use std::sync::mpsc;
@@ -21,195 +21,220 @@ fn set_thread_affinity(cpu: isize) {
     }
 }
 
-pub mod hello_spg_1 {
-    // Auto-generated from AADL subprogram: Hello_Spg_1
-    // C binding to: user_hello_spg_1
-    // source_files: "hello.c"
-    use super::{user_hello_spg_1};
-    // Direct execution wrapper for C function user_hello_spg_1
-    // This component has no communication ports
-    pub fn execute() -> () {
-        unsafe { user_hello_spg_1();
-         };
-    }
-    
-}
-
-pub mod hello_spg_2 {
-    // Auto-generated from AADL subprogram: Hello_Spg_2
-    // C binding to: user_hello_spg_2
-    // source_files: "hello.c"
-    use super::{user_hello_spg_2};
-    // Direct execution wrapper for C function user_hello_spg_2
-    // This component has no communication ports
-    pub fn execute() -> () {
-        unsafe { user_hello_spg_2();
-         };
-    }
-    
-}
-
-// AADL Thread: task
-#[derive(Debug)]
-pub struct taskThread {
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
-}
-
-impl taskThread {
-    // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 1, // AADL属性: Priority
-            period: 1000, // AADL属性: Period
-            deadline: 1000, // AADL属性: Deadline
-        }
-    }
-}
-impl taskThread {
-    // Thread execution entry point
-    // Period: Some(1000) ms
-    pub fn run(mut self) -> () {
-        unsafe {
-            let mut param: sched_param = sched_param { sched_priority: 1 };
-            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
-            if ret != 0 {
-                eprintln!("taskThread: Failed to set thread priority: {}", ret);
-            };
-        };
-        if self.cpu_id > -1 {
-            set_thread_affinity(self.cpu_id);
-        };
-        let period: std::time::Duration = Duration::from_millis(1000);
-        loop {
-            let start = Instant::now();
-            {
-                hello_spg_1::execute();
-            };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
-        };
-    }
-    
-}
-
-// AADL Thread: task2
-#[derive(Debug)]
-pub struct task2Thread {
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
-}
-
-impl task2Thread {
-    // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 2, // AADL属性: Priority
-            period: 500, // AADL属性: Period
-            deadline: 500, // AADL属性: Deadline
-        }
-    }
-}
-impl task2Thread {
-    // Thread execution entry point
-    // Period: Some(500) ms
-    pub fn run(mut self) -> () {
-        unsafe {
-            let mut param: sched_param = sched_param { sched_priority: 2 };
-            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
-            if ret != 0 {
-                eprintln!("task2Thread: Failed to set thread priority: {}", ret);
-            };
-        };
-        if self.cpu_id > -1 {
-            set_thread_affinity(self.cpu_id);
-        };
-        let period: std::time::Duration = Duration::from_millis(500);
-        loop {
-            let start = Instant::now();
-            {
-                hello_spg_2::execute();
-            };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
-        };
-    }
-    
-}
-
-// Process implementation: node_a
+// Process implementation: A
 // Auto-generated from AADL
 #[derive(Debug)]
-pub struct node_aProcess {
-    // Subcomponent: Task1
+pub struct aProcess {
+    // Subcomponent: Pinger
     #[allow(dead_code)]
-    pub task1: taskThread,
-    // Subcomponent: Task2
+    pub pinger: pThread,
+    // Subcomponent: Ping_Me
     #[allow(dead_code)]
-    pub task2: task2Thread,
+    pub ping_me: qThread,
     // 新增 CPU ID
     pub cpu_id: isize,
 }
 
-impl node_aProcess {
+impl aProcess {
     // Creates a new process instance
     pub fn new(cpu_id: isize) -> Self {
-        let mut task1: taskThread = taskThread::new(cpu_id);
-        let mut task2: task2Thread = task2Thread::new(cpu_id);
-        return Self { task1, task2, cpu_id }  //显式return;
+        let mut pinger: pThread = pThread::new(cpu_id);
+        let mut ping_me: qThread = qThread::new(cpu_id);
+        let channel = mpsc::channel();
+        // build connection: 
+            pinger.data_source = Some(channel.0);
+        // build connection: 
+            ping_me.data_sink = Some(channel.1);
+        return Self { pinger, ping_me, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
     pub fn start(self: Self) -> () {
         thread::Builder::new()
-            .name("task1".to_string())
-            .spawn(move || { self.task1.run() }).unwrap();
+            .name("pinger".to_string())
+            .spawn(move || { self.pinger.run() }).unwrap();
         thread::Builder::new()
-            .name("task2".to_string())
-            .spawn(move || { self.task2.run() }).unwrap();
+            .name("ping_me".to_string())
+            .spawn(move || { self.ping_me.run() }).unwrap();
     }
     
 }
 
-// AADL System: rma
+// AADL System: PING
 #[derive(Debug)]
-pub struct rmaSystem {
+pub struct pingSystem {
     // 进程和CPU的对应关系
     pub processes: Vec<(String, isize)>,
 }
 
-impl rmaSystem {
+impl pingSystem {
     // 创建系统实例
     pub fn new() -> Self {
-        return Self { processes: vec![("node_a".to_string(), 0)] };
+        return Self { processes: vec![("Node_A".to_string(), 0)] };
     }
     
     // 运行系统，启动所有进程
     pub fn run(self: Self) -> () {
         for (proc_name, cpu_id) in self.processes {
         match proc_name.as_str() {
-            "node_a" => {
+            "Node_A" => {
                     let proc = node_aProcess::new(cpu_id);
                     proc.start();
                 },
             _ => { eprintln!("Unknown process: {}", proc_name); }
            }
+        };
+    }
+    
+}
+
+// AADL Data Type: Simple_Type
+pub type Simple_Type = custom_int;
+
+pub mod do_ping_spg {
+    // Auto-generated from AADL subprogram: Do_Ping_Spg
+    // C binding to: user_do_ping_spg
+    // source_files: "ping.c"
+    use super::{user_do_ping_spg, Simple_Type};
+    // Wrapper for C function user_do_ping_spg
+    // Original AADL port: Data_Source
+    pub fn send(data_source: &mut Simple_Type) -> () {
+        unsafe { user_do_ping_spg(data_source);
+         };
+    }
+    
+}
+
+pub mod ping_spg {
+    // Auto-generated from AADL subprogram: Ping_Spg
+    // C binding to: user_ping_spg
+    // source_files: "ping.c"
+    use super::{user_ping_spg, Simple_Type};
+    // Wrapper for C function user_ping_spg
+    // Original AADL port: Data_Sink
+    pub fn receive(data_sink: Simple_Type) -> () {
+        unsafe { user_ping_spg(data_sink);
+         };
+    }
+    
+}
+
+// AADL Thread: p
+#[derive(Debug)]
+pub struct pThread {
+    // Port: Data_Source Out
+    pub data_source: Option<mpsc::Sender<Simple_Type>>,
+    // 结构体新增 CPU ID
+    pub cpu_id: isize,
+    
+    // --- AADL属性 ---
+    pub recover_entrypoint_source_text: String, // AADL属性: Recover_Entrypoint_Source_Text
+    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
+    pub period: u64, // AADL属性: Period
+    pub deadline: u64, // AADL属性: Deadline
+    pub priority: u64, // AADL属性: Priority
+    pub dispatch_offset: u64, // AADL属性: Dispatch_Offset
+}
+
+impl pThread {
+    // 创建组件并初始化AADL属性
+    pub fn new(cpu_id: isize) -> Self {
+        Self {
+            data_source: None,
+            cpu_id: cpu_id,
+            recover_entrypoint_source_text: "recover".to_string(), // AADL属性: Recover_Entrypoint_Source_Text
+            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
+            period: 2000, // AADL属性: Period
+            deadline: 2000, // AADL属性: Deadline
+            priority: 2, // AADL属性: Priority
+            dispatch_offset: 500, // AADL属性: Dispatch_Offset
+        }
+    }
+}
+impl pThread {
+    // Thread execution entry point
+    // Period: Some(2000) ms
+    pub fn run(mut self) -> () {
+        unsafe {
+            let mut param: sched_param = sched_param { sched_priority: 2 };
+            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+            if ret != 0 {
+                eprintln!("pThread: Failed to set thread priority: {}", ret);
+            };
+        };
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+                if let Some(sender) = &self.data_source {
+                    let mut val = 0;
+                    do_ping_spg::send(&mut val);
+                    sender.send(val).unwrap();
+                };
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
+}
+
+// AADL Thread: q
+#[derive(Debug)]
+pub struct qThread {
+    // Port: Data_Sink In
+    pub data_sink: Option<mpsc::Receiver<Simple_Type>>,
+    // 结构体新增 CPU ID
+    pub cpu_id: isize,
+    
+    // --- AADL属性 ---
+    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
+    pub period: u64, // AADL属性: Period
+    pub deadline: u64, // AADL属性: deadline
+    pub priority: u64, // AADL属性: Priority
+}
+
+impl qThread {
+    // 创建组件并初始化AADL属性
+    pub fn new(cpu_id: isize) -> Self {
+        Self {
+            data_sink: None,
+            cpu_id: cpu_id,
+            dispatch_protocol: "Sporadic".to_string(), // AADL属性: Dispatch_Protocol
+            period: 10, // AADL属性: Period
+            deadline: 10, // AADL属性: deadline
+            priority: 1, // AADL属性: Priority
+        }
+    }
+}
+impl qThread {
+    // Thread execution entry point
+    // Period: Some(10) ms
+    pub fn run(mut self) -> () {
+        unsafe {
+            let mut param: sched_param = sched_param { sched_priority: 1 };
+            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+            if ret != 0 {
+                eprintln!("qThread: Failed to set thread priority: {}", ret);
+            };
+        };
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(10);
+        loop {
+            let start = Instant::now();
+            {
+                if let Some(receiver) = &self.data_sink {
+                    let val = receiver.recv().unwrap();
+                    ping_spg::receive(val);
+                };
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
         };
     }
     

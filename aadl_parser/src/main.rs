@@ -19,9 +19,9 @@ use syn::{parse_str, ItemFn};
 use crate::{aadlAst2rustCode::converter::AadlConverter, ast::aadl_ast_cj::Package};
 
 fn main() {
-    //let path = "AADLSource/pingpong_ocarina.aadl";
+    let path = "AADLSource/pingpong_ocarina.aadl";
     //let path = "pingpong.aadl";
-    let path = "AADLSource/rma.aadl";
+    //let path = "AADLSource/rma.aadl";
     let aadl_input = match fs::read_to_string(path) {
         Ok(content) => content,
         Err(err) => {
