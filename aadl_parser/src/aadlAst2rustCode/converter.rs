@@ -18,7 +18,7 @@ struct PortHandlerConfig {
 impl Default for AadlConverter {
     fn default() -> Self {
         let mut type_mappings = HashMap::new();
-        type_mappings.insert("Integer".to_string(), Type::Named("u32".to_string()));
+        type_mappings.insert("Integer".to_string(), Type::Named("i32".to_string()));
         type_mappings.insert("String".to_string(), Type::Named("String".to_string()));
         type_mappings.insert("Boolean".to_string(), Type::Named("bool".to_string()));
 
@@ -47,24 +47,24 @@ impl AadlConverter {
         // 处理公共声明
         if let Some(public_section) = &pkg.public_section {
             for decl in &public_section.declarations {
-                self.convert_declaration(decl, &mut module);
+                self.convert_declaration(decl, &mut module, pkg);
             }
         }
 
         // 处理私有声明
         if let Some(private_section) = &pkg.private_section {
             for decl in &private_section.declarations {
-                self.convert_declaration(decl, &mut module);
+                self.convert_declaration(decl, &mut module, pkg);
             }
         }
 
         module
     }
 
-    fn convert_declaration(&self, decl: &AadlDeclaration, module: &mut RustModule) {
+    fn convert_declaration(&self, decl: &AadlDeclaration, module: &mut RustModule, package: &Package) {
         match decl {
             AadlDeclaration::ComponentType(comp) => {
-                module.items.extend(self.convert_component(comp));
+                module.items.extend(self.convert_component(comp, package));
             }
             AadlDeclaration::ComponentImplementation(impl_) => {
                 module.items.extend(self.convert_implementation(impl_));
@@ -73,11 +73,11 @@ impl AadlConverter {
         }
     }
 
-    fn convert_component(&self, comp: &ComponentType) -> Vec<Item> {
+    fn convert_component(&self, comp: &ComponentType, package: &Package) -> Vec<Item> {
         match comp.category {
             ComponentCategory::Data => self.convert_data_component(comp),
             ComponentCategory::Thread => self.convert_thread_component(comp),
-            ComponentCategory::Subprogram => self.convert_subprogram(comp),
+            ComponentCategory::Subprogram => self.convert_subprogram(comp, package),
             ComponentCategory::System => self.convert_system_component(comp),
             _ => Vec::default(), //TODO:进程还需要处理
         }
@@ -85,6 +85,14 @@ impl AadlConverter {
 
     fn convert_data_component(&self, comp: &ComponentType) -> Vec<Item> {
         let target_type = self.determine_data_type(comp);
+        
+        // 当 determine_data_type 返回空元组类型时，不继续处理
+        if let Type::Named(unit_type) = &target_type {
+            if unit_type == "()" {
+                return Vec::new();
+            }
+        }
+        
         vec![Item::TypeAlias(TypeAlias {
             name: comp.identifier.clone(),
             target: target_type,
@@ -97,6 +105,26 @@ impl AadlConverter {
         if let PropertyClause::Properties(props) = &comp.properties {
             for prop in props {
                 if let Property::BasicProperty(bp) = prop {
+                    // 处理 Data_Model::Data_Representation 属性
+                    if bp.identifier.name.to_lowercase() == "data_model" {
+                        if let Some(property_set) = &bp.identifier.property_set {
+                            if property_set.to_lowercase() == "data_representation" {
+                                if let PropertyValue::Single(PropertyExpression::String(
+                                    StringTerm::Literal(str_val),
+                                )) = &bp.value
+                                {
+                                    // 使用 type_mappings 查找对应的类型，如果没有找到则使用原值
+                                    return self
+                                        .type_mappings
+                                        .get(&str_val.to_string())
+                                        .cloned()
+                                        .unwrap_or_else(|| Type::Named(str_val.to_string()));
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 处理 type_source_name 属性，用于指定数据类型
                     if bp.identifier.name.to_lowercase() == "type_source_name" {
                         if let PropertyValue::Single(PropertyExpression::String(
                             StringTerm::Literal(str_val),
@@ -212,13 +240,64 @@ impl AadlConverter {
 
         if let FeatureClause::Items(feature_items) = features {
             for feature in feature_items {
-                if let Feature::Port(port) = feature {
-                    fields.push(Field {
-                        name: port.identifier.to_lowercase(),
-                        ty: self.convert_port_type(&port),
-                        docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
-                        attrs: Vec::new(),
-                    });
+                match feature {
+                    Feature::Port(port) => {
+                        fields.push(Field {
+                            name: port.identifier.to_lowercase(),
+                            ty: self.convert_port_type(&port),
+                            docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
+                            attrs: Vec::new(),
+                        });
+                    }
+                    Feature::SubcomponentAccess(sub_access) => {
+                        // 处理 requires data access 特征
+                        if let SubcomponentAccessSpec::Data(data_access) = sub_access {
+                            if data_access.direction == AccessDirection::Requires {
+                                // 生成字段：pub GNC_POS : PosShared,
+                                let field_name = data_access.identifier.to_lowercase();
+                                
+                                // 从分类器中提取组件名称，用于生成PosShared类型
+                                if let Some(classifier) = &data_access.classifier {
+                                    if let DataAccessReference::Classifier(unique_ref) = classifier {
+                                        let shared_type_name = match unique_ref {
+                                            UniqueComponentClassifierReference::Implementation(impl_ref) => {
+                                                // 从 POS.Impl 生成 pos_shared
+                                                let base_name = &impl_ref.implementation_name.type_identifier;
+                                                if base_name.ends_with(".Impl") {
+                                                    let prefix = &base_name[..base_name.len() - 5]; // 去掉".Impl"后缀
+                                                    format!("{}Shared", prefix)
+                                                } else {
+                                                    // 如果没有Impl后缀，直接处理
+                                                    format!("{}Shared", base_name)
+                                                }
+                                            }
+                                            UniqueComponentClassifierReference::Type(type_ref) => {
+                                                // 从 POS 生成 pos_shared
+                                                let base_name = &type_ref.implementation_name.type_identifier;
+                                                format!("{}Shared", base_name)
+                                            }
+                                        };
+                                        
+                                        fields.push(Field {
+                                            name: field_name,
+                                            ty: Type::Named(shared_type_name),
+                                            docs: vec![format!("// AADL feature: {} : requires data access {}", 
+                                                data_access.identifier, 
+                                                match classifier {
+                                                    DataAccessReference::Classifier(UniqueComponentClassifierReference::Implementation(impl_ref)) => 
+                                                        impl_ref.implementation_name.type_identifier.clone(),
+                                                    DataAccessReference::Classifier(UniqueComponentClassifierReference::Type(type_ref)) => 
+                                                        type_ref.implementation_name.type_identifier.clone(),
+                                                    _ => "Unknown".to_string(),
+                                                }
+                                            )],
+                                            attrs: Vec::new(),
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -238,7 +317,7 @@ impl AadlConverter {
         let inner_type = match &port.port_type {
             PortType::Data { classifier } | PortType::EventData { classifier } => {
                 classifier
-                    .as_ref() //.as_ref() 的作用是把 Option<T> 变成 Option<&T>。它不会取得其中值的所有权，而只是“借用”里面的值。
+                    .as_ref() //.as_ref() 的作用是把 Option<T> 变成 Option<&T>。它不会取得其中值的所有权，而只是"借用"里面的值。
                     .map(|c| self.classifier_to_type(c)) //对 Option 类型调用 .map() 方法，用于在 Some(...) 中包裹的值c上应用一个函数。
                     .unwrap_or(Type::Named("()".to_string()))
             }
@@ -476,12 +555,12 @@ impl AadlConverter {
         }
     }
 
-    fn convert_subprogram(&self, comp: &ComponentType) -> Vec<Item> {
+    fn convert_subprogram(&self, comp: &ComponentType, package: &Package) -> Vec<Item> {
         let mut items = Vec::new();
 
         // 检查是否是C语言绑定的子程序
         if let Some(c_func_name) = self.extract_c_function_name(comp) {
-            return self.generate_c_function_wrapper(comp, &c_func_name);
+            return self.generate_c_function_wrapper(comp, &c_func_name, package);
         }
 
         if let FeatureClause::Items(features) = &comp.features {
@@ -537,7 +616,7 @@ impl AadlConverter {
         None
     }
 
-    fn generate_c_function_wrapper(&self, comp: &ComponentType, c_func_name: &str) -> Vec<Item> {
+    fn generate_c_function_wrapper(&self, comp: &ComponentType, c_func_name: &str, package: &Package) -> Vec<Item> {
         //获取C程序源文件文件名
         let source_files = self.extract_source_files(comp);
 
@@ -545,58 +624,115 @@ impl AadlConverter {
         let mut functions = Vec::new();
         let mut types_to_import = std::collections::HashSet::new();
 
-        // 处理每个参数特征
+        // 处理每个特征
         if let FeatureClause::Items(features) = &comp.features {
             for feature in features {
-                if let Feature::Port(port) = feature {
-                    let (func_name, param_type) = match port.direction {
-                        PortDirection::Out => (
-                            "send",
-                            Type::Reference(Box::new(self.convert_paramport_type(port)), true, true),
-                        ),
-                        PortDirection::In => (
-                            "receive",
-                            Type::Reference(Box::new(self.convert_paramport_type(port)), false, false),
-                        ),
-                        _ => continue, //
-                    };
+                match feature {
+                    Feature::Port(port) => {
+                        let (func_name, param_type) = match port.direction {
+                            PortDirection::Out => (
+                                "send",
+                                Type::Reference(Box::new(self.convert_paramport_type(port)), true, true),
+                            ),
+                            PortDirection::In => (
+                                "receive",
+                                Type::Reference(Box::new(self.convert_paramport_type(port)), false, false),
+                            ),
+                            _ => continue, //
+                        };
 
-                    // 收集需要导入的类型
-                    if let Type::Named(type_name) = &self.convert_paramport_type(port) {
-                        if !self.is_rust_primitive_type(type_name) {
-                            types_to_import.insert(type_name.clone());
+                        // 收集需要导入的类型
+                        if let Type::Named(type_name) = &self.convert_paramport_type(port) {
+                            if !self.is_rust_primitive_type(type_name) {
+                                types_to_import.insert(type_name.clone());
+                            }
+                        }
+
+                        // 创建包装函数
+                        functions.push(FunctionDef {
+                            name: func_name.to_string(),
+                            params: vec![Param {
+                                name: port.identifier.to_string().to_lowercase(),
+                                ty: param_type,
+                            }],
+                            return_type: Type::Unit,
+                            body: Block {
+                                stmts: vec![Statement::Expr(Expr::Unsafe(Box::new(Block {
+                                    stmts: vec![Statement::Expr(Expr::Call(
+                                        Box::new(Expr::Path(
+                                            vec![c_func_name.to_string()],
+                                            PathType::Namespace,
+                                        )),
+                                        vec![Expr::Ident(port.identifier.to_string().to_lowercase())],
+                                    ))],
+                                    expr: None,
+                                })))],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Visibility::Public,
+                            docs: vec![
+                                format!("// Wrapper for C function {}", c_func_name),
+                                format!("// Original AADL port: {}", port.identifier),
+                            ],
+                            attrs: Vec::new(),
+                        });
+                    }
+                    Feature::SubcomponentAccess(sub_access) => {
+                        // 处理 requires data access 特征
+                        if let SubcomponentAccessSpec::Data(data_access) = sub_access {
+                            if data_access.direction == AccessDirection::Requires {
+                                // 从 this : requires data access POS.Impl 中提取 POS.Impl
+                                if let Some(classifier) = &data_access.classifier {
+                                    if let DataAccessReference::Classifier(unique_ref) = classifier {
+                                        if let UniqueComponentClassifierReference::Implementation(impl_ref) = unique_ref {
+                                            let data_component_name = &impl_ref.implementation_name.type_identifier;
+                                            // 查找该数据组件实现中的具体数据类型
+                                            if let Some(data_type) = self.find_data_type_from_implementation(data_component_name, package) {
+                                                // 将数据类型添加到导入列表中
+                                                let data_type_for_import = data_type.clone();
+                                                types_to_import.insert(data_type_for_import);
+                                                
+                                                // 为 requires data access 特征生成 call 函数
+                                                let call_function = FunctionDef {
+                                                    name: "call".to_string(),
+                                                    params: vec![Param {
+                                                        name: "pos_ref".to_string(),
+                                                        ty: Type::Reference(Box::new(Type::Named(data_type)), true, true), // &mut PosInternalType
+                                                    }],
+                                                    return_type: Type::Unit,
+                                                    body: Block {
+                                                        stmts: vec![Statement::Expr(Expr::Unsafe(Box::new(Block {
+                                                            stmts: vec![Statement::Expr(Expr::Call(
+                                                                Box::new(Expr::Path(
+                                                                    vec![c_func_name.to_string()],
+                                                                    PathType::Namespace,
+                                                                )),
+                                                                vec![Expr::Ident("pos_ref".to_string())], // 直接传递引用，让Rust编译器处理类型转换
+                                                            ))],
+                                                            expr: None,
+                                                        })))],
+                                                        expr: None,
+                                                    },
+                                                    asyncness: false,
+                                                    vis: Visibility::Public,
+                                                    docs: vec![
+                                                        format!("// Call C function {} with data access reference", c_func_name),
+                                                        "// Generated for requires data access feature".to_string(),
+                                                        "// Note: Rust compiler will handle the reference to pointer conversion".to_string(),
+                                                    ],
+                                                    attrs: Vec::new(),
+                                                };
+                                                
+                                                functions.push(call_function);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    // 创建包装函数
-                    functions.push(FunctionDef {
-                        name: func_name.to_string(),
-                        params: vec![Param {
-                            name: port.identifier.to_string().to_lowercase(),
-                            ty: param_type,
-                        }],
-                        return_type: Type::Unit,
-                        body: Block {
-                            stmts: vec![Statement::Expr(Expr::Unsafe(Box::new(Block {
-                                stmts: vec![Statement::Expr(Expr::Call(
-                                    Box::new(Expr::Path(
-                                        vec![c_func_name.to_string()],
-                                        PathType::Namespace,
-                                    )),
-                                    vec![Expr::Ident(port.identifier.to_string().to_lowercase())],
-                                ))],
-                                expr: None,
-                            })))],
-                            expr: None,
-                        },
-                        asyncness: false,
-                        vis: Visibility::Public,
-                        docs: vec![
-                            format!("// Wrapper for C function {}", c_func_name),
-                            format!("// Original AADL port: {}", port.identifier),
-                        ],
-                        attrs: Vec::new(),
-                    });
+                    _ => {} // 忽略其他类型的特征
                 }
             }
         }
@@ -767,6 +903,7 @@ impl AadlConverter {
             ComponentCategory::Process => self.convert_process_implementation(impl_),
             ComponentCategory::Thread => self.convert_thread_implemenation(impl_),
             ComponentCategory::System => self.convert_system_implementation(impl_),
+            ComponentCategory::Data => self.convert_data_implementation(impl_),
             _ => Vec::default(), // 默认实现
         }
     }
@@ -776,6 +913,69 @@ impl AadlConverter {
 
         // 生成系统实现块
         items.push(Item::Impl(self.create_system_impl_block(impl_)));
+
+        items
+    }
+
+    fn convert_data_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+        let mut items = Vec::new();
+
+        // 检查子组件，判断是否为共享变量
+        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            let subprogram_count = subcomponents.iter()
+                .filter(|sub| sub.category == ComponentCategory::Subprogram)
+                .count();
+            
+            let data_subcomponents: Vec<_> = subcomponents.iter()
+                .filter(|sub| sub.category == ComponentCategory::Data)
+                .collect();
+
+            // 如果有多个子程序，说明是共享变量；暂时不支持Data中有大于1个共享数据
+            if subprogram_count > 1 {
+                if data_subcomponents.len() == 1 {
+                                    // 获取数据子组件的类型名（用于Arc<Mutex<T>>中的T）
+                let data_type_name = match &data_subcomponents[0].classifier {
+                    SubcomponentClassifier::ClassifierReference(
+                        UniqueComponentClassifierReference::Implementation(unirf),
+                    ) => {
+                        format!("{}", unirf.implementation_name.type_identifier)
+                    }
+                    _ => "UnknownType".to_string(),
+                };
+
+                // 生成共享变量类型定义：从数据组件实现名称（如POS.Impl）提取POS部分，然后加上Shared
+                let shared_type_name = {
+                    // 从 impl_.name.type_identifier 中提取实现名称（去掉可能的Impl后缀）
+                    let impl_name = &impl_.name.type_identifier;
+                    format!("{}Shared", impl_name)
+                };
+
+                    // 生成 Arc<Mutex<T>> 类型
+                    let shared_type = Type::Generic("Arc".to_string(), vec![
+                        Type::Generic("Mutex".to_string(), vec![
+                            Type::Named(data_type_name)
+                        ])
+                    ]);
+
+                    let type_alias = TypeAlias {
+                        name: shared_type_name,
+                        target: shared_type,
+                        vis: Visibility::Public,
+                        docs: vec![
+                            format!("// Shared data type for {}", impl_.name.type_identifier),
+                            "// Auto-generated from AADL data implementation".to_string(),
+                        ],
+                    };
+
+                    items.push(Item::TypeAlias(type_alias));
+                } else if data_subcomponents.len() > 1 {
+                    // 输出报错信息：不支持多个共享数据
+                    eprintln!("错误：数据组件实现 {} 中有 {} 个数据子组件，暂时不支持多个共享数据", 
+                        impl_.name.type_identifier, data_subcomponents.len());
+                    eprintln!("请检查AADL模型，确保每个共享数据组件实现中只有一个数据子组件");
+                }
+            }
+        }
 
         items
     }
@@ -813,6 +1013,7 @@ impl AadlConverter {
         items
     }
 
+    //处理子组件（thread+data）
     fn get_process_fields(&self, impl_: &ComponentImplementation) -> Vec<Field> {
         let mut fields = Vec::new();
 
@@ -828,10 +1029,29 @@ impl AadlConverter {
                     _ => "UnsupportedComponent".to_string(),
                 };
 
+                // 根据类别决定字段类型
+                let field_ty = match sub.category {
+                    ComponentCategory::Thread => Type::Named(format!("{}Thread", type_name.to_lowercase())),
+                    ComponentCategory::Data => {
+                        // 直接使用原始类型名，不进行大小写转换
+                        Type::Named(format!("{}Shared", type_name))
+                    }
+                    _ => Type::Named(format!("{}Thread", type_name.to_lowercase())),
+                };
+
+                let doc = match sub.category {
+                    ComponentCategory::Thread => format!("// 子组件线程（{} : thread {}）", sub.identifier, type_name),
+                    ComponentCategory::Data => {
+                        // 直接使用原始类型名
+                        format!("// 共享数据（{} : data {}）", sub.identifier, type_name)
+                    }
+                    _ => format!("// Subcomponent: {}", sub.identifier),
+                };
+
                 fields.push(Field {
                     name: sub.identifier.to_lowercase(),
-                    ty: Type::Named(format!("{}Thread", type_name.to_lowercase())),
-                    docs: vec![format!("// Subcomponent: {}", sub.identifier)],
+                    ty: field_ty,
+                    docs: vec![doc],
                     attrs: vec![Attribute {
                         name: "allow".to_string(),
                         args: vec![AttributeArg::Ident("dead_code".to_string())],
@@ -886,9 +1106,33 @@ impl AadlConverter {
 
     fn create_process_new_body(&self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
+        // 为每个线程收集需要注入到 new() 的共享变量参数（例如 data access 映射）
+        let mut thread_extra_args: std::collections::HashMap<String, Vec<Expr>> = std::collections::HashMap::new();
 
-        // 1. 创建子组件实例
+        if let ConnectionClause::Items(connections) = &impl_.connections {
+            for conn in connections {
+                if let Connection::Access(access_conn) = conn {
+                    // 仅处理 data access 映射：ComponentAccess(data) -> SubcomponentAccess{ subcomponent: thread, .. }
+                    match (&access_conn.source, &access_conn.destination) {
+                        (AccessEndpoint::ComponentAccess(data_name), AccessEndpoint::SubcomponentAccess { subcomponent: thread_name, .. }) => {
+                            let thread_key = thread_name.to_lowercase();
+                            let data_var = data_name.to_lowercase();
+                            let entry = thread_extra_args.entry(thread_key).or_default();
+                            // 传递克隆：pos_data.clone()
+                            entry.push(Expr::MethodCall(Box::new(Expr::Ident(data_var)), "clone".to_string(), Vec::new()));
+                        }
+                        // 其他方向暂不处理
+                        _ => {}
+                    }
+                }
+            }
+        }
+
+        // 1. 创建子组件实例（先 Data 后 Thread，避免线程 new() 引用未声明的共享变量）
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            let mut data_inits: Vec<Statement> = Vec::new();
+            let mut thread_inits: Vec<Statement> = Vec::new();
+
             for sub in subcomponents {
                 let type_name = match &sub.classifier {
                     SubcomponentClassifier::ClassifierReference(
@@ -901,22 +1145,72 @@ impl AadlConverter {
                 };
 
                 let var_name = sub.identifier.to_lowercase();
-                stmts.push(Statement::Let(LetStmt {
-                    ifmut: false,
-                    name: format!("mut {}", var_name),
-                    ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
-                    init: Some(Expr::Call(
-                        Box::new(Expr::Path(
-                            vec![
-                                format!("{}Thread", type_name.to_lowercase()),
-                                "new".to_string(),
-                            ],
-                            PathType::Namespace,
-                        )),
-                        vec![Expr::Ident("cpu_id".to_string())],
-                    )),
-                }));
+                // 按类别初始化子组件：线程调用 FooThread::new(cpu_id+共享变量克隆)，数据使用 PosShared::default()
+                match sub.category {
+                    ComponentCategory::Data => {
+                        // 直接使用原始类型名，不进行大小写转换
+                        let shared_ty = format!("{}Shared", type_name);
+                        // let pos: POS.ImplShared = Arc::new(Mutex::new(0));
+                        let init_expr = Expr::Call(
+                            Box::new(Expr::Path(vec!["Arc".to_string(), "new".to_string()], PathType::Namespace)),
+                            vec![Expr::Call(
+                                Box::new(Expr::Path(vec!["Mutex".to_string(), "new".to_string()], PathType::Namespace)),
+                                vec![Expr::Literal(Literal::Int(0))],
+                            )],
+                        );
+                        data_inits.push(Statement::Let(LetStmt {
+                            ifmut: false,
+                            name: format!("mut {}", var_name),
+                            ty: Some(Type::Named(shared_ty.clone())),
+                            init: Some(init_expr),
+                        }));
+                    }
+                    ComponentCategory::Thread => {
+                        // 组装 new() 实参：cpu_id + 由 access 连接推导出的共享变量克隆列表
+                        let mut args = vec![Expr::Ident("cpu_id".to_string())];
+                        if let Some(extra) = thread_extra_args.get(&sub.identifier.to_lowercase()) {
+                            args.extend(extra.clone());
+                        }
+                        thread_inits.push(Statement::Let(LetStmt {
+                            ifmut: false,
+                            name: format!("mut {}", var_name),
+                            ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
+                            init: Some(Expr::Call(
+                                Box::new(Expr::Path(
+                                    vec![
+                                        format!("{}Thread", type_name.to_lowercase()),
+                                        "new".to_string(),
+                                    ],
+                                    PathType::Namespace,
+                                )),
+                                args,
+                            )),
+                        }));
+                    }
+                    _ => {
+                        // 其他类别暂按线程处理
+                        thread_inits.push(Statement::Let(LetStmt {
+                            ifmut: false,
+                            name: format!("mut {}", var_name),
+                            ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
+                            init: Some(Expr::Call(
+                                Box::new(Expr::Path(
+                                    vec![
+                                        format!("{}Thread", type_name.to_lowercase()),
+                                        "new".to_string(),
+                                    ],
+                                    PathType::Namespace,
+                                )),
+                                vec![Expr::Ident("cpu_id".to_string())],
+                            )),
+                        }));
+                    }
+                }
             }
+
+            // 先共享数据，后线程
+            stmts.extend(data_inits);
+            stmts.extend(thread_inits);
         }
 
         // 2. 建立连接
@@ -959,40 +1253,38 @@ impl AadlConverter {
 
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
-                let var_name = sub.identifier.to_lowercase();
+                // 仅对线程子组件启动线程，数据子组件忽略
+                if let ComponentCategory::Thread = sub.category {
+                    let var_name = sub.identifier.to_lowercase();
 
-                // 构建线程闭包（使用move语义）
-                let closure = Expr::Closure(
-                    Vec::new(), // 无参数
-                    Box::new(Expr::MethodCall(
-                        Box::new(Expr::Path(
-                            vec!["self".to_string(), var_name.clone()],
-                            PathType::Member,
+                    // 构建线程闭包（使用move语义）
+                    let closure = Expr::Closure(
+                        Vec::new(), // 无参数
+                        Box::new(Expr::MethodCall(
+                            Box::new(Expr::Path(
+                                vec!["self".to_string(), var_name.clone()],
+                                PathType::Member,
+                            )),
+                            "run".to_string(),
+                            Vec::new(),
                         )),
-                        "run".to_string(),
+                    );
+
+                    // 构建线程构建器表达式链
+                    let builder_chain = vec![
+                        BuilderMethod::Named(format!("\"{}\".to_string()", var_name)),
+                        BuilderMethod::Spawn {
+                            closure: Box::new(closure),
+                            move_kw: true,
+                        },
+                    ];
+
+                    stmts.push(Statement::Expr(Expr::MethodCall(
+                        Box::new(Expr::BuilderChain(builder_chain)),
+                        "unwrap".to_string(),
                         Vec::new(),
-                    )),
-                );
-
-                // 构建线程构建器表达式链
-                let builder_chain = vec![
-                    BuilderMethod::Named(format!("\"{}\".to_string()", var_name)),
-                    // BuilderMethod::StackSize(Box::new(Expr::Path(vec![
-                    //     "self".to_string(),
-                    //     var_name.clone(),
-                    //     "stack_size".to_string()
-                    // ],PathType::Member))),
-                    BuilderMethod::Spawn {
-                        closure: Box::new(closure),
-                        move_kw: true,
-                    },
-                ];
-
-                stmts.push(Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::BuilderChain(builder_chain)),
-                    "unwrap".to_string(),
-                    Vec::new(),
-                )));
+                    )));
+                }
             }
         }
 
@@ -1296,7 +1588,47 @@ impl AadlConverter {
         let subprogram_calls = self.extract_subprogram_calls(impl_);//这个函数是针对子程序有对外的连接关系，其在提取这种关系
         let mut port_handling_stmts = Vec::new();
 
-        for (param_port_name, subprogram_name, thread_port_name, is_send) in subprogram_calls {
+        // 从Mycalls中提取正确的子程序调用序列
+        let mut mycalls_sequence = Vec::new();
+        if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
+            for call_clause in calls_clause {
+                for subprocall in &call_clause.calls {
+                    if let CalledSubprogram::Classifier(
+                        UniqueComponentClassifierReference::Implementation(temp),
+                    ) = &subprocall.called
+                    {
+                        let subprogram_name = temp.implementation_name.type_identifier.to_lowercase();
+                        mycalls_sequence.push((subprocall.identifier.clone(), subprogram_name));
+                    }
+                }
+            }
+        }
+        
+        // 获取data access连接信息，用于判断哪些子程序使用共享变量
+        let data_access_calls = self.extract_data_access_calls(impl_);
+        
+        // 创建子程序调用映射，用于判断哪些子程序使用共享变量
+        let mut shared_var_subprograms = std::collections::HashMap::new();
+        for (subprogram_name, _, shared_var_field) in &data_access_calls {
+            shared_var_subprograms.insert(subprogram_name.clone(), shared_var_field.clone());
+        }
+        
+        // 添加调用序列注释（使用Mycalls中的顺序）
+        if !mycalls_sequence.is_empty() {
+            let call_sequence = mycalls_sequence.iter()
+                .map(|(call_id, _)| format!("{}()", call_id))
+                .collect::<Vec<_>>()
+                .join(" -> ");
+            
+            port_handling_stmts.push(Statement::Expr(Expr::Ident(format!(
+                "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // {}",
+                call_sequence
+            ))));
+        }
+
+        for (param_port_name, subprogram_name, thread_port_name, is_send) in
+            subprogram_calls
+        {
             // 构建 then 分支的语句
             if is_send {
                 // ====================== 发送模式 ======================
@@ -1400,17 +1732,67 @@ impl AadlConverter {
             }
         }
 
-        //20250813新增，处理无端口的子程序调用
-        // 新增：处理无端口的子程序调用
-        let subprogram_calls_no_ports = self.extract_subprogram_calls_no_ports(impl_);
-        for subprogram_name in subprogram_calls_no_ports {
-            port_handling_stmts.push(Statement::Expr(Expr::Call(
-                Box::new(Expr::Path(
-                    vec![subprogram_name.clone(), "execute".to_string()],
-                    PathType::Namespace,
-                )),
-                Vec::new(),
-            )));
+        // 根据Mycalls中的顺序处理所有子程序调用
+        for (call_id, subprogram_name) in mycalls_sequence {
+            if let Some(shared_var_field) = shared_var_subprograms.get(&subprogram_name) {
+                // 使用共享变量的子程序：生成锁操作
+                let mut lock_stmts = Vec::new();
+                
+                // 添加注释说明这是哪个子程序
+                lock_stmts.push(Statement::Expr(Expr::Ident(format!("// {}", call_id))));
+                
+                // 生成锁操作代码块
+                lock_stmts.push(Statement::Expr(Expr::Block(Block {
+                    stmts: vec![
+                        // if let Ok(mut guard) = self.pos.lock() {
+                        Statement::Expr(Expr::IfLet {
+                            pattern: "Ok(mut guard)".to_string(),
+                            value: Box::new(Expr::MethodCall(
+                                Box::new(Expr::Path(
+                                    vec!["self".to_string(), shared_var_field.clone()],
+                                    PathType::Member,
+                                )),
+                                "lock".to_string(),
+                                Vec::new(),
+                            )),
+                            then_branch: Block {
+                                stmts: vec![
+                                    // update_pos::call(&mut guard);
+                                    Statement::Expr(Expr::Call(
+                                        Box::new(Expr::Path(
+                                            vec![subprogram_name.clone(), "call".to_string()],
+                                            PathType::Namespace,
+                                        )),
+                                        vec![Expr::Reference(
+                                            Box::new(Expr::Ident("guard".to_string())),
+                                            true,
+                                            true,
+                                        )],
+                                    )),
+                                ],
+                                expr: None,
+                            },
+                            else_branch: None,
+                        }),
+                    ],
+                    expr: None,
+                })));
+                
+                port_handling_stmts.push(Statement::Expr(Expr::Block(Block {
+                    stmts: lock_stmts,
+                    expr: None,
+                })));
+            } else {
+                // 不使用共享变量的子程序：直接调用execute
+                port_handling_stmts.push(Statement::Expr(Expr::Ident(format!("// {}", call_id))));
+                port_handling_stmts.push(Statement::Expr(Expr::Call(
+                    Box::new(Expr::Path(
+                        vec![subprogram_name.clone(), "execute".to_string()],
+                        PathType::Namespace,
+                    )),
+                    Vec::new(),
+                )));
+            }
         }
 
         // 3. 主循环
@@ -1513,7 +1895,7 @@ impl AadlConverter {
                                         call_identifier,
                                         parameter,
                                     } = &port_conn.source
-                                    //这里针对“发送”连接，判断的是“源端口”的信息
+                                    //这里针对"发送"连接，判断的是"源端口"的信息
                                     {
                                         let sou_parameter = parameter.to_lowercase();
                                         if subprogram_identifier == call_identifier.to_lowercase() {
@@ -1537,7 +1919,7 @@ impl AadlConverter {
                                         call_identifier,
                                         parameter,
                                     } = &port_conn.destination
-                                    //这里针对“接收”连接，判断的是“目的端口”的信息
+                                    //这里针对"接收"连接，判断的是"目的端口"的信息
                                     {
                                         let des_parameter = parameter.to_lowercase();
                                         if subprogram_identifier == call_identifier.to_lowercase() {
@@ -1733,24 +2115,32 @@ impl AadlConverter {
     fn create_system_run_body(&self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
 
-        // 收集系统内所有进程子组件的名称
-        let mut process_names: Vec<String> = Vec::new();
+        // 收集系统内所有进程子组件的名称和类型
+        let mut process_info: Vec<(String, String)> = Vec::new(); // (identifier, type_name)
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+            //println!("********************subcomponents: {:?}", subcomponents);
             for sub in subcomponents {
+                //println!("********************sub: {:?}", sub);
                 if sub.category == ComponentCategory::Process {
-                    process_names.push(sub.identifier.clone());
+                    let identifier = sub.identifier.clone();
+                    let type_name = if let SubcomponentClassifier::ClassifierReference(UniqueComponentClassifierReference::Implementation(impl_ref)) = &sub.classifier {
+                        impl_ref.implementation_name.type_identifier.clone()
+                    } else {
+                        identifier.clone() // fallback
+                    };
+                    process_info.push((identifier, type_name));
                 }
             }
         }
 
         // 生成 match 分支
         let mut arms: Vec<String> = Vec::new();
-        for proc_name in &process_names {
-            let type_name = format!("{}Process", proc_name.to_lowercase());
+        for (identifier, type_name) in &process_info {
+            let rust_type_name = format!("{}Process", type_name.to_lowercase());
             arms.push(format!(
-                "\"{pn}\" => {{\n                    let proc = {ty}::new(cpu_id);\n                    proc.start();\n                }}",
-                pn = proc_name,
-                ty = type_name
+                "\"{id}\" => {{\n                    let proc = {ty}::new(cpu_id);\n                    proc.start();\n                }}",
+                id = identifier,
+                ty = rust_type_name
             ));
         }
         // 默认分支
@@ -1765,5 +2155,199 @@ impl AadlConverter {
         stmts.push(Statement::Expr(Expr::Ident(for_block)));
 
         Block { stmts, expr: None }
+    }
+    
+    /// 从数据组件实现名称中查找具体的数据类型
+    /// 例如：从 POS.Impl 中找到 Field : data POS_Internal_Type 中的 POS_Internal_Type
+    fn find_data_type_from_implementation(&self, impl_name: &str, package: &Package) -> Option<String> {
+        // 在 Package 中查找组件实现
+        if let Some(public_section) = &package.public_section {
+            for decl in &public_section.declarations {
+                if let AadlDeclaration::ComponentImplementation(impl_) = decl {
+                    //println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!impl_.name.type_identifier: {}", impl_.name.type_identifier);
+                    // 检查实现名称是否匹配：impl_name 可能是 "POS.Impl"，而 type_identifier 是 "POS"
+                    // 所以需要检查 impl_name 是否以 type_identifier 开头
+                    if impl_name.starts_with(&impl_.name.type_identifier) {
+                        // 找到匹配的组件实现，查找其中的数据子组件
+                        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+                            for sub in subcomponents {
+                                if sub.category == ComponentCategory::Data {
+                                    // 从数据子组件中提取类型名
+                                    if let SubcomponentClassifier::ClassifierReference(
+                                        UniqueComponentClassifierReference::Implementation(unirf),
+                                    ) = &sub.classifier {
+                                        return Some(unirf.implementation_name.type_identifier.clone());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 在私有部分也查找
+        if let Some(private_section) = &package.private_section {
+            for decl in &private_section.declarations {
+                if let AadlDeclaration::ComponentImplementation(impl_) = decl {
+                    // 检查实现名称是否匹配：impl_name 可能是 "POS.Impl"，而 type_identifier 是 "POS"
+                    // 所以需要检查 impl_name 是否以 type_identifier 开头
+                    if impl_name.starts_with(&impl_.name.type_identifier) {
+                        // 找到匹配的组件实现，查找其中的数据子组件
+                        if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+                            for sub in subcomponents {
+                                if sub.category == ComponentCategory::Data {
+                                    // 从数据子组件中提取类型名
+                                    if let SubcomponentClassifier::ClassifierReference(
+                                        UniqueComponentClassifierReference::Implementation(unirf),
+                                    ) = &sub.classifier {
+                                        return Some(unirf.implementation_name.type_identifier.clone());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        None
+    }
+    
+    /// 从数据组件类型名称中查找具体的数据类型
+    /// 例如：从 POS.Impl 类型中找到对应的数据类型
+    fn find_data_type_from_type(&self, type_name: &str, package: &Package) -> Option<String> {
+        // 在 Package 中查找组件类型
+        if let Some(public_section) = &package.public_section {
+            for decl in &public_section.declarations {
+                if let AadlDeclaration::ComponentType(comp) = decl {
+                    if comp.identifier == type_name {
+                        // 找到匹配的组件类型，查找其中的数据类型属性
+                        if let PropertyClause::Properties(props) = &comp.properties {
+                            for prop in props {
+                                if let Property::BasicProperty(bp) = prop {
+                                    // 处理 Data_Model::Data_Representation 属性
+                                    if bp.identifier.name.to_lowercase() == "data_model" {
+                                        if let Some(property_set) = &bp.identifier.property_set {
+                                            if property_set.to_lowercase() == "data_representation" {
+                                                if let PropertyValue::Single(PropertyExpression::String(
+                                                    StringTerm::Literal(str_val),
+                                                )) = &bp.value
+                                                {
+                                                    // 使用 type_mappings 查找对应的类型
+                                                    return self
+                                                        .type_mappings
+                                                        .get(&str_val.to_string())
+                                                        .cloned()
+                                                        .map(|t| {
+                                                            if let Type::Named(name) = t {
+                                                                name
+                                                            } else {
+                                                                str_val.to_string()
+                                                            }
+                                                        })
+                                                        .or(Some(str_val.to_string()));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 在私有部分也查找
+        if let Some(private_section) = &package.private_section {
+            for decl in &private_section.declarations {
+                if let AadlDeclaration::ComponentType(comp) = decl {
+                    if comp.identifier == type_name {
+                        // 找到匹配的组件类型，查找其中的数据类型属性
+                        if let PropertyClause::Properties(props) = &comp.properties {
+                            for prop in props {
+                                if let Property::BasicProperty(bp) = prop {
+                                    // 处理 Data_Model::Data_Representation 属性
+                                    if bp.identifier.name.to_lowercase() == "data_model" {
+                                        if let Some(property_set) = &bp.identifier.property_set {
+                                            if property_set.to_lowercase() == "data_representation" {
+                                                if let PropertyValue::Single(PropertyExpression::String(
+                                                    StringTerm::Literal(str_val),
+                                                )) = &bp.value
+                                                {
+                                                    // 使用 type_mappings 查找对应的类型
+                                                    return self
+                                                        .type_mappings
+                                                        .get(&str_val.to_string())
+                                                        .cloned()
+                                                        .map(|t| {
+                                                            if let Type::Named(name) = t {
+                                                                name
+                                                            } else {
+                                                                str_val.to_string()
+                                                            }
+                                                        })
+                                                        .or(Some(str_val.to_string()));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        None
+    }
+    
+    /// 提取data access连接，识别哪些子程序使用共享变量
+    /// 返回：(子程序名, 共享变量名, 共享变量字段名)
+    fn extract_data_access_calls(&self, impl_: &ComponentImplementation) -> Vec<(String, String, String)> {
+        let mut data_access_calls = Vec::new();
+        
+        // 首先从Mycalls中提取调用标识符到子程序名的映射
+        let mut call_id_to_subprogram = std::collections::HashMap::new();
+        if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
+            for call_clause in calls_clause {
+                for subprocall in &call_clause.calls {
+                    if let CalledSubprogram::Classifier(
+                        UniqueComponentClassifierReference::Implementation(temp),
+                    ) = &subprocall.called
+                    {
+                        let subprogram_name = temp.implementation_name.type_identifier.to_lowercase();
+                        call_id_to_subprogram.insert(subprocall.identifier.to_lowercase(), subprogram_name);
+                    }
+                }
+            }
+        }
+        
+        if let ConnectionClause::Items(connections) = &impl_.connections {
+            for conn in connections {
+                if let Connection::Access(access_conn) = conn {
+                    // 处理 data access 连接：ComponentAccess(data) -> SubcomponentAccess{ subcomponent: thread, .. }
+                    match (&access_conn.source, &access_conn.destination) {
+                        (AccessEndpoint::ComponentAccess(data_name), AccessEndpoint::SubcomponentAccess { subcomponent: call_identifier, .. }) => {
+                            // 从调用标识符中提取子程序名
+                            if let Some(subprogram_name) = call_id_to_subprogram.get(&call_identifier.to_lowercase()) {
+                                // 从数据名称中提取共享变量字段名
+                                let shared_var_field = data_name.to_lowercase();
+                                
+                                // 共享变量名（用于注释）
+                                let shared_var_name = data_name.clone();
+                                
+                                data_access_calls.push((subprogram_name.clone(), shared_var_name, shared_var_field));
+                            }
+                        }
+                        _ => {} // 其他方向的连接暂不处理
+                    }
+                }
+            }
+        }
+        
+        data_access_calls
     }
 }

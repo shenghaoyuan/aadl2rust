@@ -538,11 +538,10 @@ pub mod aadl_ast_cj {
 
         // 端口 (port_spec)
         Port(PortSpec),
+        // 子组件访问 (subcomponent_access_spec)
+        SubcomponentAccess(SubcomponentAccessSpec),
         // 特征组 (feature_group_spec)
         //FeatureGroup(FeatureGroupSpec),
-
-        // 子组件访问 (subcomponent_access_spec)
-        //SubcomponentAccess(SubcomponentAccess),
 
         // 参数 (parameter_spec)
         //Parameter(ParameterSpec),
@@ -582,6 +581,55 @@ pub mod aadl_ast_cj {
         pub port_type: PortType,
     }
 
+    /* ========== 子组件访问总和类型 (subcomponent_access_spec) ========== */
+    #[derive(Debug, Clone)]
+    pub enum SubcomponentAccessSpec {
+        /// 数据访问 (data_access_spec)
+        Data(DataAccessSpec),
+        /// 子程序访问 (subprogram_access_spec)
+        Subprogram(SubprogramAccessSpec),
+        // TODO: SubprogramGroup, Bus, VirtualBus
+    }
+
+    /* ========== 访问特征 ========== */
+    /// 数据访问规范 (data_access_spec)
+    #[derive(Debug, Clone)]
+    pub struct DataAccessSpec {
+        /// `defining_data_component_access_identifier`
+        pub identifier: String,
+        pub direction: AccessDirection, // provides | requires
+        /// `data_unique_component_classifier_reference | prototype_identifier`
+        pub classifier: Option<DataAccessReference>,
+    }
+
+    /// 数据访问分类器引用
+    #[derive(Debug, Clone)]
+    pub enum DataAccessReference {
+        /// 分类器引用 (data_unique_component_classifier_reference)
+        Classifier(UniqueComponentClassifierReference),
+        /// 原型标识符 (prototype_identifier)
+        Prototype(String),
+    }
+
+    /// 子程序访问规范 (subprogram_access_spec)
+    #[derive(Debug, Clone)]
+    pub struct SubprogramAccessSpec {
+        /// `defining_subprogram_access_identifier`
+        pub identifier: String,
+        pub direction: AccessDirection, // provides | requires
+        /// `subprogram_unique_component_classifier_reference | subprogram_component_prototype_identifier`
+        pub classifier: Option<SubprogramAccessReference>,
+    }
+
+    /// 子程序访问分类器引用
+    #[derive(Debug, Clone)]
+    pub enum SubprogramAccessReference {
+        /// 分类器引用 (subprogram_unique_component_classifier_reference)
+        Classifier(UniqueComponentClassifierReference),
+        /// 原型标识符 (subprogram_component_prototype_identifier)
+        Prototype(String),
+    }
+
     /*=================9 connection ============ */
     /* ========== 连接类型 ========== */
     #[derive(Debug, Clone)]
@@ -593,7 +641,7 @@ pub mod aadl_ast_cj {
         Parameter(ParameterConnection),
         // 以下为其他连接类型（暂不实现）
         // Feature(FeatureConnection),      // feature_connection
-        // Access(AccessConnection),       // access_connection
+        Access(AccessConnection),       // access_connection（仅关注 data/subprogram）
         // FeatureGroup(FeatureGroupConnection), // feature_group_connection
     }
 
@@ -672,6 +720,25 @@ pub mod aadl_ast_cj {
         pub source: ParameterEndpoint,
         pub destination: ParameterEndpoint,
         pub connection_direction: ConnectionSymbol,
+    }
+
+    /* ========== 访问连接定义（data/subprogram） ========== */
+    /// 对应标准中的 `access_connection`
+    #[derive(Debug, Clone)]
+    pub struct AccessConnection {
+        pub source: AccessEndpoint,
+        pub destination: AccessEndpoint,
+        pub connection_direction: ConnectionSymbol,
+    }
+
+    /// 对应标准中的 `source_access_reference` / `destination_access_reference`
+    /// 仅覆盖 data/subprogram 两类的常见引用形式
+    #[derive(Debug, Clone)]
+    pub enum AccessEndpoint {
+        /// 组件类型上的访问特征标识符
+        ComponentAccess(String),
+        /// 子组件上的访问特征：subcomponent_identifier.access_identifier
+        SubcomponentAccess { subcomponent: String, access: String },
     }
     /* ========== 参数端点定义 ========== */
     /// 对应标准中的 `parameter_reference`

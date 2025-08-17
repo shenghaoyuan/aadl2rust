@@ -44,11 +44,30 @@ pub fn print_ast(ast: &Vec<Package>) {
                         println!("  Component Type: {} ({:?})", comp.identifier, comp.category);
                         if let FeatureClause::Items(features) = &comp.features {
                             for feature in features {
-                                if let Feature::Port(port) = feature {
-                                    println!(
-                                        "    Port: {} {:?} {:?}",
-                                        port.identifier, port.direction, port.port_type
-                                    );
+                                match feature {
+                                    Feature::Port(port) => {
+                                        println!(
+                                            "    Port: {} {:?} {:?}",
+                                            port.identifier, port.direction, port.port_type
+                                        );
+                                    }
+                                    Feature::SubcomponentAccess(access) => {
+                                        match access {
+                                            SubcomponentAccessSpec::Data(d) => {
+                                                println!(
+                                                    "    Data Access: {} {:?} {:?}",
+                                                    d.identifier, d.direction, d.classifier
+                                                );
+                                            }
+                                            SubcomponentAccessSpec::Subprogram(s) => {
+                                                println!(
+                                                    "    Subprogram Access: {} {:?} {:?}",
+                                                    s.identifier, s.direction, s.classifier
+                                                );
+                                            }
+                                        }
+                                    }
+                                    _ => {}
                                 }
                             }
                         }
@@ -89,6 +108,12 @@ pub fn print_ast(ast: &Vec<Package>) {
                                         println!(
                                             "    Connection: {:?} -> {:?}",
                                             parameter_conn.source, parameter_conn.destination
+                                        );
+                                    }
+                                    Connection::Access(access_conn) => {
+                                        println!(
+                                            "    Access Connection: {:?} -> {:?}",
+                                            access_conn.source, access_conn.destination
                                         );
                                     }
                                 }

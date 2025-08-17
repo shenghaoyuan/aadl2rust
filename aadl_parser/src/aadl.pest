@@ -98,12 +98,19 @@ prototype_declaration = {
 
 // 8 Features
 feature_declaration = {
-    identifier ~ ":" ~ direction? ~ port_type ~ identifier? ~ ";"
+    identifier ~ ":" ~ (
+        // 端口/参数等特征
+        (direction? ~ port_type ~ qualified_identifier?) |
+        // 访问特征：subprogram access（支持 provides/requires）
+        (access_direction? ~ access_type ~ "access" ~ qualified_identifier?)
+    ) ~ ";"
 }
 
 direction = { "in out" | "in" | "out" } // 注意 "in out" 要放前面
+access_direction = { "provides" | "requires" }
 
 port_type = { "data port" | "event data port" | "event port" | "parameter" }
+access_type = { "subprogram" | "data" }
 
 // 9 Connections
 connection = {
@@ -112,7 +119,7 @@ connection = {
     ";"
 }
 
-connection_type = { "port" | "parameter" }
+connection_type = { "port" | "parameter" | "subprogram access" | "data access"}
 connection_operator = { "->" | "<->" }
 
 port_connection = {
@@ -169,7 +176,7 @@ boolean = { "true" | "false"}
 // 枚举值规则（覆盖AADL属性集预定义值）
 enum_value = @{
     "Periodic" | "Sporadic" | "Timed" | "Event" | "Hybrid" |
-    "native"
+    "native" | "Integer" | "Struct"
 }
 
 // 5.2 Subprogram Calls

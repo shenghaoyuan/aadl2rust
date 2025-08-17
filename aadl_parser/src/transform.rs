@@ -345,8 +345,10 @@ impl AADLTransformer {
 
         let identifier = extract_identifier(inner_iter.next().unwrap()); // p
         let mut direction: Option<PortDirection> = None;
-        let mut port_type: Option<&str> = None;
-        let mut type_name: Option<String> = None;
+        let mut port_type_str: Option<&str> = None;
+        let mut access_direction: Option<AccessDirection> = None;
+        let mut access_type_str: Option<&str> = None; // "data" | "subprogram"
+        let mut classifier_qname: Option<String> = None; // qualified_identifier or identifier
 
         for inner in inner_iter {
             match inner.as_rule() {
@@ -359,60 +361,121 @@ impl AADLTransformer {
                     };
                 }
                 aadlight_parser::Rule::port_type => {
-                    port_type = Some(inner.as_str());
+                    port_type_str = Some(inner.as_str());
+                }
+                aadlight_parser::Rule::access_direction => {
+                    access_direction = match inner.as_str() {
+                        "provides" => Some(AccessDirection::Provides),
+                        "requires" => Some(AccessDirection::Requires),
+                        _ => None,
+                    };
+                }
+                aadlight_parser::Rule::access_type => {
+                    access_type_str = Some(inner.as_str());
+                }
+                aadlight_parser::Rule::qualified_identifier => {
+                    classifier_qname = Some(inner.as_str().to_string());
                 }
                 aadlight_parser::Rule::identifier => {
-                    type_name = Some(inner.as_str().to_string());
+                    // 兼容老语法中使用 identifier 作为类型名
+                    if classifier_qname.is_none() {
+                        classifier_qname = Some(inner.as_str().to_string());
+                    }
                 }
                 _ => {}
             }
         }
 
-        let (resolved_port_type, _classifier) = match port_type.expect("Missing port type") {
-            "data port" | "parameter" => {
-                let classifier = type_name.clone().map(|type_id| {
-                    PortDataTypeReference::Classifier(
-                        UniqueComponentClassifierReference::Type(UniqueImplementationReference {
-                            package_prefix: None,
-                            implementation_name: ImplementationName {
-                                type_identifier: type_id,
-                                implementation_identifier: String::new(),
-                            },
-                        })
-                    )
-                });
-                (PortType::Data { classifier: classifier.clone() }, classifier)
-            }
-            "event data port" => {
-                let classifier = type_name.clone().map(|type_id| {
-                    PortDataTypeReference::Classifier(
-                        UniqueComponentClassifierReference::Type(UniqueImplementationReference {
-                            package_prefix: None,
-                            implementation_name: ImplementationName {
-                                type_identifier: type_id,
-                                implementation_identifier: String::new(),
-                            },
-                        })
-                    )
-                });
-                (PortType::EventData { classifier: classifier.clone() }, classifier)
-            }
-            "event port" => (PortType::Event, None), //TODO
-            // "parameter" => {
-            //     // TODO: 实现 parameter 处理,在AST中还没有定义
-            //     (PortType::Event, None)
-            // }
-            other => panic!("Unknown port type: {}", other),
-        };
+        // 如果是端口类特征
+        if let Some(pt) = port_type_str {
+            let classifier = classifier_qname.clone().map(|qname| {
+                // 仅提取最后一个段作为类型名，忽略包前缀
+                let type_id = qname.split("::").last().unwrap_or(&qname).to_string();
+                PortDataTypeReference::Classifier(
+                    UniqueComponentClassifierReference::Type(UniqueImplementationReference {
+                        package_prefix: None,
+                        implementation_name: ImplementationName {
+                            type_identifier: type_id,
+                            implementation_identifier: String::new(),
+                        },
+                    }),
+                )
+            });
 
-        Feature::Port(PortSpec {
-            identifier,
-            direction: direction.unwrap_or_else(|| match resolved_port_type {
-                PortType::Data { .. } | PortType::EventData { .. } => PortDirection::InOut,
-                PortType::Event => PortDirection::In,
-            }),
-            port_type: resolved_port_type,
-        })
+            let resolved_port_type = match pt {
+                "data port" | "parameter" => PortType::Data { classifier: classifier.clone() },
+                "event data port" => PortType::EventData { classifier: classifier.clone() },
+                "event port" => PortType::Event,
+                other => panic!("Unknown port type: {}", other),
+            };
+
+            return Feature::Port(PortSpec {
+                identifier,
+                direction: direction.unwrap_or_else(|| match resolved_port_type {
+                    PortType::Data { .. } | PortType::EventData { .. } => PortDirection::InOut,
+                    PortType::Event => PortDirection::In,
+                }),
+                port_type: resolved_port_type,
+            });
+        }
+
+        // 访问特征：data access / subprogram access
+        if let Some(at) = access_type_str {
+            let direction = access_direction.unwrap_or(AccessDirection::Provides);
+
+            // 构造分类器（若存在）
+            let map_classifier_to_component_classifier = || -> Option<UniqueComponentClassifierReference> {
+                classifier_qname.clone().map(|qname| {
+                    let type_id = qname.split("::").last().unwrap_or(&qname).to_string();
+                    
+                    // 智能判断：如果以.Impl结尾，认为是实现引用
+                    if type_id.ends_with("Impl") {
+                        UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
+                            package_prefix: None,
+                            implementation_name: ImplementationName {
+                                type_identifier: type_id,
+                                implementation_identifier: String::new(),
+                            },
+                        })
+                    } else {
+                        // 否则认为是类型引用
+                        UniqueComponentClassifierReference::Type(UniqueImplementationReference {
+                            package_prefix: None,
+                            implementation_name: ImplementationName {
+                                type_identifier: type_id,
+                                implementation_identifier: String::new(),
+                            },
+                        })
+                    }
+                })
+            };
+
+            match at {
+                "data" => {
+                    let classifier = map_classifier_to_component_classifier()
+                        .map(DataAccessReference::Classifier);
+                    return Feature::SubcomponentAccess(SubcomponentAccessSpec::Data(DataAccessSpec {
+                        identifier,
+                        direction,
+                        classifier,
+                    }));
+                }
+                "subprogram" => {
+                    let classifier = map_classifier_to_component_classifier()
+                        .map(SubprogramAccessReference::Classifier);
+                    return Feature::SubcomponentAccess(SubcomponentAccessSpec::Subprogram(
+                        SubprogramAccessSpec {
+                            identifier,
+                            direction,
+                            classifier,
+                        },
+                    ));
+                }
+                other => panic!("Unknown access type: {}", other),
+            }
+        }
+
+        panic!("Unsupported feature_declaration: missing port or access spec")
     }
     pub fn transform_properties_clause(pair: Pair<aadlight_parser::Rule>) -> PropertyClause {
         if pair.as_str().contains("none") {
@@ -696,6 +759,7 @@ impl AADLTransformer {
             "thread" => ComponentCategory::Thread,
             "processor" => ComponentCategory::Processor,
             "memory" => ComponentCategory::Memory,
+            "data" => ComponentCategory::Data,
             s => panic!("Unknown component implementation category: {}", s),
         };
         
@@ -790,6 +854,8 @@ impl AADLTransformer {
             "thread" => ComponentCategory::Thread,
             "processor" => ComponentCategory::Processor,
             "memory" => ComponentCategory::Memory,
+            "data" => ComponentCategory::Data,
+            "subprogram" => ComponentCategory::Subprogram,
             s => panic!("Unknown subcomponent category: {}", s),
         };
         
@@ -926,7 +992,7 @@ impl AADLTransformer {
         //let _colon = inner_iter.next();
         
         let connection_type = inner_iter.next().unwrap();
-        let connection_body = inner_iter.next().unwrap(); // ✅ port_connection or parameter_connection
+        let connection_body = inner_iter.next().unwrap(); // port_connection or parameter_connection
 
         match connection_type.as_str() {
             "port" => {
@@ -963,6 +1029,24 @@ impl AADLTransformer {
                     connection_direction: direction,
                 })
             }
+            "data access" | "subprogram access" => {
+                let mut port_iter = connection_body.into_inner();
+
+                let source = Self::transform_access_reference(port_iter.next().unwrap());
+                let direction = match port_iter.next().unwrap().as_str() {
+                    "->" => ConnectionSymbol::Direct,
+                    "<->" => ConnectionSymbol::Didirect,
+                    _ => panic!("Unknown connection direction"),
+                };
+                let destination = Self::transform_access_reference(port_iter.next().unwrap());
+
+                Connection::Access(AccessConnection {
+                    source,
+                    destination,
+                    connection_direction: direction,
+                })
+            }
+            
             _ => panic!("Unknown connection type"),
         }
     }
@@ -991,6 +1075,19 @@ impl AADLTransformer {
             ParameterEndpoint::ComponentParameter { 
                 parameter: reference.to_string(), 
                 data_subcomponent: (None) }
+        }
+    }
+
+    pub fn transform_access_reference(pair: Pair<aadlight_parser::Rule>) -> AccessEndpoint {
+        let reference = pair.as_str().trim();
+        if reference.contains('.') {
+            let mut parts = reference.split('.');
+            AccessEndpoint::SubcomponentAccess {
+                subcomponent: parts.next().unwrap().to_string(),
+                access: parts.next().unwrap().to_string(),
+            }
+        } else {
+            AccessEndpoint::ComponentAccess(reference.to_string())
         }
     }
 }

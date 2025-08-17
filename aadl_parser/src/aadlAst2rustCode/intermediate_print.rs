@@ -29,7 +29,8 @@ impl RustCodeGenerator {
         ));
         self.writeln("");
         self.writeln("#![allow(unused_imports)]");
-        self.writeln("use std::sync::mpsc;");
+        self.writeln("use std::sync::{mpsc, Arc};");
+        self.writeln("use std::sync::Mutex;");
         self.writeln("use std::thread;");
         self.writeln("use std::time::{Duration, Instant};");
         self.writeln("use libc::{");
@@ -185,14 +186,33 @@ impl RustCodeGenerator {
         self.writeln("    // 创建组件并初始化AADL属性");
         self.write("    pub fn new(cpu_id: isize");
 
+        // 为以"Shared"结尾的字段添加参数
+        for field in &s.fields {
+            if let Type::Named(type_name) = &field.ty {
+                if type_name.ends_with("Shared") {
+                    self.write(&format!(", {}: {}", field.name, self.type_to_string(&field.ty)));
+                }
+            }
+        }
+
         self.writeln(") -> Self {");
         self.writeln("        Self {");
 
         // 端口字段初始化，新增了针对cpu_id的特殊处理，将其作为特性
         for field in &s.fields {
+            //println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!field.name: {:?}", field.ty);
             if field.name == "cpu_id" {
                 self.writeln("            cpu_id: cpu_id,");
+            } else if let Type::Named(type_name) = &field.ty {
+                if type_name.ends_with("Shared") {
+                    // 共享变量字段使用传入的参数初始化
+                    self.writeln(&format!("            {}: {},", field.name, field.name));
+                } else {
+                    // 其他字段初始化为None
+                    self.writeln(&format!("            {}: None,", field.name));
+                }
             } else {
+                // 其他类型的字段初始化为None
                 self.writeln(&format!("            {}: None,", field.name));
             }
         }
