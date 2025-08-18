@@ -140,9 +140,21 @@ pub enum Expr {
         then_branch: Block,
         else_branch: Option<Block>,
     },
+    Match {
+        expr: Box<Expr>,
+        arms: Vec<MatchArm>,
+    }, // match 表达式
     Reference(Box<Expr>,bool,bool),    // &expr,第一位标志&,第二位标志mut
     BinaryOp(Box<Expr>, String, Box<Expr>), // left op right, 如 a != 0
 
+}
+
+// Match 表达式的分支
+#[derive(Debug,Clone)]
+pub struct MatchArm {
+    pub pattern: String,
+    pub guard: Option<Expr>,
+    pub body: Block,
 }
 
 //区分.name()、.stack_size()等不同构建器方法

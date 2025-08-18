@@ -518,8 +518,6 @@ impl RustCodeGenerator {
                     self.write(param);
                 }
                 self.write("| ");
-
-                // 特殊处理单表达式闭包体
                 match body.as_ref() {
                     Expr::Block(_) => self.generate_expr(body),
                     _ => {
@@ -528,6 +526,34 @@ impl RustCodeGenerator {
                         self.write(" }");
                     }
                 }
+            }
+            Expr::Match { expr, arms } => {
+                self.write("match ");
+                self.generate_expr(expr);
+                self.writeln(" {");
+                self.indent();
+                for arm in arms {
+                    self.write(&arm.pattern);
+                    if let Some(guard) = &arm.guard {
+                        self.write(" if ");
+                        self.generate_expr(guard);
+                    }
+                    self.writeln(" => {");
+                    self.indent();
+                    // 根据分支模式添加注释
+                    if arm.pattern.starts_with("Ok(") {
+                        self.writeln("// 收到消息 → 调用处理函数");
+                    } else if arm.pattern.contains("TryRecvError::Empty") {
+                        self.writeln("// 没有消息，不阻塞，直接跳过");
+                    } else if arm.pattern.contains("TryRecvError::Disconnected") {
+                        self.writeln("// 通道已关闭");
+                    }
+                    self.generate_block(&arm.body);
+                    self.dedent();
+                    self.writeln("},");
+                }
+                self.dedent();
+                self.write("}");
             }
             Expr::Unsafe(block) => {
                 self.write("unsafe ");

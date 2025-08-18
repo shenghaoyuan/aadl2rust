@@ -1463,9 +1463,15 @@ impl AadlConverter {
         items
     }
 
+    /// 创建线程的 run() 方法体
+    /// 该方法生成线程的执行逻辑，包括：
+    /// 1. 线程优先级和CPU亲和性设置
+    /// 2. 周期性执行循环
+    /// 3. 子程序调用处理（参数端口、共享变量、普通调用）
     fn create_thread_run_body(&self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
-
+        //======================= 线程优先级设置 ========================
+        // 如果线程有 priority 属性，则设置线程优先级
         // 0. 线程优先级设置（如果存在priority属性）
         if let Some(priority) = self.extract_property_value(impl_, "priority") {
             // 添加优先级设置代码 - 使用unsafe块和完整的错误处理
@@ -1537,7 +1543,8 @@ impl AadlConverter {
             }))));
         }
 
-        // 0.5. CPU亲和性设置（如果cpu_id > 0）
+        // ==================== 步骤 0.5: CPU亲和性设置 ====================
+        // 如果 cpu_id > -1，则设置线程绑定到指定CPU
         stmts.push(Statement::Expr(Expr::If {
             condition: Box::new(Expr::BinaryOp(
                 Box::new(Expr::Path(
@@ -1565,7 +1572,8 @@ impl AadlConverter {
             else_branch: None,
         }));
 
-        // 1. 周期设置
+        // ==================== 步骤 1: 周期设置 ====================
+        // 从AADL属性中提取周期值，默认为2000ms
         let period = self.extract_property_value(impl_, "period").unwrap_or(2000);
         stmts.push(Statement::Let(LetStmt {
             ifmut: false,
@@ -1584,11 +1592,12 @@ impl AadlConverter {
             )),
         }));
 
-        // 2. 处理子程序调用（使用 IfLet 结构）
+        // ==================== 步骤 2: 子程序调用处理 ====================
+        // 2.1 提取有参数端口的子程序调用信息
         let subprogram_calls = self.extract_subprogram_calls(impl_);//这个函数是针对子程序有对外的连接关系，其在提取这种关系
         let mut port_handling_stmts = Vec::new();
 
-        // 从Mycalls中提取正确的子程序调用序列
+        // 2.2 从AADL的calls部分提取子程序调用序列
         let mut mycalls_sequence = Vec::new();
         if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
             for call_clause in calls_clause {
@@ -1604,16 +1613,21 @@ impl AadlConverter {
             }
         }
         
-        // 获取data access连接信息，用于判断哪些子程序使用共享变量
+        // 2.3 提取共享变量访问信息，用于判断哪些子程序需要锁操作
         let data_access_calls = self.extract_data_access_calls(impl_);
         
-        // 创建子程序调用映射，用于判断哪些子程序使用共享变量
+        // 2.4 创建子程序调用映射，用于判断哪些子程序使用共享变量
         let mut shared_var_subprograms = std::collections::HashMap::new();
         for (subprogram_name, _, shared_var_field) in &data_access_calls {
             shared_var_subprograms.insert(subprogram_name.clone(), shared_var_field.clone());
         }
         
-        // 添加调用序列注释（使用Mycalls中的顺序）
+        // 2.5 创建有参数端口的子程序集合，用于后续判断
+        let subprograms_with_ports: std::collections::HashSet<String> = subprogram_calls.iter()
+            .map(|(_, spg_name, _, _)| spg_name.clone())
+            .collect();
+        
+        // 2.6 添加调用序列注释（使用Mycalls中的顺序）
         if !mycalls_sequence.is_empty() {
             let call_sequence = mycalls_sequence.iter()
                 .map(|(call_id, _)| format!("{}()", call_id))
@@ -1626,125 +1640,154 @@ impl AadlConverter {
             ))));
         }
 
-        for (param_port_name, subprogram_name, thread_port_name, is_send) in
-            subprogram_calls
-        {
-            // 构建 then 分支的语句
-            if is_send {
-                // ====================== 发送模式 ======================
-                let mut then_stmts = Vec::new();
-
-                // let mut val = 0;
-                then_stmts.push(Statement::Let(LetStmt {
-                    name: "val".to_string(),
-                    ty: None,
-                    init: Some(Expr::Literal(Literal::Int(0))),
-                    ifmut: true, // 标记为可变
-                }));
-
-                // do_ping_spg::send(val);
-                then_stmts.push(Statement::Expr(Expr::Call(
-                    Box::new(Expr::Path(
-                        vec![subprogram_name.clone(), "send".to_string()],
-                        PathType::Namespace,
-                    )),
-                    vec![Expr::Reference(
-                        Box::new(Expr::Ident("val".to_string())),
-                        true,
-                        true,
-                    )],
-                )));
-
-                // sender.send(val).unwrap();
-                then_stmts.push(Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::MethodCall(
-                        Box::new(Expr::Ident("sender".to_string())),
-                        "send".to_string(),
-                        vec![Expr::Ident("val".to_string())],
-                    )),
-                    "unwrap".to_string(),
-                    Vec::new(),
-                )));
-
-                // 构建 IfLet 表达式
-                port_handling_stmts.push(Statement::Expr(Expr::IfLet {
-                    pattern: "Some(sender)".to_string(),
-                    value: Box::new(Expr::Reference(
-                        Box::new(Expr::Path(
-                            vec!["self".to_string(), thread_port_name],
-                            PathType::Member,
-                        )),
-                        true,
-                        false, // 不可变引用 & ,no mut
-                    )),
-                    then_branch: Block {
-                        stmts: then_stmts,
-                        expr: None,
-                    },
-                    else_branch: None,
-                }));
-            } else {
-                // ====================== 接收模式 ======================
-                let mut then_stmts = Vec::new();
-
-                // let val = receiver.recv().unwrap();
-                then_stmts.push(Statement::Let(LetStmt {
-                    name: "val".to_string(),
-                    ty: None,
-                    init: Some(Expr::MethodCall(
-                        Box::new(Expr::MethodCall(
-                            Box::new(Expr::Ident("receiver".to_string())),
-                            "recv".to_string(),
-                            Vec::new(),
-                        )),
-                        "unwrap".to_string(),
-                        Vec::new(),
-                    )),
-                    ifmut: false, // 不可变
-                }));
-
-                // receiver_spg::receive(val);
-                then_stmts.push(Statement::Expr(Expr::Call(
-                    Box::new(Expr::Path(
-                        vec![subprogram_name.clone(), "receive".to_string()],
-                        PathType::Namespace,
-                    )),
-                    vec![Expr::Ident("val".to_string())],
-                )));
-
-                // 构建 IfLet 表达式
-                port_handling_stmts.push(Statement::Expr(Expr::IfLet {
-                    pattern: "Some(receiver)".to_string(),
-                    value: Box::new(Expr::Reference(
-                        Box::new(Expr::Path(
-                            vec!["self".to_string(), thread_port_name],
-                            PathType::Member,
-                        )),
-                        true,
-                        false, // 不可变引用 &
-                    )),
-                    then_branch: Block {
-                        stmts: then_stmts,
-                        expr: None,
-                    },
-                    else_branch: None,
-                }));
-            }
-        }
-
-        // 根据Mycalls中的顺序处理所有子程序调用
+        // 2.7 根据Mycalls中的顺序处理所有子程序调用，确保调用顺序正确
         for (call_id, subprogram_name) in mycalls_sequence {
-            if let Some(shared_var_field) = shared_var_subprograms.get(&subprogram_name) {
-                // 使用共享变量的子程序：生成锁操作
+            // 检查这个子程序是否有参数端口连接
+            let has_parameter_ports = subprograms_with_ports.contains(&subprogram_name);
+            
+            // 添加注释说明这是哪个子程序
+            port_handling_stmts.push(Statement::Expr(Expr::Ident(format!("// {}", call_id))));
+            
+            if has_parameter_ports {
+                // ====================== 有参数端口的子程序 ======================
+                // 查找对应的参数端口处理信息
+                if let Some((_, _, thread_port_name, is_send)) = subprogram_calls.iter()
+                    .find(|(_, spg_name, _, _)| spg_name == &subprogram_name) {
+                    
+                    if *is_send {
+                        // 发送模式：生成数据发送代码
+                        let mut send_stmts = Vec::new();
+                        
+                        // 创建数据变量
+                        send_stmts.push(Statement::Let(LetStmt {
+                            name: "val".to_string(),
+                            ty: None,
+                            init: Some(Expr::Literal(Literal::Int(0))),
+                            ifmut: true,
+                        }));
+                        
+                        // 调用子程序的send函数处理数据
+                        send_stmts.push(Statement::Expr(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec![subprogram_name.clone(), "send".to_string()],
+                                PathType::Namespace,
+                            )),
+                            vec![Expr::Reference(
+                                Box::new(Expr::Ident("val".to_string())),
+                                true,
+                                true,
+                            )],
+                        )));
+                        
+                        // 通过channel发送数据
+                        send_stmts.push(Statement::Expr(Expr::MethodCall(
+                            Box::new(Expr::MethodCall(
+                                Box::new(Expr::Ident("sender".to_string())),
+                                "send".to_string(),
+                                vec![Expr::Ident("val".to_string())],
+                            )),
+                            "unwrap".to_string(),
+                            Vec::new(),
+                        )));
+                        
+                        // 构建 IfLet 表达式：检查sender是否存在
+                        port_handling_stmts.push(Statement::Expr(Expr::IfLet {
+                            pattern: "Some(sender)".to_string(),
+                            value: Box::new(Expr::Reference(
+                                Box::new(Expr::Path(
+                                    vec!["self".to_string(), thread_port_name.clone()],
+                                    PathType::Member,
+                                )),
+                                true,
+                                false,
+                            )),
+                            then_branch: Block {
+                                stmts: send_stmts,
+                                expr: None,
+                            },
+                            else_branch: None,
+                        }));
+                    } else {
+                        // 接收模式：生成数据接收代码（使用 try_recv 实现异步非阻塞）
+                        let mut receive_stmts = Vec::new();
+
+                        // match receiver.try_recv() { ... }
+                        let match_expr = Expr::Match {
+                            expr: Box::new(Expr::MethodCall(
+                                Box::new(Expr::Ident("receiver".to_string())),
+                                "try_recv".to_string(),
+                                Vec::new(),
+                            )),
+                            arms: vec![
+                                // Ok(val) => { <subprogram>::receive(val); }
+                                MatchArm {
+                                    pattern: "Ok(val)".to_string(),
+                                    guard: None,
+                                    body: Block {
+                                        stmts: vec![Statement::Expr(Expr::Call(
+                                            Box::new(Expr::Path(
+                                                vec![subprogram_name.clone(), "receive".to_string()],
+                                                PathType::Namespace,
+                                            )),
+                                            vec![Expr::Ident("val".to_string())],
+                                        ))],
+                                        expr: None,
+                                    },
+                                },
+                                // Err(mpsc::TryRecvError::Empty) => { /* skip */ }
+                                MatchArm {
+                                    pattern: "Err(mpsc::TryRecvError::Empty)".to_string(),
+                                    guard: None,
+                                    body: Block { stmts: vec![], expr: None },
+                                },
+                                // Err(mpsc::TryRecvError::Disconnected) => { eprintln!("channel closed"); }
+                                MatchArm {
+                                    pattern: "Err(mpsc::TryRecvError::Disconnected)".to_string(),
+                                    guard: None,
+                                    body: Block {
+                                        stmts: vec![Statement::Expr(Expr::Call(
+                                            Box::new(Expr::Path(
+                                                vec!["eprintln!".to_string()],
+                                                PathType::Namespace,
+                                            )),
+                                            vec![Expr::Literal(Literal::Str("channel closed".to_string()))],
+                                        ))],
+                                        expr: None,
+                                    },
+                                },
+                            ],
+                        };
+
+                        receive_stmts.push(Statement::Expr(match_expr));
+
+                        // 构建 IfLet 表达式：检查receiver是否存在
+                        port_handling_stmts.push(Statement::Expr(Expr::IfLet {
+                            pattern: "Some(receiver)".to_string(),
+                            value: Box::new(Expr::Reference(
+                                Box::new(Expr::Path(
+                                    vec!["self".to_string(), thread_port_name.clone()],
+                                    PathType::Member,
+                                )),
+                                true,
+                                false,
+                            )),
+                            then_branch: Block {
+                                stmts: receive_stmts,
+                                expr: None,
+                            },
+                            else_branch: None,
+                        }));
+                    }
+                }
+            } else if let Some(shared_var_field) = shared_var_subprograms.get(&subprogram_name) {
+                // ====================== 使用共享变量的子程序 ======================
+                // 生成锁操作代码，确保线程安全访问共享变量
                 let mut lock_stmts = Vec::new();
-                
-                // 添加注释说明这是哪个子程序
-                lock_stmts.push(Statement::Expr(Expr::Ident(format!("// {}", call_id))));
                 
                 // 生成锁操作代码块
                 lock_stmts.push(Statement::Expr(Expr::Block(Block {
                     stmts: vec![
-                        // if let Ok(mut guard) = self.pos.lock() {
+                        // 尝试获取锁
                         Statement::Expr(Expr::IfLet {
                             pattern: "Ok(mut guard)".to_string(),
                             value: Box::new(Expr::MethodCall(
@@ -1757,7 +1800,7 @@ impl AadlConverter {
                             )),
                             then_branch: Block {
                                 stmts: vec![
-                                    // update_pos::call(&mut guard);
+                                    // 在锁保护下调用子程序
                                     Statement::Expr(Expr::Call(
                                         Box::new(Expr::Path(
                                             vec![subprogram_name.clone(), "call".to_string()],
@@ -1783,8 +1826,8 @@ impl AadlConverter {
                     expr: None,
                 })));
             } else {
-                // 不使用共享变量的子程序：直接调用execute
-                port_handling_stmts.push(Statement::Expr(Expr::Ident(format!("// {}", call_id))));
+                // ====================== 没有参数端口的普通子程序 ======================
+                // 直接调用execute函数，无需参数传递
                 port_handling_stmts.push(Statement::Expr(Expr::Call(
                     Box::new(Expr::Path(
                         vec![subprogram_name.clone(), "execute".to_string()],
@@ -1795,9 +1838,11 @@ impl AadlConverter {
             }
         }
 
-        // 3. 主循环
+        // ==================== 步骤 3: 主循环 ====================
+        // 生成周期性执行的主循环，包含时间控制和子程序调用
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
             stmts: vec![
+                // 记录循环开始时间
                 Statement::Let(LetStmt {
                     ifmut: false,
                     name: "start".to_string(),
@@ -1810,11 +1855,12 @@ impl AadlConverter {
                         Vec::new(),
                     )),
                 }),
-                // 子程序调用处理块
+                // 执行子程序调用处理块（包含步骤2生成的所有代码）
                 Statement::Expr(Expr::Block(Block {
                     stmts: port_handling_stmts,
                     expr: None,
                 })),
+                // 计算执行时间
                 Statement::Let(LetStmt {
                     ifmut: false,
                     name: "elapsed".to_string(),
@@ -1825,6 +1871,7 @@ impl AadlConverter {
                         Vec::new(),
                     )),
                 }),
+                // 睡眠剩余时间，确保周期性执行
                 Statement::Expr(Expr::MethodCall(
                     Box::new(Expr::Path(
                         vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
@@ -1994,47 +2041,6 @@ impl AadlConverter {
 
         calls
     }
-    // fn extract_subprogram_calls(&self, impl_: &ComponentImplementation) -> Vec<(String, String, String)> {
-    //     let mut calls = Vec::new();
-
-    //     if let CallSequenceClause::Items(calls_clause) = &impl_.calls {
-    //         for call_clause in calls_clause {
-    //             for subprocall in &call_clause.calls {
-    //                 if let CalledSubprogram::Classifier(UniqueComponentClassifierReference::Type(type_ref)) = &subprocall.called {
-    //                     let subprogram_name = type_ref.implementation_name.type_identifier.to_lowercase();
-    //                     let call_identifier = subprocall.identifier.to_lowercase();
-
-    //                     if let ConnectionClause::Items(connections) = &impl_.connections {
-    //                         for conn in connections {
-    //                             if let Connection::Parameter(param_conn) = conn {
-    //                                 // 匹配参数连接的源和目标
-    //                                 if let ParameterEndpoint::SubprogramCallParameter {
-    //                                     call_identifier: src_call_id,
-    //                                     parameter: src_param
-    //                                 } = &param_conn.source {
-    //                                     if *src_call_id == call_identifier {
-    //                                         if let ParameterEndpoint::ComponentParameter {
-    //                                             parameter: _,
-    //                                             data_subcomponent: Some(dst_comp)
-    //                                         } = &param_conn.destination {
-    //                                             calls.push((
-    //                                                 src_param.to_lowercase(),  // 参数名
-    //                                                 subprogram_name.clone(),   // 子程序名
-    //                                                 dst_comp.to_lowercase()    // 线程字段名
-    //                                             ));
-    //                                         }
-    //                                     }
-    //                                 }
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     calls
-    // }
     
     // 提取系统实现中的处理器绑定信息
     fn extract_processor_bindings(&self, impl_: &ComponentImplementation) -> Vec<(String, String)> {
