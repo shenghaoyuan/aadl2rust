@@ -1551,98 +1551,20 @@ RustModule {
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Expr(
-                                                                                                                IfLet {
-                                                                                                                    pattern: "Some(receiver)",
-                                                                                                                    value: Reference(
-                                                                                                                        Path(
-                                                                                                                            [
-                                                                                                                                "self",
-                                                                                                                                "data_sink",
-                                                                                                                            ],
-                                                                                                                            Member,
-                                                                                                                        ),
-                                                                                                                        true,
-                                                                                                                        false,
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Expr(
-                                                                                                                                Match {
-                                                                                                                                    expr: MethodCall(
-                                                                                                                                        Ident(
-                                                                                                                                            "receiver",
-                                                                                                                                        ),
-                                                                                                                                        "try_recv",
-                                                                                                                                        [],
-                                                                                                                                    ),
-                                                                                                                                    arms: [
-                                                                                                                                        MatchArm {
-                                                                                                                                            pattern: "Ok(val)",
-                                                                                                                                            guard: None,
-                                                                                                                                            body: Block {
-                                                                                                                                                stmts: [
-                                                                                                                                                    Expr(
-                                                                                                                                                        Call(
-                                                                                                                                                            Path(
-                                                                                                                                                                [
-                                                                                                                                                                    "ping_spg",
-                                                                                                                                                                    "receive",
-                                                                                                                                                                ],
-                                                                                                                                                                Namespace,
-                                                                                                                                                            ),
-                                                                                                                                                            [
-                                                                                                                                                                Ident(
-                                                                                                                                                                    "val",
-                                                                                                                                                                ),
-                                                                                                                                                            ],
-                                                                                                                                                        ),
-                                                                                                                                                    ),
-                                                                                                                                                ],
-                                                                                                                                                expr: None,
-                                                                                                                                            },
-                                                                                                                                        },
-                                                                                                                                        MatchArm {
-                                                                                                                                            pattern: "Err(mpsc::TryRecvError::Empty)",
-                                                                                                                                            guard: None,
-                                                                                                                                            body: Block {
-                                                                                                                                                stmts: [],
-                                                                                                                                                expr: None,
-                                                                                                                                            },
-                                                                                                                                        },
-                                                                                                                                        MatchArm {
-                                                                                                                                            pattern: "Err(mpsc::TryRecvError::Disconnected)",
-                                                                                                                                            guard: None,
-                                                                                                                                            body: Block {
-                                                                                                                                                stmts: [
-                                                                                                                                                    Expr(
-                                                                                                                                                        Call(
-                                                                                                                                                            Path(
-                                                                                                                                                                [
-                                                                                                                                                                    "eprintln!",
-                                                                                                                                                                ],
-                                                                                                                                                                Namespace,
-                                                                                                                                                            ),
-                                                                                                                                                            [
-                                                                                                                                                                Literal(
-                                                                                                                                                                    Str(
-                                                                                                                                                                        "channel closed",
-                                                                                                                                                                    ),
-                                                                                                                                                                ),
-                                                                                                                                                            ],
-                                                                                                                                                        ),
-                                                                                                                                                    ),
-                                                                                                                                                ],
-                                                                                                                                                expr: None,
-                                                                                                                                            },
-                                                                                                                                        },
-                                                                                                                                    ],
-                                                                                                                                },
-                                                                                                                            ),
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "ping_spg",
+                                                                                                                            "receive",
                                                                                                                         ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Ident(
+                                                                                                                            "val",
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,

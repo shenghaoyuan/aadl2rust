@@ -1332,7 +1332,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "period",
+                                            name: "min_interarrival",
                                             ty: Some(
                                                 Path(
                                                     [
@@ -1362,119 +1362,139 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "last_dispatch",
+                                            ty: Some(
+                                                Path(
+                                                    [
+                                                        "std",
+                                                        "time",
+                                                        "Instant",
+                                                    ],
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Instant",
+                                                            "now",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
                                                 stmts: [
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "start",
-                                                            ty: None,
-                                                            init: Some(
-                                                                Call(
-                                                                    Path(
-                                                                        [
-                                                                            "Instant",
-                                                                            "now",
-                                                                        ],
-                                                                        Namespace,
-                                                                    ),
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
                                                     Expr(
-                                                        Block(
-                                                            Block {
+                                                        IfLet {
+                                                            pattern: "Some(receiver)",
+                                                            value: Reference(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "data_sink",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                true,
+                                                                false,
+                                                            ),
+                                                            then_branch: Block {
                                                                 stmts: [
                                                                     Expr(
-                                                                        Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // Q_Spg()",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// Q_Spg",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        IfLet {
-                                                                            pattern: "Some(receiver)",
-                                                                            value: Reference(
-                                                                                Path(
-                                                                                    [
-                                                                                        "self",
-                                                                                        "data_sink",
-                                                                                    ],
-                                                                                    Member,
+                                                                        Match {
+                                                                            expr: MethodCall(
+                                                                                Ident(
+                                                                                    "receiver",
                                                                                 ),
-                                                                                true,
-                                                                                false,
+                                                                                "recv",
+                                                                                [],
                                                                             ),
-                                                                            then_branch: Block {
-                                                                                stmts: [
-                                                                                    Expr(
-                                                                                        Match {
-                                                                                            expr: MethodCall(
-                                                                                                Ident(
-                                                                                                    "receiver",
-                                                                                                ),
-                                                                                                "try_recv",
-                                                                                                [],
-                                                                                            ),
-                                                                                            arms: [
-                                                                                                MatchArm {
-                                                                                                    pattern: "Ok(val)",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "ping_spg",
-                                                                                                                            "receive",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Ident(
-                                                                                                                            "val",
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
+                                                                            arms: [
+                                                                                MatchArm {
+                                                                                    pattern: "Ok(val)",
+                                                                                    guard: None,
+                                                                                    body: Block {
+                                                                                        stmts: [
+                                                                                            Let(
+                                                                                                LetStmt {
+                                                                                                    ifmut: false,
+                                                                                                    name: "now",
+                                                                                                    ty: None,
+                                                                                                    init: Some(
+                                                                                                        Call(
+                                                                                                            Path(
+                                                                                                                [
+                                                                                                                    "Instant",
+                                                                                                                    "now",
+                                                                                                                ],
+                                                                                                                Namespace,
                                                                                                             ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
+                                                                                                            [],
+                                                                                                        ),
+                                                                                                    ),
                                                                                                 },
-                                                                                                MatchArm {
-                                                                                                    pattern: "Err(mpsc::TryRecvError::Empty)",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [],
-                                                                                                        expr: None,
-                                                                                                    },
+                                                                                            ),
+                                                                                            Let(
+                                                                                                LetStmt {
+                                                                                                    ifmut: false,
+                                                                                                    name: "elapsed",
+                                                                                                    ty: None,
+                                                                                                    init: Some(
+                                                                                                        MethodCall(
+                                                                                                            Ident(
+                                                                                                                "now",
+                                                                                                            ),
+                                                                                                            "duration_since",
+                                                                                                            [
+                                                                                                                Ident(
+                                                                                                                    "last_dispatch",
+                                                                                                                ),
+                                                                                                            ],
+                                                                                                        ),
+                                                                                                    ),
                                                                                                 },
-                                                                                                MatchArm {
-                                                                                                    pattern: "Err(mpsc::TryRecvError::Disconnected)",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
+                                                                                            ),
+                                                                                            Expr(
+                                                                                                If {
+                                                                                                    condition: BinaryOp(
+                                                                                                        Ident(
+                                                                                                            "elapsed",
+                                                                                                        ),
+                                                                                                        "<",
+                                                                                                        Ident(
+                                                                                                            "min_interarrival",
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    then_branch: Block {
                                                                                                         stmts: [
                                                                                                             Expr(
-                                                                                                                Call(
+                                                                                                                MethodCall(
                                                                                                                     Path(
                                                                                                                         [
-                                                                                                                            "eprintln!",
+                                                                                                                            "std",
+                                                                                                                            "thread",
+                                                                                                                            "sleep",
                                                                                                                         ],
                                                                                                                         Namespace,
                                                                                                                     ),
+                                                                                                                    "",
                                                                                                                     [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "channel closed",
+                                                                                                                        BinaryOp(
+                                                                                                                            Ident(
+                                                                                                                                "min_interarrival",
+                                                                                                                            ),
+                                                                                                                            "-",
+                                                                                                                            Ident(
+                                                                                                                                "elapsed",
                                                                                                                             ),
                                                                                                                         ),
                                                                                                                     ],
@@ -1483,62 +1503,184 @@ RustModule {
                                                                                                         ],
                                                                                                         expr: None,
                                                                                                     },
+                                                                                                    else_branch: None,
                                                                                                 },
-                                                                                            ],
-                                                                                        },
-                                                                                    ),
-                                                                                ],
-                                                                                expr: None,
-                                                                            },
-                                                                            else_branch: None,
+                                                                                            ),
+                                                                                            Expr(
+                                                                                                Block(
+                                                                                                    Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // Q_Spg()",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "// Q_Spg",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                IfLet {
+                                                                                                                    pattern: "Some(receiver)",
+                                                                                                                    value: Reference(
+                                                                                                                        Path(
+                                                                                                                            [
+                                                                                                                                "self",
+                                                                                                                                "data_sink",
+                                                                                                                            ],
+                                                                                                                            Member,
+                                                                                                                        ),
+                                                                                                                        true,
+                                                                                                                        false,
+                                                                                                                    ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Expr(
+                                                                                                                                Match {
+                                                                                                                                    expr: MethodCall(
+                                                                                                                                        Ident(
+                                                                                                                                            "receiver",
+                                                                                                                                        ),
+                                                                                                                                        "try_recv",
+                                                                                                                                        [],
+                                                                                                                                    ),
+                                                                                                                                    arms: [
+                                                                                                                                        MatchArm {
+                                                                                                                                            pattern: "Ok(val)",
+                                                                                                                                            guard: None,
+                                                                                                                                            body: Block {
+                                                                                                                                                stmts: [
+                                                                                                                                                    Expr(
+                                                                                                                                                        Call(
+                                                                                                                                                            Path(
+                                                                                                                                                                [
+                                                                                                                                                                    "ping_spg",
+                                                                                                                                                                    "receive",
+                                                                                                                                                                ],
+                                                                                                                                                                Namespace,
+                                                                                                                                                            ),
+                                                                                                                                                            [
+                                                                                                                                                                Ident(
+                                                                                                                                                                    "val",
+                                                                                                                                                                ),
+                                                                                                                                                            ],
+                                                                                                                                                        ),
+                                                                                                                                                    ),
+                                                                                                                                                ],
+                                                                                                                                                expr: None,
+                                                                                                                                            },
+                                                                                                                                        },
+                                                                                                                                        MatchArm {
+                                                                                                                                            pattern: "Err(mpsc::TryRecvError::Empty)",
+                                                                                                                                            guard: None,
+                                                                                                                                            body: Block {
+                                                                                                                                                stmts: [],
+                                                                                                                                                expr: None,
+                                                                                                                                            },
+                                                                                                                                        },
+                                                                                                                                        MatchArm {
+                                                                                                                                            pattern: "Err(mpsc::TryRecvError::Disconnected)",
+                                                                                                                                            guard: None,
+                                                                                                                                            body: Block {
+                                                                                                                                                stmts: [
+                                                                                                                                                    Expr(
+                                                                                                                                                        Call(
+                                                                                                                                                            Path(
+                                                                                                                                                                [
+                                                                                                                                                                    "eprintln!",
+                                                                                                                                                                ],
+                                                                                                                                                                Namespace,
+                                                                                                                                                            ),
+                                                                                                                                                            [
+                                                                                                                                                                Literal(
+                                                                                                                                                                    Str(
+                                                                                                                                                                        "channel closed",
+                                                                                                                                                                    ),
+                                                                                                                                                                ),
+                                                                                                                                                            ],
+                                                                                                                                                        ),
+                                                                                                                                                    ),
+                                                                                                                                                ],
+                                                                                                                                                expr: None,
+                                                                                                                                            },
+                                                                                                                                        },
+                                                                                                                                    ],
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
+                                                                                                                },
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                ),
+                                                                                            ),
+                                                                                            Let(
+                                                                                                LetStmt {
+                                                                                                    ifmut: true,
+                                                                                                    name: "last_dispatch",
+                                                                                                    ty: None,
+                                                                                                    init: Some(
+                                                                                                        Call(
+                                                                                                            Path(
+                                                                                                                [
+                                                                                                                    "Instant",
+                                                                                                                    "now",
+                                                                                                                ],
+                                                                                                                Namespace,
+                                                                                                            ),
+                                                                                                            [],
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                },
+                                                                                            ),
+                                                                                        ],
+                                                                                        expr: None,
+                                                                                    },
+                                                                                },
+                                                                                MatchArm {
+                                                                                    pattern: "Err(_)",
+                                                                                    guard: None,
+                                                                                    body: Block {
+                                                                                        stmts: [
+                                                                                            Expr(
+                                                                                                Call(
+                                                                                                    Path(
+                                                                                                        [
+                                                                                                            "eprintln!",
+                                                                                                        ],
+                                                                                                        Namespace,
+                                                                                                    ),
+                                                                                                    [
+                                                                                                        Literal(
+                                                                                                            Str(
+                                                                                                                "qThread: channel closed",
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ],
+                                                                                                ),
+                                                                                            ),
+                                                                                            Expr(
+                                                                                                Ident(
+                                                                                                    "return",
+                                                                                                ),
+                                                                                            ),
+                                                                                        ],
+                                                                                        expr: None,
+                                                                                    },
+                                                                                },
+                                                                            ],
                                                                         },
                                                                     ),
                                                                 ],
                                                                 expr: None,
                                                             },
-                                                        ),
-                                                    ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "elapsed",
-                                                            ty: None,
-                                                            init: Some(
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "start",
-                                                                    ),
-                                                                    "elapsed",
-                                                                    [],
-                                                                ),
-                                                            ),
+                                                            else_branch: None,
                                                         },
-                                                    ),
-                                                    Expr(
-                                                        MethodCall(
-                                                            Path(
-                                                                [
-                                                                    "std",
-                                                                    "thread",
-                                                                    "sleep",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            "",
-                                                            [
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "period",
-                                                                    ),
-                                                                    "saturating_sub",
-                                                                    [
-                                                                        Ident(
-                                                                            "elapsed",
-                                                                        ),
-                                                                    ],
-                                                                ),
-                                                            ],
-                                                        ),
                                                     ),
                                                 ],
                                                 expr: None,

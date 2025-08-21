@@ -245,7 +245,7 @@ impl AADLTransformer {
                 aadlight_parser::Rule::properties => {
                     properties = Self::transform_properties_clause(inner);
                 }
-                aadlight_parser::Rule::annexes => {
+                aadlight_parser::Rule::array_spec => {
                     annexes = Self::transform_annexes_clause(inner);
                 }
                 _ => {}
@@ -797,7 +797,7 @@ impl AADLTransformer {
                 aadlight_parser::Rule::properties => {
                     properties = Self::transform_properties_clause(inner);
                 }
-                aadlight_parser::Rule::annexes => {
+                aadlight_parser::Rule::array_spec => {
                     annexes = Self::transform_annexes_clause(inner);
                 }
                 _ => {}

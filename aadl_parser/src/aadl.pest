@@ -64,7 +64,7 @@ component_type = {
     prototypes? ~
     features? ~
     properties? ~
-    annexes? ~
+    annex_subclause* ~
     "end" ~ identifier ~ ";"
 }
 
@@ -76,7 +76,7 @@ component_implementation = {
     calls? ~
     connections? ~
     properties? ~
-    annexes? ~
+    annex_subclause* ~
     "end" ~ identifier ~ ";"
 }
 
@@ -176,7 +176,7 @@ boolean = { "true" | "false"}
 // 枚举值规则（覆盖AADL属性集预定义值）
 enum_value = @{
     "Periodic" | "Sporadic" | "Timed" | "Event" | "Hybrid" |
-    "native" | "Integer" | "Struct"
+    "native" | "Integer" | "Struct" | "Boolean"
 }
 
 // 5.2 Subprogram Calls
@@ -190,7 +190,7 @@ subprogram_call = {
 
 // Annexes
 annex_library = { "annex" ~ identifier? ~ "{" ~ ANY* ~ "}" ~ ";" }
-annex_subclause = { "annex" ~ identifier? ~ "{" ~ ANY* ~ "}" ~ ";" }
+annex_subclause = { "annex" ~ identifier? ~ "{**" ~ ANY* ~ "**}" ~ ";" }
 
 // Helpers
 array_spec = { "[" ~ dimension ~ ("," ~ dimension)* ~ "]" }
@@ -204,7 +204,6 @@ parameter_reference = { (identifier ~ ".")? ~ identifier }
 prototypes = { "prototypes" ~ (prototype_declaration+ | "") }
 features = { "features" ~ (feature_declaration+ | "") }
 properties = { "properties" ~ (property_association+ | "") }
-annexes = { "annexes" ~ (annex_subclause+ | "") }
 subcomponents = { "subcomponents" ~ (subcomponent+ | "") }
 calls = { "calls" ~ (call_sequence+ | "") }
 connections = { "connections" ~ (connection+ | "") }
