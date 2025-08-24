@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-21 16:27:13
+// 生成时间: 2025-08-24 15:28:50
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -160,18 +160,17 @@ impl task2Thread {
     
 }
 
-// Process implementation: node_a
-// Auto-generated from AADL
+// AADL Process: node_a
 #[derive(Debug)]
 pub struct node_aProcess {
+    // 进程 CPU ID
+    pub cpu_id: isize,
     // 子组件线程（Task1 : thread Task）
     #[allow(dead_code)]
     pub task1: taskThread,
     // 子组件线程（Task2 : thread Task2）
     #[allow(dead_code)]
     pub task2: task2Thread,
-    // 新增 CPU ID
-    pub cpu_id: isize,
 }
 
 impl node_aProcess {
@@ -184,12 +183,13 @@ impl node_aProcess {
     
     // Starts all threads in the process
     pub fn start(self: Self) -> () {
+        let Self { task1, task2, cpu_id, .. } = self;
         thread::Builder::new()
             .name("task1".to_string())
-            .spawn(move || { self.task1.run() }).unwrap();
+            .spawn(|| { task1.run() }).unwrap();
         thread::Builder::new()
             .name("task2".to_string())
-            .spawn(move || { self.task2.run() }).unwrap();
+            .spawn(|| { task2.run() }).unwrap();
     }
     
 }
@@ -197,27 +197,21 @@ impl node_aProcess {
 // AADL System: rma
 #[derive(Debug)]
 pub struct rmaSystem {
-    // 进程和CPU的对应关系
-    pub processes: Vec<(String, isize)>,
+    // 子组件进程（node_a : process node_a）
+    #[allow(dead_code)]
+    pub node_a: node_aProcess,
 }
 
 impl rmaSystem {
-    // 创建系统实例
+    // Creates a new system instance
     pub fn new() -> Self {
-        return Self { processes: vec![("node_a".to_string(), 0)] };
+        let mut node_a: node_aProcess = node_aProcess::new(0);
+        return Self { node_a }  //显式return;
     }
     
-    // 运行系统，启动所有进程
+    // Runs the system, starts all processes
     pub fn run(self: Self) -> () {
-        for (proc_name, cpu_id) in self.processes {
-        match proc_name.as_str() {
-            "node_a" => {
-                    let proc = node_aProcess::new(cpu_id);
-                    proc.start();
-                },
-            _ => { eprintln!("Unknown process: {}", proc_name); }
-           }
-        };
+        self.node_a.start();
     }
     
 }

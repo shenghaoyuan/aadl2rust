@@ -917,6 +917,16 @@ RustModule {
                 name: "node_aProcess",
                 fields: [
                     Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 进程 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
                         name: "task1",
                         ty: Named(
                             "taskThread",
@@ -954,16 +964,6 @@ RustModule {
                             },
                         ],
                     },
-                    Field {
-                        name: "cpu_id",
-                        ty: Named(
-                            "isize",
-                        ),
-                        docs: [
-                            "// 新增 CPU ID",
-                        ],
-                        attrs: [],
-                    },
                 ],
                 properties: [],
                 generics: [],
@@ -971,8 +971,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// Process implementation: node_a",
-                    "// Auto-generated from AADL",
+                    "// AADL Process: node_a",
                 ],
                 vis: Public,
             },
@@ -1084,6 +1083,18 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "Self { task1, task2, cpu_id, .. }",
+                                            ty: None,
+                                            init: Some(
+                                                Ident(
+                                                    "self",
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         MethodCall(
                                             BuilderChain(
@@ -1095,18 +1106,14 @@ RustModule {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "task1",
-                                                                    ],
-                                                                    Member,
+                                                                Ident(
+                                                                    "task1",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: true,
+                                                        move_kw: false,
                                                     },
                                                 ],
                                             ),
@@ -1125,18 +1132,14 @@ RustModule {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "task2",
-                                                                    ],
-                                                                    Member,
+                                                                Ident(
+                                                                    "task2",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: true,
+                                                        move_kw: false,
                                                     },
                                                 ],
                                             ),
@@ -1164,14 +1167,23 @@ RustModule {
                 name: "rmaSystem",
                 fields: [
                     Field {
-                        name: "processes",
+                        name: "node_a",
                         ty: Named(
-                            "Vec<(String, isize)>",
+                            "node_aProcess",
                         ),
                         docs: [
-                            "// 进程和CPU的对应关系",
+                            "// 子组件进程（node_a : process node_a）",
                         ],
-                        attrs: [],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
                     },
                 ],
                 properties: [],
@@ -1203,7 +1215,12 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self { processes: vec![(\"node_a\".to_string(), 0)] }",
+                                            "let mut node_a: node_aProcess = node_aProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "return Self { node_a }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -1212,7 +1229,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// 创建系统实例",
+                                "// Creates a new system instance",
                             ],
                             attrs: [],
                         },
@@ -1233,7 +1250,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "for (proc_name, cpu_id) in self.processes {\n        match proc_name.as_str() {\n            \"node_a\" => {\n                    let proc = node_aProcess::new(cpu_id);\n                    proc.start();\n                },\n            _ => { eprintln!(\"Unknown process: {}\", proc_name); }\n           }\n        }",
+                                            "self.node_a.start()",
                                         ),
                                     ),
                                 ],
@@ -1242,7 +1259,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// 运行系统，启动所有进程",
+                                "// Runs the system, starts all processes",
                             ],
                             attrs: [],
                         },

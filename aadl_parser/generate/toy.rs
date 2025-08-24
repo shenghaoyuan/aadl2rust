@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-21 16:27:55
+// 生成时间: 2025-08-24 15:22:13
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -263,10 +263,11 @@ impl tmtc_threadThread {
     
 }
 
-// Process implementation: Toy_Example_Proc
-// Auto-generated from AADL
+// AADL Process: toy_example_proc
 #[derive(Debug)]
 pub struct toy_example_procProcess {
+    // 进程 CPU ID
+    pub cpu_id: isize,
     // 子组件线程（GNC_Th : thread GNC_Thread）
     #[allow(dead_code)]
     pub gnc_th: gnc_threadThread,
@@ -276,8 +277,6 @@ pub struct toy_example_procProcess {
     // 共享数据（POS_Data : data POS）
     #[allow(dead_code)]
     pub pos_data: POSShared,
-    // 新增 CPU ID
-    pub cpu_id: isize,
 }
 
 impl toy_example_procProcess {
@@ -291,12 +290,13 @@ impl toy_example_procProcess {
     
     // Starts all threads in the process
     pub fn start(self: Self) -> () {
+        let Self { gnc_th, tmtc_th, pos_data, cpu_id, .. } = self;
         thread::Builder::new()
             .name("gnc_th".to_string())
-            .spawn(move || { self.gnc_th.run() }).unwrap();
+            .spawn(|| { gnc_th.run() }).unwrap();
         thread::Builder::new()
             .name("tmtc_th".to_string())
-            .spawn(move || { self.tmtc_th.run() }).unwrap();
+            .spawn(|| { tmtc_th.run() }).unwrap();
     }
     
 }
@@ -304,27 +304,21 @@ impl toy_example_procProcess {
 // AADL System: toy_example
 #[derive(Debug)]
 pub struct toy_exampleSystem {
-    // 进程和CPU的对应关系
-    pub processes: Vec<(String, isize)>,
+    // 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）
+    #[allow(dead_code)]
+    pub gnc_tmtc_pos: toy_example_procProcess,
 }
 
 impl toy_exampleSystem {
-    // 创建系统实例
+    // Creates a new system instance
     pub fn new() -> Self {
-        return Self { processes: vec![("GNC_TMTC_POS".to_string(), 0)] };
+        let mut gnc_tmtc_pos: toy_example_procProcess = toy_example_procProcess::new(0);
+        return Self { gnc_tmtc_pos }  //显式return;
     }
     
-    // 运行系统，启动所有进程
+    // Runs the system, starts all processes
     pub fn run(self: Self) -> () {
-        for (proc_name, cpu_id) in self.processes {
-        match proc_name.as_str() {
-            "GNC_TMTC_POS" => {
-                    let proc = toy_example_procProcess::new(cpu_id);
-                    proc.start();
-                },
-            _ => { eprintln!("Unknown process: {}", proc_name); }
-           }
-        };
+        self.gnc_tmtc_pos.start();
     }
     
 }

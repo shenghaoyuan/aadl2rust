@@ -1,0 +1,83 @@
+package Test_Multi_CPU
+public
+
+-- 数据类型
+data Alpha_Type
+end Alpha_Type;
+
+-- 线程定义
+thread capteur
+features
+    evenement : out event data port Alpha_Type;
+properties
+    Dispatch_Protocol => Periodic;
+    Period => 100 ms;
+end capteur;
+
+thread implementation capteur.i
+end capteur.i;
+
+thread controle
+features
+    info_capteur : in event data port Alpha_Type;
+    comm_servo : out event data port Alpha_Type;
+properties
+    Dispatch_Protocol => Periodic;
+    Period => 50 ms;
+end controle;
+
+thread implementation controle.i
+end controle.i;
+
+-- 进程定义
+process p_capteur
+features
+    evenement : out event data port Alpha_Type;
+end p_capteur;
+
+process implementation p_capteur.i
+subcomponents
+    th_c : thread capteur.i;
+connections
+    conn1: port th_c.evenement -> evenement;
+end p_capteur.i;
+
+process p_controle
+features
+    info_capteur : in event data port Alpha_Type;
+    comm_servo : out event data port Alpha_Type;
+end p_controle;
+
+process implementation p_controle.i
+subcomponents
+    th_ctrl : thread controle.i;
+connections
+    conn1: port info_capteur -> th_ctrl.info_capteur;
+    conn2: port th_ctrl.comm_servo -> comm_servo;
+end p_controle.i;
+
+-- 处理器定义
+processor CPU1
+end CPU1;
+
+processor CPU2
+end CPU2;
+
+-- 系统定义
+system robot
+end robot;
+
+system implementation robot.i
+subcomponents
+    proc_capteur : process p_capteur.i;
+    proc_controle : process p_controle.i;
+    cpu1 : processor CPU1;
+    cpu2 : processor CPU2;
+connections
+    conn1: port proc_capteur.evenement -> proc_controle.info_capteur;
+properties
+    actual_processor_binding => reference (cpu1) applies to proc_capteur;
+    actual_processor_binding => reference (cpu2) applies to proc_controle;
+end robot.i;
+
+end Test_Multi_CPU; 

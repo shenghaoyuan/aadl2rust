@@ -56,9 +56,9 @@ fn main() {
         },
         TestCase {
             id: 5,
-            name: "Robot".to_string(),
-            path: "AADLSource/robot.aadl".to_string(),
-            output_name: "robot".to_string(),
+            name: "Robot(No_Subprogram)".to_string(),
+            path: "AADLSource/robot_nosubprogram.aadl".to_string(),
+            output_name: "robot_nosubprogram".to_string(),
         },
     ];
 

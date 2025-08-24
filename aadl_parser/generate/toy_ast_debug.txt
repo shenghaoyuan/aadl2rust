@@ -1559,6 +1559,32 @@ RustModule {
                 name: "toy_example_procProcess",
                 fields: [
                     Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 进程 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Process: toy_example_proc",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "toy_example_procProcess",
+                fields: [
+                    Field {
                         name: "gnc_th",
                         ty: Named(
                             "gnc_threadThread",
@@ -1799,6 +1825,18 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "Self { gnc_th, tmtc_th, pos_data, cpu_id, .. }",
+                                            ty: None,
+                                            init: Some(
+                                                Ident(
+                                                    "self",
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         MethodCall(
                                             BuilderChain(
@@ -1810,18 +1848,14 @@ RustModule {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "gnc_th",
-                                                                    ],
-                                                                    Member,
+                                                                Ident(
+                                                                    "gnc_th",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: true,
+                                                        move_kw: false,
                                                     },
                                                 ],
                                             ),
@@ -1840,18 +1874,14 @@ RustModule {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "tmtc_th",
-                                                                    ],
-                                                                    Member,
+                                                                Ident(
+                                                                    "tmtc_th",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: true,
+                                                        move_kw: false,
                                                     },
                                                 ],
                                             ),
@@ -1877,16 +1907,40 @@ RustModule {
         Struct(
             StructDef {
                 name: "toy_exampleSystem",
+                fields: [],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL System: toy_example",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "toy_exampleSystem",
                 fields: [
                     Field {
-                        name: "processes",
+                        name: "gnc_tmtc_pos",
                         ty: Named(
-                            "Vec<(String, isize)>",
+                            "toy_example_procProcess",
                         ),
                         docs: [
-                            "// 进程和CPU的对应关系",
+                            "// 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）",
                         ],
-                        attrs: [],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
                     },
                 ],
                 properties: [],
@@ -1895,7 +1949,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL System: toy_example",
+                    "// System implementation: toy_example",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -1918,7 +1973,12 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self { processes: vec![(\"GNC_TMTC_POS\".to_string(), 0)] }",
+                                            "let mut gnc_tmtc_pos: toy_example_procProcess = toy_example_procProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "return Self { gnc_tmtc_pos }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -1927,7 +1987,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// 创建系统实例",
+                                "// Creates a new system instance",
                             ],
                             attrs: [],
                         },
@@ -1948,7 +2008,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "for (proc_name, cpu_id) in self.processes {\n        match proc_name.as_str() {\n            \"GNC_TMTC_POS\" => {\n                    let proc = toy_example_procProcess::new(cpu_id);\n                    proc.start();\n                },\n            _ => { eprintln!(\"Unknown process: {}\", proc_name); }\n           }\n        }",
+                                            "self.gnc_tmtc_pos.start()",
                                         ),
                                     ),
                                 ],
@@ -1957,7 +2017,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// 运行系统，启动所有进程",
+                                "// Runs the system, starts all processes",
                             ],
                             attrs: [],
                         },

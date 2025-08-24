@@ -9,6 +9,16 @@ RustModule {
                 name: "aProcess",
                 fields: [
                     Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 进程 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
                         name: "pinger",
                         ty: Named(
                             "pThread",
@@ -46,16 +56,6 @@ RustModule {
                             },
                         ],
                     },
-                    Field {
-                        name: "cpu_id",
-                        ty: Named(
-                            "isize",
-                        ),
-                        docs: [
-                            "// 新增 CPU ID",
-                        ],
-                        attrs: [],
-                    },
                 ],
                 properties: [],
                 generics: [],
@@ -63,8 +63,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// Process implementation: A",
-                    "// Auto-generated from AADL",
+                    "// AADL Process: a",
                 ],
                 vis: Public,
             },
@@ -241,6 +240,18 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "Self { pinger, ping_me, cpu_id, .. }",
+                                            ty: None,
+                                            init: Some(
+                                                Ident(
+                                                    "self",
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         MethodCall(
                                             BuilderChain(
@@ -252,18 +263,14 @@ RustModule {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "pinger",
-                                                                    ],
-                                                                    Member,
+                                                                Ident(
+                                                                    "pinger",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: true,
+                                                        move_kw: false,
                                                     },
                                                 ],
                                             ),
@@ -282,18 +289,14 @@ RustModule {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "ping_me",
-                                                                    ],
-                                                                    Member,
+                                                                Ident(
+                                                                    "ping_me",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: true,
+                                                        move_kw: false,
                                                     },
                                                 ],
                                             ),
@@ -321,14 +324,23 @@ RustModule {
                 name: "pingSystem",
                 fields: [
                     Field {
-                        name: "processes",
+                        name: "node_a",
                         ty: Named(
-                            "Vec<(String, isize)>",
+                            "aProcess",
                         ),
                         docs: [
-                            "// 进程和CPU的对应关系",
+                            "// 子组件进程（Node_A : process A）",
                         ],
-                        attrs: [],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
                     },
                 ],
                 properties: [],
@@ -360,7 +372,12 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self { processes: vec![(\"Node_A\".to_string(), 0)] }",
+                                            "let mut node_a: aProcess = aProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "return Self { node_a }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -369,7 +386,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// 创建系统实例",
+                                "// Creates a new system instance",
                             ],
                             attrs: [],
                         },
@@ -390,7 +407,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "for (proc_name, cpu_id) in self.processes {\n        match proc_name.as_str() {\n            \"Node_A\" => {\n                    let proc = aProcess::new(cpu_id);\n                    proc.start();\n                },\n            _ => { eprintln!(\"Unknown process: {}\", proc_name); }\n           }\n        }",
+                                            "self.node_a.start()",
                                         ),
                                     ),
                                 ],
@@ -399,7 +416,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// 运行系统，启动所有进程",
+                                "// Runs the system, starts all processes",
                             ],
                             attrs: [],
                         },
@@ -437,7 +454,7 @@ RustModule {
                             kind: Nested(
                                 [
                                     "user_do_ping_spg",
-                                    "Simple_Type",
+                                    "custom_int",
                                 ],
                             ),
                         },
@@ -450,7 +467,7 @@ RustModule {
                                     name: "data_source",
                                     ty: Reference(
                                         Named(
-                                            "Simple_Type",
+                                            "custom_int",
                                         ),
                                         true,
                                         true,
@@ -518,7 +535,7 @@ RustModule {
                             kind: Nested(
                                 [
                                     "user_ping_spg",
-                                    "Simple_Type",
+                                    "custom_int",
                                 ],
                             ),
                         },
@@ -531,7 +548,7 @@ RustModule {
                                     name: "data_sink",
                                     ty: Reference(
                                         Named(
-                                            "Simple_Type",
+                                            "custom_int",
                                         ),
                                         false,
                                         false,
@@ -595,7 +612,7 @@ RustModule {
                                     "mpsc::Sender",
                                     [
                                         Named(
-                                            "Simple_Type",
+                                            "custom_int",
                                         ),
                                     ],
                                 ),
@@ -1083,7 +1100,7 @@ RustModule {
                                     "mpsc::Receiver",
                                     [
                                         Named(
-                                            "Simple_Type",
+                                            "custom_int",
                                         ),
                                     ],
                                 ),

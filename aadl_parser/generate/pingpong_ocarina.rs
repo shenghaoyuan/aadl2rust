@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-21 16:22:40
+// 生成时间: 2025-08-24 15:24:02
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -22,18 +22,17 @@ fn set_thread_affinity(cpu: isize) {
     }
 }
 
-// Process implementation: A
-// Auto-generated from AADL
+// AADL Process: a
 #[derive(Debug)]
 pub struct aProcess {
+    // 进程 CPU ID
+    pub cpu_id: isize,
     // 子组件线程（Pinger : thread P）
     #[allow(dead_code)]
     pub pinger: pThread,
     // 子组件线程（Ping_Me : thread Q）
     #[allow(dead_code)]
     pub ping_me: qThread,
-    // 新增 CPU ID
-    pub cpu_id: isize,
 }
 
 impl aProcess {
@@ -51,12 +50,13 @@ impl aProcess {
     
     // Starts all threads in the process
     pub fn start(self: Self) -> () {
+        let Self { pinger, ping_me, cpu_id, .. } = self;
         thread::Builder::new()
             .name("pinger".to_string())
-            .spawn(move || { self.pinger.run() }).unwrap();
+            .spawn(|| { pinger.run() }).unwrap();
         thread::Builder::new()
             .name("ping_me".to_string())
-            .spawn(move || { self.ping_me.run() }).unwrap();
+            .spawn(|| { ping_me.run() }).unwrap();
     }
     
 }
@@ -64,27 +64,21 @@ impl aProcess {
 // AADL System: PING
 #[derive(Debug)]
 pub struct pingSystem {
-    // 进程和CPU的对应关系
-    pub processes: Vec<(String, isize)>,
+    // 子组件进程（Node_A : process A）
+    #[allow(dead_code)]
+    pub node_a: aProcess,
 }
 
 impl pingSystem {
-    // 创建系统实例
+    // Creates a new system instance
     pub fn new() -> Self {
-        return Self { processes: vec![("Node_A".to_string(), 0)] };
+        let mut node_a: aProcess = aProcess::new(0);
+        return Self { node_a }  //显式return;
     }
     
-    // 运行系统，启动所有进程
+    // Runs the system, starts all processes
     pub fn run(self: Self) -> () {
-        for (proc_name, cpu_id) in self.processes {
-        match proc_name.as_str() {
-            "Node_A" => {
-                    let proc = aProcess::new(cpu_id);
-                    proc.start();
-                },
-            _ => { eprintln!("Unknown process: {}", proc_name); }
-           }
-        };
+        self.node_a.start();
     }
     
 }
@@ -96,10 +90,10 @@ pub mod do_ping_spg {
     // Auto-generated from AADL subprogram: Do_Ping_Spg
     // C binding to: user_do_ping_spg
     // source_files: "ping.c"
-    use super::{user_do_ping_spg, Simple_Type};
+    use super::{user_do_ping_spg, custom_int};
     // Wrapper for C function user_do_ping_spg
     // Original AADL port: Data_Source
-    pub fn send(data_source: &mut Simple_Type) -> () {
+    pub fn send(data_source: &mut custom_int) -> () {
         unsafe { user_do_ping_spg(data_source);
          };
     }
@@ -110,10 +104,10 @@ pub mod ping_spg {
     // Auto-generated from AADL subprogram: Ping_Spg
     // C binding to: user_ping_spg
     // source_files: "ping.c"
-    use super::{user_ping_spg, Simple_Type};
+    use super::{user_ping_spg, custom_int};
     // Wrapper for C function user_ping_spg
     // Original AADL port: Data_Sink
-    pub fn receive(data_sink: Simple_Type) -> () {
+    pub fn receive(data_sink: custom_int) -> () {
         unsafe { user_ping_spg(data_sink);
          };
     }
@@ -124,7 +118,7 @@ pub mod ping_spg {
 #[derive(Debug)]
 pub struct pThread {
     // Port: Data_Source Out
-    pub data_source: Option<mpsc::Sender<Simple_Type>>,
+    pub data_source: Option<mpsc::Sender<custom_int>>,
     // 结构体新增 CPU ID
     pub cpu_id: isize,
     
@@ -190,7 +184,7 @@ impl pThread {
 #[derive(Debug)]
 pub struct qThread {
     // Port: Data_Sink In
-    pub data_sink: Option<mpsc::Receiver<Simple_Type>>,
+    pub data_sink: Option<mpsc::Receiver<custom_int>>,
     // 结构体新增 CPU ID
     pub cpu_id: isize,
     
