@@ -3,14 +3,15 @@ pub mod aadlight_parser;
 mod ast;
 pub mod printmessage;
 pub mod transform;
+pub mod transform_annex;
 //mod output_ocarina;
 
 use aadlAst2rustCode::generate_build::*;
 use aadlAst2rustCode::intermediate_print::*;
 use aadlAst2rustCode::merge_utils::*;
 use aadlight_parser::AADLParser;
-use core::error;
 use pest::Parser;
+use pest::error::ErrorVariant;
 use printmessage::*;
 use std::fs;
 use std::io::{self, Write};
@@ -59,6 +60,12 @@ fn main() {
             name: "Robot(v1)".to_string(),
             path: "AADLSource/robotv1.aadl".to_string(),
             output_name: "robotv1".to_string(),
+        },
+        TestCase {
+            id: 6,
+            name: "Robot(v2)".to_string(),
+            path: "AADLSource/robotv2.aadl".to_string(),
+            output_name: "robotv2".to_string(),
         },
     ];
 
@@ -120,10 +127,15 @@ fn process_test_case(test_case: &TestCase) {
             return;
         }
     };
-
+    
     match AADLParser::parse(aadlight_parser::Rule::file, &aadl_input) {
         Ok(pairs) => {
             println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count());
+            
+            // 将解析结果写入文件
+            let pairs_debug_path = format!("generate/{}_pairs_debug.txt", test_case.output_name);
+            fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
+            println!("解析结果已保存到: {}", pairs_debug_path);
 
             // 转换到AST
             let ast: Vec<ast::aadl_ast_cj::Package> =
@@ -143,6 +155,24 @@ fn process_test_case(test_case: &TestCase) {
         }
         Err(e) => {
             eprintln!("解析失败: {}", e);
+            // 打印详细的错误信息
+            eprintln!("解析错误: {:?}", e);
+            
+                        // 显示错误位置和上下文
+            eprintln!("错误位置: {:?}", e.location);
+            
+            
+            // 显示期望的规则
+            if let ErrorVariant::ParsingError { positives, negatives } = e.variant {
+                if !positives.is_empty() {
+                    eprintln!("期望匹配的规则: {:?}", positives);
+                }
+                if !negatives.is_empty() {
+                    eprintln!("不应该匹配的规则: {:?}", negatives);
+                }
+            }
+            
+            eprintln!("解析失败，无法继续处理");
         }
     }
 }
@@ -205,4 +235,229 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
 
     // 同时保存主Rust代码
     fs::write("generate/generate_pingpong.rs", rust_code).expect("Failed to write main.rs");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aadlight_parser;
+    use transform_annex::*;
+    use ast::aadl_ast_cj::*;
+    use pest::Parser;
+
+    #[test]
+    fn test_transition_parsing() {
+        println!("=== 测试 Transition 解析 ===");
+        
+        let input = "idle -[on event_port]-> running;";
+        let pairs = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::transition_declaration, input);
+        
+        match pairs {
+            Ok(mut pairs) => {
+                if let Some(pair) = pairs.next() {
+                    println!("解析成功！");
+                    println!("规则: {:?}", pair.as_rule());
+                    println!("内容: {}", pair.as_str());
+                    
+                    let transition = transform_transition_declaration(pair);
+                    println!("转换后的 Transition: {:?}", transition);
+                    
+                    // 验证转换结果
+                    assert_eq!(transition.transition_identifier, None);
+                    assert_eq!(transition.source_states, vec!["idle"]);
+                    assert_eq!(transition.destination_state, "running");
+                    assert!(transition.behavior_condition.is_some());
+                    assert!(transition.actions.is_none());
+                    
+                    println!("✓ 转换解析正确");
+                } else {
+                    println!("❌ 没有找到匹配的规则");
+                }
+            }
+            Err(e) => {
+                println!("❌ 解析失败: {}", e);
+            }
+        }
+        
+        println!("=== 测试完成 ===");
+    }
+
+    #[test]
+    fn test_assignment_action_parsing() {
+        println!("=== 测试赋值动作解析 ===");
+        
+        // 测试简单赋值
+        let input1 = "count1 := count1 + 1";
+        let pairs1 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::assignment_action, input1);
+        
+        match pairs1 {
+            Ok(mut pairs) => {
+                if let Some(pair) = pairs.next() {
+                    println!("解析成功！");
+                    println!("规则: {:?}", pair.as_rule());
+                    println!("内容: {}", pair.as_str());
+                    
+                    let action = transform_annex::transform_assignment_action(pair);
+                    println!("转换后的赋值动作: {:?}", action);
+                    
+                    // 验证转换结果
+                    match action {
+                        BasicAction::Assignment(assignment) => {
+                            match assignment.target {
+                                Target::LocalVariable(name) => {
+                                    assert_eq!(name, "count1");
+                                    println!("✓ 目标变量正确: {}", name);
+                                }
+                                _ => panic!("期望 LocalVariable 目标"),
+                            }
+                            
+                            match assignment.value {
+                                AssignmentValue::Expression(_) => {
+                                    println!("✓ 表达式赋值正确");
+                                }
+                                AssignmentValue::Any => {
+                                    println!("✓ Any 赋值正确");
+                                }
+                            }
+                        }
+                        _ => panic!("期望 Assignment 动作"),
+                    }
+                } else {
+                    println!("❌ 没有找到匹配的规则");
+                }
+            }
+            Err(e) => {
+                println!("❌ 解析失败: {}", e);
+            }
+        }
+        
+        // 测试布尔表达式赋值
+        let input2 = "evenement := (count1 mod 2 = 0)";
+        let pairs2 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::assignment_action, input2);
+        
+        match pairs2 {
+            Ok(mut pairs) => {
+                if let Some(pair) = pairs.next() {
+                    println!("解析成功！");
+                    println!("规则: {:?}", pair.as_rule());
+                    println!("内容: {}", pair.as_str());
+                    
+                    let action = transform_annex::transform_assignment_action(pair);
+                    println!("转换后的布尔赋值动作: {:?}", action);
+                    
+                    // 验证转换结果
+                    match action {
+                        BasicAction::Assignment(assignment) => {
+                            match assignment.target {
+                                Target::LocalVariable(name) => {
+                                    assert_eq!(name, "evenement");
+                                    println!("✓ 目标变量正确: {}", name);
+                                }
+                                _ => panic!("期望 LocalVariable 目标"),
+                            }
+                            
+                            match assignment.value {
+                                AssignmentValue::Expression(_) => {
+                                    println!("✓ 布尔表达式赋值正确");
+                                }
+                                AssignmentValue::Any => {
+                                    println!("✓ Any 赋值正确");
+                                }
+                            }
+                        }
+                        _ => panic!("期望 Assignment 动作"),
+                    }
+                } else {
+                    println!("❌ 没有找到匹配的规则");
+                }
+            }
+            Err(e) => {
+                println!("❌ 解析失败: {}", e);
+            }
+        }
+        
+        println!("=== 测试完成 ===");
+    }
+
+    #[test]
+    fn test_complex_expression_parsing() {
+        println!("=== 测试复杂表达式解析 ===");
+        
+        // 测试简单算术表达式
+        let input1 = "count1 + 1";
+        let pairs1 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::value_expression, input1);
+        
+        match pairs1 {
+            Ok(mut pairs) => {
+                let pair = pairs.next().unwrap();
+                println!("解析成功！");
+                println!("规则: {:?}", pair.as_rule());
+                println!("内容: {}", pair.as_str());
+                
+                let expression = transform_behavior_expression(pair);
+                println!("转换后的表达式: {:?}", expression);
+                
+                // 验证表达式结构
+                if let Some(op) = expression.left.left.operations.first() {
+                    println!("✓ 检测到加法操作: {:?}", op.operator);
+                }
+            }
+            Err(e) => {
+                println!("解析失败: {:?}", e);
+                panic!("表达式解析失败");
+            }
+        }
+        
+        // 测试比较表达式
+        let input2 = "count1 mod 2 = 0";
+        let pairs2 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::value_expression, input2);
+        
+        match pairs2 {
+            Ok(mut pairs) => {
+                let pair = pairs.next().unwrap();
+                println!("解析成功！");
+                println!("规则: {:?}", pair.as_rule());
+                println!("内容: {}", pair.as_str());
+                
+                let expression = transform_behavior_expression(pair);
+                println!("转换后的比较表达式: {:?}", expression);
+                
+                // 验证比较操作
+                if let Some(comp) = &expression.left.comparison {
+                    println!("✓ 检测到比较操作: {:?}", comp.operator);
+                }
+            }
+            Err(e) => {
+                println!("解析失败: {:?}", e);
+                panic!("比较表达式解析失败");
+            }
+        }
+        
+        // 测试逻辑表达式
+        let input3 = "count1 > 0 and count1 < 100";
+        let pairs3 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::value_expression, input3);
+        
+        match pairs3 {
+            Ok(mut pairs) => {
+                let pair = pairs.next().unwrap();
+                println!("解析成功！");
+                println!("规则: {:?}", pair.as_rule());
+                println!("内容: {}", pair.as_str());
+                
+                let expression = transform_behavior_expression(pair);
+                println!("转换后的逻辑表达式: {:?}", expression);
+                
+                // 验证逻辑操作
+                if let Some(logical_op) = expression.operations.first() {
+                    println!("✓ 检测到逻辑操作: {:?}", logical_op.operator);
+                }
+            }
+            Err(e) => {
+                println!("解析失败: {:?}", e);
+                panic!("逻辑表达式解析失败");
+            }
+        }
+        
+        println!("=== 测试完成 ===");
+    }
 }

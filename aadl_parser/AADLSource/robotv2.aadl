@@ -1,4 +1,4 @@
---此模型是robot.aadl的修改。删去了BA
+--此模型是robot.aadl的修改。删去了两个子程序capteur、controle。包含BA.
 
 package Robot_BA
 public
@@ -16,33 +16,6 @@ public
   -------------------
   --  Subprograms  --
   -------------------
-
-  subprogram collecte_donnee_spg
-  features
-    d_source : out parameter Alpha_Type;
-  properties
-    source_language => (C);
-    source_name     => "collecte_donnee";
-    source_text     => ("robot.c");
-  end collecte_donnee_spg;
-
-  subprogram traite_spg_in
-  features
-    d_info  : in parameter Alpha_Type;
-  properties
-    source_language => (C);
-    source_name     => "traite_in";
-    source_text     => ("robot.c");
-  end traite_spg_in;  
-
-  subprogram traite_spg_out
-  features
-    d_ordre : out parameter Alpha_Type;
-  properties
-    source_language => (C);
-    source_name     => "traite_out";
-    source_text     => ("robot.c");
-  end traite_spg_out;
 
   subprogram action_spg
   features
@@ -74,43 +47,56 @@ public
     ordre        : in event data port Alpha_Type;
   end servomoteur;
 
-  -- implementations
-  thread implementation capteur.i
-  calls C: {
-    D_Spg : subprogram collecte_donnee_spg;
-    };
-  connections
-    conn1: parameter D_Spg.d_source -> evenement;
+  --implementations
+  thread implementation controle.i
   properties
     Dispatch_Protocol => Periodic;
     Period            => 110 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
-  -- annex Behavior_specification {**
-  --   variables
-  --     count1 : Base_Types::Integer := 0;
-  --   states
-  --     s0 : initial complete final state;
-  --   transitions
-  --     s0 -[on dispatch]-> s0 {
-  --       computation(1 ms);
-  --       count1 := count1 + 1;
-  --       evenement := (count1 mod 2 = 0)
-  --     };
-  -- **};
+  annex Behavior_specification {**
+    states
+        s_inline : initial complete final state;
+        s1, s2 : state;
+        s_outline : complete state;
+
+    transitions
+        s_inline -[on dispatch]-> s1;
+        s1 -[info_capteur]-> s_inline;
+        s1 -[not info_capteur]-> s_outline {
+          comm_servo := false
+        };
+
+        s_outline -[on dispatch]-> s2;
+        s2 -[not info_capteur]-> s_outline;
+        s2 -[info_capteur]-> s_inline {
+          comm_servo := true
+        };
+  **};
+  end controle.i;
+  thread implementation capteur.i
+  properties
+    Dispatch_Protocol => Periodic;
+    Period            => 110 ms;
+    Compute_Execution_Time => 0 ms .. 1 ms;
+  annex Behavior_specification {**
+    variables
+      count1 : Base_Types::Integer := 0;
+    states
+      s0 : initial complete final state;
+    transitions
+      s0 -[on dispatch]-> s0 {
+        computation(1 ms);
+        count1 := count1 + 1;
+        evenement := (count1 mod 2 = 0)
+      };
+  **};
   end capteur.i;
 
-  thread implementation controle.i
-  calls C: {
-    T_Spg_in : subprogram traite_spg_in;
-    T_Spg_out : subprogram traite_spg_out;
-    };
-  connections
-    conn1: parameter info_capteur  -> T_Spg_in.d_info;
-    conn2: parameter T_Spg_out.d_ordre -> comm_servo;
-  properties
-    Dispatch_Protocol => Periodic;
-    Period            => 110 ms;
-    Compute_Execution_Time => 0 ms .. 1 ms;
+  -- thread implementation controle.i
+  -- properties
+  --   Dispatch_Protocol => Periodic;
+  --   Period            => 110 ms;
+  --   Compute_Execution_Time => 0 ms .. 1 ms;
   -- annex Behavior_specification {**
   --   states
   --       s_inline : initial complete final state;
@@ -130,7 +116,7 @@ public
   --         comm_servo := true
   --       };
   -- **};
-  end controle.i;
+  -- end controle.i;
 
   thread implementation servomoteur.i
   calls main : {

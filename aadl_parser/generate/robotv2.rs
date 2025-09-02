@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-08-25 20:38:10
+// 生成时间: 2025-09-02 20:25:34
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -24,48 +24,6 @@ fn set_thread_affinity(cpu: isize) {
 
 // AADL Data Type: Alpha_Type
 pub type Alpha_Type = bool;
-
-pub mod collecte_donnee_spg {
-    // Auto-generated from AADL subprogram: collecte_donnee_spg
-    // C binding to: collecte_donnee
-    // source_files: "robot.c"
-    use super::{collecte_donnee};
-    // Wrapper for C function collecte_donnee
-    // Original AADL port: d_source
-    pub fn send(d_source: &mut bool) -> () {
-        unsafe { collecte_donnee(d_source);
-         };
-    }
-    
-}
-
-pub mod traite_spg_in {
-    // Auto-generated from AADL subprogram: traite_spg_in
-    // C binding to: traite_in
-    // source_files: "robot.c"
-    use super::{traite_in};
-    // Wrapper for C function traite_in
-    // Original AADL port: d_info
-    pub fn receive(d_info: bool) -> () {
-        unsafe { traite_in(d_info);
-         };
-    }
-    
-}
-
-pub mod traite_spg_out {
-    // Auto-generated from AADL subprogram: traite_spg_out
-    // C binding to: traite_out
-    // source_files: "robot.c"
-    use super::{traite_out};
-    // Wrapper for C function traite_out
-    // Original AADL port: d_ordre
-    pub fn send(d_ordre: &mut bool) -> () {
-        unsafe { traite_out(d_ordre);
-         };
-    }
-    
-}
 
 pub mod action_spg {
     // Auto-generated from AADL subprogram: action_spg
@@ -156,33 +114,6 @@ impl servomoteurThread {
         }
     }
 }
-impl capteurThread {
-    // Thread execution entry point
-    // Period: Some(110) ms
-    pub fn run(mut self) -> () {
-        if self.cpu_id > -1 {
-            set_thread_affinity(self.cpu_id);
-        };
-        let period: std::time::Duration = Duration::from_millis(110);
-        loop {
-            let start = Instant::now();
-            {
-                // --- 调用序列（等价 AADL 的 Wrapper）---
-            // D_Spg();
-                // D_Spg;
-                if let Some(sender) = &self.evenement {
-                    let mut val = false;
-                    collecte_donnee_spg::send(&mut val);
-                    sender.send(val).unwrap();
-                };
-            };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
-        };
-    }
-    
-}
-
 impl controleThread {
     // Thread execution entry point
     // Period: Some(110) ms
@@ -194,30 +125,25 @@ impl controleThread {
         loop {
             let start = Instant::now();
             {
-                // --- 调用序列（等价 AADL 的 Wrapper）---
-            // T_Spg_in() -> T_Spg_out();
-                // T_Spg_in;
-                if let Some(receiver) = &self.info_capteur {
-                    match receiver.try_recv() {
-                        Ok(val) => {
-                            // 收到消息 → 调用处理函数
-                            traite_spg_in::receive(val);
-                        },
-                        Err(mpsc::TryRecvError::Empty) => {
-                            // 没有消息，不阻塞，直接跳过
-                        },
-                        Err(mpsc::TryRecvError::Disconnected) => {
-                            // 通道已关闭
-                            eprintln!("channel closed");
-                        },
-                    };
-                };
-                // T_Spg_out;
-                if let Some(sender) = &self.comm_servo {
-                    let mut val = false;
-                    traite_spg_out::send(&mut val);
-                    sender.send(val).unwrap();
-                };
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
+}
+
+impl capteurThread {
+    // Thread execution entry point
+    // Period: Some(110) ms
+    pub fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(110);
+        loop {
+            let start = Instant::now();
+            {
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

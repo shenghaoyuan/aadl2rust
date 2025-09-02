@@ -98,6 +98,166 @@ RustModule {
         ),
         Mod(
             RustModule {
+                name: "traite_spg_in",
+                docs: [
+                    "// Auto-generated from AADL subprogram: traite_spg_in",
+                    "// C binding to: traite_in",
+                    "// source_files: \"robot.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "traite_in",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "receive",
+                            params: [
+                                Param {
+                                    name: "d_info",
+                                    ty: Reference(
+                                        Named(
+                                            "bool",
+                                        ),
+                                        false,
+                                        false,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "traite_in",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "d_info",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function traite_in",
+                                "// Original AADL port: d_info",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "traite_spg_out",
+                docs: [
+                    "// Auto-generated from AADL subprogram: traite_spg_out",
+                    "// C binding to: traite_out",
+                    "// source_files: \"robot.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "traite_out",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "send",
+                            params: [
+                                Param {
+                                    name: "d_ordre",
+                                    ty: Reference(
+                                        Named(
+                                            "bool",
+                                        ),
+                                        true,
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "traite_out",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "d_ordre",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function traite_out",
+                                "// Original AADL port: d_ordre",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
                 name: "action_spg",
                 docs: [
                     "// Auto-generated from AADL subprogram: action_spg",
@@ -810,7 +970,190 @@ RustModule {
                                                     Expr(
                                                         Block(
                                                             Block {
-                                                                stmts: [],
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // T_Spg_in() -> T_Spg_out()",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// T_Spg_in",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        IfLet {
+                                                                            pattern: "Some(receiver)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "info_capteur",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
+                                                                            ),
+                                                                            then_branch: Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Match {
+                                                                                            expr: MethodCall(
+                                                                                                Ident(
+                                                                                                    "receiver",
+                                                                                                ),
+                                                                                                "try_recv",
+                                                                                                [],
+                                                                                            ),
+                                                                                            arms: [
+                                                                                                MatchArm {
+                                                                                                    pattern: "Ok(val)",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "traite_spg_in",
+                                                                                                                            "receive",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Ident(
+                                                                                                                            "val",
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "Err(mpsc::TryRecvError::Empty)",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "Err(mpsc::TryRecvError::Disconnected)",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "eprintln!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "channel closed",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                            else_branch: None,
+                                                                        },
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// T_Spg_out",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        IfLet {
+                                                                            pattern: "Some(sender)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "comm_servo",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
+                                                                            ),
+                                                                            then_branch: Block {
+                                                                                stmts: [
+                                                                                    Let(
+                                                                                        LetStmt {
+                                                                                            ifmut: true,
+                                                                                            name: "val",
+                                                                                            ty: None,
+                                                                                            init: Some(
+                                                                                                Literal(
+                                                                                                    Bool(
+                                                                                                        false,
+                                                                                                    ),
+                                                                                                ),
+                                                                                            ),
+                                                                                        },
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Call(
+                                                                                            Path(
+                                                                                                [
+                                                                                                    "traite_spg_out",
+                                                                                                    "send",
+                                                                                                ],
+                                                                                                Namespace,
+                                                                                            ),
+                                                                                            [
+                                                                                                Reference(
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                    true,
+                                                                                                    true,
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        MethodCall(
+                                                                                            MethodCall(
+                                                                                                Ident(
+                                                                                                    "sender",
+                                                                                                ),
+                                                                                                "send",
+                                                                                                [
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                ],
+                                                                                            ),
+                                                                                            "unwrap",
+                                                                                            [],
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                            else_branch: None,
+                                                                        },
+                                                                    ),
+                                                                ],
                                                                 expr: None,
                                                             },
                                                         ),

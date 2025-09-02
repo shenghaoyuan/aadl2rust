@@ -18,246 +18,6 @@ RustModule {
         ),
         Mod(
             RustModule {
-                name: "collecte_donnee_spg",
-                docs: [
-                    "// Auto-generated from AADL subprogram: collecte_donnee_spg",
-                    "// C binding to: collecte_donnee",
-                    "// source_files: \"robot.c\"",
-                ],
-                items: [
-                    Use(
-                        UseStatement {
-                            path: [
-                                "super",
-                            ],
-                            kind: Nested(
-                                [
-                                    "collecte_donnee",
-                                ],
-                            ),
-                        },
-                    ),
-                    Function(
-                        FunctionDef {
-                            name: "send",
-                            params: [
-                                Param {
-                                    name: "d_source",
-                                    ty: Reference(
-                                        Named(
-                                            "bool",
-                                        ),
-                                        true,
-                                        true,
-                                    ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Expr(
-                                        Unsafe(
-                                            Block {
-                                                stmts: [
-                                                    Expr(
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "collecte_donnee",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Ident(
-                                                                    "d_source",
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                expr: None,
-                            },
-                            asyncness: false,
-                            vis: Public,
-                            docs: [
-                                "// Wrapper for C function collecte_donnee",
-                                "// Original AADL port: d_source",
-                            ],
-                            attrs: [],
-                        },
-                    ),
-                ],
-                attrs: [],
-                vis: Public,
-            },
-        ),
-        Mod(
-            RustModule {
-                name: "traite_spg_in",
-                docs: [
-                    "// Auto-generated from AADL subprogram: traite_spg_in",
-                    "// C binding to: traite_in",
-                    "// source_files: \"robot.c\"",
-                ],
-                items: [
-                    Use(
-                        UseStatement {
-                            path: [
-                                "super",
-                            ],
-                            kind: Nested(
-                                [
-                                    "traite_in",
-                                ],
-                            ),
-                        },
-                    ),
-                    Function(
-                        FunctionDef {
-                            name: "receive",
-                            params: [
-                                Param {
-                                    name: "d_info",
-                                    ty: Reference(
-                                        Named(
-                                            "bool",
-                                        ),
-                                        false,
-                                        false,
-                                    ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Expr(
-                                        Unsafe(
-                                            Block {
-                                                stmts: [
-                                                    Expr(
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "traite_in",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Ident(
-                                                                    "d_info",
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                expr: None,
-                            },
-                            asyncness: false,
-                            vis: Public,
-                            docs: [
-                                "// Wrapper for C function traite_in",
-                                "// Original AADL port: d_info",
-                            ],
-                            attrs: [],
-                        },
-                    ),
-                ],
-                attrs: [],
-                vis: Public,
-            },
-        ),
-        Mod(
-            RustModule {
-                name: "traite_spg_out",
-                docs: [
-                    "// Auto-generated from AADL subprogram: traite_spg_out",
-                    "// C binding to: traite_out",
-                    "// source_files: \"robot.c\"",
-                ],
-                items: [
-                    Use(
-                        UseStatement {
-                            path: [
-                                "super",
-                            ],
-                            kind: Nested(
-                                [
-                                    "traite_out",
-                                ],
-                            ),
-                        },
-                    ),
-                    Function(
-                        FunctionDef {
-                            name: "send",
-                            params: [
-                                Param {
-                                    name: "d_ordre",
-                                    ty: Reference(
-                                        Named(
-                                            "bool",
-                                        ),
-                                        true,
-                                        true,
-                                    ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Expr(
-                                        Unsafe(
-                                            Block {
-                                                stmts: [
-                                                    Expr(
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "traite_out",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Ident(
-                                                                    "d_ordre",
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                expr: None,
-                            },
-                            asyncness: false,
-                            vis: Public,
-                            docs: [
-                                "// Wrapper for C function traite_out",
-                                "// Original AADL port: d_ordre",
-                            ],
-                            attrs: [],
-                        },
-                    ),
-                ],
-                attrs: [],
-                vis: Public,
-            },
-        ),
-        Mod(
-            RustModule {
                 name: "action_spg",
                 docs: [
                     "// Auto-generated from AADL subprogram: action_spg",
@@ -371,26 +131,7 @@ RustModule {
                         attrs: [],
                     },
                 ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
-                        ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            110,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -456,26 +197,7 @@ RustModule {
                         attrs: [],
                     },
                 ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
-                        ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            110,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -521,11 +243,26 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: servomoteur",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "controleThread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
                         value: String(
-                            "Sporadic",
+                            "Periodic",
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
@@ -534,7 +271,7 @@ RustModule {
                     StruProperty {
                         name: "Period",
                         value: Integer(
-                            10,
+                            110,
                         ),
                         docs: [
                             "// AADL属性: Period",
@@ -546,7 +283,237 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Thread: servomoteur",
+                    "// AADL Thread: controle",
+                ],
+                vis: Public,
+            },
+        ),
+        Impl(
+            ImplBlock {
+                target: Named(
+                    "controleThread",
+                ),
+                generics: [],
+                items: [
+                    Method(
+                        FunctionDef {
+                            name: "run",
+                            params: [
+                                Param {
+                                    name: "",
+                                    ty: Reference(
+                                        Named(
+                                            "self",
+                                        ),
+                                        false,
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        If {
+                                            condition: BinaryOp(
+                                                Path(
+                                                    [
+                                                        "self",
+                                                        "cpu_id",
+                                                    ],
+                                                    Member,
+                                                ),
+                                                ">",
+                                                Literal(
+                                                    Int(
+                                                        -1,
+                                                    ),
+                                                ),
+                                            ),
+                                            then_branch: Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "set_thread_affinity",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "cpu_id",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                            else_branch: None,
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "period",
+                                            ty: Some(
+                                                Path(
+                                                    [
+                                                        "std",
+                                                        "time",
+                                                        "Duration",
+                                                    ],
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Duration",
+                                                            "from_millis",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [
+                                                        Literal(
+                                                            Int(
+                                                                110,
+                                                            ),
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        Loop(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "start",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "Instant",
+                                                                            "now",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        Block(
+                                                            Block {
+                                                                stmts: [],
+                                                                expr: None,
+                                                            },
+                                                        ),
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "elapsed",
+                                                            ty: None,
+                                                            init: Some(
+                                                                MethodCall(
+                                                                    Ident(
+                                                                        "start",
+                                                                    ),
+                                                                    "elapsed",
+                                                                    [],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        MethodCall(
+                                                            Path(
+                                                                [
+                                                                    "std",
+                                                                    "thread",
+                                                                    "sleep",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            "",
+                                                            [
+                                                                MethodCall(
+                                                                    Ident(
+                                                                        "period",
+                                                                    ),
+                                                                    "saturating_sub",
+                                                                    [
+                                                                        Ident(
+                                                                            "elapsed",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Thread execution entry point",
+                                "// Period: Some(110) ms",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                trait_impl: None,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "capteurThread",
+                fields: [],
+                properties: [
+                    StruProperty {
+                        name: "Dispatch_Protocol",
+                        value: String(
+                            "Periodic",
+                        ),
+                        docs: [
+                            "// AADL属性: Dispatch_Protocol",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Period",
+                        value: Integer(
+                            110,
+                        ),
+                        docs: [
+                            "// AADL属性: Period",
+                        ],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: capteur",
                 ],
                 vis: Public,
             },
@@ -679,91 +646,7 @@ RustModule {
                                                     Expr(
                                                         Block(
                                                             Block {
-                                                                stmts: [
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // D_Spg()",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// D_Spg",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        IfLet {
-                                                                            pattern: "Some(sender)",
-                                                                            value: Reference(
-                                                                                Path(
-                                                                                    [
-                                                                                        "self",
-                                                                                        "evenement",
-                                                                                    ],
-                                                                                    Member,
-                                                                                ),
-                                                                                true,
-                                                                                false,
-                                                                            ),
-                                                                            then_branch: Block {
-                                                                                stmts: [
-                                                                                    Let(
-                                                                                        LetStmt {
-                                                                                            ifmut: true,
-                                                                                            name: "val",
-                                                                                            ty: None,
-                                                                                            init: Some(
-                                                                                                Literal(
-                                                                                                    Bool(
-                                                                                                        false,
-                                                                                                    ),
-                                                                                                ),
-                                                                                            ),
-                                                                                        },
-                                                                                    ),
-                                                                                    Expr(
-                                                                                        Call(
-                                                                                            Path(
-                                                                                                [
-                                                                                                    "collecte_donnee_spg",
-                                                                                                    "send",
-                                                                                                ],
-                                                                                                Namespace,
-                                                                                            ),
-                                                                                            [
-                                                                                                Reference(
-                                                                                                    Ident(
-                                                                                                        "val",
-                                                                                                    ),
-                                                                                                    true,
-                                                                                                    true,
-                                                                                                ),
-                                                                                            ],
-                                                                                        ),
-                                                                                    ),
-                                                                                    Expr(
-                                                                                        MethodCall(
-                                                                                            MethodCall(
-                                                                                                Ident(
-                                                                                                    "sender",
-                                                                                                ),
-                                                                                                "send",
-                                                                                                [
-                                                                                                    Ident(
-                                                                                                        "val",
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                            "unwrap",
-                                                                                            [],
-                                                                                        ),
-                                                                                    ),
-                                                                                ],
-                                                                                expr: None,
-                                                                            },
-                                                                            else_branch: None,
-                                                                        },
-                                                                    ),
-                                                                ],
+                                                                stmts: [],
                                                                 expr: None,
                                                             },
                                                         ),
@@ -831,383 +714,38 @@ RustModule {
                 trait_impl: None,
             },
         ),
-        Impl(
-            ImplBlock {
-                target: Named(
-                    "controleThread",
-                ),
-                generics: [],
-                items: [
-                    Method(
-                        FunctionDef {
-                            name: "run",
-                            params: [
-                                Param {
-                                    name: "",
-                                    ty: Reference(
-                                        Named(
-                                            "self",
-                                        ),
-                                        false,
-                                        true,
-                                    ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Expr(
-                                        If {
-                                            condition: BinaryOp(
-                                                Path(
-                                                    [
-                                                        "self",
-                                                        "cpu_id",
-                                                    ],
-                                                    Member,
-                                                ),
-                                                ">",
-                                                Literal(
-                                                    Int(
-                                                        -1,
-                                                    ),
-                                                ),
-                                            ),
-                                            then_branch: Block {
-                                                stmts: [
-                                                    Expr(
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "set_thread_affinity",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "cpu_id",
-                                                                    ],
-                                                                    Member,
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                            else_branch: None,
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "period",
-                                            ty: Some(
-                                                Path(
-                                                    [
-                                                        "std",
-                                                        "time",
-                                                        "Duration",
-                                                    ],
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "Duration",
-                                                            "from_millis",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [
-                                                        Literal(
-                                                            Int(
-                                                                110,
-                                                            ),
-                                                        ),
-                                                    ],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Expr(
-                                        Loop(
-                                            Block {
-                                                stmts: [
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "start",
-                                                            ty: None,
-                                                            init: Some(
-                                                                Call(
-                                                                    Path(
-                                                                        [
-                                                                            "Instant",
-                                                                            "now",
-                                                                        ],
-                                                                        Namespace,
-                                                                    ),
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
-                                                    Expr(
-                                                        Block(
-                                                            Block {
-                                                                stmts: [
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // T_Spg_in() -> T_Spg_out()",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// T_Spg_in",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        IfLet {
-                                                                            pattern: "Some(receiver)",
-                                                                            value: Reference(
-                                                                                Path(
-                                                                                    [
-                                                                                        "self",
-                                                                                        "info_capteur",
-                                                                                    ],
-                                                                                    Member,
-                                                                                ),
-                                                                                true,
-                                                                                false,
-                                                                            ),
-                                                                            then_branch: Block {
-                                                                                stmts: [
-                                                                                    Expr(
-                                                                                        Match {
-                                                                                            expr: MethodCall(
-                                                                                                Ident(
-                                                                                                    "receiver",
-                                                                                                ),
-                                                                                                "try_recv",
-                                                                                                [],
-                                                                                            ),
-                                                                                            arms: [
-                                                                                                MatchArm {
-                                                                                                    pattern: "Ok(val)",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "traite_spg_in",
-                                                                                                                            "receive",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Ident(
-                                                                                                                            "val",
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "Err(mpsc::TryRecvError::Empty)",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "Err(mpsc::TryRecvError::Disconnected)",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "eprintln!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "channel closed",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                            ],
-                                                                                        },
-                                                                                    ),
-                                                                                ],
-                                                                                expr: None,
-                                                                            },
-                                                                            else_branch: None,
-                                                                        },
-                                                                    ),
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// T_Spg_out",
-                                                                        ),
-                                                                    ),
-                                                                    Expr(
-                                                                        IfLet {
-                                                                            pattern: "Some(sender)",
-                                                                            value: Reference(
-                                                                                Path(
-                                                                                    [
-                                                                                        "self",
-                                                                                        "comm_servo",
-                                                                                    ],
-                                                                                    Member,
-                                                                                ),
-                                                                                true,
-                                                                                false,
-                                                                            ),
-                                                                            then_branch: Block {
-                                                                                stmts: [
-                                                                                    Let(
-                                                                                        LetStmt {
-                                                                                            ifmut: true,
-                                                                                            name: "val",
-                                                                                            ty: None,
-                                                                                            init: Some(
-                                                                                                Literal(
-                                                                                                    Bool(
-                                                                                                        false,
-                                                                                                    ),
-                                                                                                ),
-                                                                                            ),
-                                                                                        },
-                                                                                    ),
-                                                                                    Expr(
-                                                                                        Call(
-                                                                                            Path(
-                                                                                                [
-                                                                                                    "traite_spg_out",
-                                                                                                    "send",
-                                                                                                ],
-                                                                                                Namespace,
-                                                                                            ),
-                                                                                            [
-                                                                                                Reference(
-                                                                                                    Ident(
-                                                                                                        "val",
-                                                                                                    ),
-                                                                                                    true,
-                                                                                                    true,
-                                                                                                ),
-                                                                                            ],
-                                                                                        ),
-                                                                                    ),
-                                                                                    Expr(
-                                                                                        MethodCall(
-                                                                                            MethodCall(
-                                                                                                Ident(
-                                                                                                    "sender",
-                                                                                                ),
-                                                                                                "send",
-                                                                                                [
-                                                                                                    Ident(
-                                                                                                        "val",
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                            "unwrap",
-                                                                                            [],
-                                                                                        ),
-                                                                                    ),
-                                                                                ],
-                                                                                expr: None,
-                                                                            },
-                                                                            else_branch: None,
-                                                                        },
-                                                                    ),
-                                                                ],
-                                                                expr: None,
-                                                            },
-                                                        ),
-                                                    ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "elapsed",
-                                                            ty: None,
-                                                            init: Some(
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "start",
-                                                                    ),
-                                                                    "elapsed",
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
-                                                    Expr(
-                                                        MethodCall(
-                                                            Path(
-                                                                [
-                                                                    "std",
-                                                                    "thread",
-                                                                    "sleep",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            "",
-                                                            [
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "period",
-                                                                    ),
-                                                                    "saturating_sub",
-                                                                    [
-                                                                        Ident(
-                                                                            "elapsed",
-                                                                        ),
-                                                                    ],
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                expr: None,
-                            },
-                            asyncness: false,
-                            vis: Public,
-                            docs: [
-                                "// Thread execution entry point",
-                                "// Period: Some(110) ms",
-                            ],
-                            attrs: [],
-                        },
-                    ),
+        Struct(
+            StructDef {
+                name: "servomoteurThread",
+                fields: [],
+                properties: [
+                    StruProperty {
+                        name: "Dispatch_Protocol",
+                        value: String(
+                            "Sporadic",
+                        ),
+                        docs: [
+                            "// AADL属性: Dispatch_Protocol",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Period",
+                        value: Integer(
+                            10,
+                        ),
+                        docs: [
+                            "// AADL属性: Period",
+                        ],
+                    },
                 ],
-                trait_impl: None,
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: servomoteur",
+                ],
+                vis: Public,
             },
         ),
         Impl(
@@ -1609,45 +1147,6 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                    Field {
-                        name: "evenementRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: evenement Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "th_c",
-                        ty: Named(
-                            "capteurThread",
-                        ),
-                        docs: [
-                            "// 子组件线程（th_c : thread capteur）",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1754,124 +1253,6 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                    Field {
-                        name: "info_capteur_droitSend",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: info_capteur_droit In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "comm_servo_droitRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: comm_servo_droit Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "info_capteur_gaucheSend",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: info_capteur_gauche In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "comm_servo_gaucheRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: comm_servo_gauche Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "th_ctrl_droit",
-                        ty: Named(
-                            "controleThread",
-                        ),
-                        docs: [
-                            "// 子组件线程（th_ctrl_droit : thread controle）",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
-                    Field {
-                        name: "th_ctrl_gauche",
-                        ty: Named(
-                            "controleThread",
-                        ),
-                        docs: [
-                            "// 子组件线程（th_ctrl_gauche : thread controle）",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1918,8 +1299,24 @@ RustModule {
                         ],
                         attrs: [],
                     },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Process: p_servomoteur",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "p_capteurProcess",
+                fields: [
                     Field {
-                        name: "ordreSend",
+                        name: "evenement",
                         ty: Generic(
                             "Option",
                             [
@@ -1934,17 +1331,37 @@ RustModule {
                             ],
                         ),
                         docs: [
-                            "// 内部端口: ordre In",
+                            "// Port: evenement Out",
                         ],
                         attrs: [],
                     },
                     Field {
-                        name: "th_servomoteur",
-                        ty: Named(
-                            "servomoteurThread",
+                        name: "evenementRece",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
                         ),
                         docs: [
-                            "// 子组件线程（th_servomoteur : thread servomoteur）",
+                            "// 内部端口: evenement Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "th_c",
+                        ty: Named(
+                            "capteurThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_c : thread capteur）",
                         ],
                         attrs: [
                             Attribute {
@@ -1957,6 +1374,16 @@ RustModule {
                             },
                         ],
                     },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1964,7 +1391,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Process: p_servomoteur",
+                    "// Process implementation: p_capteur",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -2316,6 +1744,231 @@ RustModule {
                     ),
                 ],
                 trait_impl: None,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "p_controleProcess",
+                fields: [
+                    Field {
+                        name: "info_capteur_droit",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: info_capteur_droit In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "info_capteur_droitSend",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: info_capteur_droit In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_droit",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: comm_servo_droit Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_droitRece",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: comm_servo_droit Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "info_capteur_gauche",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: info_capteur_gauche In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "info_capteur_gaucheSend",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: info_capteur_gauche In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_gauche",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: comm_servo_gauche Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_gaucheRece",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: comm_servo_gauche Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "th_ctrl_droit",
+                        ty: Named(
+                            "controleThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_ctrl_droit : thread controle）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "th_ctrl_gauche",
+                        ty: Named(
+                            "controleThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_ctrl_gauche : thread controle）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// Process implementation: p_controle",
+                    "// Auto-generated from AADL",
+                ],
+                vis: Public,
             },
         ),
         Impl(
@@ -3368,6 +3021,92 @@ RustModule {
                 trait_impl: None,
             },
         ),
+        Struct(
+            StructDef {
+                name: "p_servomoteurProcess",
+                fields: [
+                    Field {
+                        name: "ordre",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: ordre In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "ordreSend",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: ordre In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "th_servomoteur",
+                        ty: Named(
+                            "servomoteurThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_servomoteur : thread servomoteur）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// Process implementation: p_servomoteur",
+                    "// Auto-generated from AADL",
+                ],
+                vis: Public,
+            },
+        ),
         Impl(
             ImplBlock {
                 target: Named(
@@ -3720,6 +3459,21 @@ RustModule {
         Struct(
             StructDef {
                 name: "robotSystem",
+                fields: [],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL System: robot",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "robotSystem",
                 fields: [
                     Field {
                         name: "proc_capteur_droit",
@@ -3823,7 +3577,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL System: robot",
+                    "// System implementation: robot",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },

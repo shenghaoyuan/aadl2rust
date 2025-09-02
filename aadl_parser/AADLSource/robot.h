@@ -4,7 +4,8 @@
 #include <stdbool.h>
 
 void collecte_donnee(bool *d_source);
-void traite(bool d_info, bool *d_ordre);
+void traite_in(bool d_info);
+void traite_out(bool *d_ordre);
 void action(bool d_action);
 
 #endif 

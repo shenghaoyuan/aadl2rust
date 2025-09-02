@@ -95,9 +95,837 @@ pub mod aadl_ast_cj {
     //sTODO 4.8 Annex Subclauses and Annex Libraries
     #[derive(Debug, Clone)]
     pub struct AnnexLibrary {}
+    
+    /// AADL 扩展附件子句
+    /// 对应标准中的 `annex_subclause`
     #[derive(Debug, Clone)]
-    pub enum AnnexSubclause {}
-    //eTODO
+    pub struct AnnexSubclause {
+        /// 附件标识符 (annex_identifier)
+        pub identifier: AnnexIdentifier,
+        /// 附件内容 (annex_specific_language_constructs | none)
+        pub content: AnnexContent,
+    }
+    
+    /// 附件标识符
+    /// 目前只支持 behavior_specification 和 EMV2
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum AnnexIdentifier {
+        BehaviorSpecification,
+        EMV2,
+    }
+    
+    /// 附件内容
+    #[derive(Debug, Clone)]
+    pub enum AnnexContent {
+        /// 显式声明 none
+        None,
+        /// 附件特定语言构造
+        // 对应 {** annex_specific_language_constructs **}
+        // LanguageConstructs(String),
+        /// Behavior Annex 特定内容
+        BehaviorAnnex(BehaviorAnnexContent),
+    }
+    
+    /// Behavior Annex 内容结构
+    /// 对应标准中的 BA 语法结构
+    #[derive(Debug, Clone)]
+    pub struct BehaviorAnnexContent {
+        // 状态变量声明 (可选)
+        pub state_variables: Option<Vec<StateVariable>>,
+        // 初始化部分 (可选)
+        // pub initialization: Option<Initialization>,
+        // 状态定义 (可选)
+        pub states: Option<Vec<State>>,
+        // 转换定义 (可选)
+        pub transitions: Option<Vec<Transition>>,
+        // 连接定义 (可选)
+        // pub connections: Option<Vec<BAConnection>>,
+        // 复合声明 (可选，可多个)
+        // pub composite_declarations: Vec<CompositeDeclaration>,
+    }
+    
+    /// 状态变量声明
+    #[derive(Debug, Clone)]
+    pub struct StateVariable {
+        pub identifier: String,
+        pub data_type: String, // 数据类型
+        pub initial_value: Option<String>, // 初始值（可选）
+    }
+    
+    /// 初始化部分
+    // #[derive(Debug, Clone)]
+    // pub struct Initialization {
+    //     pub statements: Vec<String>, // 初始化语句列表
+    // }
+    
+    /// 状态定义
+    /// 对应标准中的 states 语法
+    #[derive(Debug, Clone)]
+    pub struct State {
+        /// 状态标识符列表 (identifier (, identifier)*)
+        pub identifiers: Vec<String>,
+        /// 状态修饰符 (initial | complete | return | urgent | composite | exit)*
+        pub modifiers: Vec<StateModifier>,
+    }
+    
+    /// 状态修饰符
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum StateModifier {
+        Initial,    // initial
+        Complete,   // complete
+        //Return,     // return
+        //Urgent,     // urgent
+        //Composite,  // composite
+        //Exit,       // exit
+        Final,      // final
+    }
+    
+    /// 转换定义
+    /// 对应标准中的 behavior_transition 语法
+    #[derive(Debug, Clone)]
+    pub struct Transition {
+        /// 转换标识符 (可选)
+        pub transition_identifier: Option<String>,
+        /// 转换优先级 (可选)
+        pub priority: Option<String>,
+        /// 源状态标识符列表 (支持多个源状态)
+        pub source_states: Vec<String>,
+        /// 目标状态标识符
+        pub destination_state: String,
+        /// 行为条件 (可选)
+        pub behavior_condition: Option<BehaviorCondition>,
+        /// 动作列表 (可选)
+        pub actions: Option<BehaviorActionBlock>,
+    }
+    
+    /// 行为条件
+    /// 对应标准中的 behavior_condition 语法
+    #[derive(Debug, Clone)]
+    pub enum BehaviorCondition {
+        /// dispatch_condition,特指“on dispatch”
+        Dispatch(DispatchCondition),
+        /// execute_condition,特指not + identifier端口的情况,自定义了not
+        Execute(DispatchConjunction),
+    }
+    
+    /// 执行条件
+    /// 对应标准中的 execute_condition 语法
+    #[derive(Debug, Clone)]
+    pub enum ExecuteCondition {
+        /// logical_value_expression
+        LogicalExpression(BehaviorExpression),
+        /// behavior_action_block_timeout_catch (暂时忽略timeout相关)
+        ActionBlockTimeoutCatch,
+        /// otherwise
+        Otherwise,
+    }
+    
+    /// 分发条件
+    /// 对应标准中的 dispatch_condition 语法
+    #[derive(Debug, Clone)]
+    pub struct DispatchCondition {
+        /// dispatch_trigger_condition
+        pub trigger_condition: Option<DispatchTriggerCondition>,
+        /// frozen_ports (可选)
+        pub frozen_ports: Option<Vec<String>>,
+    }
+    
+    /// 分发触发条件
+    /// 对应标准中的 dispatch_trigger_condition 语法
+    #[derive(Debug, Clone)]
+    pub enum DispatchTriggerCondition {
+        /// dispatch_trigger_logical_expression
+        LogicalExpression(DispatchTriggerLogicalExpression),
+        /// provides_subprogram_access_identifier
+        SubprogramAccess(String),
+        /// stop
+        Stop,
+        /// completion_relative_timeout_condition_and_catch (暂时忽略timeout相关)
+        CompletionTimeout,
+        /// dispatch_relative_timeout_catch (暂时忽略timeout相关)
+        DispatchTimeout,
+    }
+    
+    /// 分发触发逻辑表达式
+    /// 对应标准中的 dispatch_trigger_logical_expression 语法
+    #[derive(Debug, Clone)]
+    pub struct DispatchTriggerLogicalExpression {
+        pub dispatch_conjunctions: Vec<DispatchConjunction>,
+    }
+    
+    /// 分发合取表达式
+    /// 对应标准中的 dispatch_conjunction 语法,自定义了not
+    #[derive(Debug, Clone)]
+    pub struct DispatchConjunction {
+        pub not: bool,
+        pub dispatch_triggers: Vec<DispatchTrigger>,
+    }
+    
+    /// 分发触发器
+    /// 对应标准中的 dispatch_trigger 语法
+    #[derive(Debug, Clone)]
+    pub enum DispatchTrigger {
+        /// in_event_port_identifier
+        InEventPort(String),
+        /// in_event_data_port_identifier
+        InEventDataPort(String),
+    }
+    
+    /// 守卫条件
+    /// 对应标准中的 guard 语法
+    // #[derive(Debug, Clone)]
+    // pub enum Guard {
+    //     /// [on <expression> -->] <event> [when <expression>]
+    //     EventGuard {
+    //         on_expression: Option<BehaviorExpression>,
+    //         event: String,
+    //         when_expression: Option<BehaviorExpression>,
+    //     },
+    //     /// <expression>
+    //     Expression(BehaviorExpression),
+    // }
+    
+    /// 行为动作块
+    /// behavior_action_block ::= { behavior_actions } [ timeout behavior_time ]
+    #[derive(Debug, Clone)]
+    pub struct BehaviorActionBlock {
+        pub actions: BehaviorActions,
+        pub timeout: Option<BehaviorTime>,
+    }
+
+    /// 行为动作
+    /// behavior_actions ::= behavior_action | behavior_action_sequence | behavior_action_set
+    #[derive(Debug, Clone)]
+    pub enum BehaviorActions {
+        Single(Box<BehaviorAction>), // 使用 Box 避免递归
+        Sequence(BehaviorActionSequence),
+        Set(BehaviorActionSet),
+    }
+
+    /// 行为动作序列
+    /// behavior_action_sequence ::= behavior_action { ; behavior_action }+
+    #[derive(Debug, Clone)]
+    pub struct BehaviorActionSequence {
+        pub actions: Vec<BehaviorAction>,
+    }
+
+    /// 行为动作集合
+    /// behavior_action_set ::= behavior_action { & behavior_action }+
+    #[derive(Debug, Clone)]
+    pub struct BehaviorActionSet {
+        pub actions: Vec<BehaviorAction>,
+    }
+
+    /// 行为动作
+    /// behavior_action ::= basic_action | behavior_action_block | if_statement | for_statement | forall_statement | while_statement | do_until_statement
+    #[derive(Debug, Clone)]
+    pub enum BehaviorAction {
+        Basic(BasicAction),
+        Block(Box<BehaviorActionBlock>), // 使用 Box 避免递归
+        If(IfStatement),
+        For(ForStatement),
+        Forall(ForallStatement),
+        While(WhileStatement),
+        DoUntil(DoUntilStatement),
+    }
+
+    /// if 语句
+    /// if ( logical_value_expression ) behavior_actions { elsif ( logical_value_expression ) behavior_actions }* [ else behavior_actions ] end if
+    #[derive(Debug, Clone)]
+    pub struct IfStatement {
+        pub condition: BehaviorExpression,
+        pub then_actions: Box<BehaviorActions>, // 使用 Box 避免递归
+        pub elsif_branches: Vec<ElsifBranch>,
+        pub else_actions: Option<Box<BehaviorActions>>, // 使用 Box 避免递归
+    }
+
+    /// elsif 分支
+    #[derive(Debug, Clone)]
+    pub struct ElsifBranch {
+        pub condition: BehaviorExpression,
+        pub actions: Box<BehaviorActions>, // 使用 Box 避免递归
+    }
+
+    /// for 语句
+    /// for ( element_identifier : data_unique_component_classifier_reference in element_values ) { behavior_actions }
+    #[derive(Debug, Clone)]
+    pub struct ForStatement {
+        pub element_identifier: String,
+        pub data_classifier: String,
+        pub element_values: ElementValues,
+        pub actions: Box<BehaviorActions>, // 使用 Box 避免递归
+    }
+
+    /// forall 语句
+    /// forall ( element_identifier : data_unique_component_classifier_reference in element_values ) { behavior_actions }
+    #[derive(Debug, Clone)]
+    pub struct ForallStatement {
+        pub element_identifier: String,
+        pub data_classifier: String,
+        pub element_values: ElementValues,
+        pub actions: Box<BehaviorActions>, // 使用 Box 避免递归
+    }
+
+    /// while 语句
+    /// while ( logical_value_expression ) { behavior_actions }
+    #[derive(Debug, Clone)]
+    pub struct WhileStatement {
+        pub condition: BehaviorExpression,
+        pub actions: Box<BehaviorActions>, // 使用 Box 避免递归
+    }
+
+    /// do-until 语句
+    /// do behavior_actions until ( logical_value_expression )
+    #[derive(Debug, Clone)]
+    pub struct DoUntilStatement {
+        pub actions: Box<BehaviorActions>, // 使用 Box 避免递归
+        pub condition: BehaviorExpression,
+    }
+
+    /// 元素值
+    /// element_values ::= integer_range | event_data_port_name | array_data_component_reference
+    #[derive(Debug, Clone)]
+    pub enum ElementValues {
+        IntegerRange(IntegerRange),
+        EventDataPort(String),
+        ArrayDataComponent(String),
+    }
+
+    /// 基础动作
+    /// basic_action ::= assignment_action | communication_action | timed_action
+    #[derive(Debug, Clone)]
+    pub enum BasicAction {
+        Assignment(AssignmentAction),
+        Communication(CommunicationAction),
+        Timed(TimedAction),
+    }
+
+    /// 赋值动作
+    /// assignment_action ::= target := ( value_expression | any )
+    #[derive(Debug, Clone)]
+    pub struct AssignmentAction {
+        pub target: Target,
+        pub value: AssignmentValue,
+    }
+
+    /// 赋值值
+    #[derive(Debug, Clone)]
+    pub enum AssignmentValue {
+        Expression(ValueExpression),
+        Any,
+    }
+
+    /// 通信动作
+    /// communication_action ::= subprogram_call | port_communication | data_access_communication | broadcast
+    #[derive(Debug, Clone)]
+    pub enum CommunicationAction {
+        //SubprogramCall(SubprogramCall),
+        PortCommunication(PortCommunication),
+        DataAccessCommunication(DataAccessCommunication),
+        Broadcast(Broadcast),
+    }
+
+    /// 子程序调用 TODO
+    /// subprogram_call ::= subprogram_prototype_name ! [ ( subprogram_parameter_list ) ] | required_subprogram_access_name ! [ ( subprogram_parameter_list ) ] | subprogram_subcomponent_name ! [ ( subprogram_parameter_list ) ] | subprogram_unique_component_classifier_reference ! [ ( subprogram_parameter_list ) ]
+    // #[derive(Debug, Clone)]
+    // pub struct SubprogramCall {
+    //     pub name: String,
+    //     pub parameters: Option<SubprogramParameterList>,
+    // }
+
+    /// 端口通信
+    /// port_communication ::= output_port_name ! [ ( value_expression ) ] | input_port_name >> | input_port_name ? [ ( target ) ]
+    #[derive(Debug, Clone)]
+    pub enum PortCommunication {
+        Output {
+            port: String,
+            value: Option<ValueExpression>,
+        },
+        InputReceive(String),
+        InputCheck {
+            port: String,
+            target: Option<Target>,
+        },
+    }
+
+    /// 数据访问通信
+    /// data_access_communication ::= required_data_access_name !< | required_data_access_name !> | required_data_access_name . provided_subprogram_access_name ! [ ( subprogram_parameter_list ) ]
+    #[derive(Debug, Clone)]
+    pub enum DataAccessCommunication {
+        RequiredDataAccess {
+            name: String,
+            direction: DataAccessDirection,
+        },
+        RequiredDataAccessSubprogram {
+            data_access: String,
+            subprogram: String,
+            parameters: Option<SubprogramParameterList>,
+        },
+    }
+
+    /// 数据访问方向
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum DataAccessDirection {
+        Input,  // !<
+        Output, // !>
+    }
+
+    /// 广播
+    /// broadcast ::= *!< | *!>
+    #[derive(Debug, Clone)]
+    pub enum Broadcast {
+        Input,  // *!<
+        Output, // *!>
+    }
+
+    /// 定时动作
+    /// timed_action ::= computation ( behavior_time [ .. behavior_time ] )
+    #[derive(Debug, Clone)]
+    pub struct TimedAction {
+        pub start_time: BehaviorTime,
+        pub end_time: Option<BehaviorTime>,
+    }
+
+    /// 行为时间
+    /// behavior_time ::= integer_value unit_identifier
+    #[derive(Debug, Clone)]
+    pub struct BehaviorTime {
+        pub value: IntegerValue,
+        pub unit: String,
+    }
+
+    /// 子程序参数列表
+    /// subprogram_parameter_list ::= parameter_label { , parameter_label }*
+    #[derive(Debug, Clone)]
+    pub struct SubprogramParameterList {
+        pub parameters: Vec<ParameterLabel>,
+    }
+
+    /// 参数标签
+    /// parameter_label ::= in_parameter_value_expression | out_parameter_target
+    #[derive(Debug, Clone)]
+    pub enum ParameterLabel {
+        In(ValueExpression),
+        Out(Target),
+    }
+
+    /// 目标
+    /// target ::= local_variable_name | outgoing_port_name | outgoing_subprogram_parameter_name | data_component_reference
+    #[derive(Debug, Clone)]
+    pub enum Target {
+        LocalVariable(String),
+        OutgoingPort(String),
+        OutgoingSubprogramParameter(String),
+        DataComponentReference(DataComponentReference),
+    }
+
+    /// 数据组件引用
+    /// data_component_reference ::= data_subcomponent_name { . data_subcomponent_name }* | data_access_feature_name { . data_subcomponent_name }*
+    #[derive(Debug, Clone)]
+    pub struct DataComponentReference {
+        pub components: Vec<String>,
+    }
+
+    /// 名称
+    /// name ::= identifier { array_index }*
+    #[derive(Debug, Clone)]
+    pub struct Name {
+        pub identifier: String,
+        pub array_indices: Vec<ArrayIndex>,
+    }
+
+    /// 数组索引
+    /// array_index ::= [ integer_value_variable ]
+    #[derive(Debug, Clone)]
+    pub struct ArrayIndex {
+        pub value: IntegerValue,
+    }
+
+    /// 值
+    /// value ::= value_variable | value_constant | ( value_expression )
+    #[derive(Debug, Clone)]
+    pub enum Value {
+        Variable(ValueVariable),
+        Constant(ValueConstant),
+        Expression(Box<ValueExpression>),
+    }
+
+    /// 值变量
+    /// value_variable ::= incoming_port_name | incoming_port_name ? | incoming_subprogram_parameter_name | local_variable_name | data_component_reference | port_name ' count | port_name ' fresh
+    #[derive(Debug, Clone)]
+    pub enum ValueVariable {
+        IncomingPort(String),
+        IncomingPortCheck(String),
+        IncomingSubprogramParameter(String),
+        LocalVariable(String),
+        DataComponentReference(DataComponentReference),
+        PortCount(String),
+        PortFresh(String),
+    }
+
+    /// 值常量
+    /// value_constant ::= boolean_literal | numeric_literal | string_literal | property_constant | property_value
+    #[derive(Debug, Clone)]
+    pub enum ValueConstant {
+        Boolean(bool),
+        Numeric(String),
+        String(String),
+        PropertyConstant(String),
+        PropertyValue(String),
+    }
+
+    /// 值表达式
+    /// value_expression ::= relation { logical_operator relation }*
+    #[derive(Debug, Clone)]
+    pub struct ValueExpression {
+        pub left: Relation,
+        pub operations: Vec<LogicalOperation>,
+    }
+
+    /// 逻辑操作
+    #[derive(Debug, Clone)]
+    pub struct LogicalOperation {
+        pub operator: LogicalOperator,
+        pub right: Relation,
+    }
+
+    /// 逻辑操作符
+    /// logical_operator ::= and | or | xor
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum LogicalOperator {
+        And,
+        Or,
+        Xor,
+    }
+
+    /// 关系表达式
+    /// relation ::= simple_expression [ relational_operator simple_expression ]
+    #[derive(Debug, Clone)]
+    pub struct Relation {
+        pub left: SimpleExpression,
+        pub comparison: Option<Comparison>,
+    }
+
+    /// 比较
+    #[derive(Debug, Clone)]
+    pub struct Comparison {
+        pub operator: RelationalOperator,
+        pub right: SimpleExpression,
+    }
+
+    /// 关系操作符
+    /// relational_operator ::= = | != | < | <= | > | >=
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum RelationalOperator {
+        Equal,           // =
+        NotEqual,        // !=
+        LessThan,        // <
+        LessThanOrEqual, // <=
+        GreaterThan,     // >
+        GreaterThanOrEqual, // >=
+    }
+
+    /// 简单表达式
+    /// simple_expression ::= [ unary_adding_operator ] term { binary_adding_operator term }*
+    #[derive(Debug, Clone)]
+    pub struct SimpleExpression {
+        pub sign: Option<UnaryAddingOperator>,
+        pub left: Term,
+        pub operations: Vec<AdditiveOperation>,
+    }
+
+    /// 一元加法操作符
+    /// unary_adding_operator ::= + | -
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum UnaryAddingOperator {
+        Plus,   // +
+        Minus,  // -
+    }
+
+
+
+    /// 动作（已废弃，使用新的BehaviorAction类型）
+    /// 对应标准中的 action 语法
+    #[derive(Debug, Clone)]
+    pub enum Action {
+        /// 基础动作 (basic_action)
+        Basic(BasicAction),
+    }
+    
+    /// 端口限定符
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum PortQualifier {
+        Count,
+        Fresh,
+    }
+    
+    /// 量词
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum Quantifier {
+        All,
+        Exists,
+    }
+    
+    /// 基础表达式
+    /// 对应标准中的 basic_expression 语法
+    #[derive(Debug, Clone)]
+    pub enum BasicExpression {
+        /// unsigned_aadlnumeric_or_constant
+        NumericOrConstant(String),
+        /// behavior_variable_identifier
+        BehaviorVariable(String),
+        /// loop_variable_identifier
+        LoopVariable(String),
+        /// port_identifier
+        Port(String),
+        /// port_identifier ' [ count | fresh ]
+        PortWithQualifier {
+            port: String,
+            qualifier: PortQualifier,
+        },
+        /// data_access_identifier
+        DataAccess(String),
+        /// timeout behavior_expression
+        Timeout(Box<BasicExpression>),
+        /// data_subcomponent_identifier
+        DataSubcomponent(String),
+        /// data_subcomponent_identifier [ behavior_expression ]
+        DataSubcomponentWithIndex {
+            subcomponent: String,
+            index: Box<BasicExpression>,
+        },
+        /// data_access_identifier . data_subcomponent_identifier
+        DataAccessWithSubcomponent {
+            access: String,
+            subcomponent: String,
+        },
+        /// data_subcomponent_identifier . data_subcomponent_identifier
+        DataSubcomponentWithSubcomponent {
+            container: String,
+            subcomponent: String,
+        },
+        /// data_classifier_reference . subprogram_identifier [ (behavior_expression{, behavior_expression}* ) ]
+        DataClassifierSubprogram {
+            classifier: String,
+            subprogram: String,
+            parameters: Option<Vec<BasicExpression>>,
+        },
+        /// data_classifier_reference . subprogram_identifier ?(behavior_expression)
+        DataClassifierSubprogramWithTimeout {
+            classifier: String,
+            subprogram: String,
+            timeout: Box<BasicExpression>,
+        },
+        /// data_classifier_reference . subprogram_identifier ' parameter_identifier (behavior_expression)
+        DataClassifierSubprogramWithParameter {
+            classifier: String,
+            subprogram: String,
+            parameter: String,
+            expression: Box<BasicExpression>,
+        },
+        /// ( behavior_expression )
+        Parenthesized(Box<BasicExpression>),
+        /// (all | exists) (identifier in behavior_expression) : expression
+        Quantified {
+            quantifier: Quantifier,
+            identifier: String,
+            range: Box<BasicExpression>,
+            expression: Box<BasicExpression>,
+        },
+        /// 二元操作表达式
+        BinaryOp {
+            left: Box<BasicExpression>,
+            operator: BinaryOperator,
+            right: Box<BasicExpression>,
+        },
+        /// 一元否定操作
+        Not(Box<BasicExpression>),
+    }
+    
+    /// 二元操作符
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum BinaryOperator {
+        // 逻辑操作符
+        And,
+        Or,
+        
+        // 比较操作符
+        Equal,           // =
+        NotEqual,        // !=
+        LessThan,        // <
+        LessThanOrEqual, // <=
+        GreaterThan,     // >
+        GreaterThanOrEqual, // >=
+        
+        // 算术操作符
+        Add,      // +
+        Subtract, // -
+        Multiply, // *
+        Divide,   // /
+        Modulo,   // mod
+    }
+    
+    /// 行为表达式
+    /// 对应标准中的 behavior_expression ::= disjunction { or disjunction } *
+    #[derive(Debug, Clone)]
+    pub struct BehaviorExpression {
+        pub disjunctions: Vec<DisjunctionExpression>,
+    }
+    
+    /// 析取表达式
+    /// 对应标准中的 disjunction ::= not_conjunction { and not_conjunction } *
+    #[derive(Debug, Clone)]
+    pub struct DisjunctionExpression {
+        pub not_conjunctions: Vec<NotConjunctionExpression>,
+    }
+    
+    /// 非合取表达式
+    /// 对应标准中的 not_conjunction ::= not ? conjunction
+    #[derive(Debug, Clone)]
+    pub struct NotConjunctionExpression {
+        pub has_not: bool,
+        pub conjunction: ConjunctionExpression,
+    }
+    
+    /// 合取表达式
+    /// 对应标准中的 conjunction ::= arith_expression [ (<|<=|=|>|>=|!=) arith_expression ]
+    #[derive(Debug, Clone)]
+    pub struct ConjunctionExpression {
+        pub left: ArithmeticExpression,
+        pub comparison: Option<ComparisonExpression>,
+    }
+    
+    /// 比较表达式
+    #[derive(Debug, Clone)]
+    pub struct ComparisonExpression {
+        pub operator: ComparisonOperator,
+        pub right: ArithmeticExpression,
+    }
+    
+    /// 比较操作符
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum ComparisonOperator {
+        LessThan,        // <
+        LessThanOrEqual, // <=
+        Equal,           // =
+        GreaterThan,     // >
+        GreaterThanOrEqual, // >=
+        NotEqual,        // !=
+    }
+    
+    /// 算术表达式
+    /// 对应标准中的 arith_expression ::= add_expression { ( + | - ) add_expression } *
+    #[derive(Debug, Clone)]
+    pub struct ArithmeticExpression {
+        pub left: AddExpression,
+        pub operations: Vec<AdditiveOperation>,
+    }
+    
+    /// 加法操作
+    #[derive(Debug, Clone)]
+    pub struct AdditiveOperation {
+        pub operator: AdditiveOperator,
+        pub right: AddExpression,
+    }
+    
+    /// 加法操作符
+    /// binary_adding_operator ::= + | -
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum AdditiveOperator {
+        Add,      // +
+        Subtract, // -
+    }
+    
+    /// 加法表达式
+    /// 对应标准中的 add_expression ::= basic_expression { ( * | / ) basic_expression } *
+    #[derive(Debug, Clone)]
+    pub struct AddExpression {
+        pub left: BasicExpression,
+        pub operations: Vec<MultiplicativeOperation>,
+    }
+    
+    /// 乘法操作
+    #[derive(Debug, Clone)]
+    pub struct MultiplicativeOperation {
+        pub operator: MultiplicativeOperator,
+        pub right: BasicExpression,
+    }
+    
+    /// 乘法操作符
+    /// multiplying_operator ::= * | / | mod | rem
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum MultiplicativeOperator {
+        Multiply, // *
+        Divide,   // /
+        Modulo,   // mod
+        Remainder, // rem
+    }
+
+    /// 项
+    /// term ::= factor { multiplying_operator factor }*
+    #[derive(Debug, Clone)]
+    pub struct Term {
+        pub left: Factor,
+        pub operations: Vec<MultiplicativeOperation>,
+    }
+
+    /// 因子
+    /// factor ::= value [ binary_numeric_operator value ] | unary_numeric_operator value | unary_boolean_operator value
+    #[derive(Debug, Clone)]
+    pub enum Factor {
+        Value(Value),
+        BinaryNumeric {
+            left: Value,
+            operator: BinaryNumericOperator,
+            right: Value,
+        },
+        UnaryNumeric {
+            operator: UnaryNumericOperator,
+            value: Value,
+        },
+        UnaryBoolean {
+            operator: UnaryBooleanOperator,
+            value: Value,
+        },
+    }
+
+    /// 二元数值操作符
+    /// binary_numeric_operator ::= **
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum BinaryNumericOperator {
+        Power, // **
+    }
+
+    /// 一元数值操作符
+    /// unary_numeric_operator ::= abs
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum UnaryNumericOperator {
+        Abs, // abs
+    }
+
+    /// 一元布尔操作符
+    /// unary_boolean_operator ::= not
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum UnaryBooleanOperator {
+        Not, // not
+    }
+
+    /// 整数范围
+    /// integer_range ::= integer_value .. integer_value
+    #[derive(Debug, Clone)]
+    pub struct IntegerRange {
+        pub lower: IntegerValue,
+        pub upper: IntegerValue,
+    }
+
+    /// 整数值
+    /// integer_value ::= integer_value_variable | integer_value_constant
+    #[derive(Debug, Clone)]
+    pub enum IntegerValue {
+        Variable(String),
+        Constant(String),
+    }
+
 
     // 组件类型的可选子句（None表示子句不存在，Empty表示显式声明none）
     //cj:非“关键字可选，使用Option”

@@ -1,0 +1,317 @@
+[
+    Pair {
+        rule: file,
+        span: Span {
+            str: "package basic_annex\r\npublic\r\n    system BasicSystem\r\n        features\r\n            port1: in event port;\r\n        annex Behavior_specification {**\r\n            states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        **};\r\n    end BasicSystem;\r\nend basic_annex; ",
+            start: 0,
+            end: 332,
+        },
+        inner: [
+            Pair {
+                rule: package_declaration,
+                span: Span {
+                    str: "package basic_annex\r\npublic\r\n    system BasicSystem\r\n        features\r\n            port1: in event port;\r\n        annex Behavior_specification {**\r\n            states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        **};\r\n    end BasicSystem;\r\nend basic_annex;",
+                    start: 0,
+                    end: 331,
+                },
+                inner: [
+                    Pair {
+                        rule: package_name,
+                        span: Span {
+                            str: "basic_annex",
+                            start: 8,
+                            end: 19,
+                        },
+                        inner: [
+                            Pair {
+                                rule: qualified_identifier,
+                                span: Span {
+                                    str: "basic_annex",
+                                    start: 8,
+                                    end: 19,
+                                },
+                                inner: [],
+                            },
+                        ],
+                    },
+                    Pair {
+                        rule: package_sections,
+                        span: Span {
+                            str: "system BasicSystem\r\n        features\r\n            port1: in event port;\r\n        annex Behavior_specification {**\r\n            states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        **};\r\n    end BasicSystem;",
+                            start: 33,
+                            end: 313,
+                        },
+                        inner: [
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "system BasicSystem\r\n        features\r\n            port1: in event port;\r\n        annex Behavior_specification {**\r\n            states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        **};\r\n    end BasicSystem;",
+                                    start: 33,
+                                    end: 313,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "system BasicSystem\r\n        features\r\n            port1: in event port;\r\n        annex Behavior_specification {**\r\n            states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        **};\r\n    end BasicSystem;",
+                                            start: 33,
+                                            end: 313,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "system",
+                                                    start: 33,
+                                                    end: 39,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "BasicSystem",
+                                                    start: 40,
+                                                    end: 51,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: features,
+                                                span: Span {
+                                                    str: "features\r\n            port1: in event port;\r\n        ",
+                                                    start: 61,
+                                                    end: 114,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: feature_declaration,
+                                                        span: Span {
+                                                            str: "port1: in event port;",
+                                                            start: 83,
+                                                            end: 104,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "port1",
+                                                                    start: 83,
+                                                                    end: 88,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: direction,
+                                                                span: Span {
+                                                                    str: "in",
+                                                                    start: 90,
+                                                                    end: 92,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: port_type,
+                                                                span: Span {
+                                                                    str: "event port",
+                                                                    start: 93,
+                                                                    end: 103,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: annex_subclause,
+                                                span: Span {
+                                                    str: "annex Behavior_specification {**\r\n            states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        **};",
+                                                    start: 114,
+                                                    end: 291,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: annex_identifier,
+                                                        span: Span {
+                                                            str: "Behavior_specification",
+                                                            start: 120,
+                                                            end: 142,
+                                                        },
+                                                        inner: [],
+                                                    },
+                                                    Pair {
+                                                        rule: annex_content,
+                                                        span: Span {
+                                                            str: "states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        ",
+                                                            start: 160,
+                                                            end: 287,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: behavior_annex_content,
+                                                                span: Span {
+                                                                    str: "states\r\n                state1: initial state;\r\n            transitions\r\n                state1 -[on port1]-> state1;\r\n        ",
+                                                                    start: 160,
+                                                                    end: 287,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: states,
+                                                                        span: Span {
+                                                                            str: "states\r\n                state1: initial state;\r\n            ",
+                                                                            start: 160,
+                                                                            end: 220,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: state_declaration,
+                                                                                span: Span {
+                                                                                    str: "state1: initial state;",
+                                                                                    start: 184,
+                                                                                    end: 206,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: identifier,
+                                                                                        span: Span {
+                                                                                            str: "state1",
+                                                                                            start: 184,
+                                                                                            end: 190,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                    Pair {
+                                                                                        rule: state_modifier,
+                                                                                        span: Span {
+                                                                                            str: "initial",
+                                                                                            start: 192,
+                                                                                            end: 199,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                    Pair {
+                                                                        rule: transitions,
+                                                                        span: Span {
+                                                                            str: "transitions\r\n                state1 -[on port1]-> state1;\r\n        ",
+                                                                            start: 220,
+                                                                            end: 287,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: transition_declaration,
+                                                                                span: Span {
+                                                                                    str: "state1 -[on port1]-> state1;",
+                                                                                    start: 249,
+                                                                                    end: 277,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: identifier,
+                                                                                        span: Span {
+                                                                                            str: "state1",
+                                                                                            start: 249,
+                                                                                            end: 255,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                    Pair {
+                                                                                        rule: guard,
+                                                                                        span: Span {
+                                                                                            str: "on port1",
+                                                                                            start: 258,
+                                                                                            end: 266,
+                                                                                        },
+                                                                                        inner: [
+                                                                                            Pair {
+                                                                                                rule: event_guard,
+                                                                                                span: Span {
+                                                                                                    str: "on port1",
+                                                                                                    start: 258,
+                                                                                                    end: 266,
+                                                                                                },
+                                                                                                inner: [
+                                                                                                    Pair {
+                                                                                                        rule: identifier,
+                                                                                                        span: Span {
+                                                                                                            str: "port1",
+                                                                                                            start: 261,
+                                                                                                            end: 266,
+                                                                                                        },
+                                                                                                        inner: [],
+                                                                                                    },
+                                                                                                ],
+                                                                                            },
+                                                                                        ],
+                                                                                    },
+                                                                                    Pair {
+                                                                                        rule: identifier,
+                                                                                        span: Span {
+                                                                                            str: "state1",
+                                                                                            start: 270,
+                                                                                            end: 276,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "BasicSystem",
+                                                    start: 301,
+                                                    end: 312,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    Pair {
+                        rule: package_name,
+                        span: Span {
+                            str: "basic_annex",
+                            start: 319,
+                            end: 330,
+                        },
+                        inner: [
+                            Pair {
+                                rule: qualified_identifier,
+                                span: Span {
+                                    str: "basic_annex",
+                                    start: 319,
+                                    end: 330,
+                                },
+                                inner: [],
+                            },
+                        ],
+                    },
+                ],
+            },
+            Pair {
+                rule: EOI,
+                span: Span {
+                    str: "",
+                    start: 332,
+                    end: 332,
+                },
+                inner: [],
+            },
+        ],
+    },
+]

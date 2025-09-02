@@ -2,6 +2,7 @@
 #include "robot.h"
 
 bool b = false;
+bool traite_val;
 
 void collecte_donnee(bool *d_source) {
     printf("*** COLLECTE DONNEE *** %d\n", b);
@@ -10,8 +11,15 @@ void collecte_donnee(bool *d_source) {
     fflush(stdout);
 }
 
-void traite(bool d_info, bool *d_ordre) {
-    printf("*** TRAITE *** info=%d, ordre=%d\n", d_info, *d_ordre);
+void traite_in(bool d_info) {
+    printf("*** TRAITE *** info=%d\n", d_info);
+    traite_val = d_info;
+    fflush(stdout);
+}
+
+void traite_out(bool *d_ordre) {
+    printf("*** TRAITE *** ordre=%d\n", traite_val);
+    *d_ordre = traite_val;
     fflush(stdout);
 }
 

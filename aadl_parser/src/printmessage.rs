@@ -78,6 +78,13 @@ pub fn print_ast(ast: &Vec<Package>) {
                                 }
                             }
                         }
+                        // 打印 annex 信息
+                        if !comp.annexes.is_empty() {
+                            println!("    Annexes:");
+                            for annex in &comp.annexes {
+                                println!("      {:?}: {:?}", annex.identifier, annex.content);
+                            }
+                        }
                     }
                     AadlDeclaration::ComponentImplementation(impl_) => {
                         println!(
@@ -125,6 +132,13 @@ pub fn print_ast(ast: &Vec<Package>) {
                                 if let Property::BasicProperty(bp) = prop {
                                     println!("    Property: {} => {:?}", bp.identifier.name, bp.value);
                                 }
+                            }
+                        }
+                        // 打印 annex 信息
+                        if !impl_.annexes.is_empty() {
+                            println!("    Annexes:");
+                            for annex in &impl_.annexes {
+                                println!("      {:?}: {:?}", annex.identifier, annex.content);
                             }
                         }
                     }

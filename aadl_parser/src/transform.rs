@@ -3,6 +3,10 @@
 use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};
+use crate::transform_annex::*;
+
+// 引入 annex 转换模块
+// transform_annex 现在在 main.rs 中声明
 
 
 // 辅助函数：从 Pair 中提取标识符
@@ -245,8 +249,10 @@ impl AADLTransformer {
                 aadlight_parser::Rule::properties => {
                     properties = Self::transform_properties_clause(inner);
                 }
-                aadlight_parser::Rule::array_spec => {
-                    annexes = Self::transform_annexes_clause(inner);
+                aadlight_parser::Rule::annex_subclause => {
+                    if let Some(annex) = transform_annex_subclause(inner) {
+                        annexes.push(annex);
+                    }
                 }
                 _ => {}
             }
@@ -734,14 +740,10 @@ impl AADLTransformer {
         }
     }
 
-    pub fn transform_annexes_clause(pair: Pair<aadlight_parser::Rule>) -> Vec<AnnexSubclause> {
-        if pair.as_str().contains("none") {
-            return Vec::new();
-        }
-        
-        // TODO: Properly handle annexes
-        Vec::new()
-    }
+    // pub fn transform_annexes_clause(pair: Pair<aadlight_parser::Rule>) -> Vec<AnnexSubclause> {
+    //     //use crate::transform_annex::transform_annexes_clause as transform_annexes;
+    //     //transform_annexes(pair)
+    // }
     
     pub fn transform_component_implementation(pair: Pair<aadlight_parser::Rule>) -> ComponentImplementation {
         // println!("=== 调试 implementation ===");
@@ -797,8 +799,10 @@ impl AADLTransformer {
                 aadlight_parser::Rule::properties => {
                     properties = Self::transform_properties_clause(inner);
                 }
-                aadlight_parser::Rule::array_spec => {
-                    annexes = Self::transform_annexes_clause(inner);
+                aadlight_parser::Rule::annex_subclause => {
+                    if let Some(annex) = transform_annex_subclause(inner) {
+                        annexes.push(annex);
+                    }
                 }
                 _ => {}
             }
@@ -1091,4 +1095,3 @@ impl AADLTransformer {
         }
     }
 }
-
