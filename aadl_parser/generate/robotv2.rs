@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-02 20:25:34
+// 生成时间: 2025-09-03 20:01:44
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -122,9 +122,63 @@ impl controleThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(110);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s_inline
+            s_inline,
+            // State: s1
+            s1,
+            // State: s2
+            s2,
+            // State: s_outline
+            s_outline,
+        }
+        
+        let mut state: State = State.s_inline;
         loop {
             let start = Instant::now();
             {
+            };
+            {
+                // --- BA 宏步执行 ---;
+                loop {
+                    match state {
+                        State::s_inline => {
+                            // on dispatch → s1;
+                            let mut state = State.s1;
+                            continue; // 不是 complete，要继续;
+                        },
+                        State::s1 => {
+                            if info_capteur_val == true {
+                                let mut state = State.s_inline;
+                            };
+                        },
+                        State::s1 => {
+                            if info_capteur_val == true {
+                                let mut state = State.s_outline;
+                            };
+                            let mut comm_servo = true;
+                        },
+                        State::s_outline => {
+                            // on dispatch → s2;
+                            let mut state = State.s2;
+                            continue; // 不是 complete，要继续;
+                        },
+                        State::s2 => {
+                            if info_capteur_val == true {
+                                let mut state = State.s_outline;
+                            };
+                        },
+                        State::s2 => {
+                            if info_capteur_val == true {
+                                let mut state = State.s_inline;
+                            };
+                            let mut comm_servo = true;
+                        },
+                    };
+                    break; // 到 complete state 停止 BA 宏步;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));
@@ -141,9 +195,34 @@ impl capteurThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(110);
+        let mut count1: i32 = 111;
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+        }
+        
+        let mut state: State = State.s0;
         loop {
             let start = Instant::now();
             {
+            };
+            {
+                // --- BA 宏步执行 ---;
+                loop {
+                    match state {
+                        State::s0 => {
+                            // on dispatch → s0;
+                            let mut state = State.s0;
+                            continue; // 不是 complete，要继续;
+                            // TODO: Timed action not implemented;
+                            let mut count1 = true;
+                            let mut evenement = true;
+                        },
+                    };
+                    break; // 到 complete state 停止 BA 宏步;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

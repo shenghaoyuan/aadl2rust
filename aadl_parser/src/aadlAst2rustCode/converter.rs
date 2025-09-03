@@ -1,6 +1,7 @@
 // src/aadl_to_rust/converter.rs
 // aadlAST2rustAST
 use super::intermediate_ast::*;
+use super::converter_annex::AnnexConverter;
 use crate::ast::aadl_ast_cj::*;
 use std::{collections::HashMap, default};
 
@@ -9,6 +10,7 @@ pub struct AadlConverter {
     type_mappings: HashMap<String, Type>,
     port_handlers: HashMap<String, PortHandlerConfig>,
     component_types: HashMap<String, ComponentType>, // 存储组件类型信息，（为了有些情况下，需要在组件实现中，根据组件类型来获取端口信息）
+    annex_converter: AnnexConverter, // Behavior Annex 转换器
 }
 
 #[derive(Debug)]
@@ -27,6 +29,7 @@ impl Default for AadlConverter {
             type_mappings,
             port_handlers: HashMap::new(),
             component_types: HashMap::new(),
+            annex_converter: AnnexConverter::default(),
         }
     }
 }
@@ -2150,57 +2153,63 @@ impl AadlConverter {
             )),
         }));
 
-        // 生成子程序调用处理代码
-        let port_handling_stmts = self.create_subprogram_call_logic(impl_);
+        // 检查是否有Behavior Annex
+        if let Some(annex_stmts) = self.annex_converter.generate_annex_code(impl_) {
+            // 如果有Behavior Annex，使用它
+            stmts.extend(annex_stmts);
+        } else {
+            // 否则使用原来的子程序调用处理代码
+            let port_handling_stmts = self.create_subprogram_call_logic(impl_);
 
-        // 生成周期性执行的主循环
-        stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
-            stmts: vec![
-                // 记录循环开始时间
-                Statement::Let(LetStmt {
-                    ifmut: false,
-                    name: "start".to_string(),
-                    ty: None,
-                    init: Some(Expr::Call(
+            // 生成周期性执行的主循环
+            stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
+                stmts: vec![
+                    // 记录循环开始时间
+                    Statement::Let(LetStmt {
+                        ifmut: false,
+                        name: "start".to_string(),
+                        ty: None,
+                        init: Some(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec!["Instant".to_string(), "now".to_string()],
+                                PathType::Namespace,
+                            )),
+                            Vec::new(),
+                        )),
+                    }),
+                    // 执行子程序调用处理块
+                    Statement::Expr(Expr::Block(Block {
+                        stmts: port_handling_stmts.clone(),
+                        expr: None,
+                    })),
+                    // 计算执行时间
+                    Statement::Let(LetStmt {
+                        ifmut: false,
+                        name: "elapsed".to_string(),
+                        ty: None,
+                        init: Some(Expr::MethodCall(
+                            Box::new(Expr::Ident("start".to_string())),
+                            "elapsed".to_string(),
+                            Vec::new(),
+                        )),
+                    }),
+                    // 睡眠剩余时间，确保周期性执行
+                    Statement::Expr(Expr::MethodCall(
                         Box::new(Expr::Path(
-                            vec!["Instant".to_string(), "now".to_string()],
+                            vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
                             PathType::Namespace,
                         )),
-                        Vec::new(),
+                        "".to_string(),
+                        vec![Expr::MethodCall(
+                            Box::new(Expr::Ident("period".to_string())),
+                            "saturating_sub".to_string(),
+                            vec![Expr::Ident("elapsed".to_string())],
+                        )],
                     )),
-                }),
-                // 执行子程序调用处理块
-                Statement::Expr(Expr::Block(Block {
-                    stmts: port_handling_stmts.clone(),
-                    expr: None,
-                })),
-                // 计算执行时间
-                Statement::Let(LetStmt {
-                    ifmut: false,
-                    name: "elapsed".to_string(),
-                    ty: None,
-                    init: Some(Expr::MethodCall(
-                        Box::new(Expr::Ident("start".to_string())),
-                        "elapsed".to_string(),
-                        Vec::new(),
-                    )),
-                }),
-                // 睡眠剩余时间，确保周期性执行
-                Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Path(
-                        vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                        PathType::Namespace,
-                    )),
-                    "".to_string(),
-                    vec![Expr::MethodCall(
-                        Box::new(Expr::Ident("period".to_string())),
-                        "saturating_sub".to_string(),
-                        vec![Expr::Ident("elapsed".to_string())],
-                    )],
-                )),
-            ],
-            expr: None,
-        }))));
+                ],
+                expr: None,
+            }))));
+        }
 
         stmts
     }

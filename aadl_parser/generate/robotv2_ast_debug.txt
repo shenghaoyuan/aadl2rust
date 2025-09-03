@@ -390,6 +390,72 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Item(
+                                        Enum(
+                                            EnumDef {
+                                                name: "State",
+                                                variants: [
+                                                    Variant {
+                                                        name: "s_inline",
+                                                        data: None,
+                                                        docs: [
+                                                            "// State: s_inline",
+                                                        ],
+                                                    },
+                                                    Variant {
+                                                        name: "s1",
+                                                        data: None,
+                                                        docs: [
+                                                            "// State: s1",
+                                                        ],
+                                                    },
+                                                    Variant {
+                                                        name: "s2",
+                                                        data: None,
+                                                        docs: [
+                                                            "// State: s2",
+                                                        ],
+                                                    },
+                                                    Variant {
+                                                        name: "s_outline",
+                                                        data: None,
+                                                        docs: [
+                                                            "// State: s_outline",
+                                                        ],
+                                                    },
+                                                ],
+                                                generics: [],
+                                                derives: [
+                                                    "Debug",
+                                                    "Clone",
+                                                ],
+                                                docs: [
+                                                    "// Behavior Annex state machine states",
+                                                ],
+                                                vis: Private,
+                                            },
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "state",
+                                            ty: Some(
+                                                Named(
+                                                    "State",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Path(
+                                                    [
+                                                        "State",
+                                                        "s_inline",
+                                                    ],
+                                                    Member,
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -417,6 +483,325 @@ RustModule {
                                                         Block(
                                                             Block {
                                                                 stmts: [],
+                                                                expr: None,
+                                                            },
+                                                        ),
+                                                    ),
+                                                    Expr(
+                                                        Block(
+                                                            Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// --- BA 宏步执行 ---",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Loop(
+                                                                            Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Match {
+                                                                                            expr: Ident(
+                                                                                                "state",
+                                                                                            ),
+                                                                                            arms: [
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s_inline",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "// on dispatch → s1",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "state",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Path(
+                                                                                                                            [
+                                                                                                                                "State",
+                                                                                                                                "s1",
+                                                                                                                            ],
+                                                                                                                            Member,
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "continue; // 不是 complete，要继续",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                If {
+                                                                                                                    condition: BinaryOp(
+                                                                                                                        Ident(
+                                                                                                                            "info_capteur_val",
+                                                                                                                        ),
+                                                                                                                        "==",
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: true,
+                                                                                                                                    name: "state",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        Path(
+                                                                                                                                            [
+                                                                                                                                                "State",
+                                                                                                                                                "s_inline",
+                                                                                                                                            ],
+                                                                                                                                            Member,
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
+                                                                                                                },
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                If {
+                                                                                                                    condition: BinaryOp(
+                                                                                                                        Ident(
+                                                                                                                            "info_capteur_val",
+                                                                                                                        ),
+                                                                                                                        "==",
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: true,
+                                                                                                                                    name: "state",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        Path(
+                                                                                                                                            [
+                                                                                                                                                "State",
+                                                                                                                                                "s_outline",
+                                                                                                                                            ],
+                                                                                                                                            Member,
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "comm_servo",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s_outline",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "// on dispatch → s2",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "state",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Path(
+                                                                                                                            [
+                                                                                                                                "State",
+                                                                                                                                "s2",
+                                                                                                                            ],
+                                                                                                                            Member,
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "continue; // 不是 complete，要继续",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s2",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                If {
+                                                                                                                    condition: BinaryOp(
+                                                                                                                        Ident(
+                                                                                                                            "info_capteur_val",
+                                                                                                                        ),
+                                                                                                                        "==",
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: true,
+                                                                                                                                    name: "state",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        Path(
+                                                                                                                                            [
+                                                                                                                                                "State",
+                                                                                                                                                "s_outline",
+                                                                                                                                            ],
+                                                                                                                                            Member,
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
+                                                                                                                },
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s2",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                If {
+                                                                                                                    condition: BinaryOp(
+                                                                                                                        Ident(
+                                                                                                                            "info_capteur_val",
+                                                                                                                        ),
+                                                                                                                        "==",
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: true,
+                                                                                                                                    name: "state",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        Path(
+                                                                                                                                            [
+                                                                                                                                                "State",
+                                                                                                                                                "s_inline",
+                                                                                                                                            ],
+                                                                                                                                            Member,
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "comm_servo",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Ident(
+                                                                                            "break; // 到 complete state 停止 BA 宏步",
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                        ),
+                                                                    ),
+                                                                ],
                                                                 expr: None,
                                                             },
                                                         ),
@@ -620,6 +1005,69 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "count1",
+                                            ty: Some(
+                                                Named(
+                                                    "i32",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Literal(
+                                                    Int(
+                                                        111,
+                                                    ),
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Item(
+                                        Enum(
+                                            EnumDef {
+                                                name: "State",
+                                                variants: [
+                                                    Variant {
+                                                        name: "s0",
+                                                        data: None,
+                                                        docs: [
+                                                            "// State: s0",
+                                                        ],
+                                                    },
+                                                ],
+                                                generics: [],
+                                                derives: [
+                                                    "Debug",
+                                                    "Clone",
+                                                ],
+                                                docs: [
+                                                    "// Behavior Annex state machine states",
+                                                ],
+                                                vis: Private,
+                                            },
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "state",
+                                            ty: Some(
+                                                Named(
+                                                    "State",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Path(
+                                                    [
+                                                        "State",
+                                                        "s0",
+                                                    ],
+                                                    Member,
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -647,6 +1095,111 @@ RustModule {
                                                         Block(
                                                             Block {
                                                                 stmts: [],
+                                                                expr: None,
+                                                            },
+                                                        ),
+                                                    ),
+                                                    Expr(
+                                                        Block(
+                                                            Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// --- BA 宏步执行 ---",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Loop(
+                                                                            Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Match {
+                                                                                            expr: Ident(
+                                                                                                "state",
+                                                                                            ),
+                                                                                            arms: [
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s0",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "// on dispatch → s0",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "state",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Path(
+                                                                                                                            [
+                                                                                                                                "State",
+                                                                                                                                "s0",
+                                                                                                                            ],
+                                                                                                                            Member,
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "continue; // 不是 complete，要继续",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "// TODO: Timed action not implemented",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "count1",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                            Let(
+                                                                                                                LetStmt {
+                                                                                                                    ifmut: true,
+                                                                                                                    name: "evenement",
+                                                                                                                    ty: None,
+                                                                                                                    init: Some(
+                                                                                                                        Literal(
+                                                                                                                            Bool(
+                                                                                                                                true,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                },
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                            ],
+                                                                                        },
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Ident(
+                                                                                            "break; // 到 complete state 停止 BA 宏步",
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                        ),
+                                                                    ),
+                                                                ],
                                                                 expr: None,
                                                             },
                                                         ),
