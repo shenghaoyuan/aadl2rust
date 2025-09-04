@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-03 20:01:44
+// 生成时间: 2025-09-04 18:54:03
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -135,49 +135,67 @@ impl controleThread {
             s_outline,
         }
         
-        let mut state: State = State.s_inline;
+        let mut state: State = State::s_inline;
         loop {
             let start = Instant::now();
-            {
+            let info_capteur_val = match &self.info_capteur {
+                Some(rx) => {
+                    match rx.try_recv() {
+                        Ok(val) => {
+                            // 收到消息 → 调用处理函数
+                            val},
+                        _ => {
+                            false},
+                    }},
+                None => {
+                    false},
             };
             {
-                // --- BA 宏步执行 ---;
+                // --- BA 宏步执行 ---
                 loop {
                     match state {
                         State::s_inline => {
-                            // on dispatch → s1;
-                            let mut state = State.s1;
-                            continue; // 不是 complete，要继续;
+                            // on dispatch → s1
+                            state = State::s1;
+                            continue;
                         },
-                        State::s1 => {
-                            if info_capteur_val == true {
-                                let mut state = State.s_inline;
-                            };
+                        State::s1 if info_capteur_val == true => {
+                            state = State::s_inline;
+                            // complete，需要停
                         },
-                        State::s1 => {
-                            if info_capteur_val == true {
-                                let mut state = State.s_outline;
+                        State::s1 if info_capteur_val == false => {
+                            if let Some(sender) = &self.comm_servo {
+                                let _ = sender.send(false);
                             };
-                            let mut comm_servo = true;
+                            state = State::s_outline;
+                            // complete，需要停
                         },
                         State::s_outline => {
-                            // on dispatch → s2;
-                            let mut state = State.s2;
-                            continue; // 不是 complete，要继续;
+                            // on dispatch → s2
+                            state = State::s2;
+                            continue;
+                        },
+                        State::s2 if info_capteur_val == false => {
+                            state = State::s_outline;
+                            // complete，需要停
+                        },
+                        State::s2 if info_capteur_val == true => {
+                            if let Some(sender) = &self.comm_servo {
+                                let _ = sender.send(true);
+                            };
+                            state = State::s_inline;
+                            // complete，需要停
+                        },
+                        State::s1 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            panic!("Unexpected s1 state condition");
                         },
                         State::s2 => {
-                            if info_capteur_val == true {
-                                let mut state = State.s_outline;
-                            };
-                        },
-                        State::s2 => {
-                            if info_capteur_val == true {
-                                let mut state = State.s_inline;
-                            };
-                            let mut comm_servo = true;
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            panic!("Unexpected s2 state condition");
                         },
                     };
-                    break; // 到 complete state 停止 BA 宏步;
+                    break;
                 };
             };
             let elapsed = start.elapsed();
@@ -195,7 +213,7 @@ impl capteurThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(110);
-        let mut count1: i32 = 111;
+        let mut count1: i32 = 0;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -203,25 +221,25 @@ impl capteurThread {
             s0,
         }
         
-        let mut state: State = State.s0;
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
             {
-            };
-            {
-                // --- BA 宏步执行 ---;
+                // --- BA 宏步执行 ---
                 loop {
                     match state {
                         State::s0 => {
-                            // on dispatch → s0;
-                            let mut state = State.s0;
-                            continue; // 不是 complete，要继续;
-                            // TODO: Timed action not implemented;
-                            let mut count1 = true;
-                            let mut evenement = true;
+                            // TODO: Timed action not implemented
+                            count1 = count1 + 1;
+                            if let Some(sender) = &self.evenement {
+                                let _ = sender.send(count1 % 2 == 0);
+                            };
+                            // on dispatch → s0
+                            state = State::s0;
+                            // complete，需要停
                         },
                     };
-                    break; // 到 complete state 停止 BA 宏步;
+                    break;
                 };
             };
             let elapsed = start.elapsed();

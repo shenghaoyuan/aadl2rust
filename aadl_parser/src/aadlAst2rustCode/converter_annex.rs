@@ -6,17 +6,25 @@ use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
 
 /// Behavior Annex 代码生成器
-pub struct AnnexConverter;
+pub struct AnnexConverter {
+    /// 存储状态信息，用于判断状态是否需要continue
+    state_info: HashMap<String, bool>, // state_name -> needs_continue
+    /// 存储需要默认分支的状态（有条件判断的状态）
+    states_with_conditions: std::collections::HashSet<String>,
+}
 
 impl Default for AnnexConverter {
     fn default() -> Self {
-        Self
+        Self {
+            state_info: HashMap::new(),
+            states_with_conditions: std::collections::HashSet::new(),
+        }
     }
 }
 
 impl AnnexConverter {
     /// 为线程实现生成Behavior Annex代码
-    pub fn generate_annex_code(&self, impl_: &ComponentImplementation) -> Option<Vec<Statement>> {
+    pub fn generate_annex_code(&mut self, impl_: &ComponentImplementation) -> Option<Vec<Statement>> {
         // 查找Behavior Annex
         if let Some(behavior_annex) = self.find_behavior_annex(impl_) {
             // 生成状态机代码
@@ -37,7 +45,7 @@ impl AnnexConverter {
     }
 
     /// 生成状态机代码
-    fn generate_state_machine_code(&self, impl_: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Option<Vec<Statement>> {
+    fn generate_state_machine_code(&mut self, impl_: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Option<Vec<Statement>> {
         let mut stmts = Vec::new();
 
         // 1. 定义局部变量
@@ -45,8 +53,9 @@ impl AnnexConverter {
             stmts.extend(self.generate_state_variables(state_vars));
         }
 
-        // 2. 生成状态枚举
+        // 2. 生成状态枚举并存储状态信息
         if let Some(states) = &behavior_annex.states {
+            self.store_state_info(states);
             stmts.extend(self.generate_state_enum(states));
         }
 
@@ -57,7 +66,7 @@ impl AnnexConverter {
 
         // 4. 生成状态机循环
         if let Some(transitions) = &behavior_annex.transitions {
-            stmts.extend(self.generate_state_machine_loop(impl_, transitions));
+            stmts.extend(self.generate_state_machine_loop(transitions));
         }
 
         Some(stmts)
@@ -118,6 +127,18 @@ impl AnnexConverter {
         vec![Statement::Item(Box::new(Item::Enum(enum_def)))]
     }
 
+    /// 存储状态信息到内部数据结构
+    fn store_state_info(&mut self, states: &[State]) {
+        for state in states {
+            for state_id in &state.identifiers {
+                // 如果状态有 Complete 或 Final 修饰符，则不需要 continue
+                let needs_continue = !state.modifiers.contains(&StateModifier::Complete) 
+                    && !state.modifiers.contains(&StateModifier::Final);
+                self.state_info.insert(state_id.clone(), needs_continue);
+            }
+        }
+    }
+
     /// 生成初始状态设置
     fn generate_initial_state(&self, states: &[State]) -> Vec<Statement> {
         let mut stmts = Vec::new();
@@ -156,17 +177,17 @@ impl AnnexConverter {
     }
 
     /// 生成状态机循环
-    fn generate_state_machine_loop(&self, impl_: &ComponentImplementation, transitions: &[Transition]) -> Vec<Statement> {
+    fn generate_state_machine_loop(&mut self,transitions: &[Transition]) -> Vec<Statement> {
         let mut stmts = Vec::new();
 
         // 生成端口数据接收代码
-        let port_receive_stmts = self.generate_port_receive_code(impl_);
+        let port_receive_stmts = self.generate_port_receive_code(transitions);
 
         // 生成状态转换逻辑
         let state_transition_stmts = self.generate_state_transition_logic(transitions);
 
         // 构建完整的循环
-        let loop_body = vec![
+        let mut loop_body = vec![
             // 记录循环开始时间
             Statement::Let(LetStmt {
                 ifmut: false,
@@ -180,40 +201,43 @@ impl AnnexConverter {
                     Vec::new(),
                 )),
             }),
-            // 尝试接收端口数据
-            Statement::Expr(Expr::Block(Block {
-                stmts: port_receive_stmts,
-                expr: None,
-            })),
-            // 状态机宏步执行
-            Statement::Expr(Expr::Block(Block {
+        ];
+
+        // 直接将端口接收语句添加到循环体中，不包装在Block中
+        loop_body.extend(port_receive_stmts);
+        
+        // 只有当状态转换语句不为空时才添加Block
+        if !state_transition_stmts.is_empty() {
+            loop_body.push(Statement::Expr(Expr::Block(Block {
                 stmts: state_transition_stmts,
                 expr: None,
-            })),
-            // 计算执行时间并睡眠
-            Statement::Let(LetStmt {
-                ifmut: false,
-                name: "elapsed".to_string(),
-                ty: None,
-                init: Some(Expr::MethodCall(
-                    Box::new(Expr::Ident("start".to_string())),
-                    "elapsed".to_string(),
-                    Vec::new(),
-                )),
-            }),
-            Statement::Expr(Expr::MethodCall(
-                Box::new(Expr::Path(
-                    vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                    PathType::Namespace,
-                )),
-                "".to_string(),
-                vec![Expr::MethodCall(
-                    Box::new(Expr::Ident("period".to_string())),
-                    "saturating_sub".to_string(),
-                    vec![Expr::Ident("elapsed".to_string())],
-                )],
+            })));
+        }
+
+        // 添加计算执行时间并睡眠的语句
+        loop_body.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "elapsed".to_string(),
+            ty: None,
+            init: Some(Expr::MethodCall(
+                Box::new(Expr::Ident("start".to_string())),
+                "elapsed".to_string(),
+                Vec::new(),
             )),
-        ];
+        }));
+        
+        loop_body.push(Statement::Expr(Expr::MethodCall(
+            Box::new(Expr::Path(
+                vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                PathType::Namespace,
+            )),
+            "".to_string(),
+            vec![Expr::MethodCall(
+                Box::new(Expr::Ident("period".to_string())),
+                "saturating_sub".to_string(),
+                vec![Expr::Ident("elapsed".to_string())],
+            )],
+        )));
 
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
             stmts: loop_body,
@@ -223,34 +247,39 @@ impl AnnexConverter {
         stmts
     }
 
-    /// 生成端口数据接收代码
-    fn generate_port_receive_code(&self, impl_: &ComponentImplementation) -> Vec<Statement> {
+    /// 生成端口接收代码
+    /// 为转换中的端口生成接收代码
+    pub fn generate_port_receive_code(&self, transitions: &[Transition]) -> Vec<Statement> {
         let mut stmts = Vec::new();
-
-        // 获取组件类型以了解端口
-        if let Some(comp_type) = self.get_component_type(impl_) {
-            if let FeatureClause::Items(features) = &comp_type.features {
-                for feature in features {
-                    if let Feature::Port(port) = feature {
-                        // 只处理输入端口
-                        if port.direction == PortDirection::In {
-                            let port_name = port.identifier.to_lowercase();
-                            
-                            // 生成端口数据接收代码
-                            let receive_stmt = Statement::Let(LetStmt {
-                                ifmut: false,
-                                name: format!("{}_val", port_name),
-                                ty: None,
-                                init: Some(Expr::Match {
+        
+        // 从转换中提取端口
+        let mut ports_to_receive = std::collections::HashSet::new();
+        for transition in transitions {
+            if let Some(condition) = &transition.behavior_condition {
+                self.extract_ports_from_condition(condition, &mut ports_to_receive);
+            }
+        }
+        
+        // 为每个需要接收的端口生成接收代码
+        for port_name in ports_to_receive {
+            let receive_stmt = Statement::Let(LetStmt {
+                ifmut: false,
+                name: format!("{}_val", port_name),
+                ty: None,
+                init: Some(Expr::Match {
+                    expr: Box::new(Expr::Path(
+                        vec!["&self".to_string(), port_name.clone()],
+                        PathType::Member,
+                    )),
+                    arms: vec![
+                        MatchArm {
+                            pattern: "Some(rx)".to_string(),
+                            guard: None,
+                            body: Block {
+                                stmts: vec![],
+                                expr: Some(Box::new(Expr::Match {
                                     expr: Box::new(Expr::MethodCall(
-                                        Box::new(Expr::Reference(
-                                            Box::new(Expr::Path(
-                                                vec!["self".to_string(), port_name.clone()],
-                                                PathType::Member,
-                                            )),
-                                            true,
-                                            false,
-                                        )),
+                                        Box::new(Expr::Ident("rx".to_string())),
                                         "try_recv".to_string(),
                                         Vec::new(),
                                     )),
@@ -264,33 +293,92 @@ impl AnnexConverter {
                                             },
                                         },
                                         MatchArm {
-                                            pattern: "Err(_)".to_string(),
+                                            pattern: "_".to_string(),
                                             guard: None,
                                             body: Block {
                                                 stmts: vec![],
-                                                expr: Some(Box::new(Expr::Ident("None".to_string()))),
+                                                expr: Some(Box::new(Expr::Literal(Literal::Bool(false)))),
                                             },
                                         },
                                     ],
-                                }),
-                            });
+                                })),
+                            },
+                        },
+                        MatchArm {
+                            pattern: "None".to_string(),
+                            guard: None,
+                            body: Block {
+                                stmts: vec![],
+                                expr: Some(Box::new(Expr::Literal(Literal::Bool(false)))),
+                            },
+                        },
+                    ],
+                }),
+            });
 
-                            stmts.push(receive_stmt);
-                        }
-                    }
-                }
-            }
+            stmts.push(receive_stmt);
         }
 
         stmts
     }
 
+    /// 从行为条件中提取端口名称
+    pub fn extract_ports_from_condition(&self, condition: &BehaviorCondition, ports: &mut std::collections::HashSet<String>) {
+        match condition {
+            BehaviorCondition::Dispatch(dispatch_cond) => {
+                if let Some(trigger_condition) = &dispatch_cond.trigger_condition {
+                    match trigger_condition {
+                        DispatchTriggerCondition::LogicalExpression(logical_expr) => {
+                            for conjunction in &logical_expr.dispatch_conjunctions {
+                                for trigger in &conjunction.dispatch_triggers {
+                                    self.extract_port_from_trigger(trigger, ports);
+                                }
+                            }
+                        }
+                        DispatchTriggerCondition::SubprogramAccess(_) => {
+                            // 子程序访问不涉及端口接收
+                        }
+                        DispatchTriggerCondition::Stop => {
+                            // stop 不涉及端口接收
+                        }
+                        DispatchTriggerCondition::CompletionTimeout => {
+                            // 完成超时不涉及端口接收
+                        }
+                        DispatchTriggerCondition::DispatchTimeout => {
+                            // 分发超时不涉及端口接收
+                        }
+                    }
+                }
+            }
+            BehaviorCondition::Execute(execute_cond) => {
+                for trigger in &execute_cond.dispatch_triggers {
+                    self.extract_port_from_trigger(trigger, ports);
+                }
+            }
+        }
+    }
+
+    /// 从分发触发器中提取端口名称
+    fn extract_port_from_trigger(&self, trigger: &DispatchTrigger, ports: &mut std::collections::HashSet<String>) {
+        match trigger {
+            DispatchTrigger::InEventPort(port_name) => {
+                ports.insert(port_name.clone());
+            }
+            DispatchTrigger::InEventDataPort(port_name) => {
+                ports.insert(port_name.clone());
+            }
+        }
+    }
+
     /// 生成状态转换逻辑
-    fn generate_state_transition_logic(&self, transitions: &[Transition]) -> Vec<Statement> {
+    fn generate_state_transition_logic(&mut self, transitions: &[Transition]) -> Vec<Statement> {
         let mut stmts = Vec::new();
 
         // 添加注释
-        stmts.push(Statement::Expr(Expr::Ident("// --- BA 宏步执行 ---".to_string())));
+        stmts.push(Statement::Comment("--- BA 宏步执行 ---".to_string()));
+
+        // 清空之前的状态条件记录
+        self.states_with_conditions.clear();
 
         // 生成状态转换循环
         let mut match_arms = Vec::new();
@@ -303,6 +391,28 @@ impl AnnexConverter {
             }
         }
 
+        // 为有条件判断的状态添加默认分支
+        for state_name in &self.states_with_conditions {
+            let default_arm = MatchArm {
+                pattern: format!("State::{}", state_name),
+                guard: None,
+                body: Block {
+                    stmts: vec![
+                        Statement::Comment(format!("理论上不会执行到这里，但编译器需要这个分支")),
+                        Statement::Expr(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec!["panic!".to_string()],
+                                PathType::Namespace,
+                            )),
+                            vec![Expr::Literal(Literal::Str(format!("Unexpected {} state condition", state_name)))],
+                        )),
+                    ],
+                    expr: None,
+                },
+            };
+            match_arms.push(default_arm);
+        }
+
         // 构建match表达式
         let match_expr = Expr::Match {
             expr: Box::new(Expr::Ident("state".to_string())),
@@ -313,7 +423,7 @@ impl AnnexConverter {
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
             stmts: vec![
                 Statement::Expr(match_expr),
-                Statement::Expr(Expr::Ident("break; // 到 complete state 停止 BA 宏步".to_string())),
+                Statement::Break,
             ],
             expr: None,
         }))));
@@ -322,64 +432,81 @@ impl AnnexConverter {
     }
 
     /// 生成状态匹配分支
-    fn generate_state_match_arm(&self, transition: &Transition, source_state: &str) -> MatchArm {
+    fn generate_state_match_arm(&mut self, transition: &Transition, source_state: &str) -> MatchArm {
         let mut stmts = Vec::new();
-
-        // 处理转换条件
-        if let Some(condition) = &transition.behavior_condition {
-            match condition {
-                BehaviorCondition::Dispatch(dispatch_cond) => {
-                    // 处理 "on dispatch" 条件
-                    stmts.push(Statement::Expr(Expr::Ident(format!("// on dispatch → {}", transition.destination_state))));
-                    stmts.push(Statement::Let(LetStmt {
-                        ifmut: true,
-                        name: "state".to_string(),
-                        ty: None,
-                        init: Some(Expr::Path(
-                            vec!["State".to_string(), transition.destination_state.clone()],
-                            PathType::Member,
-                        )),
-                    }));
-                    
-                    // 检查目标状态是否需要continue
-                    if self.should_continue_state(&transition.destination_state) {
-                        stmts.push(Statement::Expr(Expr::Ident("continue; // 不是 complete，要继续".to_string())));
-                    } else {
-                        stmts.push(Statement::Expr(Expr::Ident("// complete，停".to_string())));
-                    }
-                }
-                BehaviorCondition::Execute(execute_cond) => {
-                    // 处理执行条件
-                    stmts.extend(self.generate_execute_condition_code(execute_cond, transition));
-                }
-            }
-        } else {
-            // 无条件转换
-            stmts.push(Statement::Let(LetStmt {
-                ifmut: true,
-                name: "state".to_string(),
-                ty: None,
-                init: Some(Expr::Path(
-                    vec!["State".to_string(), transition.destination_state.clone()],
-                    PathType::Member,
-                )),
-            }));
-            
-            if self.should_continue_state(&transition.destination_state) {
-                stmts.push(Statement::Expr(Expr::Ident("continue; // 不是 complete，要继续".to_string())));
-            } else {
-                stmts.push(Statement::Expr(Expr::Ident("// complete，停".to_string())));
-            }
-        }
+        let mut guard = None;
 
         // 处理动作
         if let Some(actions) = &transition.actions {
             stmts.extend(self.generate_action_code(actions));
         }
 
+        // 处理转换条件
+        if let Some(condition) = &transition.behavior_condition {
+            match condition {
+                BehaviorCondition::Dispatch(dispatch_cond) => {
+                    // 处理 "on dispatch" 条件
+                    stmts.push(Statement::Comment(format!("on dispatch → {}", transition.destination_state)));
+                    stmts.push(Statement::Expr(Expr::Assign(
+                        Box::new(Expr::Ident("state".to_string())),
+                        Box::new(Expr::Path(
+                            vec!["State".to_string(), transition.destination_state.clone()],
+                            PathType::Namespace,
+                        )),
+                    )));
+                    
+                    // 检查目标状态是否需要continue
+                    if self.should_continue_state(&transition.destination_state) {
+                        stmts.push(Statement::Continue);
+                    } else {
+                        stmts.push(Statement::Comment("complete，需要停".to_string()));
+                    }
+                }
+                BehaviorCondition::Execute(execute_cond) => {
+                    // 处理执行条件，将端口条件作为guard
+                    if !execute_cond.dispatch_triggers.is_empty() {
+                        guard = Some(self.generate_guard_condition(execute_cond));
+                        // 记录这个状态有条件判断，需要添加默认分支
+                        self.states_with_conditions.insert(source_state.to_string());
+                    }
+                    
+                    // 状态转换
+                    stmts.push(Statement::Expr(Expr::Assign(
+                        Box::new(Expr::Ident("state".to_string())),
+                        Box::new(Expr::Path(
+                            vec!["State".to_string(), transition.destination_state.clone()],
+                            PathType::Namespace,
+                        )),
+                    )));
+                    
+                    // 检查目标状态是否需要continue
+                    if self.should_continue_state(&transition.destination_state) {
+                        stmts.push(Statement::Continue);
+                    } else {
+                        stmts.push(Statement::Comment("complete，需要停".to_string()));
+                    }
+                }
+            }
+        } else {
+            // 无条件转换
+            stmts.push(Statement::Expr(Expr::Assign(
+                Box::new(Expr::Ident("state".to_string())),
+                Box::new(Expr::Path(
+                    vec!["State".to_string(), transition.destination_state.clone()],
+                    PathType::Namespace,
+                )),
+            )));
+            
+            if self.should_continue_state(&transition.destination_state) {
+                stmts.push(Statement::Continue);
+            } else {
+                stmts.push(Statement::Comment("complete，停".to_string()));
+            }
+        }
+
         MatchArm {
             pattern: format!("State::{}", source_state),
-            guard: None,
+            guard,
             body: Block {
                 stmts,
                 expr: None,
@@ -387,67 +514,57 @@ impl AnnexConverter {
         }
     }
 
-    /// 生成执行条件代码
-    fn generate_execute_condition_code(&self, execute_cond: &DispatchConjunction, transition: &Transition) -> Vec<Statement> {
-        let mut stmts = Vec::new();
-
-        // 处理端口检查条件
-        for trigger in &execute_cond.dispatch_triggers {
-            match trigger {
-                DispatchTrigger::InEventPort(port_name) => {
-                    // 生成端口值检查
-                    let port_var = format!("{}_val", port_name.to_lowercase());
-                    stmts.push(Statement::Expr(Expr::If {
-                        condition: Box::new(Expr::BinaryOp(
-                            Box::new(Expr::Ident(port_var.clone())),
+    /// 生成守卫条件表达式
+    fn generate_guard_condition(&self, execute_cond: &DispatchConjunction) -> Expr {
+        if execute_cond.dispatch_triggers.is_empty() {
+            // 无条件，根据not字段返回true或false
+            Expr::Literal(Literal::Bool(!execute_cond.not))
+        } else {
+            // 有端口条件，生成检查表达式
+            let mut conditions = Vec::new();
+            
+            for trigger in &execute_cond.dispatch_triggers {
+                match trigger {
+                    DispatchTrigger::InEventPort(port_name) => {
+                        let port_var = format!("{}_val", port_name.to_lowercase());
+                        // 根据not字段直接生成正确的比较
+                        let expected_value = if execute_cond.not { false } else { true };
+                        conditions.push(Expr::BinaryOp(
+                            Box::new(Expr::Ident(port_var)),
                             "==".to_string(),
-                            Box::new(Expr::Literal(Literal::Bool(true))),
-                        )),
-                        then_branch: Block {
-                            stmts: vec![
-                                Statement::Let(LetStmt {
-                                    ifmut: true,
-                                    name: "state".to_string(),
-                                    ty: None,
-                                    init: Some(Expr::Path(
-                                        vec!["State".to_string(), transition.destination_state.clone()],
-                                        PathType::Member,
-                                    )),
-                                }),
-                            ],
-                            expr: None,
-                        },
-                        else_branch: None,
-                    }));
-                }
-                DispatchTrigger::InEventDataPort(port_name) => {
-                    // 处理事件数据端口
-                    let port_var = format!("{}_val", port_name.to_lowercase());
-                    stmts.push(Statement::Expr(Expr::IfLet {
-                        pattern: "Some(val)".to_string(),
-                        value: Box::new(Expr::Ident(port_var.clone())),
-                        then_branch: Block {
-                            stmts: vec![
-                                Statement::Let(LetStmt {
-                                    ifmut: true,
-                                    name: "state".to_string(),
-                                    ty: None,
-                                    init: Some(Expr::Path(
-                                        vec!["State".to_string(), transition.destination_state.clone()],
-                                        PathType::Member,
-                                    )),
-                                }),
-                            ],
-                            expr: None,
-                        },
-                        else_branch: None,
-                    }));
+                            Box::new(Expr::Literal(Literal::Bool(expected_value))),
+                        ));
+                    }
+                    //TODO: 需要处理事件数据端口,以下不正确
+                    DispatchTrigger::InEventDataPort(port_name) => {
+                        let port_var = format!("{}_val", port_name.to_lowercase());
+                        conditions.push(Expr::MethodCall(
+                            Box::new(Expr::Ident(port_var)),
+                            "is_some".to_string(),
+                            Vec::new(),
+                        ));
+                    }
                 }
             }
+            
+            // 生成条件（已经考虑了not字段）
+            if conditions.len() == 1 {
+                conditions.remove(0)
+            } else {
+                let mut result = conditions.remove(0);
+                for condition in conditions {
+                    result = Expr::BinaryOp(
+                        Box::new(result),
+                        "&&".to_string(),
+                        Box::new(condition),
+                    );
+                }
+                result
+            }
         }
-
-        stmts
     }
+
+    /// 生成执行条件代码
 
     /// 生成动作代码
     fn generate_action_code(&self, actions: &BehaviorActionBlock) -> Vec<Statement> {
@@ -488,7 +605,7 @@ impl AnnexConverter {
             }
             _ => {
                 // 其他类型的动作暂时跳过
-                stmts.push(Statement::Expr(Expr::Ident("// TODO: Unsupported action type".to_string())));
+                stmts.push(Statement::Comment("TODO: Unsupported action type".to_string()));
             }
         }
 
@@ -514,26 +631,90 @@ impl AnnexConverter {
         stmts
     }
 
-    /// 生成赋值动作
+    /// 生成赋值动作,暂时只支持前两种
     fn generate_assignment_action(&self, assignment: &AssignmentAction) -> Vec<Statement> {
-        let mut stmts = Vec::new();
+        let mut stmts: Vec<Statement> = Vec::new();
 
-        let target_name = match &assignment.target {
-            Target::LocalVariable(name) => name.clone(),
-            _ => "unknown".to_string(),
-        };
+        match &assignment.target {
+            Target::LocalVariable(name) => {
+                // 本地变量赋值
+                let target_expr = Expr::Ident(name.clone());
+                let value_expr = match &assignment.value {
+                    AssignmentValue::Expression(expr) => self.convert_value_expression(expr),
+                    AssignmentValue::Any => Expr::Literal(Literal::Int(0)), // 默认值
+                };
 
-        let value_expr = match &assignment.value {
-            AssignmentValue::Expression(expr) => self.convert_value_expression(expr),
-            AssignmentValue::Any => Expr::Literal(Literal::Int(0)), // 默认值
-        };
+                stmts.push(Statement::Expr(Expr::Assign(
+                    Box::new(target_expr),
+                    Box::new(value_expr),
+                )));
+            }
+            Target::OutgoingPort(port_name) => {
+                // 输出端口赋值 - 生成发送代码
+                let value_expr = match &assignment.value {
+                    AssignmentValue::Expression(expr) => self.convert_value_expression(expr),
+                    AssignmentValue::Any => Expr::Literal(Literal::Bool(true)), // 默认发送true
+                };
 
-        stmts.push(Statement::Let(LetStmt {
-            ifmut: true,
-            name: target_name,
-            ty: None,
-            init: Some(value_expr),
-        }));
+                // 生成发送代码
+                stmts.push(Statement::Expr(Expr::IfLet {
+                    pattern: "Some(sender)".to_string(),
+                    value: Box::new(Expr::Reference(
+                        Box::new(Expr::Path(
+                            vec!["self".to_string(), port_name.clone()],
+                            PathType::Member,
+                        )),
+                        true,
+                        false,
+                    )),
+                    then_branch: Block {
+                        stmts: vec![
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "_".to_string(),
+                                ty: None,
+                                init: Some(Expr::MethodCall(
+                                    Box::new(Expr::Ident("sender".to_string())),
+                                    "send".to_string(),
+                                    vec![value_expr],
+                                )),
+                            }),
+                        ],
+                        expr: None,
+                    },
+                    else_branch: None,
+                }));
+            }
+            Target::OutgoingSubprogramParameter(param_name) => {
+                // 输出子程序参数赋值
+                let target_expr = Expr::Ident(param_name.clone());
+                let value_expr = match &assignment.value {
+                    AssignmentValue::Expression(expr) => self.convert_value_expression(expr),
+                    AssignmentValue::Any => Expr::Literal(Literal::Int(0)), // 默认值
+                };
+
+                stmts.push(Statement::Expr(Expr::Assign(
+                    Box::new(target_expr),
+                    Box::new(value_expr),
+                )));
+            }
+            Target::DataComponentReference(ref_data) => {
+                // 数据组件引用赋值
+                let target_expr = Expr::Path(
+                    vec!["self".to_string(), ref_data.components.join("_")],
+                    PathType::Member,
+                );
+                let value_expr = match &assignment.value {
+                    AssignmentValue::Expression(expr) => self.convert_value_expression(expr),
+                    AssignmentValue::Any => Expr::Literal(Literal::Int(0)), // 默认值
+                };
+
+                stmts.push(Statement::Expr(Expr::Assign(
+                    Box::new(target_expr),
+                    Box::new(value_expr),
+                )));
+            }
+        }
 
         stmts
     }
@@ -582,12 +763,12 @@ impl AnnexConverter {
                         }));
                     }
                     _ => {
-                        stmts.push(Statement::Expr(Expr::Ident("// TODO: Unsupported port communication".to_string())));
+                        stmts.push(Statement::Comment("TODO: Unsupported port communication".to_string()));
                     }
                 }
             }
             _ => {
-                stmts.push(Statement::Expr(Expr::Ident("// TODO: Unsupported communication action".to_string())));
+                stmts.push(Statement::Comment("TODO: Unsupported communication action".to_string()));
             }
         }
 
@@ -597,21 +778,19 @@ impl AnnexConverter {
     /// 生成定时动作
     fn generate_timed_action(&self, _timed: &TimedAction) -> Vec<Statement> {
         // 定时动作暂时跳过
-        vec![Statement::Expr(Expr::Ident("// TODO: Timed action not implemented".to_string()))]
+        vec![Statement::Comment("TODO: Timed action not implemented".to_string())]
     }
 
     /// 生成if语句
     fn generate_if_statement(&self, _if_stmt: &IfStatement) -> Vec<Statement> {
         // if语句暂时跳过
-        vec![Statement::Expr(Expr::Ident("// TODO: If statement not implemented".to_string()))]
+        vec![Statement::Comment("TODO: If statement not implemented".to_string())]
     }
 
     /// 判断状态是否需要continue
     fn should_continue_state(&self, state_name: &str) -> bool {
-        // 根据状态修饰符判断
-        // complete状态不需要continue，其他状态需要
-        // 这里简化处理，实际应该根据状态定义中的修饰符判断
-        !state_name.contains("Complete")
+        // 从存储的状态信息中查找
+        self.state_info.get(state_name).copied().unwrap_or(true)
     }
 
     /// 转换AADL类型到Rust类型
@@ -675,9 +854,9 @@ impl AnnexConverter {
         }
     }
 
-    /// 转换值表达式
+    /// 转换值表达式 And Or Xor
     fn convert_value_expression(&self, expr: &ValueExpression) -> Expr {
-        // 简化处理，只处理基本的关系表达式
+        // 转换左侧关系表达式
         let left = self.convert_relation(&expr.left);
         
         if expr.operations.is_empty() {
@@ -701,10 +880,363 @@ impl AnnexConverter {
         }
     }
 
-    /// 转换关系表达式
-    fn convert_relation(&self, _relation: &Relation) -> Expr {
-        // 简化处理，返回默认值
-        Expr::Literal(Literal::Bool(true))
+    /// 转换关系表达式 = != < <= > >=
+    fn convert_relation(&self, relation: &Relation) -> Expr {
+        let left = self.convert_simple_expression(&relation.left);
+        
+        if let Some(comparison) = &relation.comparison {
+            // 有比较操作
+            let right = self.convert_simple_expression(&comparison.right);
+            Expr::BinaryOp(
+                Box::new(left),
+                match comparison.operator {
+                    RelationalOperator::Equal => "==".to_string(),
+                    RelationalOperator::NotEqual => "!=".to_string(),
+                    RelationalOperator::LessThan => "<".to_string(),
+                    RelationalOperator::LessThanOrEqual => "<=".to_string(),
+                    RelationalOperator::GreaterThan => ">".to_string(),
+                    RelationalOperator::GreaterThanOrEqual => ">=".to_string(),
+                },
+                Box::new(right),
+            )
+        } else {
+            // 没有比较操作，直接返回左侧表达式
+            left
+        }
+    }
+
+    /// 转换简单表达式
+    fn convert_simple_expression(&self, expr: &SimpleExpression) -> Expr {
+        let mut result = self.convert_term(&expr.left);
+        
+        // 处理一元符号
+        if let Some(sign) = &expr.sign {
+            result = match sign {
+                UnaryAddingOperator::Plus => result, // +x = x
+                UnaryAddingOperator::Minus => Expr::UnaryOp(
+                    "-".to_string(),
+                    Box::new(result),
+                ),
+            };
+        }
+        
+        // 处理二元加法操作
+        for op in &expr.operations {
+            let right = self.convert_add_expression(&op.right);
+            result = Expr::BinaryOp(
+                Box::new(result),
+                match op.operator {
+                    AdditiveOperator::Add => "+".to_string(),
+                    AdditiveOperator::Subtract => "-".to_string(),
+                },
+                Box::new(right),
+            );
+        }
+        
+        result
+    }
+
+    /// 转换加法表达式
+    fn convert_add_expression(&self, expr: &AddExpression) -> Expr {
+        let mut result = self.convert_basic_expression(&expr.left);
+        
+        // 处理乘法操作
+        for op in &expr.operations {
+            let right = self.convert_basic_expression(&op.right);
+            result = Expr::BinaryOp(
+                Box::new(result),
+                match op.operator {
+                    MultiplicativeOperator::Multiply => "*".to_string(),
+                    MultiplicativeOperator::Divide => "/".to_string(),
+                    MultiplicativeOperator::Modulo => "%".to_string(),
+                    MultiplicativeOperator::Remainder => "%".to_string(), // rem 和 mod 在 Rust 中都是 %
+                },
+                Box::new(right),
+            );
+        }
+        
+        result
+    }
+
+    /// 转换项
+    fn convert_term(&self, term: &Term) -> Expr {
+        let mut result = self.convert_factor(&term.left);
+        
+        // 处理乘法操作
+        for op in &term.operations {
+            let right = self.convert_basic_expression(&op.right);
+            result = Expr::BinaryOp(
+                Box::new(result),
+                match op.operator {
+                    MultiplicativeOperator::Multiply => "*".to_string(),
+                    MultiplicativeOperator::Divide => "/".to_string(),
+                    MultiplicativeOperator::Modulo => "%".to_string(),
+                    MultiplicativeOperator::Remainder => "%".to_string(),
+                },
+                Box::new(right),
+            );
+        }
+        
+        result
+    }
+
+    /// 转换因子
+    fn convert_factor(&self, factor: &Factor) -> Expr {
+        match factor {
+            Factor::Value(value) => self.convert_value(value),
+            Factor::BinaryNumeric { left, operator, right } => {
+                let left_expr = self.convert_value(left);
+                let right_expr = self.convert_value(right);
+                match operator {
+                    BinaryNumericOperator::Power => {
+                        // 使用 pow 方法
+                        Expr::MethodCall(
+                            Box::new(left_expr),
+                            "pow".to_string(),
+                            vec![right_expr],
+                        )
+                    }
+                }
+            }
+            Factor::UnaryNumeric { operator, value } => {
+                let value_expr = self.convert_value(value);
+                match operator {
+                    UnaryNumericOperator::Abs => {
+                        Expr::MethodCall(
+                            Box::new(value_expr),
+                            "abs".to_string(),
+                            Vec::new(),
+                        )
+                    }
+                }
+            }
+            Factor::UnaryBoolean { operator, value } => {
+                let value_expr = self.convert_value(value);
+                match operator {
+                    UnaryBooleanOperator::Not => {
+                        Expr::UnaryOp("!".to_string(), Box::new(value_expr))
+                    }
+                }
+            }
+        }
+    }
+
+    /// 转换值
+    fn convert_value(&self, value: &Value) -> Expr {
+        match value {
+            Value::Variable(var) => self.convert_value_variable(var),
+            Value::Constant(constant) => self.convert_value_constant(constant),
+            Value::Expression(expr) => self.convert_value_expression(expr),
+        }
+    }
+
+    /// 转换值变量
+    fn convert_value_variable(&self, var: &ValueVariable) -> Expr {
+        match var {
+            ValueVariable::IncomingPort(port_name) => {
+                // 端口变量，转换为 self.port_name
+                Expr::Path(
+                    vec!["self".to_string(), port_name.clone()],
+                    PathType::Member,
+                )
+            }
+            ValueVariable::IncomingPortCheck(port_name) => {
+                // 端口检查，转换为 self.port_name.is_some()
+                Expr::MethodCall(
+                    Box::new(Expr::Path(
+                        vec!["self".to_string(), port_name.clone()],
+                        PathType::Member,
+                    )),
+                    "is_some".to_string(),
+                    Vec::new(),
+                )
+            }
+            ValueVariable::LocalVariable(var_name) => {
+                // 局部变量
+                Expr::Ident(var_name.clone())
+            }
+            ValueVariable::DataComponentReference(ref_data) => {
+                // 数据组件引用，转换为 self.data_component
+                Expr::Path(
+                    vec!["self".to_string(), ref_data.components.join("_")],
+                    PathType::Member,
+                )
+            }
+            ValueVariable::PortCount(port_name) => {
+                // 端口计数，转换为 self.port_name.len()
+                Expr::MethodCall(
+                    Box::new(Expr::Path(
+                        vec!["self".to_string(), port_name.clone()],
+                        PathType::Member,
+                    )),
+                    "len".to_string(),
+                    Vec::new(),
+                )
+            }
+            ValueVariable::PortFresh(port_name) => {
+                // 端口新鲜度，暂时返回 true
+                Expr::Literal(Literal::Bool(true))
+            }
+            ValueVariable::IncomingSubprogramParameter(param_name) => {
+                // 子程序参数，转换为参数名
+                Expr::Ident(param_name.clone())
+            }
+        }
+    }
+
+    /// 转换值常量
+    fn convert_value_constant(&self, constant: &ValueConstant) -> Expr {
+        match constant {
+            ValueConstant::Boolean(b) => Expr::Literal(Literal::Bool(*b)),
+            ValueConstant::Numeric(num_str) => {
+                // 尝试解析为整数或浮点数
+                if let Ok(int_val) = num_str.parse::<i64>() {
+                    Expr::Literal(Literal::Int(int_val))
+                } else if let Ok(float_val) = num_str.parse::<f64>() {
+                    Expr::Literal(Literal::Float(float_val))
+                } else {
+                    // 无法解析，返回 0
+                    println!("!!!!!!!!!!!!!!!!!!!!!!!该数值无法解析，返回0");
+                    Expr::Literal(Literal::Int(0))
+                }
+            }
+            ValueConstant::String(s) => Expr::Literal(Literal::Str(s.clone())),
+            ValueConstant::PropertyConstant(prop) => {
+                // 属性常量，暂时返回默认值
+                Expr::Literal(Literal::Int(0))
+            }
+            ValueConstant::PropertyValue(prop) => {
+                // 属性值，暂时返回默认值
+                Expr::Literal(Literal::Int(0))
+            }
+        }
+    }
+
+    /// 转换基础表达式
+    fn convert_basic_expression(&self, expr: &BasicExpression) -> Expr {
+        match expr {
+            BasicExpression::NumericOrConstant(num_str) => {
+                if let Ok(int_val) = num_str.parse::<i64>() {
+                    Expr::Literal(Literal::Int(int_val))
+                } else if let Ok(float_val) = num_str.parse::<f64>() {
+                    Expr::Literal(Literal::Float(float_val))
+                } else {
+                    println!("!!!!!!!!!!!!!!!!!!!!!!!该数值无法解析，返回0");
+                    Expr::Literal(Literal::Int(0))
+                }
+            }
+            BasicExpression::BehaviorVariable(var_name) => {
+                Expr::Ident(var_name.clone())
+            }
+            BasicExpression::LoopVariable(var_name) => {
+                Expr::Ident(var_name.clone())
+            }
+            BasicExpression::Port(port_name) => {
+                Expr::Path(
+                    vec!["self".to_string(), port_name.clone()],
+                    PathType::Member,
+                )
+            }
+            BasicExpression::PortWithQualifier { port, qualifier } => {
+                let port_expr = Expr::Path(
+                    vec!["self".to_string(), port.clone()],
+                    PathType::Member,
+                );
+                match qualifier {
+                    PortQualifier::Count => {
+                        Expr::MethodCall(
+                            Box::new(port_expr),
+                            "len".to_string(),
+                            Vec::new(),
+                        )
+                    }
+                    PortQualifier::Fresh => {
+                        Expr::Literal(Literal::Bool(true))
+                    }
+                }
+            }
+            BasicExpression::DataAccess(access_name) => {
+                Expr::Path(
+                    vec!["self".to_string(), access_name.clone()],
+                    PathType::Member,
+                )
+            }
+            BasicExpression::Timeout(expr) => {
+                // 超时表达式，暂时返回默认值
+                Expr::Literal(Literal::Int(0))
+            }
+            BasicExpression::DataSubcomponent(sub_name) => {
+                Expr::Path(
+                    vec!["self".to_string(), sub_name.clone()],
+                    PathType::Member,
+                )
+            }
+            BasicExpression::DataSubcomponentWithIndex { subcomponent, index } => {
+                let sub_expr = Expr::Path(
+                    vec!["self".to_string(), subcomponent.clone()],
+                    PathType::Member,
+                );
+                let index_expr = self.convert_basic_expression(index);
+                Expr::Index(Box::new(sub_expr), Box::new(index_expr))
+            }
+            BasicExpression::DataAccessWithSubcomponent { access, subcomponent } => {
+                Expr::Path(
+                    vec!["self".to_string(), access.clone(), subcomponent.clone()],
+                    PathType::Member,
+                )
+            }
+            BasicExpression::DataSubcomponentWithSubcomponent { container, subcomponent } => {
+                Expr::Path(
+                    vec!["self".to_string(), container.clone(), subcomponent.clone()],
+                    PathType::Member,
+                )
+            }
+            BasicExpression::DataClassifierSubprogram { classifier, subprogram, parameters } => {
+                // 子程序调用，暂时返回默认值
+                Expr::Literal(Literal::Int(0))
+            }
+            BasicExpression::DataClassifierSubprogramWithTimeout { classifier, subprogram, timeout } => {
+                // 带超时的子程序调用，暂时返回默认值
+                Expr::Literal(Literal::Int(0))
+            }
+            BasicExpression::DataClassifierSubprogramWithParameter { classifier, subprogram, parameter, expression } => {
+                // 带参数的子程序调用，暂时返回默认值
+                Expr::Literal(Literal::Int(0))
+            }
+            BasicExpression::Parenthesized(expr) => {
+                Expr::Parenthesized(Box::new(self.convert_basic_expression(expr)))
+            }
+            BasicExpression::Quantified { quantifier, identifier, range, expression } => {
+                // 量词表达式，暂时返回默认值
+                Expr::Literal(Literal::Bool(false))
+            }
+            BasicExpression::BinaryOp { left, operator, right } => {
+                let left_expr = self.convert_basic_expression(left);
+                let right_expr = self.convert_basic_expression(right);
+                Expr::BinaryOp(
+                    Box::new(left_expr),
+                    match operator {
+                        BinaryOperator::And => "&&".to_string(),
+                        BinaryOperator::Or => "||".to_string(),
+                        BinaryOperator::Equal => "==".to_string(),
+                        BinaryOperator::NotEqual => "!=".to_string(),
+                        BinaryOperator::LessThan => "<".to_string(),
+                        BinaryOperator::LessThanOrEqual => "<=".to_string(),
+                        BinaryOperator::GreaterThan => ">".to_string(),
+                        BinaryOperator::GreaterThanOrEqual => ">=".to_string(),
+                        BinaryOperator::Add => "+".to_string(),
+                        BinaryOperator::Subtract => "-".to_string(),
+                        BinaryOperator::Multiply => "*".to_string(),
+                        BinaryOperator::Divide => "/".to_string(),
+                        BinaryOperator::Modulo => "%".to_string(),
+                    },
+                    Box::new(right_expr),
+                )
+            }
+            BasicExpression::Not(expr) => {
+                Expr::UnaryOp("!".to_string(), Box::new(self.convert_basic_expression(expr)))
+            }
+        }
     }
 
     /// 获取组件类型

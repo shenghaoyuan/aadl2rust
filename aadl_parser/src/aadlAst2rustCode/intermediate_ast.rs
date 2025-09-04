@@ -146,6 +146,10 @@ pub enum Expr {
     }, // match 表达式
     Reference(Box<Expr>,bool,bool),    // &expr,第一位标志&,第二位标志mut
     BinaryOp(Box<Expr>, String, Box<Expr>), // left op right, 如 a != 0
+    UnaryOp(String, Box<Expr>), // op expr, 如 !x, -y
+    Index(Box<Expr>, Box<Expr>), // expr[index], 如 array[i]
+    Parenthesized(Box<Expr>), // (expr), 如 (a + b)
+    Assign(Box<Expr>, Box<Expr>), // left = right, 如 state = State::S0
 
 }
 
@@ -203,6 +207,9 @@ pub enum Statement {
     Let(LetStmt),
     Expr(Expr),
     Item(Box<Item>),
+    Continue, // 新增：continue 语句
+    Break,    // 新增：break 语句
+    Comment(String), // 新增：注释语句
 }
 
 /// let绑定

@@ -971,7 +971,7 @@ impl AadlConverter {
 
 
 
-    fn convert_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+    fn convert_implementation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
         match impl_.category {
             ComponentCategory::Process => self.convert_process_implementation(impl_),
             ComponentCategory::Thread => self.convert_thread_implemenation(impl_),
@@ -1934,7 +1934,7 @@ impl AadlConverter {
         docs
     }
 
-    fn convert_thread_implemenation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+    fn convert_thread_implemenation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
         let mut items = Vec::new();
 
         // 1. 结构体定义
@@ -1999,7 +1999,7 @@ impl AadlConverter {
     /// 1. 线程优先级和CPU亲和性设置
     /// 2. 根据调度协议生成不同的执行逻辑
     /// 3. 子程序调用处理（参数端口、共享变量、普通调用）
-    fn create_thread_run_body(&self, impl_: &ComponentImplementation) -> Block {
+    fn create_thread_run_body(&mut self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
         
         //======================= 线程优先级设置 ========================
@@ -2105,7 +2105,6 @@ impl AadlConverter {
 
         // ==================== 步骤 1: 获取调度协议 ====================
         let dispatch_protocol = self.extract_dispatch_protocol(impl_);
-        println!("!!!!!!!!!!!!!!!!!!!!!!!dispatch_protocol: {:?}", dispatch_protocol);
         
         // ==================== 步骤 2: 根据调度协议生成不同的执行逻辑 ====================
         match dispatch_protocol.as_deref() {
@@ -2131,7 +2130,7 @@ impl AadlConverter {
     }
 
     /// 创建周期性执行逻辑
-    fn create_periodic_execution_logic(&self, impl_: &ComponentImplementation) -> Vec<Statement> {
+    fn create_periodic_execution_logic(&mut self, impl_: &ComponentImplementation) -> Vec<Statement> {
         let mut stmts = Vec::new();
         
         // 从AADL属性中提取周期值，默认为2000ms
@@ -2515,9 +2514,6 @@ impl AadlConverter {
                 // 有参数端口的子程序处理
                 if let Some((_, _, thread_port_name, is_send, port_type)) = subprogram_calls.iter()
                     .find(|(_, spg_name, _, _, _)| spg_name == &subprogram_name) {
-                    println!("subprogram_name: {}", subprogram_name);
-                    println!("thread_port_name: {}", thread_port_name);
-                    println!("is_send: {}", is_send);
                     
                     if *is_send {
                         // 发送模式

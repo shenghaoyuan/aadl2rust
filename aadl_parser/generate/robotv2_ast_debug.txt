@@ -451,7 +451,7 @@ RustModule {
                                                         "State",
                                                         "s_inline",
                                                     ],
-                                                    Member,
+                                                    Namespace,
                                                 ),
                                             ),
                                         },
@@ -479,22 +479,92 @@ RustModule {
                                                             ),
                                                         },
                                                     ),
-                                                    Expr(
-                                                        Block(
-                                                            Block {
-                                                                stmts: [],
-                                                                expr: None,
-                                                            },
-                                                        ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "info_capteur_val",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Match {
+                                                                    expr: Path(
+                                                                        [
+                                                                            "&self",
+                                                                            "info_capteur",
+                                                                        ],
+                                                                        Member,
+                                                                    ),
+                                                                    arms: [
+                                                                        MatchArm {
+                                                                            pattern: "Some(rx)",
+                                                                            guard: None,
+                                                                            body: Block {
+                                                                                stmts: [],
+                                                                                expr: Some(
+                                                                                    Match {
+                                                                                        expr: MethodCall(
+                                                                                            Ident(
+                                                                                                "rx",
+                                                                                            ),
+                                                                                            "try_recv",
+                                                                                            [],
+                                                                                        ),
+                                                                                        arms: [
+                                                                                            MatchArm {
+                                                                                                pattern: "Ok(val)",
+                                                                                                guard: None,
+                                                                                                body: Block {
+                                                                                                    stmts: [],
+                                                                                                    expr: Some(
+                                                                                                        Ident(
+                                                                                                            "val",
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                },
+                                                                                            },
+                                                                                            MatchArm {
+                                                                                                pattern: "_",
+                                                                                                guard: None,
+                                                                                                body: Block {
+                                                                                                    stmts: [],
+                                                                                                    expr: Some(
+                                                                                                        Literal(
+                                                                                                            Bool(
+                                                                                                                false,
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                },
+                                                                                            },
+                                                                                        ],
+                                                                                    },
+                                                                                ),
+                                                                            },
+                                                                        },
+                                                                        MatchArm {
+                                                                            pattern: "None",
+                                                                            guard: None,
+                                                                            body: Block {
+                                                                                stmts: [],
+                                                                                expr: Some(
+                                                                                    Literal(
+                                                                                        Bool(
+                                                                                            false,
+                                                                                        ),
+                                                                                    ),
+                                                                                ),
+                                                                            },
+                                                                        },
+                                                                    ],
+                                                                },
+                                                            ),
+                                                        },
                                                     ),
                                                     Expr(
                                                         Block(
                                                             Block {
                                                                 stmts: [
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// --- BA 宏步执行 ---",
-                                                                        ),
+                                                                    Comment(
+                                                                        "--- BA 宏步执行 ---",
                                                                     ),
                                                                     Expr(
                                                                         Loop(
@@ -511,137 +581,143 @@ RustModule {
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
+                                                                                                            Comment(
+                                                                                                                "on dispatch → s1",
+                                                                                                            ),
                                                                                                             Expr(
-                                                                                                                Ident(
-                                                                                                                    "// on dispatch → s1",
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s1",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "state",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
+                                                                                                            Continue,
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: Some(
+                                                                                                        BinaryOp(
+                                                                                                            Ident(
+                                                                                                                "info_capteur_val",
+                                                                                                            ),
+                                                                                                            "==",
+                                                                                                            Literal(
+                                                                                                                Bool(
+                                                                                                                    true,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s_inline",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Comment(
+                                                                                                                "complete，需要停",
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: Some(
+                                                                                                        BinaryOp(
+                                                                                                            Ident(
+                                                                                                                "info_capteur_val",
+                                                                                                            ),
+                                                                                                            "==",
+                                                                                                            Literal(
+                                                                                                                Bool(
+                                                                                                                    false,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                IfLet {
+                                                                                                                    pattern: "Some(sender)",
+                                                                                                                    value: Reference(
                                                                                                                         Path(
                                                                                                                             [
-                                                                                                                                "State",
-                                                                                                                                "s1",
+                                                                                                                                "self",
+                                                                                                                                "comm_servo",
                                                                                                                             ],
                                                                                                                             Member,
                                                                                                                         ),
+                                                                                                                        true,
+                                                                                                                        false,
                                                                                                                     ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: false,
+                                                                                                                                    name: "_",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        MethodCall(
+                                                                                                                                            Ident(
+                                                                                                                                                "sender",
+                                                                                                                                            ),
+                                                                                                                                            "send",
+                                                                                                                                            [
+                                                                                                                                                Literal(
+                                                                                                                                                    Bool(
+                                                                                                                                                        false,
+                                                                                                                                                    ),
+                                                                                                                                                ),
+                                                                                                                                            ],
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
                                                                                                                 },
                                                                                                             ),
                                                                                                             Expr(
-                                                                                                                Ident(
-                                                                                                                    "continue; // 不是 complete，要继续",
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s_outline",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
                                                                                                                 ),
                                                                                                             ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                If {
-                                                                                                                    condition: BinaryOp(
-                                                                                                                        Ident(
-                                                                                                                            "info_capteur_val",
-                                                                                                                        ),
-                                                                                                                        "==",
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: true,
-                                                                                                                                    name: "state",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        Path(
-                                                                                                                                            [
-                                                                                                                                                "State",
-                                                                                                                                                "s_inline",
-                                                                                                                                            ],
-                                                                                                                                            Member,
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                If {
-                                                                                                                    condition: BinaryOp(
-                                                                                                                        Ident(
-                                                                                                                            "info_capteur_val",
-                                                                                                                        ),
-                                                                                                                        "==",
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: true,
-                                                                                                                                    name: "state",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        Path(
-                                                                                                                                            [
-                                                                                                                                                "State",
-                                                                                                                                                "s_outline",
-                                                                                                                                            ],
-                                                                                                                                            Member,
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "comm_servo",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                },
+                                                                                                            Comment(
+                                                                                                                "complete，需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -652,30 +728,171 @@ RustModule {
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
+                                                                                                            Comment(
+                                                                                                                "on dispatch → s2",
+                                                                                                            ),
                                                                                                             Expr(
-                                                                                                                Ident(
-                                                                                                                    "// on dispatch → s2",
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s2",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "state",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
+                                                                                                            Continue,
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s2",
+                                                                                                    guard: Some(
+                                                                                                        BinaryOp(
+                                                                                                            Ident(
+                                                                                                                "info_capteur_val",
+                                                                                                            ),
+                                                                                                            "==",
+                                                                                                            Literal(
+                                                                                                                Bool(
+                                                                                                                    false,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s_outline",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Comment(
+                                                                                                                "complete，需要停",
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s2",
+                                                                                                    guard: Some(
+                                                                                                        BinaryOp(
+                                                                                                            Ident(
+                                                                                                                "info_capteur_val",
+                                                                                                            ),
+                                                                                                            "==",
+                                                                                                            Literal(
+                                                                                                                Bool(
+                                                                                                                    true,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ),
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                IfLet {
+                                                                                                                    pattern: "Some(sender)",
+                                                                                                                    value: Reference(
                                                                                                                         Path(
                                                                                                                             [
-                                                                                                                                "State",
-                                                                                                                                "s2",
+                                                                                                                                "self",
+                                                                                                                                "comm_servo",
                                                                                                                             ],
                                                                                                                             Member,
                                                                                                                         ),
+                                                                                                                        true,
+                                                                                                                        false,
                                                                                                                     ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: false,
+                                                                                                                                    name: "_",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        MethodCall(
+                                                                                                                                            Ident(
+                                                                                                                                                "sender",
+                                                                                                                                            ),
+                                                                                                                                            "send",
+                                                                                                                                            [
+                                                                                                                                                Literal(
+                                                                                                                                                    Bool(
+                                                                                                                                                        true,
+                                                                                                                                                    ),
+                                                                                                                                                ),
+                                                                                                                                            ],
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
                                                                                                                 },
                                                                                                             ),
                                                                                                             Expr(
-                                                                                                                Ident(
-                                                                                                                    "continue; // 不是 complete，要继续",
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s_inline",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                            Comment(
+                                                                                                                "complete，需要停",
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "panic!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "Unexpected s1 state condition",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
                                                                                                                 ),
                                                                                                             ),
                                                                                                         ],
@@ -687,102 +904,25 @@ RustModule {
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
-                                                                                                            Expr(
-                                                                                                                If {
-                                                                                                                    condition: BinaryOp(
-                                                                                                                        Ident(
-                                                                                                                            "info_capteur_val",
-                                                                                                                        ),
-                                                                                                                        "==",
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: true,
-                                                                                                                                    name: "state",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        Path(
-                                                                                                                                            [
-                                                                                                                                                "State",
-                                                                                                                                                "s_outline",
-                                                                                                                                            ],
-                                                                                                                                            Member,
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
                                                                                                             ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s2",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
                                                                                                             Expr(
-                                                                                                                If {
-                                                                                                                    condition: BinaryOp(
-                                                                                                                        Ident(
-                                                                                                                            "info_capteur_val",
-                                                                                                                        ),
-                                                                                                                        "==",
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: true,
-                                                                                                                                    name: "state",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        Path(
-                                                                                                                                            [
-                                                                                                                                                "State",
-                                                                                                                                                "s_inline",
-                                                                                                                                            ],
-                                                                                                                                            Member,
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "panic!",
                                                                                                                         ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "comm_servo",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
                                                                                                                         Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
+                                                                                                                            Str(
+                                                                                                                                "Unexpected s2 state condition",
                                                                                                                             ),
                                                                                                                         ),
-                                                                                                                    ),
-                                                                                                                },
+                                                                                                                    ],
+                                                                                                                ),
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -791,11 +931,7 @@ RustModule {
                                                                                             ],
                                                                                         },
                                                                                     ),
-                                                                                    Expr(
-                                                                                        Ident(
-                                                                                            "break; // 到 complete state 停止 BA 宏步",
-                                                                                        ),
-                                                                                    ),
+                                                                                    Break,
                                                                                 ],
                                                                                 expr: None,
                                                                             },
@@ -1017,7 +1153,7 @@ RustModule {
                                             init: Some(
                                                 Literal(
                                                     Int(
-                                                        111,
+                                                        0,
                                                     ),
                                                 ),
                                             ),
@@ -1063,7 +1199,7 @@ RustModule {
                                                         "State",
                                                         "s0",
                                                     ],
-                                                    Member,
+                                                    Namespace,
                                                 ),
                                             ),
                                         },
@@ -1094,19 +1230,9 @@ RustModule {
                                                     Expr(
                                                         Block(
                                                             Block {
-                                                                stmts: [],
-                                                                expr: None,
-                                                            },
-                                                        ),
-                                                    ),
-                                                    Expr(
-                                                        Block(
-                                                            Block {
                                                                 stmts: [
-                                                                    Expr(
-                                                                        Ident(
-                                                                            "// --- BA 宏步执行 ---",
-                                                                        ),
+                                                                    Comment(
+                                                                        "--- BA 宏步执行 ---",
                                                                     ),
                                                                     Expr(
                                                                         Loop(
@@ -1123,64 +1249,104 @@ RustModule {
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
+                                                                                                            Comment(
+                                                                                                                "TODO: Timed action not implemented",
+                                                                                                            ),
                                                                                                             Expr(
-                                                                                                                Ident(
-                                                                                                                    "// on dispatch → s0",
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "count1",
+                                                                                                                    ),
+                                                                                                                    BinaryOp(
+                                                                                                                        Ident(
+                                                                                                                            "count1",
+                                                                                                                        ),
+                                                                                                                        "+",
+                                                                                                                        Literal(
+                                                                                                                            Int(
+                                                                                                                                1,
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ),
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "state",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
+                                                                                                            Expr(
+                                                                                                                IfLet {
+                                                                                                                    pattern: "Some(sender)",
+                                                                                                                    value: Reference(
                                                                                                                         Path(
                                                                                                                             [
-                                                                                                                                "State",
-                                                                                                                                "s0",
+                                                                                                                                "self",
+                                                                                                                                "evenement",
                                                                                                                             ],
                                                                                                                             Member,
                                                                                                                         ),
+                                                                                                                        true,
+                                                                                                                        false,
                                                                                                                     ),
+                                                                                                                    then_branch: Block {
+                                                                                                                        stmts: [
+                                                                                                                            Let(
+                                                                                                                                LetStmt {
+                                                                                                                                    ifmut: false,
+                                                                                                                                    name: "_",
+                                                                                                                                    ty: None,
+                                                                                                                                    init: Some(
+                                                                                                                                        MethodCall(
+                                                                                                                                            Ident(
+                                                                                                                                                "sender",
+                                                                                                                                            ),
+                                                                                                                                            "send",
+                                                                                                                                            [
+                                                                                                                                                BinaryOp(
+                                                                                                                                                    BinaryOp(
+                                                                                                                                                        Ident(
+                                                                                                                                                            "count1",
+                                                                                                                                                        ),
+                                                                                                                                                        "%",
+                                                                                                                                                        Literal(
+                                                                                                                                                            Int(
+                                                                                                                                                                2,
+                                                                                                                                                            ),
+                                                                                                                                                        ),
+                                                                                                                                                    ),
+                                                                                                                                                    "==",
+                                                                                                                                                    Literal(
+                                                                                                                                                        Int(
+                                                                                                                                                            0,
+                                                                                                                                                        ),
+                                                                                                                                                    ),
+                                                                                                                                                ),
+                                                                                                                                            ],
+                                                                                                                                        ),
+                                                                                                                                    ),
+                                                                                                                                },
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                        expr: None,
+                                                                                                                    },
+                                                                                                                    else_branch: None,
                                                                                                                 },
+                                                                                                            ),
+                                                                                                            Comment(
+                                                                                                                "on dispatch → s0",
                                                                                                             ),
                                                                                                             Expr(
-                                                                                                                Ident(
-                                                                                                                    "continue; // 不是 complete，要继续",
+                                                                                                                Assign(
+                                                                                                                    Ident(
+                                                                                                                        "state",
+                                                                                                                    ),
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "State",
+                                                                                                                            "s0",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            Expr(
-                                                                                                                Ident(
-                                                                                                                    "// TODO: Timed action not implemented",
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "count1",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            Let(
-                                                                                                                LetStmt {
-                                                                                                                    ifmut: true,
-                                                                                                                    name: "evenement",
-                                                                                                                    ty: None,
-                                                                                                                    init: Some(
-                                                                                                                        Literal(
-                                                                                                                            Bool(
-                                                                                                                                true,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                },
+                                                                                                            Comment(
+                                                                                                                "complete，需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -1189,11 +1355,7 @@ RustModule {
                                                                                             ],
                                                                                         },
                                                                                     ),
-                                                                                    Expr(
-                                                                                        Ident(
-                                                                                            "break; // 到 complete state 停止 BA 宏步",
-                                                                                        ),
-                                                                                    ),
+                                                                                    Break,
                                                                                 ],
                                                                                 expr: None,
                                                                             },

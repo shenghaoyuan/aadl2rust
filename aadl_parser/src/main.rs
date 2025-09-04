@@ -244,6 +244,7 @@ mod tests {
     use transform_annex::*;
     use ast::aadl_ast_cj::*;
     use pest::Parser;
+    use crate::transform::get_global_port_manager;
 
     #[test]
     fn test_transition_parsing() {
@@ -459,5 +460,81 @@ mod tests {
         }
         
         println!("=== 测试完成 ===");
+    }
+
+    #[test]
+    fn test_port_manager() {
+        // 测试端口管理器功能
+        let manager = get_global_port_manager();
+        
+        // 添加一些测试端口
+        {
+            let mut manager = manager.lock().unwrap();
+            manager.add_port("out_port".to_string(), crate::ast::aadl_ast_cj::PortDirection::Out);
+            manager.add_port("in_port".to_string(), crate::ast::aadl_ast_cj::PortDirection::In);
+            manager.add_port("inout_port".to_string(), crate::ast::aadl_ast_cj::PortDirection::InOut);
+        }
+        
+        // 验证端口方向判断
+        {
+            let manager = manager.lock().unwrap();
+            assert!(manager.is_outgoing_port("out_port"));
+            assert!(!manager.is_outgoing_port("in_port"));
+            assert!(manager.is_outgoing_port("inout_port"));
+        }
+        
+        println!("端口管理器测试通过！");
+    }
+
+    #[test]
+    fn test_assignment_action_target_detection() {
+        // 测试赋值动作中的目标类型检测
+        use crate::transform_annex::transform_assignment_action;
+        use crate::aadlight_parser::AADLParser;
+        use crate::ast::aadl_ast_cj::*;
+        
+        // 首先设置端口信息
+        let manager = get_global_port_manager();
+        {
+            let mut manager = manager.lock().unwrap();
+            manager.add_port("output_port".to_string(), PortDirection::Out);
+            manager.add_port("input_port".to_string(), PortDirection::In);
+        }
+        
+        // 测试输出端口赋值
+        let out_port_assign = "output_port := 42";
+        let pairs = AADLParser::parse(crate::aadlight_parser::Rule::assignment_action, out_port_assign).unwrap();
+        let action = transform_assignment_action(pairs.into_iter().next().unwrap());
+        
+        if let BasicAction::Assignment(assign) = action {
+            match assign.target {
+                Target::OutgoingPort(name) => {
+                    assert_eq!(name, "output_port");
+                    println!("输出端口赋值检测正确: {}", name);
+                }
+                _ => panic!("期望 OutgoingPort，但得到 {:?}", assign.target),
+            }
+        } else {
+            panic!("期望 Assignment 动作");
+        }
+        
+        // 测试本地变量赋值
+        let local_var_assign = "local_var := 100";
+        let pairs = AADLParser::parse(crate::aadlight_parser::Rule::assignment_action, local_var_assign).unwrap();
+        let action = transform_assignment_action(pairs.into_iter().next().unwrap());
+        
+        if let BasicAction::Assignment(assign) = action {
+            match assign.target {
+                Target::LocalVariable(name) => {
+                    assert_eq!(name, "local_var");
+                    println!("本地变量赋值检测正确: {}", name);
+                }
+                _ => panic!("期望 LocalVariable，但得到 {:?}", assign.target),
+            }
+        } else {
+            panic!("期望 Assignment 动作");
+        }
+        
+        println!("赋值动作目标类型检测测试通过！");
     }
 }

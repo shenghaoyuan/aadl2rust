@@ -1,0 +1,2328 @@
+[
+    Pair {
+        rule: file,
+        span: Span {
+            str: "--  This AADL model illustrates how to conduct schedulability analysis\r\n--  using Cheddar, and then code generation of periodic tasks.\r\n--\r\n--  Two periodic tasks run in parallel, without interaction. Tasks\r\n--  parameters allows RMA analysis\r\n\r\npackage RMAAadl\r\npublic\r\n  with Processors;\r\n\r\n  -----------------\r\n  -- Subprograms --\r\n  -----------------\r\n\r\n  subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu \r\n  end cpu;\r\n\r\n  processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;\r\n\r\nend RMAAadl;\r\n",
+            start: 0,
+            end: 2447,
+        },
+        inner: [
+            Pair {
+                rule: package_declaration,
+                span: Span {
+                    str: "package RMAAadl\r\npublic\r\n  with Processors;\r\n\r\n  -----------------\r\n  -- Subprograms --\r\n  -----------------\r\n\r\n  subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu \r\n  end cpu;\r\n\r\n  processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;\r\n\r\nend RMAAadl;",
+                    start: 246,
+                    end: 2445,
+                },
+                inner: [
+                    Pair {
+                        rule: package_name,
+                        span: Span {
+                            str: "RMAAadl",
+                            start: 254,
+                            end: 261,
+                        },
+                        inner: [
+                            Pair {
+                                rule: qualified_identifier,
+                                span: Span {
+                                    str: "RMAAadl",
+                                    start: 254,
+                                    end: 261,
+                                },
+                                inner: [],
+                            },
+                        ],
+                    },
+                    Pair {
+                        rule: visibility_declarations,
+                        span: Span {
+                            str: "with Processors;",
+                            start: 273,
+                            end: 289,
+                        },
+                        inner: [
+                            Pair {
+                                rule: WITH,
+                                span: Span {
+                                    str: "with",
+                                    start: 273,
+                                    end: 277,
+                                },
+                                inner: [],
+                            },
+                            Pair {
+                                rule: package_name,
+                                span: Span {
+                                    str: "Processors",
+                                    start: 278,
+                                    end: 288,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: qualified_identifier,
+                                        span: Span {
+                                            str: "Processors",
+                                            start: 278,
+                                            end: 288,
+                                        },
+                                        inner: [],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    Pair {
+                        rule: package_sections,
+                        span: Span {
+                            str: "subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu \r\n  end cpu;\r\n\r\n  processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;",
+                            start: 360,
+                            end: 2429,
+                        },
+                        inner: [
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;",
+                                    start: 360,
+                                    end: 526,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;",
+                                            start: 360,
+                                            end: 526,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "subprogram",
+                                                    start: 360,
+                                                    end: 370,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Hello_Spg_1",
+                                                    start: 371,
+                                                    end: 382,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");",
+                                                    start: 386,
+                                                    end: 506,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "source_language => (C);",
+                                                            start: 402,
+                                                            end: 425,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "source_language",
+                                                                    start: 402,
+                                                                    end: 417,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 418,
+                                                                    end: 420,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(C)",
+                                                                    start: 421,
+                                                                    end: 424,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "(C)",
+                                                                            start: 421,
+                                                                            end: 424,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "(C)",
+                                                                                    start: 421,
+                                                                                    end: 424,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "source_name     => \"user_hello_spg_1\";",
+                                                            start: 431,
+                                                            end: 469,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "source_name",
+                                                                    start: 431,
+                                                                    end: 442,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 447,
+                                                                    end: 449,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "\"user_hello_spg_1\"",
+                                                                    start: 450,
+                                                                    end: 468,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "\"user_hello_spg_1\"",
+                                                                            start: 450,
+                                                                            end: 468,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "\"user_hello_spg_1\"",
+                                                                                    start: 450,
+                                                                                    end: 468,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "source_text     => (\"hello.c\");",
+                                                            start: 475,
+                                                            end: 506,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "source_text",
+                                                                    start: 475,
+                                                                    end: 486,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 491,
+                                                                    end: 493,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(\"hello.c\")",
+                                                                    start: 494,
+                                                                    end: 505,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "(\"hello.c\")",
+                                                                            start: 494,
+                                                                            end: 505,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "(\"hello.c\")",
+                                                                                    start: 494,
+                                                                                    end: 505,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Hello_Spg_1",
+                                                    start: 514,
+                                                    end: 525,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;",
+                                    start: 532,
+                                    end: 698,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;",
+                                            start: 532,
+                                            end: 698,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "subprogram",
+                                                    start: 532,
+                                                    end: 542,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Hello_Spg_2",
+                                                    start: 543,
+                                                    end: 554,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");",
+                                                    start: 558,
+                                                    end: 678,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "source_language => (C);",
+                                                            start: 574,
+                                                            end: 597,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "source_language",
+                                                                    start: 574,
+                                                                    end: 589,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 590,
+                                                                    end: 592,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(C)",
+                                                                    start: 593,
+                                                                    end: 596,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "(C)",
+                                                                            start: 593,
+                                                                            end: 596,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "(C)",
+                                                                                    start: 593,
+                                                                                    end: 596,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "source_name     => \"user_hello_spg_2\";",
+                                                            start: 603,
+                                                            end: 641,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "source_name",
+                                                                    start: 603,
+                                                                    end: 614,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 619,
+                                                                    end: 621,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "\"user_hello_spg_2\"",
+                                                                    start: 622,
+                                                                    end: 640,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "\"user_hello_spg_2\"",
+                                                                            start: 622,
+                                                                            end: 640,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "\"user_hello_spg_2\"",
+                                                                                    start: 622,
+                                                                                    end: 640,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "source_text     => (\"hello.c\");",
+                                                            start: 647,
+                                                            end: 678,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "source_text",
+                                                                    start: 647,
+                                                                    end: 658,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 663,
+                                                                    end: 665,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(\"hello.c\")",
+                                                                    start: 666,
+                                                                    end: 677,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "(\"hello.c\")",
+                                                                            start: 666,
+                                                                            end: 677,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "(\"hello.c\")",
+                                                                                    start: 666,
+                                                                                    end: 677,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Hello_Spg_2",
+                                                    start: 686,
+                                                    end: 697,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "thread Task\r\n  end Task;",
+                                    start: 757,
+                                    end: 781,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "thread Task\r\n  end Task;",
+                                            start: 757,
+                                            end: 781,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "thread",
+                                                    start: 757,
+                                                    end: 763,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task",
+                                                    start: 764,
+                                                    end: 768,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task",
+                                                    start: 776,
+                                                    end: 780,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;",
+                                    start: 787,
+                                    end: 1184,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_implementation,
+                                        span: Span {
+                                            str: "thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;",
+                                            start: 787,
+                                            end: 1184,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "thread",
+                                                    start: 787,
+                                                    end: 793,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task.impl_1",
+                                                    start: 809,
+                                                    end: 820,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: calls,
+                                                span: Span {
+                                                    str: "calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  ",
+                                                    start: 824,
+                                                    end: 894,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: call_sequence,
+                                                        span: Span {
+                                                            str: "Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };",
+                                                            start: 835,
+                                                            end: 890,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Mycalls",
+                                                                    start: 835,
+                                                                    end: 842,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: subprogram_call,
+                                                                span: Span {
+                                                                    str: "P_Spg : subprogram Hello_Spg_1;",
+                                                                    start: 851,
+                                                                    end: 882,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: identifier,
+                                                                        span: Span {
+                                                                            str: "P_Spg",
+                                                                            start: 851,
+                                                                            end: 856,
+                                                                        },
+                                                                        inner: [],
+                                                                    },
+                                                                    Pair {
+                                                                        rule: qualified_identifier,
+                                                                        span: Span {
+                                                                            str: "Hello_Spg_1",
+                                                                            start: 870,
+                                                                            end: 881,
+                                                                        },
+                                                                        inner: [],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;",
+                                                    start: 894,
+                                                    end: 1164,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Dispatch_Protocol                  => Periodic;",
+                                                            start: 910,
+                                                            end: 957,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Dispatch_Protocol",
+                                                                    start: 910,
+                                                                    end: 927,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 945,
+                                                                    end: 947,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "Periodic",
+                                                                    start: 948,
+                                                                    end: 956,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "Periodic",
+                                                                            start: 948,
+                                                                            end: 956,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: enum_value,
+                                                                                span: Span {
+                                                                                    str: "Periodic",
+                                                                                    start: 948,
+                                                                                    end: 956,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Priority                           => 1;",
+                                                            start: 963,
+                                                            end: 1003,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Priority",
+                                                                    start: 963,
+                                                                    end: 971,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 998,
+                                                                    end: 1000,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "1",
+                                                                    start: 1001,
+                                                                    end: 1002,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "1",
+                                                                            start: 1001,
+                                                                            end: 1002,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "1",
+                                                                                    start: 1001,
+                                                                                    end: 1002,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "1",
+                                                                                            start: 1001,
+                                                                                            end: 1002,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Period                             => 1000 ms;",
+                                                            start: 1009,
+                                                            end: 1055,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Period",
+                                                                    start: 1009,
+                                                                    end: 1015,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1044,
+                                                                    end: 1046,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "1000 ms",
+                                                                    start: 1047,
+                                                                    end: 1054,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "1000 ms",
+                                                                            start: 1047,
+                                                                            end: 1054,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "1000 ",
+                                                                                    start: 1047,
+                                                                                    end: 1052,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "1000 ",
+                                                                                            start: 1047,
+                                                                                            end: 1052,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1052,
+                                                                                    end: 1054,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1052,
+                                                                                            end: 1054,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Compute_Execution_time             => 0 ms .. 3 ms;",
+                                                            start: 1061,
+                                                            end: 1112,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Compute_Execution_time",
+                                                                    start: 1061,
+                                                                    end: 1083,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1096,
+                                                                    end: 1098,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "0 ms .. 3 ms",
+                                                                    start: 1099,
+                                                                    end: 1111,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: range_value,
+                                                                        span: Span {
+                                                                            str: "0 ms .. 3 ms",
+                                                                            start: 1099,
+                                                                            end: 1111,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "0 ",
+                                                                                    start: 1099,
+                                                                                    end: 1101,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "0 ",
+                                                                                            start: 1099,
+                                                                                            end: 1101,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1101,
+                                                                                    end: 1103,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1101,
+                                                                                            end: 1103,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "3 ",
+                                                                                    start: 1107,
+                                                                                    end: 1109,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "3 ",
+                                                                                            start: 1107,
+                                                                                            end: 1109,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1109,
+                                                                                    end: 1111,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1109,
+                                                                                            end: 1111,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Deadline                           => 1000 ms;",
+                                                            start: 1118,
+                                                            end: 1164,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Deadline",
+                                                                    start: 1118,
+                                                                    end: 1126,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1153,
+                                                                    end: 1155,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "1000 ms",
+                                                                    start: 1156,
+                                                                    end: 1163,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "1000 ms",
+                                                                            start: 1156,
+                                                                            end: 1163,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "1000 ",
+                                                                                    start: 1156,
+                                                                                    end: 1161,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "1000 ",
+                                                                                            start: 1156,
+                                                                                            end: 1161,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1161,
+                                                                                    end: 1163,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1161,
+                                                                                            end: 1163,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task.impl_1",
+                                                    start: 1172,
+                                                    end: 1183,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "thread Task2\r\n  end Task2;",
+                                    start: 1192,
+                                    end: 1218,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "thread Task2\r\n  end Task2;",
+                                            start: 1192,
+                                            end: 1218,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "thread",
+                                                    start: 1192,
+                                                    end: 1198,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task2",
+                                                    start: 1199,
+                                                    end: 1204,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task2",
+                                                    start: 1212,
+                                                    end: 1217,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;",
+                                    start: 1222,
+                                    end: 1619,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_implementation,
+                                        span: Span {
+                                            str: "thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;",
+                                            start: 1222,
+                                            end: 1619,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "thread",
+                                                    start: 1222,
+                                                    end: 1228,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task2.impl_2",
+                                                    start: 1244,
+                                                    end: 1256,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: calls,
+                                                span: Span {
+                                                    str: "calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  ",
+                                                    start: 1260,
+                                                    end: 1330,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: call_sequence,
+                                                        span: Span {
+                                                            str: "Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };",
+                                                            start: 1271,
+                                                            end: 1326,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Mycalls",
+                                                                    start: 1271,
+                                                                    end: 1278,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: subprogram_call,
+                                                                span: Span {
+                                                                    str: "P_Spg : subprogram Hello_Spg_2;",
+                                                                    start: 1287,
+                                                                    end: 1318,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: identifier,
+                                                                        span: Span {
+                                                                            str: "P_Spg",
+                                                                            start: 1287,
+                                                                            end: 1292,
+                                                                        },
+                                                                        inner: [],
+                                                                    },
+                                                                    Pair {
+                                                                        rule: qualified_identifier,
+                                                                        span: Span {
+                                                                            str: "Hello_Spg_2",
+                                                                            start: 1306,
+                                                                            end: 1317,
+                                                                        },
+                                                                        inner: [],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;",
+                                                    start: 1330,
+                                                    end: 1598,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Dispatch_Protocol                  => Periodic;",
+                                                            start: 1346,
+                                                            end: 1393,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Dispatch_Protocol",
+                                                                    start: 1346,
+                                                                    end: 1363,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1381,
+                                                                    end: 1383,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "Periodic",
+                                                                    start: 1384,
+                                                                    end: 1392,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "Periodic",
+                                                                            start: 1384,
+                                                                            end: 1392,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: enum_value,
+                                                                                span: Span {
+                                                                                    str: "Periodic",
+                                                                                    start: 1384,
+                                                                                    end: 1392,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Priority                           => 2;",
+                                                            start: 1399,
+                                                            end: 1439,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Priority",
+                                                                    start: 1399,
+                                                                    end: 1407,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1434,
+                                                                    end: 1436,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "2",
+                                                                    start: 1437,
+                                                                    end: 1438,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "2",
+                                                                            start: 1437,
+                                                                            end: 1438,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "2",
+                                                                                    start: 1437,
+                                                                                    end: 1438,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "2",
+                                                                                            start: 1437,
+                                                                                            end: 1438,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Period                             => 500 ms;",
+                                                            start: 1445,
+                                                            end: 1490,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Period",
+                                                                    start: 1445,
+                                                                    end: 1451,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1480,
+                                                                    end: 1482,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "500 ms",
+                                                                    start: 1483,
+                                                                    end: 1489,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "500 ms",
+                                                                            start: 1483,
+                                                                            end: 1489,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "500 ",
+                                                                                    start: 1483,
+                                                                                    end: 1487,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "500 ",
+                                                                                            start: 1483,
+                                                                                            end: 1487,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1487,
+                                                                                    end: 1489,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1487,
+                                                                                            end: 1489,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Compute_Execution_time             => 0 ms .. 5 ms;",
+                                                            start: 1496,
+                                                            end: 1547,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Compute_Execution_time",
+                                                                    start: 1496,
+                                                                    end: 1518,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1531,
+                                                                    end: 1533,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "0 ms .. 5 ms",
+                                                                    start: 1534,
+                                                                    end: 1546,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: range_value,
+                                                                        span: Span {
+                                                                            str: "0 ms .. 5 ms",
+                                                                            start: 1534,
+                                                                            end: 1546,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "0 ",
+                                                                                    start: 1534,
+                                                                                    end: 1536,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "0 ",
+                                                                                            start: 1534,
+                                                                                            end: 1536,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1536,
+                                                                                    end: 1538,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1536,
+                                                                                            end: 1538,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "5 ",
+                                                                                    start: 1542,
+                                                                                    end: 1544,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "5 ",
+                                                                                            start: 1542,
+                                                                                            end: 1544,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1544,
+                                                                                    end: 1546,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1544,
+                                                                                            end: 1546,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Deadline                           => 500 ms;",
+                                                            start: 1553,
+                                                            end: 1598,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Deadline",
+                                                                    start: 1553,
+                                                                    end: 1561,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1588,
+                                                                    end: 1590,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "500 ms",
+                                                                    start: 1591,
+                                                                    end: 1597,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "500 ms",
+                                                                            start: 1591,
+                                                                            end: 1597,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: number,
+                                                                                span: Span {
+                                                                                    str: "500 ",
+                                                                                    start: 1591,
+                                                                                    end: 1595,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: numbervalue,
+                                                                                        span: Span {
+                                                                                            str: "500 ",
+                                                                                            start: 1591,
+                                                                                            end: 1595,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: unit,
+                                                                                span: Span {
+                                                                                    str: "ms",
+                                                                                    start: 1595,
+                                                                                    end: 1597,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: no_point_identifier,
+                                                                                        span: Span {
+                                                                                            str: "ms",
+                                                                                            start: 1595,
+                                                                                            end: 1597,
+                                                                                        },
+                                                                                        inner: [],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "Task2.impl_2",
+                                                    start: 1606,
+                                                    end: 1618,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "processor cpu \r\n  end cpu;",
+                                    start: 1684,
+                                    end: 1710,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "processor cpu \r\n  end cpu;",
+                                            start: 1684,
+                                            end: 1710,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "processor",
+                                                    start: 1684,
+                                                    end: 1693,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "cpu",
+                                                    start: 1694,
+                                                    end: 1697,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "cpu",
+                                                    start: 1706,
+                                                    end: 1709,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;",
+                                    start: 1716,
+                                    end: 1855,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_implementation,
+                                        span: Span {
+                                            str: "processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;",
+                                            start: 1716,
+                                            end: 1855,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "processor",
+                                                    start: 1716,
+                                                    end: 1725,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "cpu.impl",
+                                                    start: 1741,
+                                                    end: 1749,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  ",
+                                                    start: 1754,
+                                                    end: 1842,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);",
+                                                            start: 1770,
+                                                            end: 1838,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Scheduling_Protocol",
+                                                                    start: 1770,
+                                                                    end: 1789,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1790,
+                                                                    end: 1792,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)",
+                                                                    start: 1793,
+                                                                    end: 1837,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "(POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)",
+                                                                            start: 1793,
+                                                                            end: 1837,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: string_literal,
+                                                                                span: Span {
+                                                                                    str: "(POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)",
+                                                                                    start: 1793,
+                                                                                    end: 1837,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "cpu.impl",
+                                                    start: 1846,
+                                                    end: 1854,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "process node_a\r\n  end node_a;",
+                                    start: 1920,
+                                    end: 1949,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "process node_a\r\n  end node_a;",
+                                            start: 1920,
+                                            end: 1949,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "process",
+                                                    start: 1920,
+                                                    end: 1927,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "node_a",
+                                                    start: 1928,
+                                                    end: 1934,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "node_a",
+                                                    start: 1942,
+                                                    end: 1948,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;",
+                                    start: 1955,
+                                    end: 2093,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_implementation,
+                                        span: Span {
+                                            str: "process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;",
+                                            start: 1955,
+                                            end: 2093,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "process",
+                                                    start: 1955,
+                                                    end: 1962,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "node_a.impl",
+                                                    start: 1978,
+                                                    end: 1989,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: subcomponents,
+                                                span: Span {
+                                                    str: "subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;",
+                                                    start: 1993,
+                                                    end: 2073,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: subcomponent,
+                                                        span: Span {
+                                                            str: "Task1 : thread Task.impl_1;",
+                                                            start: 2012,
+                                                            end: 2039,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Task1",
+                                                                    start: 2012,
+                                                                    end: 2017,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: component_category,
+                                                                span: Span {
+                                                                    str: "thread",
+                                                                    start: 2020,
+                                                                    end: 2026,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Task.impl_1",
+                                                                    start: 2027,
+                                                                    end: 2038,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: subcomponent,
+                                                        span: Span {
+                                                            str: "Task2 : thread Task2.impl_2;",
+                                                            start: 2045,
+                                                            end: 2073,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Task2",
+                                                                    start: 2045,
+                                                                    end: 2050,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: component_category,
+                                                                span: Span {
+                                                                    str: "thread",
+                                                                    start: 2053,
+                                                                    end: 2059,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Task2.impl_2",
+                                                                    start: 2060,
+                                                                    end: 2072,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "node_a.impl",
+                                                    start: 2081,
+                                                    end: 2092,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "system rma\r\n  end rma;",
+                                    start: 2149,
+                                    end: 2171,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "system rma\r\n  end rma;",
+                                            start: 2149,
+                                            end: 2171,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "system",
+                                                    start: 2149,
+                                                    end: 2155,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "rma",
+                                                    start: 2156,
+                                                    end: 2159,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "rma",
+                                                    start: 2167,
+                                                    end: 2170,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;",
+                                    start: 2177,
+                                    end: 2429,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_implementation,
+                                        span: Span {
+                                            str: "system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;",
+                                            start: 2177,
+                                            end: 2429,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "system",
+                                                    start: 2177,
+                                                    end: 2183,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "rma.impl",
+                                                    start: 2199,
+                                                    end: 2207,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: subcomponents,
+                                                span: Span {
+                                                    str: "subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;",
+                                                    start: 2211,
+                                                    end: 2330,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: subcomponent,
+                                                        span: Span {
+                                                            str: "node_a : process node_a.impl;",
+                                                            start: 2230,
+                                                            end: 2259,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "node_a",
+                                                                    start: 2230,
+                                                                    end: 2236,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: component_category,
+                                                                span: Span {
+                                                                    str: "process",
+                                                                    start: 2239,
+                                                                    end: 2246,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "node_a.impl",
+                                                                    start: 2247,
+                                                                    end: 2258,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: subcomponent,
+                                                        span: Span {
+                                                            str: "cpu\t   : processor cpu.impl;",
+                                                            start: 2302,
+                                                            end: 2330,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "cpu",
+                                                                    start: 2302,
+                                                                    end: 2305,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: component_category,
+                                                                span: Span {
+                                                                    str: "processor",
+                                                                    start: 2311,
+                                                                    end: 2320,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "cpu.impl",
+                                                                    start: 2321,
+                                                                    end: 2329,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  ",
+                                                    start: 2334,
+                                                    end: 2416,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Actual_Processor_Binding => reference (cpu) applies to node_a;",
+                                                            start: 2350,
+                                                            end: 2412,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Actual_Processor_Binding",
+                                                                    start: 2350,
+                                                                    end: 2374,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 2375,
+                                                                    end: 2377,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "reference (cpu) applies to node_a",
+                                                                    start: 2378,
+                                                                    end: 2411,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: reference_value,
+                                                                        span: Span {
+                                                                            str: "reference (cpu) applies to node_a",
+                                                                            start: 2378,
+                                                                            end: 2411,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: qualified_identifier,
+                                                                                span: Span {
+                                                                                    str: "cpu",
+                                                                                    start: 2389,
+                                                                                    end: 2392,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: qualified_identifier,
+                                                                                span: Span {
+                                                                                    str: "node_a",
+                                                                                    start: 2405,
+                                                                                    end: 2411,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "rma.impl",
+                                                    start: 2420,
+                                                    end: 2428,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                    Pair {
+                        rule: package_name,
+                        span: Span {
+                            str: "RMAAadl",
+                            start: 2437,
+                            end: 2444,
+                        },
+                        inner: [
+                            Pair {
+                                rule: qualified_identifier,
+                                span: Span {
+                                    str: "RMAAadl",
+                                    start: 2437,
+                                    end: 2444,
+                                },
+                                inner: [],
+                            },
+                        ],
+                    },
+                ],
+            },
+            Pair {
+                rule: EOI,
+                span: Span {
+                    str: "",
+                    start: 2447,
+                    end: 2447,
+                },
+                inner: [],
+            },
+        ],
+    },
+]

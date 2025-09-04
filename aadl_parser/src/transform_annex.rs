@@ -601,8 +601,23 @@ pub fn transform_assignment_action(pair: Pair<aadlight_parser::Rule>) -> BasicAc
         AssignmentValue::Any
     };
     
+    // 根据 target_str 确定目标类型
+    let target = {
+        use crate::transform::get_global_port_manager;
+        if let Ok(manager) = get_global_port_manager().lock() {
+            if manager.is_outgoing_port(&target_str) {
+                Target::OutgoingPort(target_str)
+            } else {
+                Target::LocalVariable(target_str)
+            }
+        } else {
+            // 如果无法获取端口管理器，默认为本地变量
+            Target::LocalVariable(target_str)
+        }
+    };
+    
     BasicAction::Assignment(AssignmentAction {
-        target: Target::LocalVariable(target_str),
+        target,
         value,
     })
 }
@@ -828,9 +843,7 @@ fn transform_simple_expression(pair: Pair<aadlight_parser::Rule>) -> SimpleExpre
     // 处理二元加法操作
     while let Some(binary_op) = inner_iter.next() {
         // 检查是否是二元加法操作符
-        println!("!!!!!!!!!!!!!!!!!!!!binary_op: {:?}", binary_op.as_rule());
         if binary_op.as_rule() == aadlight_parser::Rule::binary_adding_operator {
-            println!("!!!!!!!!!!!!!!!!!!!!binary_op: {}", binary_op.as_str());
             let operator = match binary_op.as_str() {
                 "+" => AdditiveOperator::Add,
                 "-" => AdditiveOperator::Subtract,
@@ -916,7 +929,6 @@ fn transform_factor(pair: Pair<aadlight_parser::Rule>) -> Factor {
     match first.as_rule() {
         aadlight_parser::Rule::value => {
             let value = transform_value(first);
-            
             // 检查是否有二元数值操作符
             if let Some(binary_op) = inner_iter.next() {
                 if binary_op.as_rule() == aadlight_parser::Rule::binary_numeric_operator {
@@ -997,7 +1009,7 @@ fn transform_value_constant(pair: Pair<aadlight_parser::Rule>) -> ValueConstant 
     
     match inner.as_rule() {
         aadlight_parser::Rule::number => {
-            ValueConstant::Numeric(inner.as_str().to_string())
+            ValueConstant::Numeric(inner.as_str().trim().to_string())
         }
         aadlight_parser::Rule::boolean => {
             let val = match inner.as_str() {

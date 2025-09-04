@@ -8,6 +8,53 @@ use crate::transform_annex::*;
 // 引入 annex 转换模块
 // transform_annex 现在在 main.rs 中声明
 
+// 端口信息管理结构体
+#[derive(Debug, Clone)]
+pub struct PortInfo {
+    pub name: String,
+    pub direction: PortDirection,
+}
+
+// 端口信息管理器
+pub struct PortManager {
+    ports: Vec<PortInfo>,
+}
+
+impl PortManager {
+    pub fn new() -> Self {
+        Self { ports: Vec::new() }
+    }
+    
+    pub fn add_port(&mut self, name: String, direction: PortDirection) {
+        self.ports.push(PortInfo { name, direction });
+    }
+    
+    pub fn get_port_direction(&self, name: &str) -> Option<PortDirection> {
+        self.ports.iter()
+            .find(|port| port.name == name)
+            .map(|port| port.direction.clone())
+    }
+    
+    pub fn is_outgoing_port(&self, name: &str) -> bool {
+        if let Some(direction) = self.get_port_direction(name) {
+            matches!(direction, PortDirection::Out | PortDirection::InOut)
+        } else {
+            false
+        }
+    }
+}
+
+// 全局端口管理器
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+
+static GLOBAL_PORT_MANAGER: Lazy<Mutex<PortManager>> = Lazy::new(|| {
+    Mutex::new(PortManager::new())
+});
+
+pub fn get_global_port_manager() -> &'static Mutex<PortManager> {
+    &GLOBAL_PORT_MANAGER
+}
 
 // 辅助函数：从 Pair 中提取标识符
 pub fn extract_identifier(pair: Pair<aadlight_parser::Rule>) -> String {
@@ -25,18 +72,26 @@ pub fn extract_package_name(pair: Pair<aadlight_parser::Rule>) -> PackageName {
 }
 
 // 主转换结构体
-pub struct AADLTransformer;
+pub struct AADLTransformer {
+    port_manager: PortManager,
+}
 
 #[warn(unused_mut)]
 impl AADLTransformer {
+    pub fn new() -> Self {
+        Self {
+            port_manager: PortManager::new(),
+        }
+    }
+    
     pub fn transform_file(pairs: Vec<Pair<aadlight_parser::Rule>>) -> Vec<Package> {
+        let mut transformer = Self::new();
         let mut packages = Vec::new();
         
         // for pair in pairs {
         //     println!("处理规则: {:?}, 内容: {}", pair.as_rule(), pair.as_str());
         //     if pair.as_rule() == aadlight_parser::Rule::package_declaration { //检查是否是package_declaration规则
         //         if let Some(pkg) = Self::transform_package(pair) {
-        //             packages.push(pkg);
         //         }
         //     }
         // }
@@ -50,7 +105,7 @@ impl AADLTransformer {
                     //println!("  内部规则: {:?}, 内容: {}", inner.as_rule(), inner.as_str());
                     //println!("  内部规则: {:?}", inner.as_rule());
                     if inner.as_rule() == aadlight_parser::Rule::package_declaration {
-                        if let Some(pkg) = Self::transform_package(inner) {
+                        if let Some(pkg) = transformer.transform_package(inner) {
                             packages.push(pkg);
                         }
                     }
@@ -62,7 +117,7 @@ impl AADLTransformer {
         packages
     }
     
-    pub fn transform_package(pair: Pair<aadlight_parser::Rule>) -> Option<Package> {
+    pub fn transform_package(&mut self, pair: Pair<aadlight_parser::Rule>) -> Option<Package> {
         //println!("=== 调试 package ===");
         //println!("pair = Rule::{:?}", pair.as_rule());
         // for (i, inner) in pair.clone().into_inner().enumerate() {
@@ -84,7 +139,7 @@ impl AADLTransformer {
                     visibility_decls.push(Self::transform_visibility_declaration(inner));
                 }
                 aadlight_parser::Rule::package_sections => {
-                    let section = Self::transform_package_section(inner);
+                    let section = self.transform_package_section(inner);
                     if section.is_public {
                         public_section = Some(section);
                     } else {
@@ -155,7 +210,7 @@ impl AADLTransformer {
         }
     }
     
-    pub fn transform_package_section(pair: Pair<aadlight_parser::Rule>) -> PackageSection {
+    pub fn transform_package_section(&mut self, pair: Pair<aadlight_parser::Rule>) -> PackageSection {
         // println!("=== 调试 package_section ===");
         // println!("pair = Rule::{:?}", pair.as_rule());
         // for (i, inner) in pair.clone().into_inner().enumerate() {
@@ -179,7 +234,7 @@ impl AADLTransformer {
                 }
                 _ => {
                     // 如果不是修饰符，则是说明其是一个声明
-                    declarations.push(Self::transform_declaration(first));
+                    declarations.push(self.transform_declaration(first));
                 }
             }
         }
@@ -188,7 +243,7 @@ impl AADLTransformer {
         for inner in inner_iter {
             match inner.as_rule() {
                 aadlight_parser::Rule::declaration => {
-                    declarations.push(Self::transform_declaration(inner));
+                    declarations.push(self.transform_declaration(inner));
                 }
                 _ => {} // 忽略其他规则
             }
@@ -200,11 +255,11 @@ impl AADLTransformer {
         }
     }
     
-    pub fn transform_declaration(pair: Pair<aadlight_parser::Rule>) -> AadlDeclaration {
+    pub fn transform_declaration(&mut self, pair: Pair<aadlight_parser::Rule>) -> AadlDeclaration {
         let inner = pair.into_inner().next().unwrap();
         match inner.as_rule() {
             aadlight_parser::Rule::component_type => {
-                AadlDeclaration::ComponentType(Self::transform_component_type(inner))
+                AadlDeclaration::ComponentType(self.transform_component_type(inner))
             }
             aadlight_parser::Rule::component_implementation => {
                 AadlDeclaration::ComponentImplementation(Self::transform_component_implementation(inner))
@@ -216,7 +271,7 @@ impl AADLTransformer {
         }
     }
     
-    pub fn transform_component_type(pair: Pair<aadlight_parser::Rule>) -> ComponentType {
+    pub fn transform_component_type(&mut self, pair: Pair<aadlight_parser::Rule>) -> ComponentType {
         let mut inner_iter = pair.into_inner();
         
         let category = match inner_iter.next().unwrap().as_str() {
@@ -244,7 +299,7 @@ impl AADLTransformer {
                     prototypes = Self::transform_prototypes_clause(inner);
                 }
                 aadlight_parser::Rule::features => {
-                    features = Self::transform_features_clause(inner);
+                    features = self.transform_features_clause(inner);
                 }
                 aadlight_parser::Rule::properties => {
                     properties = Self::transform_properties_clause(inner);
@@ -327,7 +382,7 @@ impl AADLTransformer {
         }
     }
     
-    pub fn transform_features_clause(pair: Pair<aadlight_parser::Rule>) -> FeatureClause {
+    pub fn transform_features_clause(&mut self, pair: Pair<aadlight_parser::Rule>) -> FeatureClause {
         if pair.as_str().contains("none") {
             return FeatureClause::Empty;
         }
@@ -335,7 +390,16 @@ impl AADLTransformer {
         let mut features = Vec::new();
         for inner in pair.into_inner() {
             if inner.as_rule() == aadlight_parser::Rule::feature_declaration {
-                features.push(Self::transform_feature_declaration(inner));
+                let feature = Self::transform_feature_declaration(inner);
+                
+                // 收集端口信息
+                if let Feature::Port(port_spec) = &feature {
+                    if let Ok(mut manager) = get_global_port_manager().lock() {
+                        manager.add_port(port_spec.identifier.clone(), port_spec.direction.clone());
+                    }
+                }
+                
+                features.push(feature);
             }
         }
         

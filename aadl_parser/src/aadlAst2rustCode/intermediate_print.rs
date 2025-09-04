@@ -380,6 +380,18 @@ impl RustCodeGenerator {
         }
     }
 
+    // 专门用于生成 match 分支体的方法
+    fn generate_match_arm_body(&mut self, block: &Block) {
+        for stmt in &block.stmts {
+            self.generate_statement(stmt);
+        }
+
+        if let Some(expr) = &block.expr {
+            self.generate_expr(expr);
+            // match 分支的最后一个表达式永远不应该有分号，因为它是返回值
+        }
+    }
+
     fn generate_statement(&mut self, stmt: &Statement) {
         match stmt {
             Statement::Let(ls) => {
@@ -422,6 +434,15 @@ impl RustCodeGenerator {
                 self.writeln(";");
             }
             Statement::Item(item) => self.generate_item(item),
+            Statement::Continue => {
+                self.writeln("continue;");
+            }
+            Statement::Break => {
+                self.writeln("break;");
+            }
+            Statement::Comment(comment) => {
+                self.writeln(&format!("// {}", comment));
+            }
         }
     }
 
@@ -548,7 +569,8 @@ impl RustCodeGenerator {
                     } else if arm.pattern.contains("TryRecvError::Disconnected") {
                         self.writeln("// 通道已关闭");
                     }
-                    self.generate_block(&arm.body);
+                    // 生成分支体，但不为最后的表达式添加分号
+                    self.generate_match_arm_body(&arm.body);
                     self.dedent();
                     self.writeln("},");
                 }
@@ -636,7 +658,26 @@ impl RustCodeGenerator {
                 self.write(" ");
                 self.generate_expr(right);
             }
-            //_ => self.write(""),
+            Expr::Assign(left, right) => {
+                self.generate_expr(left);
+                self.write(" = ");
+                self.generate_expr(right);
+            }
+            Expr::UnaryOp(op, expr) => {
+                self.write(op);
+                self.generate_expr(expr);
+            }
+            Expr::Index(array, index) => {
+                self.generate_expr(array);
+                self.write("[");
+                self.generate_expr(index);
+                self.write("]");
+            }
+            Expr::Parenthesized(expr) => {
+                self.write("(");
+                self.generate_expr(expr);
+                self.write(")");
+            }
         }
     }
 
