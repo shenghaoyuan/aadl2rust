@@ -36,3 +36,11 @@ demo，尝试aadl_ast -> rust_ast -> rust code的流程。
 ## pingpongcallc
 
 手写的在rust项目中调用c程序，可参考Notion中**Rust中调用C代码**。
+
+## model_eval
+
+简单的AADL模型自动评估工具，统计结构规模和行为复杂度。
+
+## *_test
+
+各案例生成的代码在Linux下可运行的完整项目。
