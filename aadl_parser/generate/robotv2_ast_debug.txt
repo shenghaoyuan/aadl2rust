@@ -871,35 +871,6 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s1 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
                                                                                                     pattern: "State::s2",
                                                                                                     guard: None,
                                                                                                     body: Block {
@@ -919,6 +890,35 @@ RustModule {
                                                                                                                         Literal(
                                                                                                                             Str(
                                                                                                                                 "Unexpected s2 state condition",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "panic!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "Unexpected s1 state condition",
                                                                                                                             ),
                                                                                                                         ),
                                                                                                                     ],
@@ -4667,6 +4667,89 @@ RustModule {
                     ),
                 ],
                 trait_impl: None,
+            },
+        ),
+        LazyStatic(
+            LazyStaticDef {
+                name: "CPU_ID_TO_SCHED_POLICY",
+                ty: Generic(
+                    "HashMap",
+                    [
+                        Named(
+                            "isize",
+                        ),
+                        Named(
+                            "i32",
+                        ),
+                    ],
+                ),
+                init: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: true,
+                                name: "map",
+                                ty: Some(
+                                    Generic(
+                                        "HashMap",
+                                        [
+                                            Named(
+                                                "isize",
+                                            ),
+                                            Named(
+                                                "i32",
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                                init: Some(
+                                    Call(
+                                        Path(
+                                            [
+                                                "HashMap",
+                                                "new",
+                                            ],
+                                            Namespace,
+                                        ),
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            MethodCall(
+                                Ident(
+                                    "map",
+                                ),
+                                "insert",
+                                [
+                                    Literal(
+                                        Int(
+                                            0,
+                                        ),
+                                    ),
+                                    Path(
+                                        [
+                                            "SCHED_FIFO",
+                                        ],
+                                        Namespace,
+                                    ),
+                                ],
+                            ),
+                        ),
+                        Expr(
+                            Ident(
+                                "return map",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                vis: Public,
+                docs: [
+                    "// CPU ID到调度策略的映射",
+                    "// 自动从AADL CPU实现中生成",
+                ],
             },
         ),
     ],

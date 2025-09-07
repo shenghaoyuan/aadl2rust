@@ -1,4 +1,3 @@
-// src/aadl_to_rust/converter.rs
 // aadlAST2rustAST
 use super::intermediate_ast::*;
 use super::converter_annex::AnnexConverter;
@@ -11,6 +10,8 @@ pub struct AadlConverter {
     port_handlers: HashMap<String, PortHandlerConfig>,
     component_types: HashMap<String, ComponentType>, // 存储组件类型信息，（为了有些情况下，需要在组件实现中，根据组件类型来获取端口信息）
     annex_converter: AnnexConverter, // Behavior Annex 转换器
+    cpu_scheduling_protocols: HashMap<String, String>, // 存储CPU实现的调度协议信息
+    cpu_name_to_id_mapping: HashMap<String, usize>, // 存储CPU名称到ID的映射关系
 }
 
 #[derive(Debug)]
@@ -30,6 +31,8 @@ impl Default for AadlConverter {
             port_handlers: HashMap::new(),
             component_types: HashMap::new(),
             annex_converter: AnnexConverter::default(),
+            cpu_scheduling_protocols: HashMap::new(),
+            cpu_name_to_id_mapping: HashMap::new(),
         }
     }
 }
@@ -66,6 +69,10 @@ impl AadlConverter {
             }
         }
 
+        //处理CPU和分配ID的映射关系，生成的Rust代码中，初始化<CPU名称,ID>的映射关系
+        self.convert_cpu_schedule_mapping(&mut module, &self.cpu_scheduling_protocols, &self.cpu_name_to_id_mapping);
+        println!("cpu_scheduling_protocols: {:?}", self.cpu_scheduling_protocols);
+        println!("cpu_name_to_id_mapping: {:?}", self.cpu_name_to_id_mapping);
         module
     }
 
@@ -332,7 +339,7 @@ impl AadlConverter {
         items
     }
 
-    fn create_system_impl_block(&self, impl_: &ComponentImplementation) -> ImplBlock {
+    fn create_system_impl_block(&mut self, impl_: &ComponentImplementation) -> ImplBlock {
         let mut items = Vec::new();
 
         // 添加new方法
@@ -594,38 +601,6 @@ impl AadlConverter {
         }
     }
 
-    // fn create_threadtype_impl(&self, comp: &ComponentType) -> Option<ImplBlock> {
-    //     // 如果未提取到 period，说明不是周期性函数(也可能是period在实现中不在原型里)，则提前返回 None
-    //     let period = self.extract_period(comp)?;
-    //     Some(ImplBlock {
-    //         target: Type::Named(format!("{}Thread", comp.identifier.to_lowercase())),
-    //         generics: Vec::new(),
-    //         items: vec![ImplItem::Method(FunctionDef {
-    //             name: "run".to_string(),
-    //             params: vec![Param {
-    //                 name: "self".to_string(),
-    //                 ty: Type::Reference(
-    //                     Box::new(Type::Named(format!(
-    //                         "{}Thread",
-    //                         comp.identifier.to_lowercase()
-    //                     ))),
-    //                     true,
-    //                     true,
-    //                 ),
-    //             }],
-    //             return_type: Type::Unit,
-    //             body: self.create_thread_body(period),
-    //             asyncness: true,
-    //             vis: Visibility::Public,
-    //             docs: vec![
-    //                 "// Thread execution entry point".to_string(),
-    //                 format!("// Period: {}ms", period),
-    //             ],
-    //             attrs: Vec::new(),
-    //         })],
-    //         trait_impl: None,
-    //     })
-    // }
 
     fn extract_period(&self, comp: &ComponentType) -> Option<u64> {
         if let PropertyClause::Properties(props) = &comp.properties {
@@ -977,11 +952,12 @@ impl AadlConverter {
             ComponentCategory::Thread => self.convert_thread_implemenation(impl_),
             ComponentCategory::System => self.convert_system_implementation(impl_),
             ComponentCategory::Data => self.convert_data_implementation(impl_),
+            ComponentCategory::Processor => self.convert_processor_implementation(impl_),
             _ => Vec::default(), // 默认实现
         }
     }
 
-    fn convert_system_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+    fn convert_system_implementation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
         let mut items = Vec::new();
 
         // 1. 生成系统结构体
@@ -1070,7 +1046,7 @@ impl AadlConverter {
         items
     }
 
-    fn convert_process_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
+    fn convert_process_implementation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
         let mut items = Vec::new();
 
         // 1. 生成进程结构体
@@ -1104,7 +1080,7 @@ impl AadlConverter {
     }
 
     //处理子组件（thread+data）
-    fn get_process_fields(&self, impl_: &ComponentImplementation) -> Vec<Field> {
+    fn get_process_fields(&mut self, impl_: &ComponentImplementation) -> Vec<Field> {
         let mut fields = Vec::new();
 
         // 1. 添加进程的端口字段（对外端口 + 内部端口）
@@ -1222,7 +1198,10 @@ impl AadlConverter {
 
                 // 根据类别决定字段类型
                 let field_ty = match sub.category {
-                    ComponentCategory::Thread => Type::Named(format!("{}Thread", type_name.to_lowercase())),
+                    ComponentCategory::Thread => {
+                        // 保存线程到进程的绑定关系
+                        Type::Named(format!("{}Thread", type_name.to_lowercase()))
+                    }
                     ComponentCategory::Data => {
                         // 直接使用原始类型名，不进行大小写转换
                         Type::Named(format!("{}Shared", type_name))
@@ -2033,9 +2012,31 @@ impl AadlConverter {
                                     )),
                                     Vec::new(),
                                 ),
-                                Expr::Path(
-                                    vec!["SCHED_FIFO".to_string()],
-                                    PathType::Namespace,
+                                Expr::MethodCall(
+                                    Box::new(Expr::MethodCall(
+                                        Box::new(Expr::Path(
+                                            vec!["*CPU_ID_TO_SCHED_POLICY".to_string()],
+                                            PathType::Namespace,
+                                        )),
+                                        "get".to_string(),
+                                        vec![Expr::Reference(
+                                            Box::new(Expr::Path(
+                                                vec!["self".to_string(), "cpu_id".to_string()],
+                                                PathType::Member,
+                                            )),
+                                            true,
+                                            false,
+                                        )],
+                                    )),
+                                    "unwrap_or".to_string(),
+                                    vec![Expr::Reference(
+                                        Box::new(Expr::Path(
+                                            vec!["SCHED_FIFO".to_string()],
+                                            PathType::Namespace,
+                                        )),
+                                        true,
+                                        false,
+                                    )],
                                 ),
                                 Expr::Reference(
                                     Box::new(Expr::Ident("param".to_string())),
@@ -2874,25 +2875,23 @@ impl AadlConverter {
         bindings
     }
     // 创建系统实例中new()方法
-    fn create_system_new_body(&self, impl_: &ComponentImplementation) -> Block {
+    fn create_system_new_body(&mut self, impl_: &ComponentImplementation) -> Block {
         let mut stmts = Vec::new();
 
         // 1. 提取处理器绑定信息并创建CPU映射
         let processor_bindings = self.extract_processor_bindings(impl_);
-        let mut cpu_mapping = Vec::new();
-        let mut next_cpu_id = 0;
         
-        // 为每个唯一的CPU名称分配一个ID
+        // 为每个唯一的CPU名称分配一个ID（如果还没有分配的话）
         for (_, cpu_name) in &processor_bindings {
-            if !cpu_mapping.iter().any(|(name, _)| name == cpu_name) {
-                cpu_mapping.push((cpu_name.clone(), next_cpu_id));
-                next_cpu_id += 1;
+            if !self.cpu_name_to_id_mapping.contains_key(cpu_name) {
+                let next_id = self.cpu_name_to_id_mapping.len();
+                self.cpu_name_to_id_mapping.insert(cpu_name.clone(), next_id);
             }
         }
         
         // 如果没有处理器绑定，默认使用CPU 0
-        if cpu_mapping.is_empty() {
-            cpu_mapping.push(("default".to_string(), 0));
+        if self.cpu_name_to_id_mapping.is_empty() {
+            self.cpu_name_to_id_mapping.insert("default".to_string(), 0);
         }
 
         // 2. 创建子组件实例 - 只处理进程组件
@@ -2914,9 +2913,7 @@ impl AadlConverter {
                     let cpu_id = processor_bindings.iter()
                         .find(|(process_name, _)| process_name == &sub.identifier)
                         .and_then(|(_, cpu_name)| {
-                            cpu_mapping.iter()
-                                .find(|(name, _)| name == cpu_name)
-                                .map(|(_, id)| *id)
+                            self.cpu_name_to_id_mapping.get(cpu_name).copied()
                         })
                         .unwrap_or(0); // 默认使用CPU 0
                     
@@ -2935,19 +2932,6 @@ impl AadlConverter {
                         // 处理端口连接，使用与进程相同的逻辑
                         stmts.extend(self.create_channel_connection(port_conn));
                     }
-                    // Connection::Access(access_conn) => {
-                    //     // 处理数据访问连接
-                    //     match (&access_conn.source, &access_conn.destination) {
-                    //         (AccessEndpoint::ComponentAccess(data_name), AccessEndpoint::SubcomponentAccess { subcomponent: component_name, .. }) => {
-                    //             let component_var = component_name.to_lowercase();
-                    //             let data_var = data_name.to_lowercase();
-                    //             let connection_stmt = format!("// build connection: \n            {}.{} = Some({}.clone());", 
-                    //                 component_var, data_var, data_var);
-                    //             stmts.push(Statement::Expr(Expr::Ident(connection_stmt)));
-                    //         }
-                    //         _ => {}
-                    //     }
-                    // }
                     _ => {
                         // 对于其他类型的连接，生成TODO注释
                         stmts.push(Statement::Expr(Expr::Ident(format!(
@@ -3102,9 +3086,113 @@ impl AadlConverter {
         data_access_calls
     }
 
+    // 生成CPU调度策略映射的静态代码
+    
+    // 转换CPU实现
+    fn convert_processor_implementation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
+        // 从CPU实现中提取Scheduling_Protocol属性并保存
+        let cpu_name = impl_.name.type_identifier.clone();
+        
+        if let PropertyClause::Properties(props) = &impl_.properties {
+            for prop in props {
+                if let Property::BasicProperty(bp) = prop {
+                    if bp.identifier.name.to_lowercase() == "scheduling_protocol" {
+                        if let PropertyValue::Single(PropertyExpression::String(
+                            StringTerm::Literal(scheduling_protocol),
+                        )) = &bp.value
+                        {
+                            self.cpu_scheduling_protocols.insert(cpu_name.clone(), scheduling_protocol.clone());
+                            return Vec::new(); // CPU实现不生成代码，只保存信息
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 如果没有找到Scheduling_Protocol属性，使用默认值
+        self.cpu_scheduling_protocols.insert(cpu_name.clone(), "FIFO".to_string());
+        println!("CPU实现 {} 未指定调度协议，使用默认值: FIFO", cpu_name);
+        
+        Vec::new() // CPU实现不生成代码，只保存信息
+    }
+    fn convert_cpu_schedule_mapping(&self, module: &mut RustModule, cpu_scheduling_protocols: &HashMap<String, String>, cpu_name_to_id_mapping: &HashMap<String, usize>) {
+        // 如果没有CPU映射信息，则不生成代码
+        if cpu_name_to_id_mapping.is_empty() {
+            return;
+        }
 
+        // 生成map.insert语句
+        let mut map_insertions = Vec::new();
+        
+        for (cpu_name, cpu_id) in cpu_name_to_id_mapping {
+            // 获取该CPU的调度协议
+            let scheduling_protocol = cpu_scheduling_protocols.get(cpu_name)
+                .map(|s| s.as_str())
+                .unwrap_or("FIFO"); // 默认使用FIFO
+            
+            // 将调度协议转换为对应的常量
+            let sched_constant = match scheduling_protocol.to_uppercase().as_str() {
+                "POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL" => "SCHED_FIFO",
+                "ROUND_ROBIN_PROTOCOL" => "SCHED_RR", 
+                "EDF" => "SCHED_DEADLINE",
+                _ => "SCHED_FIFO", // 默认值
+            };
+            
+            // 生成 map.insert(cpu_id, sched_constant);
+            map_insertions.push(Statement::Expr(Expr::MethodCall(
+                Box::new(Expr::Ident("map".to_string())),
+                "insert".to_string(),
+                vec![
+                    Expr::Literal(Literal::Int(*cpu_id as i64)),
+                    Expr::Path(vec![sched_constant.to_string()], PathType::Namespace),
+                ],
+            )));
+        }
 
+        // 构建初始化块的代码
+        let mut init_stmts = Vec::new();
+        
+        // let mut map = HashMap::new();
+        init_stmts.push(Statement::Let(LetStmt {
+            ifmut: true,
+            name: "map".to_string(),
+            ty: Some(Type::Generic("HashMap".to_string(), vec![
+                Type::Named("isize".to_string()),
+                Type::Named("i32".to_string()),
+            ])),
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(vec!["HashMap".to_string(), "new".to_string()], PathType::Namespace)),
+                Vec::new(),
+            )),
+        }));
+        
+        // 添加map.insert语句
+        init_stmts.extend(map_insertions);
+        
+        // map // 返回map
+        init_stmts.push(Statement::Expr(Expr::Ident("return map".to_string())));
 
+        // 创建 LazyStaticDef
+        let lazy_static_def = LazyStaticDef {
+            name: "CPU_ID_TO_SCHED_POLICY".to_string(),
+            ty: Type::Generic("HashMap".to_string(), vec![
+                Type::Named("isize".to_string()),
+                Type::Named("i32".to_string()),
+            ]),
+            init: Block {
+                stmts: init_stmts,
+                expr: None,
+            },
+            vis: Visibility::Public,
+            docs: vec![
+                "// CPU ID到调度策略的映射".to_string(),
+                "// 自动从AADL CPU实现中生成".to_string(),
+            ],
+        };
+
+        // 将 LazyStatic 添加到模块中
+        module.items.push(Item::LazyStatic(lazy_static_def));
+    }
 
 
 

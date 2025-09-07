@@ -22,6 +22,7 @@ pub enum Item {
     TypeAlias(TypeAlias),
     Use(UseStatement),
     Mod(Box<RustModule>), // 嵌套模块
+    LazyStatic(LazyStaticDef), // lazy_static! 宏
 }
 
 /// 结构体定义
@@ -149,8 +150,7 @@ pub enum Expr {
     UnaryOp(String, Box<Expr>), // op expr, 如 !x, -y
     Index(Box<Expr>, Box<Expr>), // expr[index], 如 array[i]
     Parenthesized(Box<Expr>), // (expr), 如 (a + b)
-    Assign(Box<Expr>, Box<Expr>), // left = right, 如 state = State::S0
-
+    Assign(Box<Expr>, Box<Expr>), // left = right, 如 state = State::S0 // 新增：lazy_static! 宏支持
 }
 
 // Match 表达式的分支
@@ -288,4 +288,14 @@ pub enum UseKind {
     Simple,
     Glob,    // {path}::*
     Nested(Vec<String>),  // {path}::{a, b}
+}
+
+/// lazy_static! 宏定义
+#[derive(Debug, Clone)]
+pub struct LazyStaticDef {
+    pub name: String,
+    pub ty: Type,
+    pub init: Block,
+    pub vis: Visibility,
+    pub docs: Vec<String>,
 }

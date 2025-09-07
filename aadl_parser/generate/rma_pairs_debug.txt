@@ -2,17 +2,17 @@
     Pair {
         rule: file,
         span: Span {
-            str: "--  This AADL model illustrates how to conduct schedulability analysis\r\n--  using Cheddar, and then code generation of periodic tasks.\r\n--\r\n--  Two periodic tasks run in parallel, without interaction. Tasks\r\n--  parameters allows RMA analysis\r\n\r\npackage RMAAadl\r\npublic\r\n  with Processors;\r\n\r\n  -----------------\r\n  -- Subprograms --\r\n  -----------------\r\n\r\n  subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu \r\n  end cpu;\r\n\r\n  processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;\r\n\r\nend RMAAadl;\r\n",
+            str: "--  This AADL model illustrates how to conduct schedulability analysis\r\n--  using Cheddar, and then code generation of periodic tasks.\r\n--\r\n--  Two periodic tasks run in parallel, without interaction. Tasks\r\n--  parameters allows RMA analysis\r\n\r\npackage RMAAadl\r\npublic\r\n  with Processors;\r\n\r\n  -----------------\r\n  -- Subprograms --\r\n  -----------------\r\n\r\n  subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu1 \r\n  end cpu1;\r\n\r\n  processor implementation cpu1.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu1.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu1\t   : processor cpu1.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu1) applies to node_a;\r\n  end rma.impl;\r\n\r\nend RMAAadl;\r\n",
             start: 0,
-            end: 2447,
+            end: 2454,
         },
         inner: [
             Pair {
                 rule: package_declaration,
                 span: Span {
-                    str: "package RMAAadl\r\npublic\r\n  with Processors;\r\n\r\n  -----------------\r\n  -- Subprograms --\r\n  -----------------\r\n\r\n  subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu \r\n  end cpu;\r\n\r\n  processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;\r\n\r\nend RMAAadl;",
+                    str: "package RMAAadl\r\npublic\r\n  with Processors;\r\n\r\n  -----------------\r\n  -- Subprograms --\r\n  -----------------\r\n\r\n  subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu1 \r\n  end cpu1;\r\n\r\n  processor implementation cpu1.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu1.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu1\t   : processor cpu1.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu1) applies to node_a;\r\n  end rma.impl;\r\n\r\nend RMAAadl;",
                     start: 246,
-                    end: 2445,
+                    end: 2452,
                 },
                 inner: [
                     Pair {
@@ -75,9 +75,9 @@
                     Pair {
                         rule: package_sections,
                         span: Span {
-                            str: "subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu \r\n  end cpu;\r\n\r\n  processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;",
+                            str: "subprogram Hello_Spg_1\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_1\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_1;\r\n\r\n  subprogram Hello_Spg_2\r\n  properties\r\n    source_language => (C);\r\n    source_name     => \"user_hello_spg_2\";\r\n    source_text     => (\"hello.c\");\r\n  end Hello_Spg_2;\r\n\r\n  -------------\r\n  -- Threads --\r\n  -------------\r\n\r\n  thread Task\r\n  end Task;\r\n\r\n  thread implementation Task.impl_1\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_1;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 1;\r\n    Period                             => 1000 ms;\r\n    Compute_Execution_time             => 0 ms .. 3 ms;\r\n    Deadline                           => 1000 ms;\r\n  end Task.impl_1;\r\n\r\n\r\n  thread Task2\r\n  end Task2;\r\n  thread implementation Task2.impl_2\r\n  calls\r\n    Mycalls: {\r\n    P_Spg : subprogram Hello_Spg_2;\r\n    };\r\n  properties\r\n    Dispatch_Protocol                  => Periodic;\r\n    Priority                           => 2;\r\n    Period                             => 500 ms;\r\n    Compute_Execution_time             => 0 ms .. 5 ms;\r\n    Deadline                           => 500 ms;\r\n  end Task2.impl_2;\r\n\r\n  ---------------\r\n  -- Processor --\r\n  ---------------\r\n\r\n  processor cpu1 \r\n  end cpu1;\r\n\r\n  processor implementation cpu1.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu1.impl;\r\n\r\n  ---------------\r\n  -- Processes --\r\n  ---------------\r\n\r\n  process node_a\r\n  end node_a;\r\n\r\n  process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;\r\n\r\n  ------------\r\n  -- System --\r\n  ------------\r\n\r\n  system rma\r\n  end rma;\r\n\r\n  system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu1\t   : processor cpu1.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu1) applies to node_a;\r\n  end rma.impl;",
                             start: 360,
-                            end: 2429,
+                            end: 2436,
                         },
                         inner: [
                             Pair {
@@ -1701,17 +1701,17 @@
                             Pair {
                                 rule: declaration,
                                 span: Span {
-                                    str: "processor cpu \r\n  end cpu;",
+                                    str: "processor cpu1 \r\n  end cpu1;",
                                     start: 1684,
-                                    end: 1710,
+                                    end: 1712,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
-                                            str: "processor cpu \r\n  end cpu;",
+                                            str: "processor cpu1 \r\n  end cpu1;",
                                             start: 1684,
-                                            end: 1710,
+                                            end: 1712,
                                         },
                                         inner: [
                                             Pair {
@@ -1726,18 +1726,18 @@
                                             Pair {
                                                 rule: identifier,
                                                 span: Span {
-                                                    str: "cpu",
+                                                    str: "cpu1",
                                                     start: 1694,
-                                                    end: 1697,
+                                                    end: 1698,
                                                 },
                                                 inner: [],
                                             },
                                             Pair {
                                                 rule: identifier,
                                                 span: Span {
-                                                    str: "cpu",
-                                                    start: 1706,
-                                                    end: 1709,
+                                                    str: "cpu1",
+                                                    start: 1707,
+                                                    end: 1711,
                                                 },
                                                 inner: [],
                                             },
@@ -1748,34 +1748,34 @@
                             Pair {
                                 rule: declaration,
                                 span: Span {
-                                    str: "processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;",
-                                    start: 1716,
-                                    end: 1855,
+                                    str: "processor implementation cpu1.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu1.impl;",
+                                    start: 1718,
+                                    end: 1859,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_implementation,
                                         span: Span {
-                                            str: "processor implementation cpu.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu.impl;",
-                                            start: 1716,
-                                            end: 1855,
+                                            str: "processor implementation cpu1.impl \r\n  properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  end cpu1.impl;",
+                                            start: 1718,
+                                            end: 1859,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "processor",
-                                                    start: 1716,
-                                                    end: 1725,
+                                                    start: 1718,
+                                                    end: 1727,
                                                 },
                                                 inner: [],
                                             },
                                             Pair {
                                                 rule: identifier,
                                                 span: Span {
-                                                    str: "cpu.impl",
-                                                    start: 1741,
-                                                    end: 1749,
+                                                    str: "cpu1.impl",
+                                                    start: 1743,
+                                                    end: 1752,
                                                 },
                                                 inner: [],
                                             },
@@ -1783,24 +1783,24 @@
                                                 rule: properties,
                                                 span: Span {
                                                     str: "properties\r\n    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);\r\n  ",
-                                                    start: 1754,
-                                                    end: 1842,
+                                                    start: 1757,
+                                                    end: 1845,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);",
-                                                            start: 1770,
-                                                            end: 1838,
+                                                            start: 1773,
+                                                            end: 1841,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Scheduling_Protocol",
-                                                                    start: 1770,
-                                                                    end: 1789,
+                                                                    start: 1773,
+                                                                    end: 1792,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1808,8 +1808,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1790,
-                                                                    end: 1792,
+                                                                    start: 1793,
+                                                                    end: 1795,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1817,24 +1817,24 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "(POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)",
-                                                                    start: 1793,
-                                                                    end: 1837,
+                                                                    start: 1796,
+                                                                    end: 1840,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: literal_value,
                                                                         span: Span {
                                                                             str: "(POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)",
-                                                                            start: 1793,
-                                                                            end: 1837,
+                                                                            start: 1796,
+                                                                            end: 1840,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: string_literal,
                                                                                 span: Span {
                                                                                     str: "(POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)",
-                                                                                    start: 1793,
-                                                                                    end: 1837,
+                                                                                    start: 1796,
+                                                                                    end: 1840,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -1849,9 +1849,9 @@
                                             Pair {
                                                 rule: identifier,
                                                 span: Span {
-                                                    str: "cpu.impl",
-                                                    start: 1846,
-                                                    end: 1854,
+                                                    str: "cpu1.impl",
+                                                    start: 1849,
+                                                    end: 1858,
                                                 },
                                                 inner: [],
                                             },
@@ -1863,24 +1863,24 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "process node_a\r\n  end node_a;",
-                                    start: 1920,
-                                    end: 1949,
+                                    start: 1924,
+                                    end: 1953,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
                                             str: "process node_a\r\n  end node_a;",
-                                            start: 1920,
-                                            end: 1949,
+                                            start: 1924,
+                                            end: 1953,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "process",
-                                                    start: 1920,
-                                                    end: 1927,
+                                                    start: 1924,
+                                                    end: 1931,
                                                 },
                                                 inner: [],
                                             },
@@ -1888,8 +1888,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "node_a",
-                                                    start: 1928,
-                                                    end: 1934,
+                                                    start: 1932,
+                                                    end: 1938,
                                                 },
                                                 inner: [],
                                             },
@@ -1897,8 +1897,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "node_a",
-                                                    start: 1942,
-                                                    end: 1948,
+                                                    start: 1946,
+                                                    end: 1952,
                                                 },
                                                 inner: [],
                                             },
@@ -1910,24 +1910,24 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;",
-                                    start: 1955,
-                                    end: 2093,
+                                    start: 1959,
+                                    end: 2097,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_implementation,
                                         span: Span {
                                             str: "process implementation node_a.impl\r\n  subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;\r\n  end node_a.impl;",
-                                            start: 1955,
-                                            end: 2093,
+                                            start: 1959,
+                                            end: 2097,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "process",
-                                                    start: 1955,
-                                                    end: 1962,
+                                                    start: 1959,
+                                                    end: 1966,
                                                 },
                                                 inner: [],
                                             },
@@ -1935,8 +1935,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "node_a.impl",
-                                                    start: 1978,
-                                                    end: 1989,
+                                                    start: 1982,
+                                                    end: 1993,
                                                 },
                                                 inner: [],
                                             },
@@ -1944,24 +1944,24 @@
                                                 rule: subcomponents,
                                                 span: Span {
                                                     str: "subcomponents\r\n    Task1 : thread Task.impl_1;\r\n    Task2 : thread Task2.impl_2;",
-                                                    start: 1993,
-                                                    end: 2073,
+                                                    start: 1997,
+                                                    end: 2077,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: subcomponent,
                                                         span: Span {
                                                             str: "Task1 : thread Task.impl_1;",
-                                                            start: 2012,
-                                                            end: 2039,
+                                                            start: 2016,
+                                                            end: 2043,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Task1",
-                                                                    start: 2012,
-                                                                    end: 2017,
+                                                                    start: 2016,
+                                                                    end: 2021,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1969,8 +1969,8 @@
                                                                 rule: component_category,
                                                                 span: Span {
                                                                     str: "thread",
-                                                                    start: 2020,
-                                                                    end: 2026,
+                                                                    start: 2024,
+                                                                    end: 2030,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1978,8 +1978,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Task.impl_1",
-                                                                    start: 2027,
-                                                                    end: 2038,
+                                                                    start: 2031,
+                                                                    end: 2042,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1989,16 +1989,16 @@
                                                         rule: subcomponent,
                                                         span: Span {
                                                             str: "Task2 : thread Task2.impl_2;",
-                                                            start: 2045,
-                                                            end: 2073,
+                                                            start: 2049,
+                                                            end: 2077,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Task2",
-                                                                    start: 2045,
-                                                                    end: 2050,
+                                                                    start: 2049,
+                                                                    end: 2054,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2006,8 +2006,8 @@
                                                                 rule: component_category,
                                                                 span: Span {
                                                                     str: "thread",
-                                                                    start: 2053,
-                                                                    end: 2059,
+                                                                    start: 2057,
+                                                                    end: 2063,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2015,8 +2015,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Task2.impl_2",
-                                                                    start: 2060,
-                                                                    end: 2072,
+                                                                    start: 2064,
+                                                                    end: 2076,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2028,8 +2028,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "node_a.impl",
-                                                    start: 2081,
-                                                    end: 2092,
+                                                    start: 2085,
+                                                    end: 2096,
                                                 },
                                                 inner: [],
                                             },
@@ -2041,32 +2041,23 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "system rma\r\n  end rma;",
-                                    start: 2149,
-                                    end: 2171,
+                                    start: 2153,
+                                    end: 2175,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
                                             str: "system rma\r\n  end rma;",
-                                            start: 2149,
-                                            end: 2171,
+                                            start: 2153,
+                                            end: 2175,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "system",
-                                                    start: 2149,
-                                                    end: 2155,
-                                                },
-                                                inner: [],
-                                            },
-                                            Pair {
-                                                rule: identifier,
-                                                span: Span {
-                                                    str: "rma",
-                                                    start: 2156,
+                                                    start: 2153,
                                                     end: 2159,
                                                 },
                                                 inner: [],
@@ -2075,8 +2066,17 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "rma",
-                                                    start: 2167,
-                                                    end: 2170,
+                                                    start: 2160,
+                                                    end: 2163,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "rma",
+                                                    start: 2171,
+                                                    end: 2174,
                                                 },
                                                 inner: [],
                                             },
@@ -2087,25 +2087,25 @@
                             Pair {
                                 rule: declaration,
                                 span: Span {
-                                    str: "system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;",
-                                    start: 2177,
-                                    end: 2429,
+                                    str: "system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu1\t   : processor cpu1.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu1) applies to node_a;\r\n  end rma.impl;",
+                                    start: 2181,
+                                    end: 2436,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_implementation,
                                         span: Span {
-                                            str: "system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  end rma.impl;",
-                                            start: 2177,
-                                            end: 2429,
+                                            str: "system implementation rma.impl\r\n  subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu1\t   : processor cpu1.impl;\r\n  properties\r\n    Actual_Processor_Binding => reference (cpu1) applies to node_a;\r\n  end rma.impl;",
+                                            start: 2181,
+                                            end: 2436,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "system",
-                                                    start: 2177,
-                                                    end: 2183,
+                                                    start: 2181,
+                                                    end: 2187,
                                                 },
                                                 inner: [],
                                             },
@@ -2113,33 +2113,33 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "rma.impl",
-                                                    start: 2199,
-                                                    end: 2207,
+                                                    start: 2203,
+                                                    end: 2211,
                                                 },
                                                 inner: [],
                                             },
                                             Pair {
                                                 rule: subcomponents,
                                                 span: Span {
-                                                    str: "subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu\t   : processor cpu.impl;",
-                                                    start: 2211,
-                                                    end: 2330,
+                                                    str: "subcomponents\r\n    node_a : process node_a.impl;\r\n    --node_b : process node_b.impl;\r\n    cpu1\t   : processor cpu1.impl;",
+                                                    start: 2215,
+                                                    end: 2336,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: subcomponent,
                                                         span: Span {
                                                             str: "node_a : process node_a.impl;",
-                                                            start: 2230,
-                                                            end: 2259,
+                                                            start: 2234,
+                                                            end: 2263,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "node_a",
-                                                                    start: 2230,
-                                                                    end: 2236,
+                                                                    start: 2234,
+                                                                    end: 2240,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2147,8 +2147,8 @@
                                                                 rule: component_category,
                                                                 span: Span {
                                                                     str: "process",
-                                                                    start: 2239,
-                                                                    end: 2246,
+                                                                    start: 2243,
+                                                                    end: 2250,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2156,8 +2156,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "node_a.impl",
-                                                                    start: 2247,
-                                                                    end: 2258,
+                                                                    start: 2251,
+                                                                    end: 2262,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2166,17 +2166,17 @@
                                                     Pair {
                                                         rule: subcomponent,
                                                         span: Span {
-                                                            str: "cpu\t   : processor cpu.impl;",
-                                                            start: 2302,
-                                                            end: 2330,
+                                                            str: "cpu1\t   : processor cpu1.impl;",
+                                                            start: 2306,
+                                                            end: 2336,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
-                                                                    str: "cpu",
-                                                                    start: 2302,
-                                                                    end: 2305,
+                                                                    str: "cpu1",
+                                                                    start: 2306,
+                                                                    end: 2310,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2184,17 +2184,17 @@
                                                                 rule: component_category,
                                                                 span: Span {
                                                                     str: "processor",
-                                                                    start: 2311,
-                                                                    end: 2320,
+                                                                    start: 2316,
+                                                                    end: 2325,
                                                                 },
                                                                 inner: [],
                                                             },
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
-                                                                    str: "cpu.impl",
-                                                                    start: 2321,
-                                                                    end: 2329,
+                                                                    str: "cpu1.impl",
+                                                                    start: 2326,
+                                                                    end: 2335,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2205,25 +2205,25 @@
                                             Pair {
                                                 rule: properties,
                                                 span: Span {
-                                                    str: "properties\r\n    Actual_Processor_Binding => reference (cpu) applies to node_a;\r\n  ",
-                                                    start: 2334,
-                                                    end: 2416,
+                                                    str: "properties\r\n    Actual_Processor_Binding => reference (cpu1) applies to node_a;\r\n  ",
+                                                    start: 2340,
+                                                    end: 2423,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
-                                                            str: "Actual_Processor_Binding => reference (cpu) applies to node_a;",
-                                                            start: 2350,
-                                                            end: 2412,
+                                                            str: "Actual_Processor_Binding => reference (cpu1) applies to node_a;",
+                                                            start: 2356,
+                                                            end: 2419,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Actual_Processor_Binding",
-                                                                    start: 2350,
-                                                                    end: 2374,
+                                                                    start: 2356,
+                                                                    end: 2380,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2231,33 +2231,33 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 2375,
-                                                                    end: 2377,
+                                                                    start: 2381,
+                                                                    end: 2383,
                                                                 },
                                                                 inner: [],
                                                             },
                                                             Pair {
                                                                 rule: property_value,
                                                                 span: Span {
-                                                                    str: "reference (cpu) applies to node_a",
-                                                                    start: 2378,
-                                                                    end: 2411,
+                                                                    str: "reference (cpu1) applies to node_a",
+                                                                    start: 2384,
+                                                                    end: 2418,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: reference_value,
                                                                         span: Span {
-                                                                            str: "reference (cpu) applies to node_a",
-                                                                            start: 2378,
-                                                                            end: 2411,
+                                                                            str: "reference (cpu1) applies to node_a",
+                                                                            start: 2384,
+                                                                            end: 2418,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: qualified_identifier,
                                                                                 span: Span {
-                                                                                    str: "cpu",
-                                                                                    start: 2389,
-                                                                                    end: 2392,
+                                                                                    str: "cpu1",
+                                                                                    start: 2395,
+                                                                                    end: 2399,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -2265,8 +2265,8 @@
                                                                                 rule: qualified_identifier,
                                                                                 span: Span {
                                                                                     str: "node_a",
-                                                                                    start: 2405,
-                                                                                    end: 2411,
+                                                                                    start: 2412,
+                                                                                    end: 2418,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -2282,8 +2282,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "rma.impl",
-                                                    start: 2420,
-                                                    end: 2428,
+                                                    start: 2427,
+                                                    end: 2435,
                                                 },
                                                 inner: [],
                                             },
@@ -2297,16 +2297,16 @@
                         rule: package_name,
                         span: Span {
                             str: "RMAAadl",
-                            start: 2437,
-                            end: 2444,
+                            start: 2444,
+                            end: 2451,
                         },
                         inner: [
                             Pair {
                                 rule: qualified_identifier,
                                 span: Span {
                                     str: "RMAAadl",
-                                    start: 2437,
-                                    end: 2444,
+                                    start: 2444,
+                                    end: 2451,
                                 },
                                 inner: [],
                             },
@@ -2318,8 +2318,8 @@
                 rule: EOI,
                 span: Span {
                     str: "",
-                    start: 2447,
-                    end: 2447,
+                    start: 2454,
+                    end: 2454,
                 },
                 inner: [],
             },

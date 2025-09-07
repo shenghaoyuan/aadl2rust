@@ -1,11 +1,13 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-04 18:58:33
+// 生成时间: 2025-09-07 22:03:36
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -149,7 +151,7 @@ impl gnc_threadThread {
     pub fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 50 };
-            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
                 eprintln!("gnc_threadThread: Failed to set thread priority: {}", ret);
             };
@@ -227,7 +229,7 @@ impl tmtc_threadThread {
     pub fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 20 };
-            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
                 eprintln!("tmtc_threadThread: Failed to set thread priority: {}", ret);
             };
@@ -321,5 +323,15 @@ impl toy_exampleSystem {
         self.gnc_tmtc_pos.start();
     }
     
+}
+
+// CPU ID到调度策略的映射
+// 自动从AADL CPU实现中生成
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

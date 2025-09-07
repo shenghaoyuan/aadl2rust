@@ -1,11 +1,13 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-04 18:57:32
+// 生成时间: 2025-09-07 21:55:44
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -81,7 +83,7 @@ impl taskThread {
     pub fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 1 };
-            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
                 eprintln!("taskThread: Failed to set thread priority: {}", ret);
             };
@@ -136,7 +138,7 @@ impl task2Thread {
     pub fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 2 };
-            let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
                 eprintln!("task2Thread: Failed to set thread priority: {}", ret);
             };
@@ -214,5 +216,15 @@ impl rmaSystem {
         self.node_a.start();
     }
     
+}
+
+// CPU ID到调度策略的映射
+// 自动从AADL CPU实现中生成
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

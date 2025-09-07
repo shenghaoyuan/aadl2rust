@@ -33,6 +33,8 @@ impl RustCodeGenerator {
         self.writeln("use std::sync::Mutex;");
         self.writeln("use std::thread;");
         self.writeln("use std::time::{Duration, Instant};");
+        self.writeln("use lazy_static::lazy_static;");
+        self.writeln("use std::collections::HashMap;");
         self.writeln("use libc::{");
         self.writeln("    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,");
         self.writeln("    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,");
@@ -77,6 +79,7 @@ impl RustCodeGenerator {
             Item::TypeAlias(t) => self.generate_type_alias(t),
             Item::Use(u) => self.generate_use(u),
             Item::Mod(m) => self.generate_nested_module(m),
+            Item::LazyStatic(l) => self.generate_lazy_static(l),
         }
     }
 
@@ -882,6 +885,37 @@ impl RustCodeGenerator {
             Visibility::Private => "".to_string(),
             Visibility::Restricted(path) => format!("pub(in {}) ", path.join("::")),
         }
+    }
+
+    fn generate_lazy_static(&mut self, l: &LazyStaticDef) {
+        // 文档注释
+        for doc in &l.docs {
+            self.writeln(doc);
+        }
+
+        // 生成 lazy_static! 宏
+        self.writeln("lazy_static! {");
+        self.indent();
+        
+        // static ref NAME: TYPE = { ... };
+        self.write("static ref ");
+        self.write(&l.name);
+        self.write(": ");
+        self.write(&self.type_to_string(&l.ty));
+        self.write(" = ");
+        
+        // 生成初始化块，添加花括号
+        self.writeln("{");
+        self.indent();
+        self.generate_block(&l.init);
+        self.dedent();
+        self.write("}");
+        self.write(";");
+        self.writeln("");
+        
+        self.dedent();
+        self.writeln("}");
+        self.writeln("");
     }
 
     // 辅助方法

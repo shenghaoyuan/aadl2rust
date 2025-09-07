@@ -826,11 +826,42 @@ RustModule {
                                                                             ),
                                                                             [],
                                                                         ),
-                                                                        Path(
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
                                                                             [
-                                                                                "SCHED_FIFO",
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
                                                                             ],
-                                                                            Namespace,
                                                                         ),
                                                                         Reference(
                                                                             Ident(
@@ -1311,11 +1342,42 @@ RustModule {
                                                                             ),
                                                                             [],
                                                                         ),
-                                                                        Path(
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
                                                                             [
-                                                                                "SCHED_FIFO",
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
                                                                             ],
-                                                                            Namespace,
                                                                         ),
                                                                         Reference(
                                                                             Ident(
@@ -1713,6 +1775,89 @@ RustModule {
                     ),
                 ],
                 trait_impl: None,
+            },
+        ),
+        LazyStatic(
+            LazyStaticDef {
+                name: "CPU_ID_TO_SCHED_POLICY",
+                ty: Generic(
+                    "HashMap",
+                    [
+                        Named(
+                            "isize",
+                        ),
+                        Named(
+                            "i32",
+                        ),
+                    ],
+                ),
+                init: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: true,
+                                name: "map",
+                                ty: Some(
+                                    Generic(
+                                        "HashMap",
+                                        [
+                                            Named(
+                                                "isize",
+                                            ),
+                                            Named(
+                                                "i32",
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                                init: Some(
+                                    Call(
+                                        Path(
+                                            [
+                                                "HashMap",
+                                                "new",
+                                            ],
+                                            Namespace,
+                                        ),
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            MethodCall(
+                                Ident(
+                                    "map",
+                                ),
+                                "insert",
+                                [
+                                    Literal(
+                                        Int(
+                                            0,
+                                        ),
+                                    ),
+                                    Path(
+                                        [
+                                            "SCHED_FIFO",
+                                        ],
+                                        Namespace,
+                                    ),
+                                ],
+                            ),
+                        ),
+                        Expr(
+                            Ident(
+                                "return map",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                vis: Public,
+                docs: [
+                    "// CPU ID到调度策略的映射",
+                    "// 自动从AADL CPU实现中生成",
+                ],
             },
         ),
     ],

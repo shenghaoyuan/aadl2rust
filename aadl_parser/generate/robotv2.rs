@@ -1,11 +1,13 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-04 18:54:03
+// 生成时间: 2025-09-07 22:00:28
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -186,13 +188,13 @@ impl controleThread {
                             state = State::s_inline;
                             // complete，需要停
                         },
-                        State::s1 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            panic!("Unexpected s1 state condition");
-                        },
                         State::s2 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             panic!("Unexpected s2 state condition");
+                        },
+                        State::s1 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            panic!("Unexpected s1 state condition");
                         },
                     };
                     break;
@@ -567,5 +569,15 @@ impl robotSystem {
         self.proc_servomoteur_gauche.start();
     }
     
+}
+
+// CPU ID到调度策略的映射
+// 自动从AADL CPU实现中生成
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

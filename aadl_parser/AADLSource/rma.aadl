@@ -66,13 +66,13 @@ public
   -- Processor --
   ---------------
 
-  processor cpu 
-  end cpu;
+  processor cpu1 
+  end cpu1;
 
-  processor implementation cpu.impl 
+  processor implementation cpu1.impl 
   properties
     Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);
-  end cpu.impl;
+  end cpu1.impl;
 
   ---------------
   -- Processes --
@@ -98,9 +98,9 @@ public
   subcomponents
     node_a : process node_a.impl;
     --node_b : process node_b.impl;
-    cpu	   : processor cpu.impl;
+    cpu1	   : processor cpu1.impl;
   properties
-    Actual_Processor_Binding => reference (cpu) applies to node_a;
+    Actual_Processor_Binding => reference (cpu1) applies to node_a;
   end rma.impl;
 
 end RMAAadl;
