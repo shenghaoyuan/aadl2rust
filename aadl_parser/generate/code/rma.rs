@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 15:48:45
+// 生成时间: 2025-09-08 19:47:43
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -96,7 +96,7 @@ impl taskThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // P_Spg();
+                           // P_Spg();
                 // P_Spg;
                 hello_spg_1::execute();
             };
@@ -151,7 +151,7 @@ impl task2Thread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // P_Spg();
+                           // P_Spg();
                 // P_Spg;
                 hello_spg_2::execute();
             };

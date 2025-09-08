@@ -1,16 +1,51 @@
 RustModule {
-    name: "rmaaadl",
+    name: "toy_example_nowrapper",
     docs: [
-        "// Auto-generated from AADL package: RMAAadl",
+        "// Auto-generated from AADL package: Toy_Example_NoWrapper",
     ],
     items: [
+        TypeAlias(
+            TypeAlias {
+                name: "POS_Internal_Type",
+                target: Named(
+                    "i32",
+                ),
+                vis: Public,
+                docs: [
+                    "// AADL Data Type: POS_Internal_Type",
+                ],
+            },
+        ),
+        TypeAlias(
+            TypeAlias {
+                name: "POSShared",
+                target: Generic(
+                    "Arc",
+                    [
+                        Generic(
+                            "Mutex",
+                            [
+                                Named(
+                                    "POS_Internal_Type",
+                                ),
+                            ],
+                        ),
+                    ],
+                ),
+                vis: Public,
+                docs: [
+                    "// Shared data type for POS",
+                    "// Auto-generated from AADL data implementation",
+                ],
+            },
+        ),
         Mod(
             RustModule {
-                name: "hello_spg_1",
+                name: "update",
                 docs: [
-                    "// Auto-generated from AADL subprogram: Hello_Spg_1",
-                    "// C binding to: user_hello_spg_1",
-                    "// source_files: \"hello.c\"",
+                    "// Auto-generated from AADL subprogram: Update",
+                    "// C binding to: user_update",
+                    "// source_files: \"toy.c\"",
                 ],
                 items: [
                     Use(
@@ -20,7 +55,171 @@ RustModule {
                             ],
                             kind: Nested(
                                 [
-                                    "user_hello_spg_1",
+                                    "user_update",
+                                    "POS_Internal_Type",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "call",
+                            params: [
+                                Param {
+                                    name: "pos_ref",
+                                    ty: Reference(
+                                        Named(
+                                            "POS_Internal_Type",
+                                        ),
+                                        true,
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "user_update",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "pos_ref",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Call C function user_update with data access reference",
+                                "// Generated for requires data access feature",
+                                "// Note: Rust compiler will handle the reference to pointer conversion",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "read_pos",
+                docs: [
+                    "// Auto-generated from AADL subprogram: Read_POS",
+                    "// C binding to: user_read",
+                    "// source_files: \"toy.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "user_read",
+                                    "POS_Internal_Type",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "call",
+                            params: [
+                                Param {
+                                    name: "pos_ref",
+                                    ty: Reference(
+                                        Named(
+                                            "POS_Internal_Type",
+                                        ),
+                                        true,
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "user_read",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "pos_ref",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Call C function user_read with data access reference",
+                                "// Generated for requires data access feature",
+                                "// Note: Rust compiler will handle the reference to pointer conversion",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "gnc_job",
+                docs: [
+                    "// Auto-generated from AADL subprogram: GNC_Job",
+                    "// C binding to: user_gnc_job",
+                    "// source_files: \"toy.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "user_gnc_job",
                                 ],
                             ),
                         },
@@ -40,7 +239,7 @@ RustModule {
                                                         Call(
                                                             Path(
                                                                 [
-                                                                    "user_hello_spg_1",
+                                                                    "user_gnc_job",
                                                                 ],
                                                                 Namespace,
                                                             ),
@@ -58,7 +257,7 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// Direct execution wrapper for C function user_hello_spg_1",
+                                "// Direct execution wrapper for C function user_gnc_job",
                                 "// This component has no communication ports",
                             ],
                             attrs: [],
@@ -71,11 +270,11 @@ RustModule {
         ),
         Mod(
             RustModule {
-                name: "hello_spg_2",
+                name: "tmtc_job",
                 docs: [
-                    "// Auto-generated from AADL subprogram: Hello_Spg_2",
-                    "// C binding to: user_hello_spg_2",
-                    "// source_files: \"hello.c\"",
+                    "// Auto-generated from AADL subprogram: TMTC_Job",
+                    "// C binding to: user_tmtc_job",
+                    "// source_files: \"toy.c\"",
                 ],
                 items: [
                     Use(
@@ -85,7 +284,7 @@ RustModule {
                             ],
                             kind: Nested(
                                 [
-                                    "user_hello_spg_2",
+                                    "user_tmtc_job",
                                 ],
                             ),
                         },
@@ -105,7 +304,7 @@ RustModule {
                                                         Call(
                                                             Path(
                                                                 [
-                                                                    "user_hello_spg_2",
+                                                                    "user_tmtc_job",
                                                                 ],
                                                                 Namespace,
                                                             ),
@@ -123,7 +322,137 @@ RustModule {
                             asyncness: false,
                             vis: Public,
                             docs: [
-                                "// Direct execution wrapper for C function user_hello_spg_2",
+                                "// Direct execution wrapper for C function user_tmtc_job",
+                                "// This component has no communication ports",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "gnc_identity",
+                docs: [
+                    "// Auto-generated from AADL subprogram: GNC_Identity",
+                    "// C binding to: user_gnc_identity",
+                    "// source_files: \"toy.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "user_gnc_identity",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "execute",
+                            params: [],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "user_gnc_identity",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Direct execution wrapper for C function user_gnc_identity",
+                                "// This component has no communication ports",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "tmtc_identity",
+                docs: [
+                    "// Auto-generated from AADL subprogram: TMTC_Identity",
+                    "// C binding to: user_tmtc_identity",
+                    "// source_files: \"toy.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "user_tmtc_identity",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "execute",
+                            params: [],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "user_tmtc_identity",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Direct execution wrapper for C function user_tmtc_identity",
                                 "// This component has no communication ports",
                             ],
                             attrs: [],
@@ -136,8 +465,18 @@ RustModule {
         ),
         Struct(
             StructDef {
-                name: "taskThread",
+                name: "gnc_threadThread",
                 fields: [
+                    Field {
+                        name: "gnc_pos",
+                        ty: Named(
+                            "POSShared",
+                        ),
+                        docs: [
+                            "// AADL feature: GNC_POS : requires data access POS.Impl",
+                        ],
+                        attrs: [],
+                    },
                     Field {
                         name: "cpu_id",
                         ty: Named(
@@ -155,14 +494,14 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Thread: task",
+                    "// AADL Thread: gnc_thread",
                 ],
                 vis: Public,
             },
         ),
         Struct(
             StructDef {
-                name: "taskThread",
+                name: "gnc_threadThread",
                 fields: [],
                 properties: [
                     StruProperty {
@@ -172,15 +511,6 @@ RustModule {
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Priority",
-                        value: Integer(
-                            1,
-                        ),
-                        docs: [
-                            "// AADL属性: Priority",
                         ],
                     },
                     StruProperty {
@@ -201,13 +531,22 @@ RustModule {
                             "// AADL属性: Deadline",
                         ],
                     },
+                    StruProperty {
+                        name: "Priority",
+                        value: Integer(
+                            50,
+                        ),
+                        docs: [
+                            "// AADL属性: Priority",
+                        ],
+                    },
                 ],
                 generics: [],
                 derives: [
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Thread: task",
+                    "// AADL Thread: gnc_thread",
                 ],
                 vis: Public,
             },
@@ -215,7 +554,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "taskThread",
+                    "gnc_threadThread",
                 ),
                 generics: [],
                 items: [
@@ -252,7 +591,7 @@ RustModule {
                                                             ),
                                                             init: Some(
                                                                 Ident(
-                                                                    "sched_param { sched_priority: 1 }",
+                                                                    "sched_param { sched_priority: 50 }",
                                                                 ),
                                                             ),
                                                         },
@@ -355,7 +694,7 @@ RustModule {
                                                                             [
                                                                                 Literal(
                                                                                     Str(
-                                                                                        "taskThread: Failed to set thread priority: {}",
+                                                                                        "gnc_threadThread: Failed to set thread priority: {}",
                                                                                     ),
                                                                                 ),
                                                                                 Ident(
@@ -481,19 +820,183 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // Welcome() -> Update_POS() -> GNC_Work() -> Read_POS() -> Bye()",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// P_Spg",
+                                                                            "// Welcome",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Call(
                                                                             Path(
                                                                                 [
-                                                                                    "hello_spg_1",
+                                                                                    "gnc_identity",
+                                                                                    "execute",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// Update_POS",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Block(
+                                                                            Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Block(
+                                                                                            Block {
+                                                                                                stmts: [
+                                                                                                    Expr(
+                                                                                                        IfLet {
+                                                                                                            pattern: "Ok(mut guard)",
+                                                                                                            value: MethodCall(
+                                                                                                                Path(
+                                                                                                                    [
+                                                                                                                        "self",
+                                                                                                                        "gnc_pos",
+                                                                                                                    ],
+                                                                                                                    Member,
+                                                                                                                ),
+                                                                                                                "lock",
+                                                                                                                [],
+                                                                                                            ),
+                                                                                                            then_branch: Block {
+                                                                                                                stmts: [
+                                                                                                                    Expr(
+                                                                                                                        Call(
+                                                                                                                            Path(
+                                                                                                                                [
+                                                                                                                                    "update",
+                                                                                                                                    "call",
+                                                                                                                                ],
+                                                                                                                                Namespace,
+                                                                                                                            ),
+                                                                                                                            [
+                                                                                                                                Reference(
+                                                                                                                                    Ident(
+                                                                                                                                        "guard",
+                                                                                                                                    ),
+                                                                                                                                    true,
+                                                                                                                                    true,
+                                                                                                                                ),
+                                                                                                                            ],
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                ],
+                                                                                                                expr: None,
+                                                                                                            },
+                                                                                                            else_branch: None,
+                                                                                                        },
+                                                                                                    ),
+                                                                                                ],
+                                                                                                expr: None,
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// GNC_Work",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "gnc_job",
+                                                                                    "execute",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// Read_POS",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Block(
+                                                                            Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Block(
+                                                                                            Block {
+                                                                                                stmts: [
+                                                                                                    Expr(
+                                                                                                        IfLet {
+                                                                                                            pattern: "Ok(mut guard)",
+                                                                                                            value: MethodCall(
+                                                                                                                Path(
+                                                                                                                    [
+                                                                                                                        "self",
+                                                                                                                        "gnc_pos",
+                                                                                                                    ],
+                                                                                                                    Member,
+                                                                                                                ),
+                                                                                                                "lock",
+                                                                                                                [],
+                                                                                                            ),
+                                                                                                            then_branch: Block {
+                                                                                                                stmts: [
+                                                                                                                    Expr(
+                                                                                                                        Call(
+                                                                                                                            Path(
+                                                                                                                                [
+                                                                                                                                    "read_pos",
+                                                                                                                                    "call",
+                                                                                                                                ],
+                                                                                                                                Namespace,
+                                                                                                                            ),
+                                                                                                                            [
+                                                                                                                                Reference(
+                                                                                                                                    Ident(
+                                                                                                                                        "guard",
+                                                                                                                                    ),
+                                                                                                                                    true,
+                                                                                                                                    true,
+                                                                                                                                ),
+                                                                                                                            ],
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                ],
+                                                                                                                expr: None,
+                                                                                                            },
+                                                                                                            else_branch: None,
+                                                                                                        },
+                                                                                                    ),
+                                                                                                ],
+                                                                                                expr: None,
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// Bye",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "gnc_identity",
                                                                                     "execute",
                                                                                 ],
                                                                                 Namespace,
@@ -571,8 +1074,18 @@ RustModule {
         ),
         Struct(
             StructDef {
-                name: "task2Thread",
+                name: "tmtc_threadThread",
                 fields: [
+                    Field {
+                        name: "tmtc_pos",
+                        ty: Named(
+                            "POSShared",
+                        ),
+                        docs: [
+                            "// AADL feature: TMTC_POS : requires data access POS.Impl",
+                        ],
+                        attrs: [],
+                    },
                     Field {
                         name: "cpu_id",
                         ty: Named(
@@ -590,14 +1103,14 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Thread: task2",
+                    "// AADL Thread: tmtc_thread",
                 ],
                 vis: Public,
             },
         ),
         Struct(
             StructDef {
-                name: "task2Thread",
+                name: "tmtc_threadThread",
                 fields: [],
                 properties: [
                     StruProperty {
@@ -610,18 +1123,9 @@ RustModule {
                         ],
                     },
                     StruProperty {
-                        name: "Priority",
-                        value: Integer(
-                            2,
-                        ),
-                        docs: [
-                            "// AADL属性: Priority",
-                        ],
-                    },
-                    StruProperty {
                         name: "Period",
                         value: Integer(
-                            500,
+                            100,
                         ),
                         docs: [
                             "// AADL属性: Period",
@@ -630,10 +1134,19 @@ RustModule {
                     StruProperty {
                         name: "Deadline",
                         value: Integer(
-                            500,
+                            100,
                         ),
                         docs: [
                             "// AADL属性: Deadline",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Priority",
+                        value: Integer(
+                            20,
+                        ),
+                        docs: [
+                            "// AADL属性: Priority",
                         ],
                     },
                 ],
@@ -642,7 +1155,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Thread: task2",
+                    "// AADL Thread: tmtc_thread",
                 ],
                 vis: Public,
             },
@@ -650,7 +1163,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "task2Thread",
+                    "tmtc_threadThread",
                 ),
                 generics: [],
                 items: [
@@ -687,7 +1200,7 @@ RustModule {
                                                             ),
                                                             init: Some(
                                                                 Ident(
-                                                                    "sched_param { sched_priority: 2 }",
+                                                                    "sched_param { sched_priority: 20 }",
                                                                 ),
                                                             ),
                                                         },
@@ -790,7 +1303,7 @@ RustModule {
                                                                             [
                                                                                 Literal(
                                                                                     Str(
-                                                                                        "task2Thread: Failed to set thread priority: {}",
+                                                                                        "tmtc_threadThread: Failed to set thread priority: {}",
                                                                                     ),
                                                                                 ),
                                                                                 Ident(
@@ -879,7 +1392,7 @@ RustModule {
                                                     [
                                                         Literal(
                                                             Int(
-                                                                500,
+                                                                100,
                                                             ),
                                                         ),
                                                     ],
@@ -916,19 +1429,118 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // Welcome() -> TMTC_Work() -> Update() -> Bye()",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// P_Spg",
+                                                                            "// Welcome",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Call(
                                                                             Path(
                                                                                 [
-                                                                                    "hello_spg_2",
+                                                                                    "tmtc_identity",
+                                                                                    "execute",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// TMTC_Work",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "tmtc_job",
+                                                                                    "execute",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// Update",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Block(
+                                                                            Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Block(
+                                                                                            Block {
+                                                                                                stmts: [
+                                                                                                    Expr(
+                                                                                                        IfLet {
+                                                                                                            pattern: "Ok(mut guard)",
+                                                                                                            value: MethodCall(
+                                                                                                                Path(
+                                                                                                                    [
+                                                                                                                        "self",
+                                                                                                                        "tmtc_pos",
+                                                                                                                    ],
+                                                                                                                    Member,
+                                                                                                                ),
+                                                                                                                "lock",
+                                                                                                                [],
+                                                                                                            ),
+                                                                                                            then_branch: Block {
+                                                                                                                stmts: [
+                                                                                                                    Expr(
+                                                                                                                        Call(
+                                                                                                                            Path(
+                                                                                                                                [
+                                                                                                                                    "update",
+                                                                                                                                    "call",
+                                                                                                                                ],
+                                                                                                                                Namespace,
+                                                                                                                            ),
+                                                                                                                            [
+                                                                                                                                Reference(
+                                                                                                                                    Ident(
+                                                                                                                                        "guard",
+                                                                                                                                    ),
+                                                                                                                                    true,
+                                                                                                                                    true,
+                                                                                                                                ),
+                                                                                                                            ],
+                                                                                                                        ),
+                                                                                                                    ),
+                                                                                                                ],
+                                                                                                                expr: None,
+                                                                                                            },
+                                                                                                            else_branch: None,
+                                                                                                        },
+                                                                                                    ),
+                                                                                                ],
+                                                                                                expr: None,
+                                                                                            },
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// Bye",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "tmtc_identity",
                                                                                     "execute",
                                                                                 ],
                                                                                 Namespace,
@@ -995,7 +1607,7 @@ RustModule {
                             vis: Public,
                             docs: [
                                 "// Thread execution entry point",
-                                "// Period: Some(500) ms",
+                                "// Period: Some(100) ms",
                             ],
                             attrs: [],
                         },
@@ -1006,7 +1618,7 @@ RustModule {
         ),
         Struct(
             StructDef {
-                name: "node_aProcess",
+                name: "toy_example_procProcess",
                 fields: [
                     Field {
                         name: "cpu_id",
@@ -1025,22 +1637,22 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Process: node_a",
+                    "// AADL Process: toy_example_proc",
                 ],
                 vis: Public,
             },
         ),
         Struct(
             StructDef {
-                name: "node_aProcess",
+                name: "toy_example_procProcess",
                 fields: [
                     Field {
-                        name: "task1",
+                        name: "gnc_th",
                         ty: Named(
-                            "taskThread",
+                            "gnc_threadThread",
                         ),
                         docs: [
-                            "// 子组件线程（Task1 : thread Task）",
+                            "// 子组件线程（GNC_Th : thread GNC_Thread）",
                         ],
                         attrs: [
                             Attribute {
@@ -1054,12 +1666,31 @@ RustModule {
                         ],
                     },
                     Field {
-                        name: "task2",
+                        name: "tmtc_th",
                         ty: Named(
-                            "task2Thread",
+                            "tmtc_threadThread",
                         ),
                         docs: [
-                            "// 子组件线程（Task2 : thread Task2）",
+                            "// 子组件线程（TMTC_Th : thread TMTC_Thread）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "pos_data",
+                        ty: Named(
+                            "POSShared",
+                        ),
+                        docs: [
+                            "// 共享数据（POS_Data : data POS）",
                         ],
                         attrs: [
                             Attribute {
@@ -1089,7 +1720,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// Process implementation: node_a",
+                    "// Process implementation: Toy_Example_Proc",
                     "// Auto-generated from AADL",
                 ],
                 vis: Public,
@@ -1098,7 +1729,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "node_aProcess",
+                    "toy_example_procProcess",
                 ),
                 generics: [],
                 items: [
@@ -1121,24 +1752,37 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut task1",
+                                            name: "mut pos_data",
                                             ty: Some(
                                                 Named(
-                                                    "taskThread",
+                                                    "POSShared",
                                                 ),
                                             ),
                                             init: Some(
                                                 Call(
                                                     Path(
                                                         [
-                                                            "taskThread",
+                                                            "Arc",
                                                             "new",
                                                         ],
                                                         Namespace,
                                                     ),
                                                     [
-                                                        Ident(
-                                                            "cpu_id",
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "Mutex",
+                                                                    "new",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ],
                                                         ),
                                                     ],
                                                 ),
@@ -1148,17 +1792,17 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut task2",
+                                            name: "mut gnc_th",
                                             ty: Some(
                                                 Named(
-                                                    "task2Thread",
+                                                    "gnc_threadThread",
                                                 ),
                                             ),
                                             init: Some(
                                                 Call(
                                                     Path(
                                                         [
-                                                            "task2Thread",
+                                                            "gnc_threadThread",
                                                             "new",
                                                         ],
                                                         Namespace,
@@ -1167,6 +1811,47 @@ RustModule {
                                                         Ident(
                                                             "cpu_id",
                                                         ),
+                                                        MethodCall(
+                                                            Ident(
+                                                                "pos_data",
+                                                            ),
+                                                            "clone",
+                                                            [],
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "mut tmtc_th",
+                                            ty: Some(
+                                                Named(
+                                                    "tmtc_threadThread",
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "tmtc_threadThread",
+                                                            "new",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "cpu_id",
+                                                        ),
+                                                        MethodCall(
+                                                            Ident(
+                                                                "pos_data",
+                                                            ),
+                                                            "clone",
+                                                            [],
+                                                        ),
                                                     ],
                                                 ),
                                             ),
@@ -1174,7 +1859,7 @@ RustModule {
                                     ),
                                     Expr(
                                         Ident(
-                                            "return Self { task1, task2, cpu_id }  //显式return",
+                                            "return Self { gnc_th, tmtc_th, pos_data, cpu_id }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -1205,7 +1890,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "Self { task1, task2, cpu_id, .. }",
+                                            name: "Self { gnc_th, tmtc_th, pos_data, cpu_id, .. }",
                                             ty: None,
                                             init: Some(
                                                 Ident(
@@ -1219,14 +1904,14 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"task1\".to_string()",
+                                                        "\"gnc_th\".to_string()",
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
                                                                 Ident(
-                                                                    "task1",
+                                                                    "gnc_th",
                                                                 ),
                                                                 "run",
                                                                 [],
@@ -1245,14 +1930,14 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"task2\".to_string()",
+                                                        "\"tmtc_th\".to_string()",
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
                                                                 Ident(
-                                                                    "task2",
+                                                                    "tmtc_th",
                                                                 ),
                                                                 "run",
                                                                 [],
@@ -1283,7 +1968,7 @@ RustModule {
         ),
         Struct(
             StructDef {
-                name: "rmaSystem",
+                name: "toy_exampleSystem",
                 fields: [],
                 properties: [],
                 generics: [],
@@ -1291,22 +1976,22 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL System: rma",
+                    "// AADL System: toy_example",
                 ],
                 vis: Public,
             },
         ),
         Struct(
             StructDef {
-                name: "rmaSystem",
+                name: "toy_exampleSystem",
                 fields: [
                     Field {
-                        name: "node_a",
+                        name: "gnc_tmtc_pos",
                         ty: Named(
-                            "node_aProcess",
+                            "toy_example_procProcess",
                         ),
                         docs: [
-                            "// 子组件进程（node_a : process node_a）",
+                            "// 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）",
                         ],
                         attrs: [
                             Attribute {
@@ -1326,7 +2011,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// System implementation: rma",
+                    "// System implementation: toy_example",
                     "// Auto-generated from AADL",
                 ],
                 vis: Public,
@@ -1335,7 +2020,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "rmaSystem",
+                    "toy_exampleSystem",
                 ),
                 generics: [],
                 items: [
@@ -1350,12 +2035,12 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "let mut node_a: node_aProcess = node_aProcess::new(0)",
+                                            "let mut gnc_tmtc_pos: toy_example_procProcess = toy_example_procProcess::new(0)",
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "return Self { node_a }  //显式return",
+                                            "return Self { gnc_tmtc_pos }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -1385,7 +2070,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "self.node_a.start()",
+                                            "self.gnc_tmtc_pos.start()",
                                         ),
                                     ),
                                 ],

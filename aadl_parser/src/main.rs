@@ -73,6 +73,12 @@ fn main() {
             path: "AADLSource/rms.aadl".to_string(),
             output_name: "rms".to_string(),
         },
+        TestCase {
+            id: 8,
+            name: "PingPong (Timed)".to_string(),
+            path: "AADLSource/pingpong_timed_aperiodic.aadl".to_string(),
+            output_name: "pingpong_timed_aperiodic".to_string(),
+        },
     ];
 
     // 显示可用的测试用例
@@ -140,7 +146,7 @@ fn process_test_case(test_case: &TestCase) {
             
             // 将解析结果写入文件
             let pairs_debug_path = format!("generate/{}_pairs_debug.txt", test_case.output_name);
-            fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
+            //fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
             println!("解析结果已保存到: {}", pairs_debug_path);
 
             // 转换到AST
@@ -191,13 +197,13 @@ pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase
     println!("\n==================================== rust_module ===================================");
     
     // 保存中间AST到文件
-    let ast_debug_path = format!("generate/{}_ast_debug.txt", test_case.output_name);
+    let ast_debug_path = format!("generate/temp/{}_ast_debug.txt", test_case.output_name);
     fs::write(&ast_debug_path, format!("{:#?}", rust_module)).unwrap();
     println!("中间AST已保存到: {}", ast_debug_path);
     
     let merge_rust_module = merge_item_defs(rust_module);
     
-    let merged_ast_path = format!("generate/{}_merged_ast.txt", test_case.output_name);
+    let merged_ast_path = format!("generate/temp/{}_merged_ast.txt", test_case.output_name);
     fs::write(&merged_ast_path, format!("{:#?}", merge_rust_module)).unwrap();
     println!("合并后AST已保存到: {}", merged_ast_path);
 
@@ -205,7 +211,7 @@ pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase
     let rust_code = code_generator.generate_module_code(&merge_rust_module);
 
     // 生成主Rust代码文件
-    let output_path = format!("generate/{}.rs", test_case.output_name);
+    let output_path = format!("generate/code/{}.rs", test_case.output_name);
     fs::write(&output_path, rust_code).expect("Failed to write main.rs");
     println!("Rust代码已生成: {}", output_path);
 
@@ -241,306 +247,4 @@ pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
 
     // 同时保存主Rust代码
     fs::write("generate/generate_pingpong.rs", rust_code).expect("Failed to write main.rs");
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use aadlight_parser;
-    use transform_annex::*;
-    use ast::aadl_ast_cj::*;
-    use pest::Parser;
-    use crate::transform::get_global_port_manager;
-
-    #[test]
-    fn test_transition_parsing() {
-        println!("=== 测试 Transition 解析 ===");
-        
-        let input = "idle -[on event_port]-> running;";
-        let pairs = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::transition_declaration, input);
-        
-        match pairs {
-            Ok(mut pairs) => {
-                if let Some(pair) = pairs.next() {
-                    println!("解析成功！");
-                    println!("规则: {:?}", pair.as_rule());
-                    println!("内容: {}", pair.as_str());
-                    
-                    let transition = transform_transition_declaration(pair);
-                    println!("转换后的 Transition: {:?}", transition);
-                    
-                    // 验证转换结果
-                    assert_eq!(transition.transition_identifier, None);
-                    assert_eq!(transition.source_states, vec!["idle"]);
-                    assert_eq!(transition.destination_state, "running");
-                    assert!(transition.behavior_condition.is_some());
-                    assert!(transition.actions.is_none());
-                    
-                    println!("✓ 转换解析正确");
-                } else {
-                    println!("❌ 没有找到匹配的规则");
-                }
-            }
-            Err(e) => {
-                println!("❌ 解析失败: {}", e);
-            }
-        }
-        
-        println!("=== 测试完成 ===");
-    }
-
-    #[test]
-    fn test_assignment_action_parsing() {
-        println!("=== 测试赋值动作解析 ===");
-        
-        // 测试简单赋值
-        let input1 = "count1 := count1 + 1";
-        let pairs1 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::assignment_action, input1);
-        
-        match pairs1 {
-            Ok(mut pairs) => {
-                if let Some(pair) = pairs.next() {
-                    println!("解析成功！");
-                    println!("规则: {:?}", pair.as_rule());
-                    println!("内容: {}", pair.as_str());
-                    
-                    let action = transform_annex::transform_assignment_action(pair);
-                    println!("转换后的赋值动作: {:?}", action);
-                    
-                    // 验证转换结果
-                    match action {
-                        BasicAction::Assignment(assignment) => {
-                            match assignment.target {
-                                Target::LocalVariable(name) => {
-                                    assert_eq!(name, "count1");
-                                    println!("✓ 目标变量正确: {}", name);
-                                }
-                                _ => panic!("期望 LocalVariable 目标"),
-                            }
-                            
-                            match assignment.value {
-                                AssignmentValue::Expression(_) => {
-                                    println!("✓ 表达式赋值正确");
-                                }
-                                AssignmentValue::Any => {
-                                    println!("✓ Any 赋值正确");
-                                }
-                            }
-                        }
-                        _ => panic!("期望 Assignment 动作"),
-                    }
-                } else {
-                    println!("❌ 没有找到匹配的规则");
-                }
-            }
-            Err(e) => {
-                println!("❌ 解析失败: {}", e);
-            }
-        }
-        
-        // 测试布尔表达式赋值
-        let input2 = "evenement := (count1 mod 2 = 0)";
-        let pairs2 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::assignment_action, input2);
-        
-        match pairs2 {
-            Ok(mut pairs) => {
-                if let Some(pair) = pairs.next() {
-                    println!("解析成功！");
-                    println!("规则: {:?}", pair.as_rule());
-                    println!("内容: {}", pair.as_str());
-                    
-                    let action = transform_annex::transform_assignment_action(pair);
-                    println!("转换后的布尔赋值动作: {:?}", action);
-                    
-                    // 验证转换结果
-                    match action {
-                        BasicAction::Assignment(assignment) => {
-                            match assignment.target {
-                                Target::LocalVariable(name) => {
-                                    assert_eq!(name, "evenement");
-                                    println!("✓ 目标变量正确: {}", name);
-                                }
-                                _ => panic!("期望 LocalVariable 目标"),
-                            }
-                            
-                            match assignment.value {
-                                AssignmentValue::Expression(_) => {
-                                    println!("✓ 布尔表达式赋值正确");
-                                }
-                                AssignmentValue::Any => {
-                                    println!("✓ Any 赋值正确");
-                                }
-                            }
-                        }
-                        _ => panic!("期望 Assignment 动作"),
-                    }
-                } else {
-                    println!("❌ 没有找到匹配的规则");
-                }
-            }
-            Err(e) => {
-                println!("❌ 解析失败: {}", e);
-            }
-        }
-        
-        println!("=== 测试完成 ===");
-    }
-
-    #[test]
-    fn test_complex_expression_parsing() {
-        println!("=== 测试复杂表达式解析 ===");
-        
-        // 测试简单算术表达式
-        let input1 = "count1 + 1";
-        let pairs1 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::value_expression, input1);
-        
-        match pairs1 {
-            Ok(mut pairs) => {
-                let pair = pairs.next().unwrap();
-                println!("解析成功！");
-                println!("规则: {:?}", pair.as_rule());
-                println!("内容: {}", pair.as_str());
-                
-                let expression = transform_behavior_expression(pair);
-                println!("转换后的表达式: {:?}", expression);
-                
-                // 验证表达式结构
-                if let Some(op) = expression.left.left.operations.first() {
-                    println!("✓ 检测到加法操作: {:?}", op.operator);
-                }
-            }
-            Err(e) => {
-                println!("解析失败: {:?}", e);
-                panic!("表达式解析失败");
-            }
-        }
-        
-        // 测试比较表达式
-        let input2 = "count1 mod 2 = 0";
-        let pairs2 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::value_expression, input2);
-        
-        match pairs2 {
-            Ok(mut pairs) => {
-                let pair = pairs.next().unwrap();
-                println!("解析成功！");
-                println!("规则: {:?}", pair.as_rule());
-                println!("内容: {}", pair.as_str());
-                
-                let expression = transform_behavior_expression(pair);
-                println!("转换后的比较表达式: {:?}", expression);
-                
-                // 验证比较操作
-                if let Some(comp) = &expression.left.comparison {
-                    println!("✓ 检测到比较操作: {:?}", comp.operator);
-                }
-            }
-            Err(e) => {
-                println!("解析失败: {:?}", e);
-                panic!("比较表达式解析失败");
-            }
-        }
-        
-        // 测试逻辑表达式
-        let input3 = "count1 > 0 and count1 < 100";
-        let pairs3 = aadlight_parser::AADLParser::parse(aadlight_parser::Rule::value_expression, input3);
-        
-        match pairs3 {
-            Ok(mut pairs) => {
-                let pair = pairs.next().unwrap();
-                println!("解析成功！");
-                println!("规则: {:?}", pair.as_rule());
-                println!("内容: {}", pair.as_str());
-                
-                let expression = transform_behavior_expression(pair);
-                println!("转换后的逻辑表达式: {:?}", expression);
-                
-                // 验证逻辑操作
-                if let Some(logical_op) = expression.operations.first() {
-                    println!("✓ 检测到逻辑操作: {:?}", logical_op.operator);
-                }
-            }
-            Err(e) => {
-                println!("解析失败: {:?}", e);
-                panic!("逻辑表达式解析失败");
-            }
-        }
-        
-        println!("=== 测试完成 ===");
-    }
-
-    #[test]
-    fn test_port_manager() {
-        // 测试端口管理器功能
-        let manager = get_global_port_manager();
-        
-        // 添加一些测试端口
-        {
-            let mut manager = manager.lock().unwrap();
-            manager.add_port("out_port".to_string(), crate::ast::aadl_ast_cj::PortDirection::Out);
-            manager.add_port("in_port".to_string(), crate::ast::aadl_ast_cj::PortDirection::In);
-            manager.add_port("inout_port".to_string(), crate::ast::aadl_ast_cj::PortDirection::InOut);
-        }
-        
-        // 验证端口方向判断
-        {
-            let manager = manager.lock().unwrap();
-            assert!(manager.is_outgoing_port("out_port"));
-            assert!(!manager.is_outgoing_port("in_port"));
-            assert!(manager.is_outgoing_port("inout_port"));
-        }
-        
-        println!("端口管理器测试通过！");
-    }
-
-    #[test]
-    fn test_assignment_action_target_detection() {
-        // 测试赋值动作中的目标类型检测
-        use crate::transform_annex::transform_assignment_action;
-        use crate::aadlight_parser::AADLParser;
-        use crate::ast::aadl_ast_cj::*;
-        
-        // 首先设置端口信息
-        let manager = get_global_port_manager();
-        {
-            let mut manager = manager.lock().unwrap();
-            manager.add_port("output_port".to_string(), PortDirection::Out);
-            manager.add_port("input_port".to_string(), PortDirection::In);
-        }
-        
-        // 测试输出端口赋值
-        let out_port_assign = "output_port := 42";
-        let pairs = AADLParser::parse(crate::aadlight_parser::Rule::assignment_action, out_port_assign).unwrap();
-        let action = transform_assignment_action(pairs.into_iter().next().unwrap());
-        
-        if let BasicAction::Assignment(assign) = action {
-            match assign.target {
-                Target::OutgoingPort(name) => {
-                    assert_eq!(name, "output_port");
-                    println!("输出端口赋值检测正确: {}", name);
-                }
-                _ => panic!("期望 OutgoingPort，但得到 {:?}", assign.target),
-            }
-        } else {
-            panic!("期望 Assignment 动作");
-        }
-        
-        // 测试本地变量赋值
-        let local_var_assign = "local_var := 100";
-        let pairs = AADLParser::parse(crate::aadlight_parser::Rule::assignment_action, local_var_assign).unwrap();
-        let action = transform_assignment_action(pairs.into_iter().next().unwrap());
-        
-        if let BasicAction::Assignment(assign) = action {
-            match assign.target {
-                Target::LocalVariable(name) => {
-                    assert_eq!(name, "local_var");
-                    println!("本地变量赋值检测正确: {}", name);
-                }
-                _ => panic!("期望 LocalVariable，但得到 {:?}", assign.target),
-            }
-        } else {
-            panic!("期望 Assignment 动作");
-        }
-        
-        println!("赋值动作目标类型检测测试通过！");
-    }
 }

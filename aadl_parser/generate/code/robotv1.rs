@@ -1,11 +1,13 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-04 18:59:00
+// 生成时间: 2025-09-08 19:47:55
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
 use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
+use lazy_static::lazy_static;
+use std::collections::HashMap;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -160,6 +162,14 @@ impl capteurThread {
     // Thread execution entry point
     // Period: Some(110) ms
     pub fn run(mut self) -> () {
+        unsafe {
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
+            if ret != 0 {
+                eprintln!("capteurThread: Failed to set thread priority from period: {}", ret);
+            };
+        };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
@@ -168,7 +178,7 @@ impl capteurThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // D_Spg();
+                           // D_Spg();
                 // D_Spg;
                 if let Some(sender) = &self.evenement {
                     let mut val = false;
@@ -187,6 +197,14 @@ impl controleThread {
     // Thread execution entry point
     // Period: Some(110) ms
     pub fn run(mut self) -> () {
+        unsafe {
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
+            if ret != 0 {
+                eprintln!("controleThread: Failed to set thread priority from period: {}", ret);
+            };
+        };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
@@ -195,7 +213,7 @@ impl controleThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // T_Spg_in() -> T_Spg_out();
+                           // T_Spg_in() -> T_Spg_out();
                 // T_Spg_in;
                 if let Some(receiver) = &self.info_capteur {
                     match receiver.try_recv() {
@@ -230,6 +248,14 @@ impl servomoteurThread {
     // Thread execution entry point
     // Period: Some(10) ms
     pub fn run(mut self) -> () {
+        unsafe {
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
+            if ret != 0 {
+                eprintln!("servomoteurThread: Failed to set thread priority from period: {}", ret);
+            };
+        };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
@@ -247,11 +273,11 @@ impl servomoteurThread {
                         };
                         {
                             // --- 调用序列（等价 AADL 的 Wrapper）---
-            // A_Spg();
+                           // A_Spg();
                             // A_Spg;
                             action_spg::receive(val);
                         };
-                        let mut last_dispatch = Instant::now();
+                        last_dispatch = Instant::now();
                     },
                     Err(_) => {
                         eprintln!("servomoteurThread: channel closed");
@@ -544,5 +570,14 @@ impl robotSystem {
         self.proc_servomoteur_gauche.start();
     }
     
+}
+
+// CPU ID到调度策略的映射
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

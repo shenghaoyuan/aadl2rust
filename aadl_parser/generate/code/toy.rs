@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-07 22:03:36
+// 生成时间: 2025-09-08 19:47:50
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -164,7 +164,7 @@ impl gnc_threadThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // Welcome() -> Update_POS() -> GNC_Work() -> Read_POS() -> Bye();
+                           // Welcome() -> Update_POS() -> GNC_Work() -> Read_POS() -> Bye();
                 // Welcome;
                 gnc_identity::execute();
                 // Update_POS;
@@ -242,7 +242,7 @@ impl tmtc_threadThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // Welcome() -> TMTC_Work() -> Update() -> Bye();
+                           // Welcome() -> TMTC_Work() -> Update() -> Bye();
                 // Welcome;
                 tmtc_identity::execute();
                 // TMTC_Work;
@@ -326,7 +326,6 @@ impl toy_exampleSystem {
 }
 
 // CPU ID到调度策略的映射
-// 自动从AADL CPU实现中生成
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();

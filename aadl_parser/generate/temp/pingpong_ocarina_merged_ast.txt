@@ -969,7 +969,7 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // P_Spg()",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1591,7 +1591,7 @@ RustModule {
                                                                                                         stmts: [
                                                                                                             Expr(
                                                                                                                 Ident(
-                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // Q_Spg()",
+                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // Q_Spg()",
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Expr(
@@ -1620,24 +1620,22 @@ RustModule {
                                                                                                     },
                                                                                                 ),
                                                                                             ),
-                                                                                            Let(
-                                                                                                LetStmt {
-                                                                                                    ifmut: true,
-                                                                                                    name: "last_dispatch",
-                                                                                                    ty: None,
-                                                                                                    init: Some(
-                                                                                                        Call(
-                                                                                                            Path(
-                                                                                                                [
-                                                                                                                    "Instant",
-                                                                                                                    "now",
-                                                                                                                ],
-                                                                                                                Namespace,
-                                                                                                            ),
-                                                                                                            [],
-                                                                                                        ),
+                                                                                            Expr(
+                                                                                                Assign(
+                                                                                                    Ident(
+                                                                                                        "last_dispatch",
                                                                                                     ),
-                                                                                                },
+                                                                                                    Call(
+                                                                                                        Path(
+                                                                                                            [
+                                                                                                                "Instant",
+                                                                                                                "now",
+                                                                                                            ],
+                                                                                                            Namespace,
+                                                                                                        ),
+                                                                                                        [],
+                                                                                                    ),
+                                                                                                ),
                                                                                             ),
                                                                                         ],
                                                                                         expr: None,
@@ -1783,7 +1781,6 @@ RustModule {
                 vis: Public,
                 docs: [
                     "// CPU ID到调度策略的映射",
-                    "// 自动从AADL CPU实现中生成",
                 ],
             },
         ),

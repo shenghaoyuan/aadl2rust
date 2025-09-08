@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-07 21:59:44
+// 生成时间: 2025-09-08 19:47:37
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -167,7 +167,7 @@ impl pThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-            // P_Spg();
+                           // P_Spg();
                 // P_Spg;
                 if let Some(sender) = &self.data_source {
                     let mut val = 0;
@@ -238,11 +238,11 @@ impl qThread {
                         };
                         {
                             // --- 调用序列（等价 AADL 的 Wrapper）---
-            // Q_Spg();
+                           // Q_Spg();
                             // Q_Spg;
                             ping_spg::receive(val);
                         };
-                        let mut last_dispatch = Instant::now();
+                        last_dispatch = Instant::now();
                     },
                     Err(_) => {
                         eprintln!("qThread: channel closed");
@@ -256,7 +256,6 @@ impl qThread {
 }
 
 // CPU ID到调度策略的映射
-// 自动从AADL CPU实现中生成
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();

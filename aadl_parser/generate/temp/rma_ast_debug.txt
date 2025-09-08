@@ -149,6 +149,21 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: task",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "taskThread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
@@ -466,7 +481,7 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // P_Spg()",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -569,6 +584,21 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: task2",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "task2Thread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
@@ -886,7 +916,7 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // P_Spg()",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -988,6 +1018,22 @@ RustModule {
                         ],
                         attrs: [],
                     },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Process: node_a",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "node_aProcess",
+                fields: [
                     Field {
                         name: "task1",
                         ty: Named(
@@ -1026,6 +1072,16 @@ RustModule {
                             },
                         ],
                     },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1033,7 +1089,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Process: node_a",
+                    "// Process implementation: node_a",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -1227,6 +1284,21 @@ RustModule {
         Struct(
             StructDef {
                 name: "rmaSystem",
+                fields: [],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL System: rma",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "rmaSystem",
                 fields: [
                     Field {
                         name: "node_a",
@@ -1254,7 +1326,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL System: rma",
+                    "// System implementation: rma",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },

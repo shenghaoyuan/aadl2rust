@@ -175,7 +175,7 @@ string_literal = {
 boolean = { "true" | "false"}
 // 枚举值规则（覆盖AADL属性集预定义值）
 enum_value = @{
-    "Periodic" | "Sporadic" | "Timed" | "Event" | "Hybrid" |
+    "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
     "native" | "Integer" | "Struct" | "Boolean"
 }
 

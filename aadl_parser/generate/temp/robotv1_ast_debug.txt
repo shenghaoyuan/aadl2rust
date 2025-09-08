@@ -371,26 +371,7 @@ RustModule {
                         attrs: [],
                     },
                 ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
-                        ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            110,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -456,26 +437,7 @@ RustModule {
                         attrs: [],
                     },
                 ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
-                        ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            110,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -521,11 +483,26 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: servomoteur",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "capteurThread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
                         value: String(
-                            "Sporadic",
+                            "Periodic",
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
@@ -534,7 +511,7 @@ RustModule {
                     StruProperty {
                         name: "Period",
                         value: Integer(
-                            10,
+                            110,
                         ),
                         docs: [
                             "// AADL属性: Period",
@@ -546,7 +523,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Thread: servomoteur",
+                    "// AADL Thread: capteur",
                 ],
                 vis: Public,
             },
@@ -576,6 +553,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "capteurThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -682,7 +819,7 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // D_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // D_Spg()",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -831,6 +968,40 @@ RustModule {
                 trait_impl: None,
             },
         ),
+        Struct(
+            StructDef {
+                name: "controleThread",
+                fields: [],
+                properties: [
+                    StruProperty {
+                        name: "Dispatch_Protocol",
+                        value: String(
+                            "Periodic",
+                        ),
+                        docs: [
+                            "// AADL属性: Dispatch_Protocol",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Period",
+                        value: Integer(
+                            110,
+                        ),
+                        docs: [
+                            "// AADL属性: Period",
+                        ],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: controle",
+                ],
+                vis: Public,
+            },
+        ),
         Impl(
             ImplBlock {
                 target: Named(
@@ -856,6 +1027,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "controleThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -962,7 +1293,7 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // T_Spg_in() -> T_Spg_out()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // T_Spg_in() -> T_Spg_out()",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1210,6 +1541,40 @@ RustModule {
                 trait_impl: None,
             },
         ),
+        Struct(
+            StructDef {
+                name: "servomoteurThread",
+                fields: [],
+                properties: [
+                    StruProperty {
+                        name: "Dispatch_Protocol",
+                        value: String(
+                            "Sporadic",
+                        ),
+                        docs: [
+                            "// AADL属性: Dispatch_Protocol",
+                        ],
+                    },
+                    StruProperty {
+                        name: "Period",
+                        value: Integer(
+                            10,
+                        ),
+                        docs: [
+                            "// AADL属性: Period",
+                        ],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: servomoteur",
+                ],
+                vis: Public,
+            },
+        ),
         Impl(
             ImplBlock {
                 target: Named(
@@ -1235,6 +1600,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "servomoteurThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -1462,7 +1987,7 @@ RustModule {
                                                                                                         stmts: [
                                                                                                             Expr(
                                                                                                                 Ident(
-                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // A_Spg()",
+                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // A_Spg()",
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Expr(
@@ -1491,24 +2016,22 @@ RustModule {
                                                                                                     },
                                                                                                 ),
                                                                                             ),
-                                                                                            Let(
-                                                                                                LetStmt {
-                                                                                                    ifmut: true,
-                                                                                                    name: "last_dispatch",
-                                                                                                    ty: None,
-                                                                                                    init: Some(
-                                                                                                        Call(
-                                                                                                            Path(
-                                                                                                                [
-                                                                                                                    "Instant",
-                                                                                                                    "now",
-                                                                                                                ],
-                                                                                                                Namespace,
-                                                                                                            ),
-                                                                                                            [],
-                                                                                                        ),
+                                                                                            Expr(
+                                                                                                Assign(
+                                                                                                    Ident(
+                                                                                                        "last_dispatch",
                                                                                                     ),
-                                                                                                },
+                                                                                                    Call(
+                                                                                                        Path(
+                                                                                                            [
+                                                                                                                "Instant",
+                                                                                                                "now",
+                                                                                                            ],
+                                                                                                            Namespace,
+                                                                                                        ),
+                                                                                                        [],
+                                                                                                    ),
+                                                                                                ),
                                                                                             ),
                                                                                         ],
                                                                                         expr: None,
@@ -1608,45 +2131,6 @@ RustModule {
                             "// 进程 CPU ID",
                         ],
                         attrs: [],
-                    },
-                    Field {
-                        name: "evenementRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: evenement Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "th_c",
-                        ty: Named(
-                            "capteurThread",
-                        ),
-                        docs: [
-                            "// 子组件线程（th_c : thread capteur）",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
                     },
                 ],
                 properties: [],
@@ -1754,124 +2238,6 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                    Field {
-                        name: "info_capteur_droitSend",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: info_capteur_droit In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "comm_servo_droitRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: comm_servo_droit Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "info_capteur_gaucheSend",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: info_capteur_gauche In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "comm_servo_gaucheRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "bool",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: comm_servo_gauche Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "th_ctrl_droit",
-                        ty: Named(
-                            "controleThread",
-                        ),
-                        docs: [
-                            "// 子组件线程（th_ctrl_droit : thread controle）",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
-                    Field {
-                        name: "th_ctrl_gauche",
-                        ty: Named(
-                            "controleThread",
-                        ),
-                        docs: [
-                            "// 子组件线程（th_ctrl_gauche : thread controle）",
-                        ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
-                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1918,8 +2284,24 @@ RustModule {
                         ],
                         attrs: [],
                     },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Process: p_servomoteur",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "p_capteurProcess",
+                fields: [
                     Field {
-                        name: "ordreSend",
+                        name: "evenement",
                         ty: Generic(
                             "Option",
                             [
@@ -1934,17 +2316,37 @@ RustModule {
                             ],
                         ),
                         docs: [
-                            "// 内部端口: ordre In",
+                            "// Port: evenement Out",
                         ],
                         attrs: [],
                     },
                     Field {
-                        name: "th_servomoteur",
-                        ty: Named(
-                            "servomoteurThread",
+                        name: "evenementRece",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
                         ),
                         docs: [
-                            "// 子组件线程（th_servomoteur : thread servomoteur）",
+                            "// 内部端口: evenement Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "th_c",
+                        ty: Named(
+                            "capteurThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_c : thread capteur）",
                         ],
                         attrs: [
                             Attribute {
@@ -1957,6 +2359,16 @@ RustModule {
                             },
                         ],
                     },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1964,7 +2376,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Process: p_servomoteur",
+                    "// Process implementation: p_capteur",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -2316,6 +2729,231 @@ RustModule {
                     ),
                 ],
                 trait_impl: None,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "p_controleProcess",
+                fields: [
+                    Field {
+                        name: "info_capteur_droit",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: info_capteur_droit In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "info_capteur_droitSend",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: info_capteur_droit In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_droit",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: comm_servo_droit Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_droitRece",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: comm_servo_droit Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "info_capteur_gauche",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: info_capteur_gauche In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "info_capteur_gaucheSend",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: info_capteur_gauche In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_gauche",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: comm_servo_gauche Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "comm_servo_gaucheRece",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: comm_servo_gauche Out",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "th_ctrl_droit",
+                        ty: Named(
+                            "controleThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_ctrl_droit : thread controle）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "th_ctrl_gauche",
+                        ty: Named(
+                            "controleThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_ctrl_gauche : thread controle）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// Process implementation: p_controle",
+                    "// Auto-generated from AADL",
+                ],
+                vis: Public,
             },
         ),
         Impl(
@@ -3368,6 +4006,92 @@ RustModule {
                 trait_impl: None,
             },
         ),
+        Struct(
+            StructDef {
+                name: "p_servomoteurProcess",
+                fields: [
+                    Field {
+                        name: "ordre",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Receiver",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// Port: ordre In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "ordreSend",
+                        ty: Generic(
+                            "Option",
+                            [
+                                Generic(
+                                    "mpsc::Sender",
+                                    [
+                                        Named(
+                                            "bool",
+                                        ),
+                                    ],
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 内部端口: ordre In",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "th_servomoteur",
+                        ty: Named(
+                            "servomoteurThread",
+                        ),
+                        docs: [
+                            "// 子组件线程（th_servomoteur : thread servomoteur）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// Process implementation: p_servomoteur",
+                    "// Auto-generated from AADL",
+                ],
+                vis: Public,
+            },
+        ),
         Impl(
             ImplBlock {
                 target: Named(
@@ -3720,6 +4444,21 @@ RustModule {
         Struct(
             StructDef {
                 name: "robotSystem",
+                fields: [],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL System: robot",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "robotSystem",
                 fields: [
                     Field {
                         name: "proc_capteur_droit",
@@ -3823,7 +4562,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL System: robot",
+                    "// System implementation: robot",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -4197,6 +4937,88 @@ RustModule {
                     ),
                 ],
                 trait_impl: None,
+            },
+        ),
+        LazyStatic(
+            LazyStaticDef {
+                name: "CPU_ID_TO_SCHED_POLICY",
+                ty: Generic(
+                    "HashMap",
+                    [
+                        Named(
+                            "isize",
+                        ),
+                        Named(
+                            "i32",
+                        ),
+                    ],
+                ),
+                init: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: true,
+                                name: "map",
+                                ty: Some(
+                                    Generic(
+                                        "HashMap",
+                                        [
+                                            Named(
+                                                "isize",
+                                            ),
+                                            Named(
+                                                "i32",
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                                init: Some(
+                                    Call(
+                                        Path(
+                                            [
+                                                "HashMap",
+                                                "new",
+                                            ],
+                                            Namespace,
+                                        ),
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            MethodCall(
+                                Ident(
+                                    "map",
+                                ),
+                                "insert",
+                                [
+                                    Literal(
+                                        Int(
+                                            0,
+                                        ),
+                                    ),
+                                    Path(
+                                        [
+                                            "SCHED_FIFO",
+                                        ],
+                                        Namespace,
+                                    ),
+                                ],
+                            ),
+                        ),
+                        Expr(
+                            Ident(
+                                "return map",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                vis: Public,
+                docs: [
+                    "// CPU ID到调度策略的映射",
+                ],
             },
         ),
     ],

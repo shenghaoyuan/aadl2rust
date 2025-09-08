@@ -18,6 +18,246 @@ RustModule {
         ),
         Mod(
             RustModule {
+                name: "collecte_donnee_spg",
+                docs: [
+                    "// Auto-generated from AADL subprogram: collecte_donnee_spg",
+                    "// C binding to: collecte_donnee",
+                    "// source_files: \"robot.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "collecte_donnee",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "send",
+                            params: [
+                                Param {
+                                    name: "d_source",
+                                    ty: Reference(
+                                        Named(
+                                            "bool",
+                                        ),
+                                        true,
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "collecte_donnee",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "d_source",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function collecte_donnee",
+                                "// Original AADL port: d_source",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "traite_spg_in",
+                docs: [
+                    "// Auto-generated from AADL subprogram: traite_spg_in",
+                    "// C binding to: traite_in",
+                    "// source_files: \"robot.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "traite_in",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "receive",
+                            params: [
+                                Param {
+                                    name: "d_info",
+                                    ty: Reference(
+                                        Named(
+                                            "bool",
+                                        ),
+                                        false,
+                                        false,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "traite_in",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "d_info",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function traite_in",
+                                "// Original AADL port: d_info",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
+                name: "traite_spg_out",
+                docs: [
+                    "// Auto-generated from AADL subprogram: traite_spg_out",
+                    "// C binding to: traite_out",
+                    "// source_files: \"robot.c\"",
+                ],
+                items: [
+                    Use(
+                        UseStatement {
+                            path: [
+                                "super",
+                            ],
+                            kind: Nested(
+                                [
+                                    "traite_out",
+                                ],
+                            ),
+                        },
+                    ),
+                    Function(
+                        FunctionDef {
+                            name: "send",
+                            params: [
+                                Param {
+                                    name: "d_ordre",
+                                    ty: Reference(
+                                        Named(
+                                            "bool",
+                                        ),
+                                        true,
+                                        true,
+                                    ),
+                                },
+                            ],
+                            return_type: Unit,
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Expr(
+                                                        Call(
+                                                            Path(
+                                                                [
+                                                                    "traite_out",
+                                                                ],
+                                                                Namespace,
+                                                            ),
+                                                            [
+                                                                Ident(
+                                                                    "d_ordre",
+                                                                ),
+                                                            ],
+                                                        ),
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// Wrapper for C function traite_out",
+                                "// Original AADL port: d_ordre",
+                            ],
+                            attrs: [],
+                        },
+                    ),
+                ],
+                attrs: [],
+                vis: Public,
+            },
+        ),
+        Mod(
+            RustModule {
                 name: "action_spg",
                 docs: [
                     "// Auto-generated from AADL subprogram: action_spg",
@@ -314,7 +554,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "controleThread",
+                    "capteurThread",
                 ),
                 generics: [],
                 items: [
@@ -336,6 +576,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "capteurThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -413,72 +813,6 @@ RustModule {
                                             ),
                                         },
                                     ),
-                                    Item(
-                                        Enum(
-                                            EnumDef {
-                                                name: "State",
-                                                variants: [
-                                                    Variant {
-                                                        name: "s_inline",
-                                                        data: None,
-                                                        docs: [
-                                                            "// State: s_inline",
-                                                        ],
-                                                    },
-                                                    Variant {
-                                                        name: "s1",
-                                                        data: None,
-                                                        docs: [
-                                                            "// State: s1",
-                                                        ],
-                                                    },
-                                                    Variant {
-                                                        name: "s2",
-                                                        data: None,
-                                                        docs: [
-                                                            "// State: s2",
-                                                        ],
-                                                    },
-                                                    Variant {
-                                                        name: "s_outline",
-                                                        data: None,
-                                                        docs: [
-                                                            "// State: s_outline",
-                                                        ],
-                                                    },
-                                                ],
-                                                generics: [],
-                                                derives: [
-                                                    "Debug",
-                                                    "Clone",
-                                                ],
-                                                docs: [
-                                                    "// Behavior Annex state machine states",
-                                                ],
-                                                vis: Private,
-                                            },
-                                        ),
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: true,
-                                            name: "state",
-                                            ty: Some(
-                                                Named(
-                                                    "State",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Path(
-                                                    [
-                                                        "State",
-                                                        "s_inline",
-                                                    ],
-                                                    Namespace,
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -502,463 +836,92 @@ RustModule {
                                                             ),
                                                         },
                                                     ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "info_capteur_val",
-                                                            ty: None,
-                                                            init: Some(
-                                                                Match {
-                                                                    expr: Path(
-                                                                        [
-                                                                            "&self",
-                                                                            "info_capteur",
-                                                                        ],
-                                                                        Member,
-                                                                    ),
-                                                                    arms: [
-                                                                        MatchArm {
-                                                                            pattern: "Some(rx)",
-                                                                            guard: None,
-                                                                            body: Block {
-                                                                                stmts: [],
-                                                                                expr: Some(
-                                                                                    Match {
-                                                                                        expr: MethodCall(
-                                                                                            Ident(
-                                                                                                "rx",
-                                                                                            ),
-                                                                                            "try_recv",
-                                                                                            [],
-                                                                                        ),
-                                                                                        arms: [
-                                                                                            MatchArm {
-                                                                                                pattern: "Ok(val)",
-                                                                                                guard: None,
-                                                                                                body: Block {
-                                                                                                    stmts: [],
-                                                                                                    expr: Some(
-                                                                                                        Ident(
-                                                                                                            "val",
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                },
-                                                                                            },
-                                                                                            MatchArm {
-                                                                                                pattern: "_",
-                                                                                                guard: None,
-                                                                                                body: Block {
-                                                                                                    stmts: [],
-                                                                                                    expr: Some(
-                                                                                                        Literal(
-                                                                                                            Bool(
-                                                                                                                false,
-                                                                                                            ),
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                },
-                                                                                            },
-                                                                                        ],
-                                                                                    },
-                                                                                ),
-                                                                            },
-                                                                        },
-                                                                        MatchArm {
-                                                                            pattern: "None",
-                                                                            guard: None,
-                                                                            body: Block {
-                                                                                stmts: [],
-                                                                                expr: Some(
-                                                                                    Literal(
-                                                                                        Bool(
-                                                                                            false,
-                                                                                        ),
-                                                                                    ),
-                                                                                ),
-                                                                            },
-                                                                        },
-                                                                    ],
-                                                                },
-                                                            ),
-                                                        },
-                                                    ),
                                                     Expr(
                                                         Block(
                                                             Block {
                                                                 stmts: [
-                                                                    Comment(
-                                                                        "--- BA 宏步执行 ---",
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // D_Spg()",
+                                                                        ),
                                                                     ),
                                                                     Expr(
-                                                                        Loop(
-                                                                            Block {
+                                                                        Ident(
+                                                                            "// D_Spg",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        IfLet {
+                                                                            pattern: "Some(sender)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "evenement",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
+                                                                            ),
+                                                                            then_branch: Block {
                                                                                 stmts: [
-                                                                                    Expr(
-                                                                                        Match {
-                                                                                            expr: Ident(
-                                                                                                "state",
+                                                                                    Let(
+                                                                                        LetStmt {
+                                                                                            ifmut: true,
+                                                                                            name: "val",
+                                                                                            ty: None,
+                                                                                            init: Some(
+                                                                                                Literal(
+                                                                                                    Bool(
+                                                                                                        false,
+                                                                                                    ),
+                                                                                                ),
                                                                                             ),
-                                                                                            arms: [
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s_inline",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "on dispatch → s1",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "State",
-                                                                                                                            "s1",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Continue,
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: Some(
-                                                                                                        BinaryOp(
-                                                                                                            Ident(
-                                                                                                                "info_capteur_val",
-                                                                                                            ),
-                                                                                                            "==",
-                                                                                                            Literal(
-                                                                                                                Bool(
-                                                                                                                    true,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "State",
-                                                                                                                            "s_inline",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Comment(
-                                                                                                                "complete，需要停",
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: Some(
-                                                                                                        BinaryOp(
-                                                                                                            Ident(
-                                                                                                                "info_capteur_val",
-                                                                                                            ),
-                                                                                                            "==",
-                                                                                                            Literal(
-                                                                                                                Bool(
-                                                                                                                    false,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                IfLet {
-                                                                                                                    pattern: "Some(sender)",
-                                                                                                                    value: Reference(
-                                                                                                                        Path(
-                                                                                                                            [
-                                                                                                                                "self",
-                                                                                                                                "comm_servo",
-                                                                                                                            ],
-                                                                                                                            Member,
-                                                                                                                        ),
-                                                                                                                        true,
-                                                                                                                        false,
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: false,
-                                                                                                                                    name: "_",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        MethodCall(
-                                                                                                                                            Ident(
-                                                                                                                                                "sender",
-                                                                                                                                            ),
-                                                                                                                                            "send",
-                                                                                                                                            [
-                                                                                                                                                Literal(
-                                                                                                                                                    Bool(
-                                                                                                                                                        false,
-                                                                                                                                                    ),
-                                                                                                                                                ),
-                                                                                                                                            ],
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "State",
-                                                                                                                            "s_outline",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Comment(
-                                                                                                                "complete，需要停",
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s_outline",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "on dispatch → s2",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "State",
-                                                                                                                            "s2",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Continue,
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s2",
-                                                                                                    guard: Some(
-                                                                                                        BinaryOp(
-                                                                                                            Ident(
-                                                                                                                "info_capteur_val",
-                                                                                                            ),
-                                                                                                            "==",
-                                                                                                            Literal(
-                                                                                                                Bool(
-                                                                                                                    false,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "State",
-                                                                                                                            "s_outline",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Comment(
-                                                                                                                "complete，需要停",
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s2",
-                                                                                                    guard: Some(
-                                                                                                        BinaryOp(
-                                                                                                            Ident(
-                                                                                                                "info_capteur_val",
-                                                                                                            ),
-                                                                                                            "==",
-                                                                                                            Literal(
-                                                                                                                Bool(
-                                                                                                                    true,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                IfLet {
-                                                                                                                    pattern: "Some(sender)",
-                                                                                                                    value: Reference(
-                                                                                                                        Path(
-                                                                                                                            [
-                                                                                                                                "self",
-                                                                                                                                "comm_servo",
-                                                                                                                            ],
-                                                                                                                            Member,
-                                                                                                                        ),
-                                                                                                                        true,
-                                                                                                                        false,
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: false,
-                                                                                                                                    name: "_",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        MethodCall(
-                                                                                                                                            Ident(
-                                                                                                                                                "sender",
-                                                                                                                                            ),
-                                                                                                                                            "send",
-                                                                                                                                            [
-                                                                                                                                                Literal(
-                                                                                                                                                    Bool(
-                                                                                                                                                        true,
-                                                                                                                                                    ),
-                                                                                                                                                ),
-                                                                                                                                            ],
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "State",
-                                                                                                                            "s_inline",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Comment(
-                                                                                                                "complete，需要停",
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s2",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s2 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s1 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                            ],
                                                                                         },
                                                                                     ),
-                                                                                    Break,
+                                                                                    Expr(
+                                                                                        Call(
+                                                                                            Path(
+                                                                                                [
+                                                                                                    "collecte_donnee_spg",
+                                                                                                    "send",
+                                                                                                ],
+                                                                                                Namespace,
+                                                                                            ),
+                                                                                            [
+                                                                                                Reference(
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                    true,
+                                                                                                    true,
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        MethodCall(
+                                                                                            MethodCall(
+                                                                                                Ident(
+                                                                                                    "sender",
+                                                                                                ),
+                                                                                                "send",
+                                                                                                [
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                ],
+                                                                                            ),
+                                                                                            "unwrap",
+                                                                                            [],
+                                                                                        ),
+                                                                                    ),
                                                                                 ],
                                                                                 expr: None,
                                                                             },
-                                                                        ),
+                                                                            else_branch: None,
+                                                                        },
                                                                     ),
                                                                 ],
                                                                 expr: None,
@@ -1031,7 +994,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "capteurThread",
+                    "controleThread",
                 ),
                 generics: [],
                 items: [
@@ -1053,6 +1016,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "controleThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -1130,69 +1253,6 @@ RustModule {
                                             ),
                                         },
                                     ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: true,
-                                            name: "count1",
-                                            ty: Some(
-                                                Named(
-                                                    "i32",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Literal(
-                                                    Int(
-                                                        0,
-                                                    ),
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Item(
-                                        Enum(
-                                            EnumDef {
-                                                name: "State",
-                                                variants: [
-                                                    Variant {
-                                                        name: "s0",
-                                                        data: None,
-                                                        docs: [
-                                                            "// State: s0",
-                                                        ],
-                                                    },
-                                                ],
-                                                generics: [],
-                                                derives: [
-                                                    "Debug",
-                                                    "Clone",
-                                                ],
-                                                docs: [
-                                                    "// Behavior Annex state machine states",
-                                                ],
-                                                vis: Private,
-                                            },
-                                        ),
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: true,
-                                            name: "state",
-                                            ty: Some(
-                                                Named(
-                                                    "State",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Path(
-                                                    [
-                                                        "State",
-                                                        "s0",
-                                                    ],
-                                                    Namespace,
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -1220,122 +1280,96 @@ RustModule {
                                                         Block(
                                                             Block {
                                                                 stmts: [
-                                                                    Comment(
-                                                                        "--- BA 宏步执行 ---",
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // T_Spg_in() -> T_Spg_out()",
+                                                                        ),
                                                                     ),
                                                                     Expr(
-                                                                        Loop(
-                                                                            Block {
+                                                                        Ident(
+                                                                            "// T_Spg_in",
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        IfLet {
+                                                                            pattern: "Some(receiver)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "info_capteur",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
+                                                                            ),
+                                                                            then_branch: Block {
                                                                                 stmts: [
                                                                                     Expr(
                                                                                         Match {
-                                                                                            expr: Ident(
-                                                                                                "state",
+                                                                                            expr: MethodCall(
+                                                                                                Ident(
+                                                                                                    "receiver",
+                                                                                                ),
+                                                                                                "try_recv",
+                                                                                                [],
                                                                                             ),
                                                                                             arms: [
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s0",
+                                                                                                    pattern: "Ok(val)",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
-                                                                                                            Comment(
-                                                                                                                "TODO: Timed action not implemented",
-                                                                                                            ),
                                                                                                             Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "count1",
-                                                                                                                    ),
-                                                                                                                    BinaryOp(
-                                                                                                                        Ident(
-                                                                                                                            "count1",
-                                                                                                                        ),
-                                                                                                                        "+",
-                                                                                                                        Literal(
-                                                                                                                            Int(
-                                                                                                                                1,
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ),
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                IfLet {
-                                                                                                                    pattern: "Some(sender)",
-                                                                                                                    value: Reference(
-                                                                                                                        Path(
-                                                                                                                            [
-                                                                                                                                "self",
-                                                                                                                                "evenement",
-                                                                                                                            ],
-                                                                                                                            Member,
-                                                                                                                        ),
-                                                                                                                        true,
-                                                                                                                        false,
-                                                                                                                    ),
-                                                                                                                    then_branch: Block {
-                                                                                                                        stmts: [
-                                                                                                                            Let(
-                                                                                                                                LetStmt {
-                                                                                                                                    ifmut: false,
-                                                                                                                                    name: "_",
-                                                                                                                                    ty: None,
-                                                                                                                                    init: Some(
-                                                                                                                                        MethodCall(
-                                                                                                                                            Ident(
-                                                                                                                                                "sender",
-                                                                                                                                            ),
-                                                                                                                                            "send",
-                                                                                                                                            [
-                                                                                                                                                BinaryOp(
-                                                                                                                                                    BinaryOp(
-                                                                                                                                                        Ident(
-                                                                                                                                                            "count1",
-                                                                                                                                                        ),
-                                                                                                                                                        "%",
-                                                                                                                                                        Literal(
-                                                                                                                                                            Int(
-                                                                                                                                                                2,
-                                                                                                                                                            ),
-                                                                                                                                                        ),
-                                                                                                                                                    ),
-                                                                                                                                                    "==",
-                                                                                                                                                    Literal(
-                                                                                                                                                        Int(
-                                                                                                                                                            0,
-                                                                                                                                                        ),
-                                                                                                                                                    ),
-                                                                                                                                                ),
-                                                                                                                                            ],
-                                                                                                                                        ),
-                                                                                                                                    ),
-                                                                                                                                },
-                                                                                                                            ),
-                                                                                                                        ],
-                                                                                                                        expr: None,
-                                                                                                                    },
-                                                                                                                    else_branch: None,
-                                                                                                                },
-                                                                                                            ),
-                                                                                                            Comment(
-                                                                                                                "on dispatch → s0",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Assign(
-                                                                                                                    Ident(
-                                                                                                                        "state",
-                                                                                                                    ),
+                                                                                                                Call(
                                                                                                                     Path(
                                                                                                                         [
-                                                                                                                            "State",
-                                                                                                                            "s0",
+                                                                                                                            "traite_spg_in",
+                                                                                                                            "receive",
                                                                                                                         ],
                                                                                                                         Namespace,
                                                                                                                     ),
+                                                                                                                    [
+                                                                                                                        Ident(
+                                                                                                                            "val",
+                                                                                                                        ),
+                                                                                                                    ],
                                                                                                                 ),
                                                                                                             ),
-                                                                                                            Comment(
-                                                                                                                "complete，需要停",
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "Err(mpsc::TryRecvError::Empty)",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "Err(mpsc::TryRecvError::Disconnected)",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "eprintln!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "channel closed",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -1344,11 +1378,89 @@ RustModule {
                                                                                             ],
                                                                                         },
                                                                                     ),
-                                                                                    Break,
                                                                                 ],
                                                                                 expr: None,
                                                                             },
+                                                                            else_branch: None,
+                                                                        },
+                                                                    ),
+                                                                    Expr(
+                                                                        Ident(
+                                                                            "// T_Spg_out",
                                                                         ),
+                                                                    ),
+                                                                    Expr(
+                                                                        IfLet {
+                                                                            pattern: "Some(sender)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "comm_servo",
+                                                                                    ],
+                                                                                    Member,
+                                                                                ),
+                                                                                true,
+                                                                                false,
+                                                                            ),
+                                                                            then_branch: Block {
+                                                                                stmts: [
+                                                                                    Let(
+                                                                                        LetStmt {
+                                                                                            ifmut: true,
+                                                                                            name: "val",
+                                                                                            ty: None,
+                                                                                            init: Some(
+                                                                                                Literal(
+                                                                                                    Bool(
+                                                                                                        false,
+                                                                                                    ),
+                                                                                                ),
+                                                                                            ),
+                                                                                        },
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Call(
+                                                                                            Path(
+                                                                                                [
+                                                                                                    "traite_spg_out",
+                                                                                                    "send",
+                                                                                                ],
+                                                                                                Namespace,
+                                                                                            ),
+                                                                                            [
+                                                                                                Reference(
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                    true,
+                                                                                                    true,
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        MethodCall(
+                                                                                            MethodCall(
+                                                                                                Ident(
+                                                                                                    "sender",
+                                                                                                ),
+                                                                                                "send",
+                                                                                                [
+                                                                                                    Ident(
+                                                                                                        "val",
+                                                                                                    ),
+                                                                                                ],
+                                                                                            ),
+                                                                                            "unwrap",
+                                                                                            [],
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                            else_branch: None,
+                                                                        },
                                                                     ),
                                                                 ],
                                                                 expr: None,
@@ -1443,6 +1555,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "servomoteurThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -1670,7 +1942,7 @@ RustModule {
                                                                                                         stmts: [
                                                                                                             Expr(
                                                                                                                 Ident(
-                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // A_Spg()",
+                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // A_Spg()",
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Expr(
@@ -1699,24 +1971,22 @@ RustModule {
                                                                                                     },
                                                                                                 ),
                                                                                             ),
-                                                                                            Let(
-                                                                                                LetStmt {
-                                                                                                    ifmut: true,
-                                                                                                    name: "last_dispatch",
-                                                                                                    ty: None,
-                                                                                                    init: Some(
-                                                                                                        Call(
-                                                                                                            Path(
-                                                                                                                [
-                                                                                                                    "Instant",
-                                                                                                                    "now",
-                                                                                                                ],
-                                                                                                                Namespace,
-                                                                                                            ),
-                                                                                                            [],
-                                                                                                        ),
+                                                                                            Expr(
+                                                                                                Assign(
+                                                                                                    Ident(
+                                                                                                        "last_dispatch",
                                                                                                     ),
-                                                                                                },
+                                                                                                    Call(
+                                                                                                        Path(
+                                                                                                            [
+                                                                                                                "Instant",
+                                                                                                                "now",
+                                                                                                            ],
+                                                                                                            Namespace,
+                                                                                                        ),
+                                                                                                        [],
+                                                                                                    ),
+                                                                                                ),
                                                                                             ),
                                                                                         ],
                                                                                         expr: None,
@@ -4486,7 +4756,6 @@ RustModule {
                 vis: Public,
                 docs: [
                     "// CPU ID到调度策略的映射",
-                    "// 自动从AADL CPU实现中生成",
                 ],
             },
         ),

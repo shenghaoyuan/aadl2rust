@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-07 22:00:28
+// 生成时间: 2025-09-08 19:48:01
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -120,6 +120,14 @@ impl controleThread {
     // Thread execution entry point
     // Period: Some(110) ms
     pub fn run(mut self) -> () {
+        unsafe {
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
+            if ret != 0 {
+                eprintln!("controleThread: Failed to set thread priority from period: {}", ret);
+            };
+        };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
@@ -188,13 +196,13 @@ impl controleThread {
                             state = State::s_inline;
                             // complete，需要停
                         },
-                        State::s2 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            panic!("Unexpected s2 state condition");
-                        },
                         State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             panic!("Unexpected s1 state condition");
+                        },
+                        State::s2 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            panic!("Unexpected s2 state condition");
                         },
                     };
                     break;
@@ -211,6 +219,14 @@ impl capteurThread {
     // Thread execution entry point
     // Period: Some(110) ms
     pub fn run(mut self) -> () {
+        unsafe {
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
+            if ret != 0 {
+                eprintln!("capteurThread: Failed to set thread priority from period: {}", ret);
+            };
+        };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
@@ -255,6 +271,14 @@ impl servomoteurThread {
     // Thread execution entry point
     // Period: Some(10) ms
     pub fn run(mut self) -> () {
+        unsafe {
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
+            let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
+            if ret != 0 {
+                eprintln!("servomoteurThread: Failed to set thread priority from period: {}", ret);
+            };
+        };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
@@ -272,11 +296,11 @@ impl servomoteurThread {
                         };
                         {
                             // --- 调用序列（等价 AADL 的 Wrapper）---
-            // A_Spg();
+                           // A_Spg();
                             // A_Spg;
                             action_spg::receive(val);
                         };
-                        let mut last_dispatch = Instant::now();
+                        last_dispatch = Instant::now();
                     },
                     Err(_) => {
                         eprintln!("servomoteurThread: channel closed");
@@ -572,7 +596,6 @@ impl robotSystem {
 }
 
 // CPU ID到调度策略的映射
-// 自动从AADL CPU实现中生成
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();

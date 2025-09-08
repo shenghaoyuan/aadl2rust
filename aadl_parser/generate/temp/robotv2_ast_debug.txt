@@ -314,6 +314,166 @@ RustModule {
                             body: Block {
                                 stmts: [
                                     Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "controleThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                    Expr(
                                         If {
                                             condition: BinaryOp(
                                                 Path(
@@ -871,35 +1031,6 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s2",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s2 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
                                                                                                     pattern: "State::s1",
                                                                                                     guard: None,
                                                                                                     body: Block {
@@ -919,6 +1050,35 @@ RustModule {
                                                                                                                         Literal(
                                                                                                                             Str(
                                                                                                                                 "Unexpected s1 state condition",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s2",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "panic!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "Unexpected s2 state condition",
                                                                                                                             ),
                                                                                                                         ),
                                                                                                                     ],
@@ -1064,6 +1224,166 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
+                                    Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "capteurThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
                                     Expr(
                                         If {
                                             condition: BinaryOp(
@@ -1489,6 +1809,166 @@ RustModule {
                             body: Block {
                                 stmts: [
                                     Expr(
+                                        Unsafe(
+                                            Block {
+                                                stmts: [
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: true,
+                                                            name: "param",
+                                                            ty: Some(
+                                                                Named(
+                                                                    "sched_param",
+                                                                ),
+                                                            ),
+                                                            init: Some(
+                                                                Ident(
+                                                                    "sched_param { sched_priority: prio }",
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
+                                                            ifmut: false,
+                                                            name: "ret",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "pthread_setschedparam",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "pthread_self",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [],
+                                                                        ),
+                                                                        MethodCall(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "*CPU_ID_TO_SCHED_POLICY",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "get",
+                                                                                [
+                                                                                    Reference(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "self",
+                                                                                                "cpu_id",
+                                                                                            ],
+                                                                                            Member,
+                                                                                        ),
+                                                                                        true,
+                                                                                        false,
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                            "unwrap_or",
+                                                                            [
+                                                                                Reference(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "SCHED_FIFO",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    true,
+                                                                                    false,
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                        Reference(
+                                                                            Ident(
+                                                                                "param",
+                                                                            ),
+                                                                            true,
+                                                                            true,
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "ret",
+                                                                ),
+                                                                "!=",
+                                                                Literal(
+                                                                    Int(
+                                                                        0,
+                                                                    ),
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        Call(
+                                                                            Path(
+                                                                                [
+                                                                                    "eprintln!",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            [
+                                                                                Literal(
+                                                                                    Str(
+                                                                                        "servomoteurThread: Failed to set thread priority from period: {}",
+                                                                                    ),
+                                                                                ),
+                                                                                Ident(
+                                                                                    "ret",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
+                                                        },
+                                                    ),
+                                                ],
+                                                expr: None,
+                                            },
+                                        ),
+                                    ),
+                                    Expr(
                                         If {
                                             condition: BinaryOp(
                                                 Path(
@@ -1715,7 +2195,7 @@ RustModule {
                                                                                                         stmts: [
                                                                                                             Expr(
                                                                                                                 Ident(
-                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // A_Spg()",
+                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // A_Spg()",
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Expr(
@@ -1744,24 +2224,22 @@ RustModule {
                                                                                                     },
                                                                                                 ),
                                                                                             ),
-                                                                                            Let(
-                                                                                                LetStmt {
-                                                                                                    ifmut: true,
-                                                                                                    name: "last_dispatch",
-                                                                                                    ty: None,
-                                                                                                    init: Some(
-                                                                                                        Call(
-                                                                                                            Path(
-                                                                                                                [
-                                                                                                                    "Instant",
-                                                                                                                    "now",
-                                                                                                                ],
-                                                                                                                Namespace,
-                                                                                                            ),
-                                                                                                            [],
-                                                                                                        ),
+                                                                                            Expr(
+                                                                                                Assign(
+                                                                                                    Ident(
+                                                                                                        "last_dispatch",
                                                                                                     ),
-                                                                                                },
+                                                                                                    Call(
+                                                                                                        Path(
+                                                                                                            [
+                                                                                                                "Instant",
+                                                                                                                "now",
+                                                                                                            ],
+                                                                                                            Namespace,
+                                                                                                        ),
+                                                                                                        [],
+                                                                                                    ),
+                                                                                                ),
                                                                                             ),
                                                                                         ],
                                                                                         expr: None,
@@ -4748,7 +5226,6 @@ RustModule {
                 vis: Public,
                 docs: [
                     "// CPU ID到调度策略的映射",
-                    "// 自动从AADL CPU实现中生成",
                 ],
             },
         ),

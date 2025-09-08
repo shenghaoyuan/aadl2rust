@@ -2229,6 +2229,10 @@ impl AadlConverter {
                 // 偶发调度：生成偶发执行逻辑
                 stmts.extend(self.create_sporadic_execution_logic(impl_));
             }
+            Some("Timed") => {
+                // 定时调度：生成定时执行逻辑
+                stmts.extend(self.create_timed_execution_logic(impl_));
+            }
             _ => {
                 // 默认使用周期性调度
                 stmts.extend(self.create_periodic_execution_logic(impl_));
@@ -2325,33 +2329,95 @@ impl AadlConverter {
     /// 创建非周期性执行逻辑
     fn create_aperiodic_execution_logic(&self, impl_: &ComponentImplementation) -> Vec<Statement> {
         let mut stmts = Vec::new();
-        
-        // 生成子程序调用处理代码
-        let port_handling_stmts = self.create_subprogram_call_logic(impl_);
 
-        // 生成事件驱动的执行逻辑
+        // 获取事件端口信息（事件端口或事件数据端口）
+        let event_ports = self.extract_event_ports(impl_);
+        
+        // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
+        let receive_ports = if !event_ports.is_empty() {
+            event_ports
+        } else {
+            let subprogram_calls = self.extract_subprogram_calls(impl_);
+            subprogram_calls.iter()
+                .filter(|(_, _, _, is_send, _)| !is_send)
+                .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
+                .collect()
+        };
+
+        // 检查是否有需要端口数据的子程序调用
+        let subprogram_calls = self.extract_subprogram_calls(impl_);
+        let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send);
+
+        // 生成偶发执行逻辑 - 事件驱动，等待消息
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
             stmts: vec![
-                // 执行子程序调用处理块
-                Statement::Expr(Expr::Block(Block {
-                    stmts: port_handling_stmts.clone(),
-                    expr: None,
-                })),
-                // 短暂休眠，避免CPU占用过高
-                Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Path(
-                        vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                        PathType::Namespace,
-                    )),
-                    "".to_string(),
-                    vec![Expr::Call(
+                // 检查是否有接收端口，如果有则等待消息
+                // 动态获取第一个接收端口
+                Statement::Expr(Expr::IfLet {
+                    pattern: "Some(receiver)".to_string(),
+                    value: Box::new(Expr::Reference(
                         Box::new(Expr::Path(
-                            vec!["Duration".to_string(), "from_millis".to_string()],
-                            PathType::Namespace,
+                            vec!["self".to_string(), 
+                                if !receive_ports.is_empty() { 
+                                    receive_ports[0].to_lowercase() 
+                                } else { 
+                                    "error_sink".to_string() 
+                                }],
+                            PathType::Member,
                         )),
-                        vec![Expr::Literal(Literal::Int(10))], // 10ms休眠
-                    )],
-                )),
+                        true,
+                        false,
+                    )),
+                    then_branch: Block {
+                        stmts: vec![
+                            // 阻塞等待消息
+                            Statement::Expr(Expr::Match {
+                                expr: Box::new(Expr::MethodCall(
+                                    Box::new(Expr::Ident("receiver".to_string())),
+                                    "recv".to_string(),
+                                    Vec::new(),
+                                )),
+                                arms: vec![
+                                    // Ok(val) => 处理接收到的消息
+                                    MatchArm {
+                                        pattern: "Ok(val)".to_string(),
+                                        guard: None,
+                                        body: Block {
+                                            stmts: vec![
+                                                // 执行子程序调用处理，传递已读取的数据
+                                                Statement::Expr(Expr::Block(Block {
+                                                    stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
+                                                    expr: None,
+                                                })),                                               
+                                            ],
+                                            expr: None,
+                                        },
+                                    },
+                                    // Err(_) => 通道关闭，退出循环
+                                    MatchArm {
+                                        pattern: "Err(_)".to_string(),
+                                        guard: None,
+                                        body: Block {
+                                            stmts: vec![
+                                                Statement::Expr(Expr::Call(
+                                                    Box::new(Expr::Path(
+                                                        vec!["eprintln!".to_string()],
+                                                        PathType::Namespace,
+                                                    )),
+                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: channel closed", impl_.name.type_identifier.to_lowercase())))],
+                                                )),
+                                                Statement::Expr(Expr::Ident("return".to_string())),
+                                            ],
+                                            expr: None,
+                                        },
+                                    },
+                                ],
+                            }),
+                        ],
+                        expr: None,
+                    },
+                    else_branch: None,
+                }),
             ],
             expr: None,
         }))));
@@ -2510,18 +2576,16 @@ impl AadlConverter {
                                                     expr: None,
                                                 })),
                                                 // 更新上次调度时间
-                                                Statement::Let(LetStmt {
-                                                    ifmut: true,
-                                                    name: "last_dispatch".to_string(),
-                                                    ty: None,
-                                                    init: Some(Expr::Call(
+                                                Statement::Expr(Expr::Assign(
+                                                    Box::new(Expr::Ident("last_dispatch".to_string())),
+                                                    Box::new(Expr::Call(
                                                         Box::new(Expr::Path(
                                                             vec!["Instant".to_string(), "now".to_string()],
                                                             PathType::Namespace,
                                                         )),
                                                         Vec::new(),
-                                                    )),
-                                                }),
+                                                    ))
+                                                )),                                                
                                             ],
                                             expr: None,
                                         },
@@ -2558,6 +2622,144 @@ impl AadlConverter {
         stmts
     }
 
+    /// 创建定时执行逻辑
+    fn create_timed_execution_logic(&self, impl_: &ComponentImplementation) -> Vec<Statement> {
+        let mut stmts = Vec::new();
+        
+        // 从AADL属性中提取最小间隔时间，默认为1000ms
+        let period = self.extract_property_value(impl_, "period").unwrap_or(1000);
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "period".to_string(),
+            ty: Some(Type::Path(vec![
+                "std".to_string(),
+                "time".to_string(),
+                "Duration".to_string(),
+            ])),
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(
+                    vec!["Duration".to_string(), "from_millis".to_string()],
+                    PathType::Namespace,
+                )),
+                vec![Expr::Literal(Literal::Int(period as i64))],
+            )),
+        }));
+
+        // 获取事件端口信息（事件端口或事件数据端口）
+        let event_ports = self.extract_event_ports(impl_);
+        
+        // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
+        let receive_ports = if !event_ports.is_empty() {
+            event_ports
+        } else {
+            let subprogram_calls = self.extract_subprogram_calls(impl_);
+            subprogram_calls.iter()
+                .filter(|(_, _, _, is_send, _)| !is_send)
+                .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
+                .collect()
+        };
+
+        // 检查是否有需要端口数据的子程序调用
+        let subprogram_calls = self.extract_subprogram_calls(impl_);
+        let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send);
+
+        // 生成定时执行逻辑 - 使用 recv_timeout 处理超时
+        stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
+            stmts: vec![
+                // 检查是否有接收端口，如果有则等待消息
+                // 动态获取第一个接收端口
+                Statement::Expr(Expr::IfLet {
+                    pattern: "Some(receiver)".to_string(),
+                    value: Box::new(Expr::Reference(
+                        Box::new(Expr::Path(
+                            vec!["self".to_string(), 
+                                if !receive_ports.is_empty() { 
+                                    receive_ports[0].to_lowercase() 
+                                } else { 
+                                    "error_sink".to_string() 
+                                }],
+                            PathType::Member,
+                        )),
+                        true,
+                        false,
+                    )),
+                    then_branch: Block {
+                        stmts: vec![
+                            // 使用 recv_timeout 等待消息，支持超时处理
+                            Statement::Expr(Expr::Match {
+                                expr: Box::new(Expr::MethodCall(
+                                    Box::new(Expr::Ident("receiver".to_string())),
+                                    "recv_timeout".to_string(),
+                                    vec![Expr::Ident("period".to_string())],
+                                )),
+                                arms: vec![
+                                    // Ok(val) => 正常触发，处理接收到的消息
+                                    MatchArm {
+                                        pattern: "Ok(val)".to_string(),
+                                        guard: None,
+                                        body: Block {
+                                            stmts: vec![
+                                                // --- Compute Entrypoint (正常触发) ---
+                                                Statement::Expr(Expr::Block(Block {
+                                                    stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
+                                                    expr: None,
+                                                })),
+                                            ],
+                                            expr: None,
+                                        },
+                                    },
+                                    // Err(RecvTimeoutError::Timeout) => 超时触发
+                                    MatchArm {
+                                        pattern: "Err(std::sync::mpsc::RecvTimeoutError::Timeout)".to_string(),
+                                        guard: None,
+                                        body: Block {
+                                            stmts: vec![
+                                                // --- Recover Entrypoint (超时触发) ---
+                                                Statement::Expr(Expr::Call(
+                                                    Box::new(Expr::Path(
+                                                        vec!["eprintln!".to_string()],
+                                                        PathType::Namespace,
+                                                    )),
+                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: timeout dispatch → Recover_Entrypoint", impl_.name.type_identifier.to_lowercase())))],
+                                                )),
+                                                // recover_entrypoint();
+                                                Statement::Expr(Expr::Ident("// recover_entrypoint();".to_string())),
+                                            ],
+                                            expr: None,
+                                        },
+                                    },
+                                    // Err(_) => 通道关闭，退出循环
+                                    MatchArm {
+                                        pattern: "Err(_)".to_string(),
+                                        guard: None,
+                                        body: Block {
+                                            stmts: vec![
+                                                Statement::Expr(Expr::Call(
+                                                    Box::new(Expr::Path(
+                                                        vec!["eprintln!".to_string()],
+                                                        PathType::Namespace,
+                                                    )),
+                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: channel closed", impl_.name.type_identifier.to_lowercase())))],
+                                                )),
+                                                Statement::Expr(Expr::Ident("return".to_string())),
+                                            ],
+                                            expr: None,
+                                        },
+                                    },
+                                ],
+                            }),
+                        ],
+                        expr: None,
+                    },
+                    else_branch: None,
+                }),
+            ],
+            expr: None,
+        }))));
+
+        stmts
+    }
+    
     /// 创建子程序调用处理逻辑（提取公共部分）
     fn create_subprogram_call_logic(&self, impl_: &ComponentImplementation) -> Vec<Statement> {
         self.create_subprogram_call_logic_with_data(impl_, false)
@@ -2608,7 +2810,7 @@ impl AadlConverter {
                 .join(" -> ");
             
             port_handling_stmts.push(Statement::Expr(Expr::Ident(format!(
-                "// --- 调用序列（等价 AADL 的 Wrapper）---\n            // {}",
+                "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // {}",
                 call_sequence
             ))));
         }
