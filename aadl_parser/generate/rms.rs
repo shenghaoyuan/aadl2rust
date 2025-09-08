@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 15:48:45
+// 生成时间: 2025-09-08 15:45:48
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -60,7 +60,6 @@ pub struct taskThread {
     
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
     pub period: u64, // AADL属性: Period
     pub deadline: u64, // AADL属性: Deadline
 }
@@ -71,7 +70,6 @@ impl taskThread {
         Self {
             cpu_id: cpu_id,
             dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 1, // AADL属性: Priority
             period: 1000, // AADL属性: Period
             deadline: 1000, // AADL属性: Deadline
         }
@@ -82,10 +80,11 @@ impl taskThread {
     // Period: Some(1000) ms
     pub fn run(mut self) -> () {
         unsafe {
-            let mut param: sched_param = sched_param { sched_priority: 1 };
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
-                eprintln!("taskThread: Failed to set thread priority: {}", ret);
+                eprintln!("taskThread: Failed to set thread priority from period: {}", ret);
             };
         };
         if self.cpu_id > -1 {
@@ -115,7 +114,6 @@ pub struct task2Thread {
     
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
     pub period: u64, // AADL属性: Period
     pub deadline: u64, // AADL属性: Deadline
 }
@@ -126,7 +124,6 @@ impl task2Thread {
         Self {
             cpu_id: cpu_id,
             dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 2, // AADL属性: Priority
             period: 500, // AADL属性: Period
             deadline: 500, // AADL属性: Deadline
         }
@@ -137,10 +134,11 @@ impl task2Thread {
     // Period: Some(500) ms
     pub fn run(mut self) -> () {
         unsafe {
-            let mut param: sched_param = sched_param { sched_priority: 2 };
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
-                eprintln!("task2Thread: Failed to set thread priority: {}", ret);
+                eprintln!("task2Thread: Failed to set thread priority from period: {}", ret);
             };
         };
         if self.cpu_id > -1 {
@@ -196,15 +194,15 @@ impl node_aProcess {
     
 }
 
-// AADL System: rma
+// AADL System: rmssys
 #[derive(Debug)]
-pub struct rmaSystem {
+pub struct rmssysSystem {
     // 子组件进程（node_a : process node_a）
     #[allow(dead_code)]
     pub node_a: node_aProcess,
 }
 
-impl rmaSystem {
+impl rmssysSystem {
     // Creates a new system instance
     pub fn new() -> Self {
         let mut node_a: node_aProcess = node_aProcess::new(0);
@@ -225,5 +223,14 @@ lazy_static! {
         map.insert(0, SCHED_FIFO);
         return map;
     };
+}
+
+// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))
+// 根据周期计算优先级，周期越短优先级越高
+// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)
+pub fn period_to_priority(period_ms: f64) -> i32 {
+    let k: f64 = 10.0;
+    let raw: f64 = 99.0 - k * period_ms.log10().floor();
+    return raw.max(1.0).min(99.0) as i32;
 }
 

@@ -1,7 +1,7 @@
 RustModule {
-    name: "rmaaadl",
+    name: "rmsaadl",
     docs: [
-        "// Auto-generated from AADL package: RMAAadl",
+        "// Auto-generated from AADL package: RMSAadl",
     ],
     items: [
         Mod(
@@ -149,6 +149,21 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: task",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "taskThread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
@@ -157,15 +172,6 @@ RustModule {
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Priority",
-                        value: Integer(
-                            1,
-                        ),
-                        docs: [
-                            "// AADL属性: Priority",
                         ],
                     },
                     StruProperty {
@@ -228,6 +234,28 @@ RustModule {
                                                 stmts: [
                                                     Let(
                                                         LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
                                                             ifmut: true,
                                                             name: "param",
                                                             ty: Some(
@@ -237,7 +265,7 @@ RustModule {
                                                             ),
                                                             init: Some(
                                                                 Ident(
-                                                                    "sched_param { sched_priority: 1 }",
+                                                                    "sched_param { sched_priority: prio }",
                                                                 ),
                                                             ),
                                                         },
@@ -340,7 +368,7 @@ RustModule {
                                                                             [
                                                                                 Literal(
                                                                                     Str(
-                                                                                        "taskThread: Failed to set thread priority: {}",
+                                                                                        "taskThread: Failed to set thread priority from period: {}",
                                                                                     ),
                                                                                 ),
                                                                                 Ident(
@@ -569,6 +597,21 @@ RustModule {
                         attrs: [],
                     },
                 ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Thread: task2",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "task2Thread",
+                fields: [],
                 properties: [
                     StruProperty {
                         name: "Dispatch_Protocol",
@@ -577,15 +620,6 @@ RustModule {
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Priority",
-                        value: Integer(
-                            2,
-                        ),
-                        docs: [
-                            "// AADL属性: Priority",
                         ],
                     },
                     StruProperty {
@@ -648,6 +682,28 @@ RustModule {
                                                 stmts: [
                                                     Let(
                                                         LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
                                                             ifmut: true,
                                                             name: "param",
                                                             ty: Some(
@@ -657,7 +713,7 @@ RustModule {
                                                             ),
                                                             init: Some(
                                                                 Ident(
-                                                                    "sched_param { sched_priority: 2 }",
+                                                                    "sched_param { sched_priority: prio }",
                                                                 ),
                                                             ),
                                                         },
@@ -760,7 +816,7 @@ RustModule {
                                                                             [
                                                                                 Literal(
                                                                                     Str(
-                                                                                        "task2Thread: Failed to set thread priority: {}",
+                                                                                        "task2Thread: Failed to set thread priority from period: {}",
                                                                                     ),
                                                                                 ),
                                                                                 Ident(
@@ -988,6 +1044,22 @@ RustModule {
                         ],
                         attrs: [],
                     },
+                ],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL Process: node_a",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "node_aProcess",
+                fields: [
                     Field {
                         name: "task1",
                         ty: Named(
@@ -1026,6 +1098,16 @@ RustModule {
                             },
                         ],
                     },
+                    Field {
+                        name: "cpu_id",
+                        ty: Named(
+                            "isize",
+                        ),
+                        docs: [
+                            "// 新增 CPU ID",
+                        ],
+                        attrs: [],
+                    },
                 ],
                 properties: [],
                 generics: [],
@@ -1033,7 +1115,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Process: node_a",
+                    "// Process implementation: node_a",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -1226,7 +1309,22 @@ RustModule {
         ),
         Struct(
             StructDef {
-                name: "rmaSystem",
+                name: "rmssysSystem",
+                fields: [],
+                properties: [],
+                generics: [],
+                derives: [
+                    "Debug",
+                ],
+                docs: [
+                    "// AADL System: rmssys",
+                ],
+                vis: Public,
+            },
+        ),
+        Struct(
+            StructDef {
+                name: "rmssysSystem",
                 fields: [
                     Field {
                         name: "node_a",
@@ -1254,7 +1352,8 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL System: rma",
+                    "// System implementation: rmssys",
+                    "// Auto-generated from AADL",
                 ],
                 vis: Public,
             },
@@ -1262,7 +1361,7 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "rmaSystem",
+                    "rmssysSystem",
                 ),
                 generics: [],
                 items: [
@@ -1410,6 +1509,92 @@ RustModule {
                 docs: [
                     "// CPU ID到调度策略的映射",
                 ],
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "period_to_priority",
+                params: [
+                    Param {
+                        name: "period_ms",
+                        ty: Named(
+                            "f64",
+                        ),
+                    },
+                ],
+                return_type: Named(
+                    "i32",
+                ),
+                body: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: false,
+                                name: "k",
+                                ty: Some(
+                                    Named(
+                                        "f64",
+                                    ),
+                                ),
+                                init: Some(
+                                    Ident(
+                                        "10.0",
+                                    ),
+                                ),
+                            },
+                        ),
+                        Let(
+                            LetStmt {
+                                ifmut: false,
+                                name: "raw",
+                                ty: Some(
+                                    Named(
+                                        "f64",
+                                    ),
+                                ),
+                                init: Some(
+                                    BinaryOp(
+                                        Ident(
+                                            "99.0",
+                                        ),
+                                        "-",
+                                        MethodCall(
+                                            BinaryOp(
+                                                Ident(
+                                                    "k",
+                                                ),
+                                                "*",
+                                                MethodCall(
+                                                    Ident(
+                                                        "period_ms",
+                                                    ),
+                                                    "log10",
+                                                    [],
+                                                ),
+                                            ),
+                                            "floor",
+                                            [],
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            Ident(
+                                "return raw.max(1.0).min(99.0) as i32",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: false,
+                vis: Public,
+                docs: [
+                    "// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))",
+                    "// 根据周期计算优先级，周期越短优先级越高",
+                    "// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)",
+                ],
+                attrs: [],
             },
         ),
     ],

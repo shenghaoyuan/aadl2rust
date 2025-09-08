@@ -69,8 +69,9 @@ impl AadlConverter {
             }
         }
 
-        //处理CPU和分配ID的映射关系，生成的Rust代码中，初始化<CPU名称,ID>的映射关系
+        //处理CPU和分配ID的映射关系，生成的Rust代码中，初始化<ID,调度协议>的映射关系
         self.convert_cpu_schedule_mapping(&mut module, &self.cpu_scheduling_protocols, &self.cpu_name_to_id_mapping);
+        self.add_period_to_priority(&mut module, &self.cpu_scheduling_protocols);
         println!("cpu_scheduling_protocols: {:?}", self.cpu_scheduling_protocols);
         println!("cpu_name_to_id_mapping: {:?}", self.cpu_name_to_id_mapping);
         module
@@ -1982,8 +1983,12 @@ impl AadlConverter {
         let mut stmts = Vec::new();
         
         //======================= 线程优先级设置 ========================
+        // 检查是否有优先级属性
+        let priority = self.extract_property_value(impl_, "priority");
+        let period = self.extract_property_value(impl_, "period");
+        
         // 如果线程有 priority 属性，则设置线程优先级
-        if let Some(priority) = self.extract_property_value(impl_, "priority") {
+        if let Some(priority) = priority {
             // 添加优先级设置代码 - 使用unsafe块和完整的错误处理
             stmts.push(Statement::Expr(Expr::Unsafe(Box::new(Block {
                 stmts: vec![
@@ -1994,7 +1999,7 @@ impl AadlConverter {
                         ty: Some(Type::Named("sched_param".to_string())),
                         init: Some(Expr::Ident(format!("sched_param {{ sched_priority: {} }}", priority as i32))),
                     }),
-                    // let ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &mut param);
+                    // let ret = pthread_setschedparam(pthread_self(), *, &mut param);
                     Statement::Let(LetStmt {
                         ifmut: false,
                         name: "ret".to_string(),
@@ -2062,6 +2067,109 @@ impl AadlConverter {
                                     )),
                                     vec![
                                         Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority: {{}}", impl_.name.type_identifier.to_lowercase()))),
+                                        Expr::Ident("ret".to_string()),
+                                    ],
+                                )),
+                            ],
+                            expr: None,
+                        },
+                        else_branch: None,
+                    }),
+                ],
+                expr: None,
+            }))));
+        } else if let Some(period) = period {
+            // 如果没有优先级但有周期，则根据周期计算优先级(RMS)
+            stmts.push(Statement::Expr(Expr::Unsafe(Box::new(Block {
+                stmts: vec![
+                    // let prio = period_to_priority(self.period as f64);
+                    Statement::Let(LetStmt {
+                        ifmut: false,
+                        name: "prio".to_string(),
+                        ty: None,
+                        init: Some(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec!["period_to_priority".to_string()],
+                                PathType::Namespace,
+                            )),
+                            vec![Expr::Ident("self.period as f64".to_string())],
+                        )),
+                    }),
+                    // let mut param: sched_param = sched_param { sched_priority: prio };
+                    Statement::Let(LetStmt {
+                        ifmut: true,
+                        name: "param".to_string(),
+                        ty: Some(Type::Named("sched_param".to_string())),
+                        init: Some(Expr::Ident("sched_param { sched_priority: prio }".to_string())),
+                    }),
+                    // let ret = pthread_setschedparam(pthread_self(), *, &mut param);
+                    Statement::Let(LetStmt {
+                        ifmut: false,
+                        name: "ret".to_string(),
+                        ty: None,
+                        init: Some(Expr::Call(
+                            Box::new(Expr::Path(
+                                vec!["pthread_setschedparam".to_string()],
+                                PathType::Namespace,
+                            )),
+                            vec![
+                                Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["pthread_self".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    Vec::new(),
+                                ),
+                                Expr::MethodCall(
+                                    Box::new(Expr::MethodCall(
+                                        Box::new(Expr::Path(
+                                            vec!["*CPU_ID_TO_SCHED_POLICY".to_string()],
+                                            PathType::Namespace,
+                                        )),
+                                        "get".to_string(),
+                                        vec![Expr::Reference(
+                                            Box::new(Expr::Path(
+                                                vec!["self".to_string(), "cpu_id".to_string()],
+                                                PathType::Member,
+                                            )),
+                                            true,
+                                            false,
+                                        )],
+                                    )),
+                                    "unwrap_or".to_string(),
+                                    vec![Expr::Reference(
+                                        Box::new(Expr::Path(
+                                            vec!["SCHED_FIFO".to_string()],
+                                            PathType::Namespace,
+                                        )),
+                                        true,
+                                        false,
+                                    )],
+                                ),
+                                Expr::Reference(
+                                    Box::new(Expr::Ident("param".to_string())),
+                                    true,
+                                    true,
+                                ),
+                            ],
+                        )),
+                    }),
+                    // if ret != 0 { eprintln!("..."); }
+                    Statement::Expr(Expr::If {
+                        condition: Box::new(Expr::BinaryOp(
+                            Box::new(Expr::Ident("ret".to_string())),
+                            "!=".to_string(),
+                            Box::new(Expr::Literal(Literal::Int(0))),
+                        )),
+                        then_branch: Block {
+                            stmts: vec![
+                                Statement::Expr(Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["eprintln!".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    vec![
+                                        Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority from period: {{}}", impl_.name.type_identifier.to_lowercase()))),
                                         Expr::Ident("ret".to_string()),
                                     ],
                                 )),
@@ -3132,9 +3240,11 @@ impl AadlConverter {
             
             // 将调度协议转换为对应的常量
             let sched_constant = match scheduling_protocol.to_uppercase().as_str() {
-                "POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL" => "SCHED_FIFO",
-                "ROUND_ROBIN_PROTOCOL" => "SCHED_RR", 
-                "EDF" => "SCHED_DEADLINE",
+                "POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL" | "HPF" => "SCHED_FIFO",
+                "ROUND_ROBIN_PROTOCOL" | "RR" => "SCHED_RR", 
+                "EDF" | "EARLIEST_DEADLINE_FIRST_PROTOCOL" => "SCHED_DEADLINE",
+                "RATE_MONOTONIC_PROTOCOL" | "RMS" | "RM" => "SCHED_FIFO",
+                "DEADLINE_MONOTONIC_PROTOCOL" | "DM" | "DMS"=> "SCHED_FIFO",
                 _ => "SCHED_FIFO", // 默认值
             };
             
@@ -3186,7 +3296,6 @@ impl AadlConverter {
             vis: Visibility::Public,
             docs: vec![
                 "// CPU ID到调度策略的映射".to_string(),
-                "// 自动从AADL CPU实现中生成".to_string(),
             ],
         };
 
@@ -3194,7 +3303,88 @@ impl AadlConverter {
         module.items.push(Item::LazyStatic(lazy_static_def));
     }
 
-
-
+    /// 添加 period_to_priority 函数到模块中
+    /// 该函数根据周期计算优先级：prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))
+    /// 只有在检测到 RMS 或 DMS 调度协议时才生成此函数
+    fn add_period_to_priority(&self, module: &mut RustModule, cpu_scheduling_protocols: &HashMap<String, String>) {
+        // 检查是否有 RMS 或 DMS 调度协议
+        let has_rms_or_dms = cpu_scheduling_protocols.values().any(|protocol| {
+            let protocol_upper = protocol.to_uppercase();
+            protocol_upper.contains("RATE_MONOTONIC") || 
+            protocol_upper.contains("RMS") || 
+            protocol_upper.contains("RM") ||
+            protocol_upper.contains("DEADLINE_MONOTONIC") ||
+            protocol_upper.contains("DMS") ||
+            protocol_upper.contains("DM")
+        });
+        
+        // 如果没有 RMS 或 DMS 调度协议，则不生成函数
+        if !has_rms_or_dms {
+            return;
+        }
+        
+        // 构建函数体
+        let mut body_stmts = Vec::new();
+        
+        // let k = 10.0; // 每增加一个数量级，优先级下降10
+        body_stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "k".to_string(),
+            ty: Some(Type::Named("f64".to_string())),
+            init: Some(Expr::Ident("10.0".to_string())),
+        }));
+        
+        // let raw = 99.0 - (k * period_ms.log10()).floor();
+        body_stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "raw".to_string(),
+            ty: Some(Type::Named("f64".to_string())),
+            init: Some(Expr::BinaryOp(
+                Box::new(Expr::Ident("99.0".to_string())),
+                "-".to_string(),
+                Box::new(Expr::MethodCall(
+                    Box::new(Expr::BinaryOp(
+                        Box::new(Expr::Ident("k".to_string())),
+                        "*".to_string(),
+                        Box::new(Expr::MethodCall(
+                            Box::new(Expr::Ident("period_ms".to_string())),
+                            "log10".to_string(),
+                            Vec::new(),
+                        )),
+                    )),
+                    "floor".to_string(),
+                    Vec::new(),
+                )),
+            )),
+        }));
+        
+        // raw.max(1.0).min(99.0) as i32
+        body_stmts.push(Statement::Expr(Expr::Ident("return raw.max(1.0).min(99.0) as i32".to_string())));
+        
+        // 创建函数定义
+        let function_def = FunctionDef {
+            name: "period_to_priority".to_string(),
+            params: vec![Param {
+                name: "period_ms".to_string(),
+                ty: Type::Named("f64".to_string()),
+            }],
+            return_type: Type::Named("i32".to_string()),
+            body: Block {
+                stmts: body_stmts,
+                expr: None,
+            },
+            asyncness: false,
+            vis: Visibility::Public,
+            docs: vec![
+                "// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))".to_string(),
+                "// 根据周期计算优先级，周期越短优先级越高".to_string(),
+                "// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)".to_string(),
+            ],
+            attrs: Vec::new(),
+        };
+        
+        // 将函数添加到模块中
+        module.items.push(Item::Function(function_def));
+    }
 
 }

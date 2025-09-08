@@ -1482,7 +1482,6 @@ RustModule {
                 vis: Public,
                 docs: [
                     "// CPU ID到调度策略的映射",
-                    "// 自动从AADL CPU实现中生成",
                 ],
             },
         ),

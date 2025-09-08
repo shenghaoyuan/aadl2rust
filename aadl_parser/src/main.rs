@@ -67,6 +67,12 @@ fn main() {
             path: "AADLSource/robotv2.aadl".to_string(),
             output_name: "robotv2".to_string(),
         },
+        TestCase {
+            id: 7,
+            name: "RMS".to_string(),
+            path: "AADLSource/rms.aadl".to_string(),
+            output_name: "rms".to_string(),
+        },
     ];
 
     // 显示可用的测试用例
