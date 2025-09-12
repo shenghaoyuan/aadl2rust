@@ -1,0 +1,661 @@
+// aadl.pest
+
+//匹配时，并非“贪心算法”，浅尝辄止
+// “|”该符号不能作为开头的首个符号
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" | COMMENT }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" | "--" ~ (!"\n" ~ ANY)* }
+
+// 基础标识符规则
+identifier = @{ 
+    ASCII_ALPHA ~ 
+    //(ASCII_ALPHANUMERIC | '_' .. '.')*  // 不知道为什么不行
+    (ASCII_ALPHANUMERIC | '_' .. '_' | '.'..'.')*  
+}
+no_point_identifier = @{ 
+    ASCII_ALPHA ~ 
+    (ASCII_ALPHANUMERIC | '_' .. '_' )*  
+}
+
+qualified_identifier = @{ (identifier ~ "::")* ~ identifier }
+package_name = { qualified_identifier }
+property_set_name = { identifier }
+
+// 4.2 Package 这里的public和private信息被丢弃
+package_declaration = {
+    "package" ~ package_name ~ 
+    ("public" | "private")? ~
+    visibility_declarations* ~
+    package_sections ~
+    "end" ~ package_name ~ ";"
+}
+
+visibility_declarations = {
+    (WITH ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" )|
+    (identifier ~ "renames" ~ ("package" ~ package_name | qualified_identifier) ~ ("as" ~ identifier)? ~ ";")
+}
+WITH = { "with" }
+
+package_sections = {
+    ((PUBLIC | PRIVATE)?  ~ declaration*)? 
+}
+PUBLIC = { "public" }
+PRIVATE = { "private" }
+
+
+declaration = {
+    component_type |
+    component_implementation |
+    annex_library
+}
+
+// 4.3 Component Types ，似乎processor与process存在冲突，暂时给processor取名cjprocessor
+// 上述问题已解决，把processor放在process之前
+component_category = {
+    "abstract" |
+    "data" | "subprogram" | "subprogram group" |
+    "thread" | "thread group" | "processor" |
+    "memory" | "process" | "bus" | "device" | "virtual processor" | "virtual bus" |
+    "system"
+}
+
+component_type = {
+    component_category ~ identifier ~ extends? ~
+    prototypes? ~
+    features? ~
+    properties? ~
+    annex_subclause* ~
+    "end" ~ identifier ~ ";"
+}
+extends = { "extends" ~ qualified_identifier}
+// 4.4 Component Implementations
+component_implementation = {
+    component_category ~ "implementation" ~ identifier ~ 
+    prototypes? ~
+    subcomponents? ~
+    calls? ~
+    connections? ~
+    properties? ~
+    annex_subclause* ~
+    "end" ~ identifier ~ ";"
+}
+
+// 4.5 Subcomponents
+subcomponent = {
+    identifier ~ ":" ~ component_category ~ identifier ~
+    array_spec? ~
+    properties? ~
+    ";"
+}
+
+// 4.7 Prototypes TODO
+prototype_declaration = {
+    identifier ~ ":" ~
+    ("component" ~ component_category ~ ("classifier" ~ qualified_identifier)?) |
+    ("feature" ~ ("in" | "out" | "in out")? ~ ("classifier" ~ qualified_identifier)?) |
+    ("feature group" ~ ("classifier" ~ qualified_identifier)?)
+}
+
+// 8 Features
+feature_declaration = {
+    identifier ~ ":" ~ (
+        // 端口/参数等特征
+        (direction? ~ port_type ~ qualified_identifier?) |
+        // 访问特征：subprogram access（支持 provides/requires）
+        (access_direction? ~ access_type ~ "access" ~ qualified_identifier?)
+    ) ~ ";"
+}
+
+direction = { "in out" | "in" | "out" } // 注意 "in out" 要放前面
+access_direction = { "provides" | "requires" }
+
+port_type = { "data port" | "event data port" | "event port" | "parameter" }
+access_type = { "subprogram" | "data" }
+
+// 9 Connections
+connection = {
+    identifier ~ ":" ~ connection_type ~
+    (port_connection | parameter_connection) ~
+    ";"
+}
+
+connection_type = { "port" | "parameter" | "subprogram access" | "data access"}
+connection_operator = { "->" | "<->" }
+
+port_connection = {
+    port_reference ~ connection_operator ~ port_reference
+}
+
+parameter_connection = {
+    parameter_reference ~ connection_operator ~ parameter_reference
+}
+
+// 11 Properties 这里其实合并了property_association和contained_property_association（有applies子句，移动到了property_value的reference_value里）
+property_association = {
+    identifier ~
+    ( "::" ~ property_set_name )? ~
+    property_operator ~
+    constant? ~ property_value ~
+    ";"
+}
+
+property_operator = { "=>" | "+=>" }
+
+constant = { "constant" }
+
+
+property_value = {
+    range_value | //优先于literal_value匹配
+    literal_value | //字面量
+    list_value |
+    reference_value 
+}
+
+literal_value = { (number | string_literal | boolean | enum_value ) ~ unit? } 
+range_value = { 
+    number ~ WHITESPACE* ~ unit? ~ WHITESPACE* ~ 
+    ".." ~ WHITESPACE* ~ 
+    (number | identifier) ~ WHITESPACE* ~ unit? 
+}
+list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
+reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" ~ ( "applies" ~ "to" ~ qualified_identifier )? }
+
+sign = { "+" | "-" }
+dot = { "." }
+number = { sign? ~ numbervalue} //带符号整数或浮点数
+numbervalue = {(ASCII_DIGIT+) ~ (dot ~ ASCII_DIGIT+)?}
+
+unit = { no_point_identifier } //可选的单位
+string_literal = { 
+    "\"" ~ (!"\"" ~ ANY)* ~ "\"" | 
+    "(" ~ ("()" | ( !")" ~ ANY ) )* ~ ")" 
+}//双引号字符串或括号内容（如 "text" 或 (content)）
+//注意跳过("new PingPongType()") 内部的括号对
+
+boolean = { "true" | "false"}
+// 枚举值规则（覆盖AADL属性集预定义值）
+enum_value = @{
+    "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
+    "native" | "Integer" | "Struct" | 
+    "Boolean" | "Signed" | "Unsigned" | "Float" | "Simple" | "Double" | "Character" | "String" 
+}
+
+// 5.2 Subprogram Calls
+call_sequence = {
+    identifier ~ ":" ~ "{" ~ subprogram_call+ ~ "}" ~ ";"
+}
+
+subprogram_call = {
+    identifier ~ ":" ~ "subprogram" ~ qualified_identifier ~ ";"
+}
+
+// Annexes
+annex_library = { "annex" ~ identifier? ~ "{" ~ ANY* ~ "}" ~ ";" }
+
+// Annex Subclause - 支持 Behavior Annex 和 EMV2
+annex_subclause = { 
+    "annex" ~ annex_identifier ~ 
+    ("{**" ~ annex_content ~ "**};") 
+}
+
+// Annex 标识符
+annex_identifier = { 
+    "Behavior_specification" | 
+    "EMV2" | 
+    identifier 
+}
+
+// Annex 内容
+annex_content = { 
+    behavior_annex_content?
+}
+
+// Behavior Annex 内容
+behavior_annex_content = {
+    (state_variables | states | transitions)*
+}
+
+// 状态变量声明
+state_variables = { 
+    "variables" ~ 
+    state_variable_declaration+ 
+}
+
+state_variable_declaration = {
+    identifier ~ ":" ~ qualified_identifier ~ (assignment_operator ~ behavior_expression)? ~ ";" 
+}
+assignment_operator = { ":=" }
+
+// 状态定义
+states = { 
+    "states" ~ 
+    state_declaration+ 
+}
+
+state_declaration = {
+    identifier ~ ("," ~ identifier)* ~ 
+    ":" ~ 
+    state_modifier* ~ 
+    "state" ~ 
+    ";" 
+}
+
+state_modifier = { 
+    "initial" | "complete" | "final"
+}
+
+// 转换定义
+transitions = { 
+    "transitions" ~ 
+    transition_declaration+
+}
+
+transition_declaration = {
+    identifier ~ 
+    "-[" ~ guard? ~ "]->" ~ 
+    identifier ~ 
+    behavior_action_block? ~
+    ";" 
+}
+
+// 守卫条件
+// 根据 AADL 标准，guard 应该对应 BehaviorCondition
+// 包括 dispatch_condition 和 execute_condition
+//这里execute_condition暂时只特殊处理，not+端口和端口两种情况
+guard = { 
+    dispatch_condition | 
+    execute_condition 
+}
+
+// dispatch_condition ::= on dispatch [ dispatch_trigger_condition ] [ frozen frozen_ports ]
+dispatch_condition = {
+    "on dispatch" ~ dispatch_trigger_condition? ~ frozen_ports?
+}
+
+// dispatch_trigger_condition ::= dispatch_trigger_logical_expression | provides_subprogram_access_identifier | stop
+dispatch_trigger_condition = {
+    dispatch_trigger_logical_expression |
+    provides_subprogram_access_identifier |
+    "stop"
+}
+
+// dispatch_trigger_logical_expression ::= dispatch_conjunction { or dispatch_conjunction }*
+dispatch_trigger_logical_expression = {
+    dispatch_conjunction ~ ("or" ~ dispatch_conjunction)*
+}
+
+// dispatch_conjunction ::= dispatch_trigger { and dispatch_trigger }*
+dispatch_conjunction = {
+    dispatch_trigger ~ ("and" ~ dispatch_trigger)*
+}
+
+// dispatch_trigger ::= in_event_port_identifier | in_event_data_port_identifier
+dispatch_trigger = {
+    identifier
+}
+
+// provides_subprogram_access_identifier
+provides_subprogram_access_identifier = {
+    identifier
+}
+
+// frozen_ports ::= frozen frozen_port_identifier { , frozen_port_identifier }*
+frozen_ports = {
+    "frozen" ~ identifier ~ ("," ~ identifier)*
+}
+
+// execute_condition ::= logical_value_expression | otherwise
+execute_condition = {
+    unary_boolean_operator? ~ identifier
+}
+
+
+// 行为动作（重命名以避免递归）
+behavior_action = { 
+    basic_action | 
+    behavior_action_block | 
+    if_statement | 
+    for_statement | 
+    forall_statement | 
+    while_statement | 
+    do_until_statement 
+}
+
+// 根据标准BNF定义basic_action
+// basic_action ::= assignment_action | communication_action | timed_action
+basic_action = { 
+    computation_action | // 定时动作
+    assignment_action | 
+    communication_action 
+}
+
+// 计算动作（定时动作）
+// timed_action ::= computation ( behavior_time [ .. behavior_time ] )
+// computation_action = { 
+//     "computation" ~ "(" ~ behavior_time ~ (".." ~ behavior_time)? ~ ")" 
+// }
+computation_action = { 
+    "computation" ~ "(" ~ behavior_time  ~ ")" 
+}
+// 延迟动作
+// delay_action = { 
+//     "delay" ~ "(" ~ behavior_time ~ ")" ~ ";" 
+// }
+
+// 通信动作
+// communication_action ::= subprogram_call | port_communication | data_access_communication | broadcast
+communication_action = { 
+    port_communication | 
+    data_access_communication | 
+    broadcast_action 
+}
+
+// 赋值动作
+// assignment_action ::= target := ( value_expression | any )
+assignment_action = { 
+    target ~ ":=" ~ ("("?)~ (behavior_expression | "any") ~ (")"?)
+}
+
+
+
+// TODO行为参数绑定
+//behavior_parameter_bindings ::=
+// behavior_expression [ -> unique_port_identifier ]
+// { , behavior_expression [ -> unique_port_identifier ] } *
+// behavior_parameter_bindings = { 
+//     "(" ~ behavior_parameter_binding ~ ("," ~ behavior_parameter_binding)* ~ ")" 
+// }
+
+// behavior_parameter_binding = { 
+//     behavior_expression ~ ("->" ~ identifier)? 
+// }
+
+// behavior_expression 现在使用与 value_expression 相同的表达式层次结构
+// 这样可以保持一致性，避免重复定义
+behavior_expression = { 
+    value_expression
+}
+
+
+// 行为时间
+// behavior_time ::= integer_value unit_identifier
+behavior_time = { 
+    integer_value ~ unit_identifier? 
+}
+// behavior_time = { 
+//         "1 ms"
+//     }
+
+// 整数值
+// integer_value ::= integer_value_variable | integer_value_constant
+integer_value = { 
+    number | identifier   // 变量标识符或数字常量
+}
+// numbertemp = @{
+//     ASCII_DIGIT+
+// }
+
+// 单位标识符
+unit_identifier = { 
+    no_point_identifier 
+}
+
+// 端口通信
+// port_communication ::= output_port_name ! [ ( value_expression ) ] | input_port_name >> | input_port_name ? [ ( target ) ]
+port_communication = { 
+    (identifier ~ "!" ~ ("(" ~ behavior_expression ~ ")")?) |  // 输出端口
+    (identifier ~ ">>") |  // 输入端口接收
+    (identifier ~ "?" ~ ("(" ~ target ~ ")")?)  // 输入端口检查
+}
+
+// 数据访问通信
+// data_access_communication ::= required_data_access_name !< | required_data_access_name !> | required_data_access_name . provided_subprogram_access_name ! [ ( subprogram_parameter_list ) ]
+data_access_communication = { 
+    (identifier ~ ("!<" | "!>")) |  // 数据访问方向
+    (identifier ~ "." ~ identifier ~ "!" ~ ("(" ~ subprogram_parameter_list ~ ")")?)  // 数据访问子程序
+}
+
+// 广播
+// broadcast ::= *!< | *!>
+broadcast_action = { 
+    "*!<" | "*!>" 
+}
+
+// 目标
+// target ::= local_variable_name | outgoing_port_name | outgoing_subprogram_parameter_name | data_component_reference
+target = { 
+    identifier  // 简化版本，只支持标识符
+}
+
+// 子程序参数列表
+// subprogram_parameter_list ::= parameter_label { , parameter_label }*
+subprogram_parameter_list = { 
+    parameter_label ~ ("," ~ parameter_label)* 
+}
+
+// 参数标签
+// parameter_label ::= in_parameter_value_expression | out_parameter_target
+parameter_label = { 
+    ("in" ~ behavior_expression) | 
+    ("out" ~ target) 
+}
+
+// 行为动作块
+// behavior_action_block ::= { behavior_actions } [ timeout behavior_time ]
+behavior_action_block = { 
+    "{" ~ behavior_actions ~ "}" ~ ("timeout" ~ behavior_time)? 
+}
+
+// 行为动作!!!!!!!!!!!!!!!!!!!必须把behavior_action_set和behavior_action_sequence放在之前!!!!!!!!!!!!!!!!!!!
+// behavior_actions ::= behavior_action | behavior_action_sequence | behavior_action_set
+behavior_actions = { 
+    behavior_action_sequence | 
+    behavior_action_set |
+    behavior_action 
+}
+
+// 行为动作序列
+// behavior_action_sequence ::= behavior_action { ; behavior_action }+
+behavior_action_sequence = { 
+    behavior_action ~ (";" ~ behavior_action)+ 
+}
+
+// 行为动作集合
+// behavior_action_set ::= behavior_action { & behavior_action }+
+behavior_action_set = { 
+    behavior_action ~ ("&" ~ behavior_action)+ 
+}
+
+// if 语句
+// if ( logical_value_expression ) behavior_actions { elsif ( logical_value_expression ) behavior_actions }* [ else behavior_actions ] end if
+if_statement = { 
+    "if" ~ "(" ~ behavior_expression ~ ")" ~ behavior_actions ~ 
+    ("elsif" ~ "(" ~ behavior_expression ~ ")" ~ behavior_actions)* ~ 
+    ("else" ~ behavior_actions)? ~ 
+    "end" ~ "if" 
+}
+
+// for 语句
+// for ( element_identifier : data_unique_component_classifier_reference in element_values ) { behavior_actions }
+for_statement = { 
+    "for" ~ "(" ~ identifier ~ ":" ~ identifier ~ "in" ~ element_values ~ ")" ~ 
+    "{" ~ behavior_actions ~ "}" 
+}
+
+// forall 语句
+// forall ( element_identifier : data_unique_component_classifier_reference in element_values ) { behavior_actions }
+forall_statement = { 
+    "forall" ~ "(" ~ identifier ~ ":" ~ identifier ~ "in" ~ element_values ~ ")" ~ 
+    "{" ~ behavior_actions ~ "}" 
+}
+
+// while 语句
+// while ( logical_value_expression ) { behavior_actions }
+while_statement = { 
+    "while" ~ "(" ~ behavior_expression ~ ")" ~ "{" ~ behavior_actions ~ "}" 
+}
+
+// do-until 语句
+// do behavior_actions until ( logical_value_expression )
+do_until_statement = { 
+    "do" ~ behavior_actions ~ "until" ~ "(" ~ behavior_expression ~ ")" 
+}
+
+// 元素值
+// element_values ::= integer_range | event_data_port_name | array_data_component_reference
+element_values = { 
+    integer_range | 
+    identifier |  // 事件数据端口名称
+    (identifier ~ "[" ~ behavior_expression ~ "]")  // 数组数据组件引用
+}
+
+// 整数范围
+// integer_range ::= integer_value .. integer_value
+integer_range = { 
+    integer_value ~ ".." ~ integer_value 
+}
+
+// 这些规则已经不再需要，使用新的表达式层次结构
+
+// 二元操作符
+binary_operator = { 
+    // 逻辑操作符
+    "and" | "or" |
+    // 比较操作符
+    "=" | "!=" | "<" | "<=" | ">" | ">=" |
+    // 算术操作符
+    "+" | "-" | "*" | "/" | "mod"
+}
+
+// 值表达式层次结构（与ast.rs保持一致）
+// value_expression ::= relation { logical_operator relation }*
+value_expression = { 
+    relation ~ (logical_operator ~ relation)* 
+}
+
+// 逻辑操作符
+// logical_operator ::= and | or | xor
+logical_operator = { 
+    "and" | "or" | "xor" 
+}
+
+// 关系表达式
+// relation ::= simple_expression [ relational_operator simple_expression ]
+relation = { 
+    simple_expression ~ (relational_operator ~ simple_expression)? 
+}
+
+// 关系操作符
+// relational_operator ::= = | != | < | <= | > | >=
+relational_operator = { 
+    "=" | "!=" | "<" | "<=" | ">" | ">=" 
+}
+
+// 简单表达式
+// simple_expression ::= [ unary_adding_operator ] term { binary_adding_operator term }*
+simple_expression = { 
+    unary_adding_operator? ~ term ~ (binary_adding_operator ~ term)* 
+}
+
+// 一元加法操作符
+// unary_adding_operator ::= + | -
+unary_adding_operator = { 
+    "+" | "-" 
+}
+
+// 二元加法操作符
+// binary_adding_operator ::= + | -
+binary_adding_operator = { 
+    "+" | "-" 
+}
+
+// 项
+// term ::= factor { multiplying_operator factor }*
+term = { 
+    factor ~ (multiplying_operator ~ factor)* 
+}
+
+// 乘法操作符
+// multiplying_operator ::= * | / | mod | rem
+multiplying_operator = { 
+    "*" | "/" | "mod" | "rem" 
+}
+
+// 因子
+// factor ::= value [ binary_numeric_operator value ] | unary_numeric_operator value | unary_boolean_operator value
+factor = { 
+    value |
+    (value ~ binary_numeric_operator ~ value) |
+    (unary_numeric_operator ~ value) |
+    (unary_boolean_operator ~ value)
+}
+
+// 二元数值操作符
+// binary_numeric_operator ::= **
+binary_numeric_operator = { 
+    "**" 
+}
+
+// 一元数值操作符
+// unary_numeric_operator ::= abs
+unary_numeric_operator = { 
+    "abs" 
+}
+
+// 一元布尔操作符
+// unary_boolean_operator ::= not
+unary_boolean_operator = { 
+    "not" 
+}
+
+// 值
+// value ::= value_variable | value_constant | ( value_expression )
+value = { 
+    value_constant | 
+    value_variable | 
+    ("(" ~ simple_expression ~ ")") 
+}
+
+// 值变量
+// value_variable ::= incoming_port_name | incoming_port_name ? | incoming_subprogram_parameter_name | local_variable_name | data_component_reference | port_name ' count | port_name ' fresh
+value_variable = { 
+    (identifier ~ "'count") |  // port_name ' count
+    (identifier ~ "'fresh") |  // port_name ' fresh
+    (identifier ~ "?") |       // incoming_port_name ?
+    identifier                 // 其他变量类型
+}
+
+// 值常量
+// value_constant ::= boolean_literal | numeric_literal | string_literal | property_constant | property_value
+value_constant = { 
+    number | 
+    boolean | 
+    string_literal  
+    //identifier  // property_constant 或 property_value
+}
+
+
+
+// 操作符（保持兼容性）
+operator = { 
+    "+" | "-" | "*" | "/" | "mod" | "=" | "!=" | "<" | ">" | "<=" | ">=" | "and" | "or" 
+}
+
+// Helpers
+array_spec = { "[" ~ dimension ~ ("," ~ dimension)* ~ "]" }
+dimension = { number? }
+//mode_reference_list = { identifier ~ ("," ~ identifier)* }
+qualified_identifier_list = { qualified_identifier ~ ("," ~ qualified_identifier)* }
+port_reference = { (no_point_identifier ~ ".")? ~ no_point_identifier }
+parameter_reference = { (identifier ~ ".")? ~ identifier }
+
+// 子句可选性,TODO:可能需要删去所有的“”，需要看标准确认
+prototypes = { "prototypes" ~ (prototype_declaration+ | "") }
+features = { "features" ~ (feature_declaration+ | "") }
+properties = { "properties" ~ (property_association+) }
+subcomponents = { "subcomponents" ~ (subcomponent+ | "") }
+calls = { "calls" ~ (call_sequence+ | "") }
+connections = { "connections" ~ (connection+ | "") }
+
+
+file = { SOI ~ package_declaration ~ EOI }
