@@ -2,7 +2,7 @@
 
 package Robot_BA
 public
-  with Data_Model;
+  with Data_Model, Base_Types;
 
   ----------
   -- Data --

@@ -79,6 +79,18 @@ fn main() {
             path: "AADLSource/pingpong_timed_aperiodic.aadl".to_string(),
             output_name: "pingpong_timed_aperiodic".to_string(),
         },
+        TestCase {
+            id: 9,
+            name: "base_types".to_string(),
+            path: "AADLSource/base_types.aadl".to_string(),
+            output_name: "base_types".to_string(),
+        },
+        TestCase {
+            id: 10,
+            name: "composite_types".to_string(),
+            path: "AADLSource/composite_types.aadl".to_string(),
+            output_name: "composite_types".to_string(),
+        },
     ];
 
     // 显示可用的测试用例

@@ -1157,19 +1157,19 @@ RustModule {
                     StruProperty {
                         name: "Dispatch_Protocol",
                         value: String(
-                            "Aperiodic",
+                            "Timed",
                         ),
                         docs: [
                             "// AADL属性: Dispatch_Protocol",
                         ],
                     },
                     StruProperty {
-                        name: "Priority",
+                        name: "Period",
                         value: Integer(
-                            1,
+                            1000,
                         ),
                         docs: [
-                            "// AADL属性: Priority",
+                            "// AADL属性: Period",
                         ],
                     },
                 ],
@@ -1214,6 +1214,28 @@ RustModule {
                                                 stmts: [
                                                     Let(
                                                         LetStmt {
+                                                            ifmut: false,
+                                                            name: "prio",
+                                                            ty: None,
+                                                            init: Some(
+                                                                Call(
+                                                                    Path(
+                                                                        [
+                                                                            "period_to_priority",
+                                                                        ],
+                                                                        Namespace,
+                                                                    ),
+                                                                    [
+                                                                        Ident(
+                                                                            "self.period as f64",
+                                                                        ),
+                                                                    ],
+                                                                ),
+                                                            ),
+                                                        },
+                                                    ),
+                                                    Let(
+                                                        LetStmt {
                                                             ifmut: true,
                                                             name: "param",
                                                             ty: Some(
@@ -1223,7 +1245,7 @@ RustModule {
                                                             ),
                                                             init: Some(
                                                                 Ident(
-                                                                    "sched_param { sched_priority: 1 }",
+                                                                    "sched_param { sched_priority: prio }",
                                                                 ),
                                                             ),
                                                         },
@@ -1326,7 +1348,7 @@ RustModule {
                                                                             [
                                                                                 Literal(
                                                                                     Str(
-                                                                                        "qThread: Failed to set thread priority: {}",
+                                                                                        "qThread: Failed to set thread priority from period: {}",
                                                                                     ),
                                                                                 ),
                                                                                 Ident(
@@ -1390,6 +1412,39 @@ RustModule {
                                             else_branch: None,
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "period",
+                                            ty: Some(
+                                                Path(
+                                                    [
+                                                        "std",
+                                                        "time",
+                                                        "Duration",
+                                                    ],
+                                                ),
+                                            ),
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Duration",
+                                                            "from_millis",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [
+                                                        Literal(
+                                                            Int(
+                                                                1000,
+                                                            ),
+                                                        ),
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -1416,8 +1471,12 @@ RustModule {
                                                                                 Ident(
                                                                                     "receiver",
                                                                                 ),
-                                                                                "recv",
-                                                                                [],
+                                                                                "recv_timeout",
+                                                                                [
+                                                                                    Ident(
+                                                                                        "period",
+                                                                                    ),
+                                                                                ],
                                                                             ),
                                                                             arms: [
                                                                                 MatchArm {
@@ -1458,6 +1517,37 @@ RustModule {
                                                                                                         ],
                                                                                                         expr: None,
                                                                                                     },
+                                                                                                ),
+                                                                                            ),
+                                                                                        ],
+                                                                                        expr: None,
+                                                                                    },
+                                                                                },
+                                                                                MatchArm {
+                                                                                    pattern: "Err(std::sync::mpsc::RecvTimeoutError::Timeout)",
+                                                                                    guard: None,
+                                                                                    body: Block {
+                                                                                        stmts: [
+                                                                                            Expr(
+                                                                                                Call(
+                                                                                                    Path(
+                                                                                                        [
+                                                                                                            "eprintln!",
+                                                                                                        ],
+                                                                                                        Namespace,
+                                                                                                    ),
+                                                                                                    [
+                                                                                                        Literal(
+                                                                                                            Str(
+                                                                                                                "qThread: timeout dispatch → Recover_Entrypoint",
+                                                                                                            ),
+                                                                                                        ),
+                                                                                                    ],
+                                                                                                ),
+                                                                                            ),
+                                                                                            Expr(
+                                                                                                Ident(
+                                                                                                    "// recover_entrypoint();",
                                                                                                 ),
                                                                                             ),
                                                                                         ],
@@ -1516,7 +1606,7 @@ RustModule {
                             vis: Public,
                             docs: [
                                 "// Thread execution entry point",
-                                "// Period: None ms",
+                                "// Period: Some(1000) ms",
                             ],
                             attrs: [],
                         },

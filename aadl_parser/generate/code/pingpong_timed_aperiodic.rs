@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 19:48:09
+// 生成时间: 2025-09-11 15:13:43
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -192,7 +192,7 @@ pub struct qThread {
     
     // --- AADL属性 ---
     pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
+    pub period: u64, // AADL属性: Period
 }
 
 impl qThread {
@@ -201,28 +201,30 @@ impl qThread {
         Self {
             data_sink: None,
             cpu_id: cpu_id,
-            dispatch_protocol: "Aperiodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 1, // AADL属性: Priority
+            dispatch_protocol: "Timed".to_string(), // AADL属性: Dispatch_Protocol
+            period: 1000, // AADL属性: Period
         }
     }
 }
 impl qThread {
     // Thread execution entry point
-    // Period: None ms
+    // Period: Some(1000) ms
     pub fn run(mut self) -> () {
         unsafe {
-            let mut param: sched_param = sched_param { sched_priority: 1 };
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
-                eprintln!("qThread: Failed to set thread priority: {}", ret);
+                eprintln!("qThread: Failed to set thread priority from period: {}", ret);
             };
         };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
+        let period: std::time::Duration = Duration::from_millis(1000);
         loop {
             if let Some(receiver) = &self.data_sink {
-                match receiver.recv() {
+                match receiver.recv_timeout(period) {
                     Ok(val) => {
                         // 收到消息 → 调用处理函数
                         {
@@ -231,6 +233,10 @@ impl qThread {
                             // Q_Spg;
                             ping_spg::receive(val);
                         };
+                    },
+                    Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                        eprintln!("qThread: timeout dispatch → Recover_Entrypoint");
+                        // recover_entrypoint();;
                     },
                     Err(_) => {
                         eprintln!("qThread: channel closed");

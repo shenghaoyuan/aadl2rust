@@ -130,10 +130,10 @@ Mycalls: {
 connections
   cnx : parameter Data_Sink -> Q_Spg.Data_Sink;
 properties
-  --Dispatch_Protocol                  => Timed;
-  --Period                             => 1000 Ms;
-  Dispatch_Protocol                  => Aperiodic;
-  Priority                           => 1;
+  Dispatch_Protocol                  => Timed;
+  Period                             => 1000 Ms;
+  -- Dispatch_Protocol                  => Aperiodic;
+  -- Priority                           => 1;
 end Q.Impl;
 
 end PING_Local;

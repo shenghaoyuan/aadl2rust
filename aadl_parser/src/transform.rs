@@ -309,6 +309,10 @@ impl AADLTransformer {
                         annexes.push(annex);
                     }
                 }
+                aadlight_parser::Rule::extends => {
+                    //TODO: 处理extends
+                    println!("extends: {:?}", inner.as_str());
+                }
                 _ => {}
             }
         }

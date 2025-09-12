@@ -6,7 +6,7 @@ use std::{collections::HashMap, default};
 
 // AADL到Rust中间表示的转换器
 pub struct AadlConverter {
-    type_mappings: HashMap<String, Type>,
+    type_mappings: HashMap<String, Type>, //初始是根据AADL库文件Base_Types.aadl，将AADL Data组件名称映射到对应的Rust类型，后续会根据AADL模型文件，添加新的映射关系
     port_handlers: HashMap<String, PortHandlerConfig>,
     component_types: HashMap<String, ComponentType>, // 存储组件类型信息，（为了有些情况下，需要在组件实现中，根据组件类型来获取端口信息）
     annex_converter: AnnexConverter, // Behavior Annex 转换器
@@ -22,9 +22,27 @@ struct PortHandlerConfig {
 impl Default for AadlConverter {
     fn default() -> Self {
         let mut type_mappings = HashMap::new();
-        type_mappings.insert("Integer".to_string(), Type::Named("i32".to_string()));
-        type_mappings.insert("String".to_string(), Type::Named("String".to_string()));
         type_mappings.insert("Boolean".to_string(), Type::Named("bool".to_string()));
+
+        type_mappings.insert("Integer".to_string(), Type::Named("i32".to_string()));
+        type_mappings.insert("Integer_8".to_string(), Type::Named("i8".to_string()));
+        type_mappings.insert("Integer_16".to_string(), Type::Named("i16".to_string()));
+        type_mappings.insert("Integer_32".to_string(), Type::Named("i32".to_string()));
+        type_mappings.insert("Integer_64".to_string(), Type::Named("i64".to_string()));
+        type_mappings.insert("Unsigned_8".to_string(), Type::Named("u8".to_string()));
+        type_mappings.insert("Unsigned_16".to_string(), Type::Named("u16".to_string()));
+        type_mappings.insert("Unsigned_32".to_string(), Type::Named("u32".to_string()));
+        type_mappings.insert("Unsigned_64".to_string(), Type::Named("u64".to_string()));
+
+        type_mappings.insert("Natural".to_string(), Type::Named("usize".to_string()));
+
+        type_mappings.insert("Float".to_string(), Type::Named("f32".to_string()));
+        type_mappings.insert("Float_32".to_string(), Type::Named("f32".to_string()));
+        type_mappings.insert("Float_64".to_string(), Type::Named("f64".to_string()));
+
+        type_mappings.insert("Character".to_string(), Type::Named("char".to_string()));
+
+        type_mappings.insert("String".to_string(), Type::Named("String".to_string()));
 
         Self {
             type_mappings,
@@ -210,8 +228,10 @@ impl AadlConverter {
             }
         }
         
-        // 将AADL Data组件名称映射到对应的Rust类型
-        self.type_mappings.insert(comp.identifier.clone(), target_type.clone());
+        // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
+        if !self.type_mappings.contains_key(&comp.identifier) {
+            self.type_mappings.insert(comp.identifier.clone(), target_type.clone());
+        }
         
         vec![Item::TypeAlias(TypeAlias {
             name: comp.identifier.clone(),
@@ -222,6 +242,11 @@ impl AadlConverter {
     }
 
     fn determine_data_type(&self, comp: &ComponentType) -> Type {
+        // 首先检查组件标识符是否已经存在于type_mappings中
+        if let Some(existing_type) = self.type_mappings.get(&comp.identifier) {
+            return existing_type.clone();
+        }
+        
         if let PropertyClause::Properties(props) = &comp.properties {
             for prop in props {
                 if let Property::BasicProperty(bp) = prop {

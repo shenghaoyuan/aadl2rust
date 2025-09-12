@@ -60,14 +60,14 @@ component_category = {
 }
 
 component_type = {
-    component_category ~ identifier ~
+    component_category ~ identifier ~ extends? ~
     prototypes? ~
     features? ~
     properties? ~
     annex_subclause* ~
     "end" ~ identifier ~ ";"
 }
-
+extends = { "extends" ~ qualified_identifier}
 // 4.4 Component Implementations
 component_implementation = {
     component_category ~ "implementation" ~ identifier ~ 
@@ -155,7 +155,7 @@ literal_value = { (number | string_literal | boolean | enum_value ) ~ unit? }
 range_value = { 
     number ~ WHITESPACE* ~ unit? ~ WHITESPACE* ~ 
     ".." ~ WHITESPACE* ~ 
-    number ~ WHITESPACE* ~ unit? 
+    (number | identifier) ~ WHITESPACE* ~ unit? 
 }
 list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
 reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" ~ ( "applies" ~ "to" ~ qualified_identifier )? }
@@ -176,7 +176,8 @@ boolean = { "true" | "false"}
 // 枚举值规则（覆盖AADL属性集预定义值）
 enum_value = @{
     "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
-    "native" | "Integer" | "Struct" | "Boolean"
+    "native" | "Integer" | "Struct" | 
+    "Boolean" | "Signed" | "Unsigned" | "Float" | "Simple" | "Double" | "Character" | "String" 
 }
 
 // 5.2 Subprogram Calls
@@ -240,7 +241,7 @@ state_declaration = {
 }
 
 state_modifier = { 
-    "initial" | "complete" | "return" | "urgent" | "composite" | "exit" | "final"
+    "initial" | "complete" | "final"
 }
 
 // 转换定义
@@ -648,10 +649,10 @@ qualified_identifier_list = { qualified_identifier ~ ("," ~ qualified_identifier
 port_reference = { (no_point_identifier ~ ".")? ~ no_point_identifier }
 parameter_reference = { (identifier ~ ".")? ~ identifier }
 
-// 子句可选性
+// 子句可选性,TODO:可能需要删去所有的“”，需要看标准确认
 prototypes = { "prototypes" ~ (prototype_declaration+ | "") }
 features = { "features" ~ (feature_declaration+ | "") }
-properties = { "properties" ~ (property_association+ | "") }
+properties = { "properties" ~ (property_association+) }
 subcomponents = { "subcomponents" ~ (subcomponent+ | "") }
 calls = { "calls" ~ (call_sequence+ | "") }
 connections = { "connections" ~ (connection+ | "") }

@@ -237,8 +237,6 @@ impl qThread {
                             std::thread::sleep(min_interarrival - elapsed);
                         };
                         {
-                            // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // Q_Spg();
                             // Q_Spg;
                             ping_spg::receive(val);
                         };
