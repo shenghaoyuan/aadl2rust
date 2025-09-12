@@ -3,7 +3,7 @@
 
 **aadl.pest**解析aadl源文件（/AADLSource/*.aadl案例）。
 
-**transform.rs将解析后的pairs结构 -> 自定义的AST(**ast.rs**)中。
+**transform.rs**将解析后的pairs结构 -> 自定义的AST(**ast.rs**)中。
 
 **converter.rs**支持aadl_ast -> 轻量级rust_ast(**intermediate_ast.rs**)。
 
