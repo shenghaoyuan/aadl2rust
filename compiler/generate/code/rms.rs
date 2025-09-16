@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 19:48:05
+// 生成时间: 2025-09-16 20:08:20
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -27,7 +27,7 @@ fn set_thread_affinity(cpu: isize) {
 pub mod hello_spg_1 {
     // Auto-generated from AADL subprogram: Hello_Spg_1
     // C binding to: user_hello_spg_1
-    // source_files: "hello.c"
+    // source_files: hello.c
     use super::{user_hello_spg_1};
     // Direct execution wrapper for C function user_hello_spg_1
     // This component has no communication ports
@@ -41,7 +41,7 @@ pub mod hello_spg_1 {
 pub mod hello_spg_2 {
     // Auto-generated from AADL subprogram: Hello_Spg_2
     // C binding to: user_hello_spg_2
-    // source_files: "hello.c"
+    // source_files: hello.c
     use super::{user_hello_spg_2};
     // Direct execution wrapper for C function user_hello_spg_2
     // This component has no communication ports

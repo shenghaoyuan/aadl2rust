@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 19:47:50
+// 生成时间: 2025-09-16 20:05:31
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -34,7 +34,7 @@ pub type POSShared = Arc<Mutex<POS_Internal_Type>>;
 pub mod update {
     // Auto-generated from AADL subprogram: Update
     // C binding to: user_update
-    // source_files: "toy.c"
+    // source_files: toy.c
     use super::{user_update, POS_Internal_Type};
     // Call C function user_update with data access reference
     // Generated for requires data access feature
@@ -49,7 +49,7 @@ pub mod update {
 pub mod read_pos {
     // Auto-generated from AADL subprogram: Read_POS
     // C binding to: user_read
-    // source_files: "toy.c"
+    // source_files: toy.c
     use super::{user_read, POS_Internal_Type};
     // Call C function user_read with data access reference
     // Generated for requires data access feature
@@ -64,7 +64,7 @@ pub mod read_pos {
 pub mod gnc_job {
     // Auto-generated from AADL subprogram: GNC_Job
     // C binding to: user_gnc_job
-    // source_files: "toy.c"
+    // source_files: toy.c
     use super::{user_gnc_job};
     // Direct execution wrapper for C function user_gnc_job
     // This component has no communication ports
@@ -78,7 +78,7 @@ pub mod gnc_job {
 pub mod tmtc_job {
     // Auto-generated from AADL subprogram: TMTC_Job
     // C binding to: user_tmtc_job
-    // source_files: "toy.c"
+    // source_files: toy.c
     use super::{user_tmtc_job};
     // Direct execution wrapper for C function user_tmtc_job
     // This component has no communication ports
@@ -92,7 +92,7 @@ pub mod tmtc_job {
 pub mod gnc_identity {
     // Auto-generated from AADL subprogram: GNC_Identity
     // C binding to: user_gnc_identity
-    // source_files: "toy.c"
+    // source_files: toy.c
     use super::{user_gnc_identity};
     // Direct execution wrapper for C function user_gnc_identity
     // This component has no communication ports
@@ -106,7 +106,7 @@ pub mod gnc_identity {
 pub mod tmtc_identity {
     // Auto-generated from AADL subprogram: TMTC_Identity
     // C binding to: user_tmtc_identity
-    // source_files: "toy.c"
+    // source_files: toy.c
     use super::{user_tmtc_identity};
     // Direct execution wrapper for C function user_tmtc_identity
     // This component has no communication ports

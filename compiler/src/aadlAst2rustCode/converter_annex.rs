@@ -116,7 +116,7 @@ impl AnnexConverter {
 
         // 生成枚举定义
         let enum_def = EnumDef {
-            name: "State".to_string(), // 使用通用名称，后续会重命名
+            name: "State".to_string(), // 使用通用名称
             variants,
             generics: Vec::new(),
             derives: vec!["Debug".to_string(), "Clone".to_string()],

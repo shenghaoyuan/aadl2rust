@@ -10,7 +10,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: Hello_Spg_1",
                     "// C binding to: user_hello_spg_1",
-                    "// source_files: \"hello.c\"",
+                    "// source_files: hello.c",
                 ],
                 items: [
                     Use(
@@ -75,7 +75,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: Hello_Spg_2",
                     "// C binding to: user_hello_spg_2",
-                    "// source_files: \"hello.c\"",
+                    "// source_files: hello.c",
                 ],
                 items: [
                     Use(

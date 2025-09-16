@@ -16,14 +16,14 @@ public
   properties
     source_language => (C);
     source_name     => "user_hello_spg_1";
-    source_text     => ("hello.c");
+    source_text     => "hello.c";
   end Hello_Spg_1;
 
   subprogram Hello_Spg_2
   properties
     source_language => (C);
     source_name     => "user_hello_spg_2";
-    source_text     => ("hello.c");
+    source_text     => "hello.c";
   end Hello_Spg_2;
 
   -------------

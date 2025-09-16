@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 19:48:01
+// 生成时间: 2025-09-16 20:06:26
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -30,7 +30,7 @@ pub type Alpha_Type = bool;
 pub mod action_spg {
     // Auto-generated from AADL subprogram: action_spg
     // C binding to: action
-    // source_files: "robot.c"
+    // source_files: robot.c
     use super::{action};
     // Wrapper for C function action
     // Original AADL port: d_action

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 19:47:37
+// 生成时间: 2025-09-16 20:04:30
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -91,7 +91,7 @@ pub type Simple_Type = custom_int;
 pub mod do_ping_spg {
     // Auto-generated from AADL subprogram: Do_Ping_Spg
     // C binding to: user_do_ping_spg
-    // source_files: "ping.c"
+    // source_files: ping.c
     use super::{user_do_ping_spg, custom_int};
     // Wrapper for C function user_do_ping_spg
     // Original AADL port: Data_Source
@@ -105,7 +105,7 @@ pub mod do_ping_spg {
 pub mod ping_spg {
     // Auto-generated from AADL subprogram: Ping_Spg
     // C binding to: user_ping_spg
-    // source_files: "ping.c"
+    // source_files: ping.c
     use super::{user_ping_spg, custom_int};
     // Wrapper for C function user_ping_spg
     // Original AADL port: Data_Sink
@@ -237,6 +237,8 @@ impl qThread {
                             std::thread::sleep(min_interarrival - elapsed);
                         };
                         {
+                            // --- 调用序列（等价 AADL 的 Wrapper）---
+                           // Q_Spg();
                             // Q_Spg;
                             ping_spg::receive(val);
                         };

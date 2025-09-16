@@ -463,11 +463,19 @@ impl AADLTransformer {
         // 如果是端口类特征
         if let Some(pt) = port_type_str {
             let classifier = classifier_qname.clone().map(|qname| {
-                // 仅提取最后一个段作为类型名，忽略包前缀
-                let type_id = qname.split("::").last().unwrap_or(&qname).to_string();
+                // 解析包前缀和类型名
+                let parts: Vec<&str> = qname.split("::").collect();
+                let (package_prefix, type_id) = if parts.len() > 1 {
+                    let package_name = parts[0..parts.len()-1].join("::");
+                    let type_name = parts.last().unwrap().to_string();
+                    (Some(package_name), type_name)
+                } else {
+                    (None, qname.to_string())
+                };
+                
                 PortDataTypeReference::Classifier(
                     UniqueComponentClassifierReference::Type(UniqueImplementationReference {
-                        package_prefix: None,
+                        package_prefix: package_prefix.map(|p| PackageName(p.split("::").map(|s| s.to_string()).collect())),
                         implementation_name: ImplementationName {
                             type_identifier: type_id,
                             implementation_identifier: String::new(),
@@ -579,12 +587,21 @@ impl AADLTransformer {
 
         let mut inner_iter = pair.into_inner().peekable();
 
-        let identifier = extract_identifier(inner_iter.next().unwrap());
-
-        let mut property_set = None;
-        if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::property_set_name) {
-            property_set = Some(extract_identifier(inner_iter.next().unwrap()));
-        }
+        // 检查是否有属性集前缀 (property_set::property_name)
+        let (property_set, identifier) = if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::identifier) {
+            let first_identifier = extract_identifier(inner_iter.next().unwrap());
+            
+            // 检查下一个元素是否是identifier
+            if inner_iter.peek().map(|p| p.as_rule()) == Some(aadlight_parser::Rule::identifier) {
+                let second_identifier = extract_identifier(inner_iter.next().unwrap());
+                (Some(first_identifier), second_identifier)
+            } else {
+                // 没有identifier，说明第一个 identifier 就是属性名
+                (None, first_identifier)
+            }
+        } else {
+            panic!("Expected property identifier");
+        };
 
         let operator_pair = inner_iter.next().expect("Expected property operator");
         let operator = match operator_pair.as_str() {
@@ -599,7 +616,7 @@ impl AADLTransformer {
             inner_iter.next(); // 消耗 constant
         }
         // 处理 property_value
-        let value = Self::transform_property_value(inner_iter.next().unwrap());
+        let value: PropertyValue = Self::transform_property_value(inner_iter.next().unwrap());
         
         Property::BasicProperty(BasicPropertyAssociation {
             identifier: PropertyIdentifier {
@@ -750,10 +767,10 @@ impl AADLTransformer {
                     aadlight_parser::Rule::string_literal => {
                         let raw = first.as_str();
                         let value = Self::strip_string_literal(raw);
-
                         PropertyValue::Single(PropertyExpression::String(
                             StringTerm::Literal(value)
                         ))
+
                     }
 
                     aadlight_parser::Rule::boolean => {
@@ -780,9 +797,15 @@ impl AADLTransformer {
             aadlight_parser::Rule::list_value => {
                 let mut elements = Vec::new();
                 for item in inner.into_inner() {
-                    elements.push(PropertyListElement::Value(
-                        PropertyExpression::String(StringTerm::Literal(extract_identifier(item)))),
-                    );
+                    let property_value = Self::transform_property_value(item);
+                    match property_value {
+                        PropertyValue::Single(expr) => {
+                            elements.push(PropertyListElement::Value(expr));
+                        }
+                        PropertyValue::List(nested_elements) => {
+                            elements.push(PropertyListElement::NestedList(nested_elements));
+                        }
+                    }
                 }
                 PropertyValue::List(elements)
             }
@@ -804,7 +827,49 @@ impl AADLTransformer {
                     applies_to,
                 }))
             }
-            _ => panic!("Unknown property value type"),
+            aadlight_parser::Rule::component_classifier_value => {
+                let mut inner_iter = inner.into_inner();
+                let qualified_identifier = inner_iter.next().unwrap();
+                let qname = qualified_identifier.as_str().to_string();
+                
+                // 解析包前缀和类型名
+                let parts: Vec<&str> = qname.split("::").collect();
+                let (package_prefix, type_id) = if parts.len() > 1 {
+                    let package_name = parts[0..parts.len()-1].join("::");
+                    let type_name = parts.last().unwrap().to_string();
+                    (Some(package_name), type_name)
+                } else {
+                    (None, qname.to_string())
+                };
+                
+                // 智能判断：如果以.Impl结尾，认为是实现引用
+                let unique_ref = if type_id.ends_with("Impl") {
+                    UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
+                        package_prefix: package_prefix.map(|p| PackageName(p.split("::").map(|s| s.to_string()).collect())),
+                        implementation_name: ImplementationName {
+                            type_identifier: type_id,
+                            implementation_identifier: String::new(),
+                        },
+                    })
+                } else {
+                    // 否则认为是类型引用
+                    UniqueComponentClassifierReference::Type(UniqueImplementationReference {
+                        package_prefix: package_prefix.map(|p| PackageName(p.split("::").map(|s| s.to_string()).collect())),
+                        implementation_name: ImplementationName {
+                            type_identifier: type_id,
+                            implementation_identifier: String::new(),
+                        },
+                    })
+                };
+                
+                PropertyValue::Single(PropertyExpression::ComponentClassifier(ComponentClassifierTerm {
+                    unique_component_classifier_reference: unique_ref,
+                }))
+            }
+            _ => {
+                println!("Unknown property value type: {:?}", inner.as_rule());
+                panic!("Unknown property value type");
+            }
         }
     }
 
@@ -931,15 +996,23 @@ impl AADLTransformer {
             s => panic!("Unknown subcomponent category: {}", s),
         };
         
-        let name_str = extract_identifier(inner_iter.next().unwrap());
+        // 处理 qualified_identifier，如果包含多个标识符就只取最后一个
+        let qualified_identifier = inner_iter.next().unwrap();
+        let name_str = if qualified_identifier.as_str().contains("::") {
+            // 如果包含 :: 分隔符，只取最后一个标识符（Base_Types::Float，只需要Float）
+            qualified_identifier.as_str().split("::").last().unwrap().trim().to_string()
+        } else {
+            // 否则直接使用原字符串
+            extract_identifier(qualified_identifier)
+        };
+        println!("!!!!!!!!!!!!!!!!!!!!!name_str = {}", name_str);
         let mut name_parts = name_str.split(".");
         let classifier = SubcomponentClassifier::ClassifierReference(
             UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
                 package_prefix: None,
                 implementation_name: ImplementationName {
                     type_identifier: name_parts.next().unwrap().to_string(),
-                    //implementation_identifier: String::new(),
-                    implementation_identifier:name_parts.next().unwrap_or("").to_string(),
+                    implementation_identifier: name_parts.next().unwrap_or("").to_string(),
                 },
             }),
         );

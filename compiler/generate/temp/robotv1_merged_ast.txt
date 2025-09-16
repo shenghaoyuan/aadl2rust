@@ -22,7 +22,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: collecte_donnee_spg",
                     "// C binding to: collecte_donnee",
-                    "// source_files: \"robot.c\"",
+                    "// source_files: robot.c",
                 ],
                 items: [
                     Use(
@@ -102,7 +102,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: traite_spg_in",
                     "// C binding to: traite_in",
-                    "// source_files: \"robot.c\"",
+                    "// source_files: robot.c",
                 ],
                 items: [
                     Use(
@@ -182,7 +182,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: traite_spg_out",
                     "// C binding to: traite_out",
-                    "// source_files: \"robot.c\"",
+                    "// source_files: robot.c",
                 ],
                 items: [
                     Use(
@@ -262,7 +262,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: action_spg",
                     "// C binding to: action",
-                    "// source_files: \"robot.c\"",
+                    "// source_files: robot.c",
                 ],
                 items: [
                     Use(

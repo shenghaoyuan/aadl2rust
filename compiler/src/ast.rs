@@ -1674,7 +1674,7 @@ pub mod aadl_ast_cj {
 
         // 复杂类型
         //PropertyReference(PropertyTerm),
-        //ComponentClassifier(ComponentClassifierTerm),
+        ComponentClassifier(ComponentClassifierTerm),
         Reference(ReferenceTerm),
         //Record(RecordTerm),
         //Computed(ComputedTerm),
@@ -1785,5 +1785,11 @@ pub mod aadl_ast_cj {
         pub identifier: String,
         /// 可选的 applies to 子句，如 `applies to node_a`
         pub applies_to: Option<String>,
+    }
+
+    //为满足Data_Model::Base_Type => classifier (Base_Types::Integer); 的需求，保存组件分类器引用
+    #[derive(Debug, Clone)]
+    pub struct ComponentClassifierTerm {
+        pub unique_component_classifier_reference: UniqueComponentClassifierReference,
     }
 } //end mod aadl_ast_cj

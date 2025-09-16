@@ -874,6 +874,7 @@ impl RustCodeGenerator {
                 s
             }
             Type::Slice(inner) => format!("[{}]", self.type_to_string(inner)),
+            Type::Array(inner, size) => format!("[{}; {}]", self.type_to_string(inner), size),
             Type::Unit => "()".to_string(),
             Type::Never => "!".to_string(),
         }

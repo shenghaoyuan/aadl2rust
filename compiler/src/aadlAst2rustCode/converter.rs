@@ -12,6 +12,7 @@ pub struct AadlConverter {
     annex_converter: AnnexConverter, // Behavior Annex 转换器
     cpu_scheduling_protocols: HashMap<String, String>, // 存储CPU实现的调度协议信息
     cpu_name_to_id_mapping: HashMap<String, usize>, // 存储CPU名称到ID的映射关系
+    data_comp_type: HashMap<String, String>, // 存储数据组件类型信息，key是数据组件名称，value是数据组件类型。是为了处理数据组件类型为结构体、联合体时，需要根据组件实现impl来获取属性信息
 }
 
 #[derive(Debug)]
@@ -51,6 +52,7 @@ impl Default for AadlConverter {
             annex_converter: AnnexConverter::default(),
             cpu_scheduling_protocols: HashMap::new(),
             cpu_name_to_id_mapping: HashMap::new(),
+            data_comp_type: HashMap::new(),
         }
     }
 }
@@ -220,11 +222,50 @@ impl AadlConverter {
 
     fn convert_data_component(&mut self, comp: &ComponentType) -> Vec<Item> {
         let target_type = self.determine_data_type(comp);
-        
         // 当 determine_data_type 返回空元组类型时，不继续处理
+        // 当 determine_data_type 返回结构体类型时，生成结构体定义
+        // 当 determine_data_type 返回联合体类型时，生成枚举定义
+        // 当 determine_data_type 返回枚举类型时，生成枚举定义
         if let Type::Named(unit_type) = &target_type {
             if unit_type == "()" {
                 return Vec::new();
+            }
+            else if unit_type.to_lowercase() == "struct" {
+                // 从组件属性中提取属性列表
+                if let PropertyClause::Properties(props) = &comp.properties {
+                    let struct_def = self.determine_struct_type(comp, props);
+                    if struct_def.fields.is_empty() { //说明是通过impl中子组件来获取字段的，而不是在此时type中
+                        return Vec::new();
+                    } else {
+                        return vec![Item::Struct(struct_def)];
+                    }
+                } else {
+                    // 如果没有属性，返回空的结构体
+                    return vec![Item::Struct(self.determine_struct_type(comp, &[]))];
+                }
+            }
+            else if unit_type.to_lowercase() == "union" {
+                // 从组件属性中提取属性列表
+                if let PropertyClause::Properties(props) = &comp.properties {
+                    let enum_def = self.determine_union_type(comp, props);
+                    if enum_def.variants.is_empty() { //说明是通过impl中子组件来获取字段的，而不是在此时type中
+                        return Vec::new();
+                    } else {
+                        return vec![Item::Enum(enum_def)];
+                    }
+                } else {
+                    // 如果没有属性，返回空的枚举
+                    return vec![Item::Enum(self.determine_union_type(comp, &[]))];
+                }
+            }
+            else if unit_type.to_lowercase() == "enum" {
+                // 从组件属性中提取属性列表
+                if let PropertyClause::Properties(props) = &comp.properties {
+                    return vec![Item::Enum(self.determine_enum_type(comp, props))];
+                } else {
+                    // 如果没有属性，返回空的枚举
+                    return vec![Item::Enum(self.determine_enum_type(comp, &[]))];
+                }
             }
         }
         
@@ -247,23 +288,48 @@ impl AadlConverter {
             return existing_type.clone();
         }
         
+        // 如果没有找到，则处理复杂类型
+        self.determine_complex_data_type(comp)
+    }
+
+    /// 处理复杂数据类型，包括数组、结构体、联合体、枚举等
+    fn determine_complex_data_type(&self, comp: &ComponentType) -> Type {
         if let PropertyClause::Properties(props) = &comp.properties {
             for prop in props {
                 if let Property::BasicProperty(bp) = prop {
                     // 处理 Data_Model::Data_Representation 属性
-                    if bp.identifier.name.to_lowercase() == "data_model" {
-                        if let Some(property_set) = &bp.identifier.property_set {
-                            if property_set.to_lowercase() == "data_representation" {
-                                if let PropertyValue::Single(PropertyExpression::String(
-                                    StringTerm::Literal(str_val),
-                                )) = &bp.value
-                                {
-                                    // 使用 type_mappings 查找对应的类型，如果没有找到则使用原值
-                                    return self
-                                        .type_mappings
-                                        .get(&str_val.to_string())
-                                        .cloned()
-                                        .unwrap_or_else(|| Type::Named(str_val.to_string()));
+                    println!("bp: {:?}", bp);
+                    
+                    // 检查属性集是否为 "Data_Model" 且属性名为 "Data_Representation"
+                    if let Some(property_set) = &bp.identifier.property_set {
+                        if property_set.to_lowercase() == "data_model" 
+                           && bp.identifier.name.to_lowercase() == "data_representation" {
+                            if let PropertyValue::Single(PropertyExpression::String(
+                                StringTerm::Literal(str_val),
+                            )) = &bp.value
+                            {
+                                println!("str_val: {:?}", str_val);
+                                match str_val.to_lowercase().as_str() {
+                                    "array" => {
+                                        return self.determine_array_type(comp, props);
+                                    }
+                                    "struct" => {
+                                        return Type::Named("struct".to_string());
+                                    }
+                                    "union" => {
+                                        return Type::Named("union".to_string());
+                                    }
+                                    "enum" => {
+                                        return Type::Named("enum".to_string());
+                                    }
+                                    _ => {
+                                        // 使用 type_mappings 查找对应的类型，如果没有找到则使用原值
+                                        return self
+                                            .type_mappings
+                                            .get(&str_val.to_string())
+                                            .cloned()
+                                            .unwrap_or_else(|| Type::Named(str_val.to_string()));
+                                    }
                                 }
                             }
                         }
@@ -280,13 +346,289 @@ impl AadlConverter {
                                 .get(&str_val.to_string())
                                 .cloned()
                                 .unwrap_or_else(|| Type::Named(str_val.to_string()));
-                            //没有在 type_mappings 中找到对应映射时，直接使用这个原始值作为类型名
                         }
                     }
                 }
             }
         }
         Type::Named("()".to_string())
+    }
+
+    /// 处理数组类型
+    fn determine_array_type(&self, comp: &ComponentType, props: &[Property]) -> Type {
+        let mut base_type = Type::Named("i32".to_string()); // 默认基础类型
+        let mut dimensions = Vec::new();
+        
+        // 查找 Base_Type 属性
+        for prop in props {
+            println!("prop: {:?}", prop);
+            if let Property::BasicProperty(bp) = prop {
+                if bp.identifier.name.to_lowercase() == "base_type" {
+                    if let PropertyValue::Single(PropertyExpression::String(
+                        StringTerm::Literal(type_name),
+                    )) = &bp.value
+                    {
+                        base_type = self
+                            .type_mappings
+                            .get(type_name)
+                            .cloned()
+                            .unwrap_or_else(|| Type::Named(type_name.clone()));
+                    }
+                }
+                
+                // 查找 Dimension 属性
+                if bp.identifier.name.to_lowercase() == "dimension" {
+                    match &bp.value {
+                        PropertyValue::Single(PropertyExpression::Integer(
+                            SignedIntergerOrConstant::Real(int_val),
+                        )) => {
+                            dimensions.push(int_val.value as usize);
+                        }
+                        PropertyValue::List(dim_list) => {
+                            for dim_item in dim_list {
+                                if let PropertyListElement::Value(PropertyExpression::Integer(
+                                    SignedIntergerOrConstant::Real(int_val),
+                                )) = dim_item
+                                {
+                                    dimensions.push(int_val.value as usize);
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        
+        // 如果没有找到维度信息，默认为一维数组
+        if dimensions.is_empty() {
+            dimensions.push(1);
+        }
+        
+        // 构建数组类型：从内到外构建嵌套数组
+        let mut array_type = base_type;
+        for &dim in dimensions.iter().rev() {
+            array_type = Type::Array(Box::new(array_type), dim);
+        }
+        
+        array_type
+    }
+
+    /// 处理结构体类型
+    fn determine_struct_type(&mut self, comp: &ComponentType, props: &[Property]) -> StructDef {
+        let mut fields = Vec::new();
+        let mut field_names = Vec::new();
+        let mut field_types = Vec::new();
+        
+        // 解析字段类型和字段名
+        for prop in props {
+            if let Property::BasicProperty(bp) = prop {
+                // 解析 Base_Type 属性获取字段类型
+                if let Some(property_set) = &bp.identifier.property_set {
+                    if property_set.to_lowercase() == "data_model" 
+                       && bp.identifier.name.to_lowercase() == "base_type" {
+                        if let PropertyValue::List(type_list) = &bp.value {
+                            for type_item in type_list {
+                                if let PropertyListElement::Value(PropertyExpression::ComponentClassifier(
+                                    ComponentClassifierTerm { unique_component_classifier_reference }
+                                )) = type_item {
+                                    // 从分类器引用中提取类型名
+                                    let type_name = match unique_component_classifier_reference {
+                                        UniqueComponentClassifierReference::Type(impl_ref) => {
+                                            impl_ref.implementation_name.type_identifier.clone()
+                                        }
+                                        UniqueComponentClassifierReference::Implementation(impl_ref) => {
+                                            impl_ref.implementation_name.type_identifier.clone()
+                                        }
+                                    };
+                                    
+                                    // 映射到 Rust 类型
+                                    let rust_type = self.type_mappings
+                                        .get(&type_name)
+                                        .cloned()
+                                        .unwrap_or_else(|| Type::Named(type_name));
+                                    
+                                    field_types.push(rust_type);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 解析 Element_Names 属性获取字段名
+                if let Some(property_set) = &bp.identifier.property_set {
+                    if property_set.to_lowercase() == "data_model" 
+                       && bp.identifier.name.to_lowercase() == "element_names" {
+                        if let PropertyValue::List(name_list) = &bp.value {
+                            for name_item in name_list {
+                                if let PropertyListElement::Value(PropertyExpression::String(
+                                    StringTerm::Literal(name)
+                                )) = name_item {
+                                    field_names.push(name.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 判断是否获取到字段信息，理论上二者同时有或同时无
+        if field_names.is_empty() || field_types.is_empty() {
+            //说明没有获取到字段信息，需要根据组件实现impl来获取属性信息
+            //存储信息到全局数据结构中
+            self.data_comp_type.insert(comp.identifier.clone(), "struct".to_string());
+        }
+        // 创建字段
+        for (name, ty) in field_names.iter().zip(field_types.iter()) {
+            fields.push(Field {
+                name: name.clone(),
+                ty: ty.clone(),
+                docs: vec![],
+                attrs: vec![],
+            });
+        }
+        
+        // 创建结构体定义
+        StructDef {
+            name: comp.identifier.clone(),
+            fields,
+            properties: vec![],
+            generics: vec![],
+            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            docs: vec![format!("// AADL Struct: {}", comp.identifier)],
+            vis: Visibility::Public,
+        }
+    }
+
+    /// 处理联合体类型,使用枚举类型来表示，不使用union类型,避免unsafe
+    fn determine_union_type(&mut self, comp: &ComponentType, props: &[Property]) -> EnumDef {
+        // 解析字段类型和字段名
+        let mut field_names = Vec::new();
+        let mut field_types = Vec::new();
+        
+        for prop in props {
+            if let Property::BasicProperty(bp) = prop {
+                // 解析 Base_Type 属性获取字段类型
+                if let Some(property_set) = &bp.identifier.property_set {
+                    if property_set.to_lowercase() == "data_model" 
+                       && bp.identifier.name.to_lowercase() == "base_type" {
+                        if let PropertyValue::List(type_list) = &bp.value {
+                            for type_item in type_list {
+                                if let PropertyListElement::Value(PropertyExpression::ComponentClassifier(
+                                    ComponentClassifierTerm { unique_component_classifier_reference }
+                                )) = type_item {
+                                    // 从分类器引用中提取类型名
+                                    let type_name = match unique_component_classifier_reference {
+                                        UniqueComponentClassifierReference::Type(impl_ref) => {
+                                            impl_ref.implementation_name.type_identifier.clone()
+                                        }
+                                        UniqueComponentClassifierReference::Implementation(impl_ref) => {
+                                            impl_ref.implementation_name.type_identifier.clone()
+                                        }
+                                    };
+                                    
+                                    // 映射到 Rust 类型
+                                    let rust_type = self.type_mappings
+                                        .get(&type_name)
+                                        .cloned()
+                                        .unwrap_or_else(|| Type::Named(type_name));
+                                    
+                                    field_types.push(rust_type);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 解析 Element_Names 属性获取字段名
+                if let Some(property_set) = &bp.identifier.property_set {
+                    if property_set.to_lowercase() == "data_model" 
+                       && bp.identifier.name.to_lowercase() == "element_names" {
+                        if let PropertyValue::List(name_list) = &bp.value {
+                            for name_item in name_list {
+                                if let PropertyListElement::Value(PropertyExpression::String(
+                                    StringTerm::Literal(name)
+                                )) = name_item {
+                                    field_names.push(name.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 判断是否获取到字段信息，理论上二者同时有或同时无
+        if field_names.is_empty() || field_types.is_empty() {
+            //说明没有获取到字段信息，需要根据组件实现impl来获取属性信息
+            //存储信息到全局数据结构中
+            self.data_comp_type.insert(comp.identifier.clone(), "union".to_string());
+        }
+        
+        // 创建枚举变体
+        let mut variants = Vec::new();
+        for (name, ty) in field_names.iter().zip(field_types.iter()) {
+            variants.push(Variant {
+                name: name.clone(),
+                data: Some(vec![ty.clone()]), // 每个变体包含一个数据类型
+                docs: vec![],
+            });
+        }
+        
+        // 创建枚举定义
+        EnumDef {
+            name: comp.identifier.clone(),
+            variants,
+            generics: vec![],
+            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            docs: vec![format!("// AADL Union: {}", comp.identifier)],
+            vis: Visibility::Public,
+        }
+    }
+
+    /// 处理枚举类型
+    fn determine_enum_type(&self, comp: &ComponentType, props: &[Property]) -> EnumDef {
+        // 解析枚举值名称
+        let mut variant_names = Vec::new();
+        
+        for prop in props {
+            if let Property::BasicProperty(bp) = prop {
+                // 解析 Enumerators 属性获取枚举值名称
+                if let Some(property_set) = &bp.identifier.property_set {
+                    if property_set.to_lowercase() == "data_model" 
+                       && bp.identifier.name.to_lowercase() == "enumerators" {
+                        if let PropertyValue::List(name_list) = &bp.value {
+                            for name_item in name_list {
+                                if let PropertyListElement::Value(PropertyExpression::String(
+                                    StringTerm::Literal(name)
+                                )) = name_item {
+                                    variant_names.push(name.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 创建枚举变体（无数据类型）
+        let mut variants = Vec::new();
+        for name in variant_names {
+            variants.push(Variant {
+                name: name.clone(),
+                data: None, // 枚举变体不包含数据类型
+                docs: vec![],
+            });
+        }
+        
+        // 创建枚举定义
+        EnumDef {
+            name: comp.identifier.clone(),
+            variants,
+            generics: vec![],
+            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            docs: vec![format!("// AADL Enum: {}", comp.identifier)],
+            vis: Visibility::Public,
+        }
     }
 
     fn convert_thread_component(&self, comp: &ComponentType) -> Vec<Item> {
@@ -486,7 +828,7 @@ impl AadlConverter {
             PortType::Data { classifier } | PortType::EventData { classifier } => {
                 classifier
                     .as_ref() //.as_ref() 的作用是把 Option<T> 变成 Option<&T>。它不会取得其中值的所有权，而只是"借用"里面的值。
-                    .map(|c| self.classifier_to_type(c)) //对 Option 类型调用 .map() 方法，用于在 Some(...) 中包裹的值c上应用一个函数。
+                    .map(|c: &PortDataTypeReference| self.classifier_to_type(c)) //对 Option 类型调用 .map() 方法，用于在 Some(...) 中包裹的值c上应用一个函数。
                     .unwrap_or(Type::Named("()".to_string()))
             }
             PortType::Event => Type::Named("()".to_string()), // 事件端口固定使用单元类型
@@ -915,7 +1257,16 @@ impl AadlConverter {
                             )) => {
                                 source_files.push(text.clone());
                             }
-                            _ => {}
+                            PropertyValue::List(arraylist) => {
+                                for item in arraylist {
+                                    if let PropertyListElement::Value(PropertyExpression::String(
+                                        StringTerm::Literal(text),
+                                    )) = item {
+                                        source_files.push(text.clone());
+                                    }
+                                }
+                            }
+                            _ => {println!("error in extract_source_files");}
                         }
                     }
                 }
@@ -1012,7 +1363,7 @@ impl AadlConverter {
     fn convert_data_implementation(&self, impl_: &ComponentImplementation) -> Vec<Item> {
         let mut items = Vec::new();
 
-        // 检查子组件，判断是否为共享变量
+        // 检查子组件，判断是否为共享变量/复杂数据类型
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             let subprogram_count = subcomponents.iter()
                 .filter(|sub| sub.category == ComponentCategory::Subprogram)
@@ -1067,10 +1418,143 @@ impl AadlConverter {
                     eprintln!("请检查AADL模型，确保每个共享数据组件实现中只有一个数据子组件");
                 }
             }
-        }
+            else if self.data_comp_type.contains_key(&impl_.name.type_identifier) {
+                //说明是复杂数据类型
+                let data_type_name = self.data_comp_type.get(&impl_.name.type_identifier).unwrap();
+                if data_type_name == "struct" {
+                    items.push(Item::Struct(self.determine_struct_impl(impl_, subcomponents)));
+                } else if data_type_name == "union" {
+                    items.push(Item::Enum(self.determine_union_impl(impl_, subcomponents)));
+                }
+            }
+            
+        } 
 
         items
     }
+
+    /// 处理结构体类型
+    fn determine_struct_impl(&self, impl_: &ComponentImplementation, subcomponents: &[Subcomponent]) -> StructDef {
+        let mut fields = Vec::new();
+        
+        // 从子组件中解析字段类型和字段名
+        for sub in subcomponents {
+            // 获取字段名（子组件标识符）
+            let field_name = sub.identifier.clone();
+            
+            // 获取字段类型
+            let field_type = match &sub.classifier {
+                SubcomponentClassifier::ClassifierReference(
+                    UniqueComponentClassifierReference::Implementation(impl_ref)
+                ) => {
+                    // 从分类器引用中提取类型名
+                    let type_name = impl_ref.implementation_name.type_identifier.clone();
+                    
+                    // 映射到 Rust 类型
+                    self.type_mappings
+                        .get(&type_name)
+                        .cloned()
+                        .unwrap_or_else(|| Type::Named(type_name))
+                }
+                SubcomponentClassifier::ClassifierReference(
+                    UniqueComponentClassifierReference::Type(type_ref)
+                ) => {
+                    // 从类型引用中提取类型名
+                    let type_name = type_ref.implementation_name.type_identifier.clone();
+                    
+                    // 映射到 Rust 类型
+                    self.type_mappings
+                        .get(&type_name)
+                        .cloned()
+                        .unwrap_or_else(|| Type::Named(type_name))
+                }
+                SubcomponentClassifier::Prototype(prototype_name) => {
+                    // 处理原型引用
+                    Type::Named(prototype_name.clone())
+                }
+            };
+            
+            // 创建字段
+            fields.push(Field {
+                name: field_name,
+                ty: field_type,
+                docs: vec![format!("// 子组件字段: {}", sub.identifier)],
+                attrs: vec![],
+            });
+        }
+        
+        // 创建结构体定义
+        StructDef {
+            name: impl_.name.type_identifier.clone(),
+            fields,
+            properties: vec![],
+            generics: vec![],
+            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            docs: vec![format!("// AADL Struct: {}", impl_.name.type_identifier)],
+            vis: Visibility::Public,
+        }
+    }
+
+    /// 处理联合体类型,使用枚举类型来表示，不使用union类型,避免unsafe
+    fn determine_union_impl(&self, impl_: &ComponentImplementation, subcomponents: &[Subcomponent]) -> EnumDef {
+        // 从子组件中解析字段类型和字段名
+        let mut variants = Vec::new();
+        
+        for sub in subcomponents {
+            // 获取字段名（子组件标识符）
+            let field_name = sub.identifier.clone();
+            
+            // 获取字段类型
+            let field_type = match &sub.classifier {
+                SubcomponentClassifier::ClassifierReference(
+                    UniqueComponentClassifierReference::Implementation(impl_ref)
+                ) => {
+                    // 从分类器引用中提取类型名
+                    let type_name = impl_ref.implementation_name.type_identifier.clone();
+                    
+                    // 映射到 Rust 类型
+                    self.type_mappings
+                        .get(&type_name)
+                        .cloned()
+                        .unwrap_or_else(|| Type::Named(type_name))
+                }
+                SubcomponentClassifier::ClassifierReference(
+                    UniqueComponentClassifierReference::Type(type_ref)
+                ) => {
+                    // 从类型引用中提取类型名
+                    let type_name = type_ref.implementation_name.type_identifier.clone();
+                    
+                    // 映射到 Rust 类型
+                    self.type_mappings
+                        .get(&type_name)
+                        .cloned()
+                        .unwrap_or_else(|| Type::Named(type_name))
+                }
+                SubcomponentClassifier::Prototype(prototype_name) => {
+                    // 处理原型引用
+                    Type::Named(prototype_name.clone())
+                }
+            };
+            
+            // 创建枚举变体
+            variants.push(Variant {
+                name: field_name,
+                data: Some(vec![field_type]), // 每个变体包含一个数据类型
+                docs: vec![format!("// 联合体字段: {}", sub.identifier)],
+            });
+        }
+        
+        // 创建枚举定义
+        EnumDef {
+            name: impl_.name.type_identifier.clone(),
+            variants,
+            generics: vec![],
+            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            docs: vec![format!("// AADL Union: {}", impl_.name.type_identifier)],
+            vis: Visibility::Public,
+        }
+    }
+
 
     fn convert_process_implementation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
         let mut items = Vec::new();

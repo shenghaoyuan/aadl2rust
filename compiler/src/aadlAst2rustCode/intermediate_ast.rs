@@ -106,6 +106,7 @@ pub enum Type {
     Reference(Box<Type>, bool, bool),  // &mut T ,第一个bool代表是否是引用，第二个bool代码是否可变mut
     Tuple(Vec<Type>),            // (T1, T2)
     Slice(Box<Type>),            // [T]
+    Array(Box<Type>, usize),     // [T; N] 固定大小数组
     Unit,                        // ()
     Never,                       // !
 }

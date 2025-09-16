@@ -82,7 +82,7 @@ component_implementation = {
 
 // 4.5 Subcomponents
 subcomponent = {
-    identifier ~ ":" ~ component_category ~ identifier ~
+    identifier ~ ":" ~ component_category ~ qualified_identifier ~
     array_spec? ~
     properties? ~
     ";"
@@ -133,7 +133,7 @@ parameter_connection = {
 // 11 Properties 这里其实合并了property_association和contained_property_association（有applies子句，移动到了property_value的reference_value里）
 property_association = {
     identifier ~
-    ( "::" ~ property_set_name )? ~
+    ( "::" ~ identifier )? ~
     property_operator ~
     constant? ~ property_value ~
     ";"
@@ -143,12 +143,13 @@ property_operator = { "=>" | "+=>" }
 
 constant = { "constant" }
 
-
+//TODO：根据标准中的property_expression，完善
 property_value = {
+    list_value |
     range_value | //优先于literal_value匹配
     literal_value | //字面量
-    list_value |
-    reference_value 
+    reference_value |
+    component_classifier_value
 }
 
 literal_value = { (number | string_literal | boolean | enum_value ) ~ unit? } 
@@ -159,6 +160,7 @@ range_value = {
 }
 list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
 reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" ~ ( "applies" ~ "to" ~ qualified_identifier )? }
+component_classifier_value = { "classifier" ~ "(" ~ qualified_identifier ~ ")" }
 
 sign = { "+" | "-" }
 dot = { "." }
@@ -166,10 +168,11 @@ number = { sign? ~ numbervalue} //带符号整数或浮点数
 numbervalue = {(ASCII_DIGIT+) ~ (dot ~ ASCII_DIGIT+)?}
 
 unit = { no_point_identifier } //可选的单位
+//TODO:string_literal的定义需要修改，不应该存在括号
 string_literal = { 
     "\"" ~ (!"\"" ~ ANY)* ~ "\"" | 
     "(" ~ ("()" | ( !")" ~ ANY ) )* ~ ")" 
-}//双引号字符串或括号内容（如 "text" 或 (content)）
+}//双引号字符串或括号内容（如 "text" 或 (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL)）
 //注意跳过("new PingPongType()") 内部的括号对
 
 boolean = { "true" | "false"}
@@ -177,7 +180,8 @@ boolean = { "true" | "false"}
 enum_value = @{
     "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
     "native" | "Integer" | "Struct" | 
-    "Boolean" | "Signed" | "Unsigned" | "Float" | "Simple" | "Double" | "Character" | "String" 
+    "Boolean" | "Signed" | "Unsigned" | "Float" | "Simple" | "Double" | "Character" | "String" | 
+    "Struct" | "Union" | "Enum" | "Fixed" | "Array"
 }
 
 // 5.2 Subprogram Calls

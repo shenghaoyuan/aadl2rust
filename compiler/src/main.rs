@@ -157,8 +157,8 @@ fn process_test_case(test_case: &TestCase) {
             println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count());
             
             // 将解析结果写入文件
-            let pairs_debug_path = format!("generate/{}_pairs_debug.txt", test_case.output_name);
-            //fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
+            let pairs_debug_path = format!("generate/temp/{}_pairs_debug.txt", test_case.output_name);
+            fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
             println!("解析结果已保存到: {}", pairs_debug_path);
 
             // 转换到AST

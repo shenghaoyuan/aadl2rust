@@ -45,7 +45,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: Update",
                     "// C binding to: user_update",
-                    "// source_files: \"toy.c\"",
+                    "// source_files: toy.c",
                 ],
                 items: [
                     Use(
@@ -127,7 +127,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: Read_POS",
                     "// C binding to: user_read",
-                    "// source_files: \"toy.c\"",
+                    "// source_files: toy.c",
                 ],
                 items: [
                     Use(
@@ -209,7 +209,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: GNC_Job",
                     "// C binding to: user_gnc_job",
-                    "// source_files: \"toy.c\"",
+                    "// source_files: toy.c",
                 ],
                 items: [
                     Use(
@@ -274,7 +274,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: TMTC_Job",
                     "// C binding to: user_tmtc_job",
-                    "// source_files: \"toy.c\"",
+                    "// source_files: toy.c",
                 ],
                 items: [
                     Use(
@@ -339,7 +339,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: GNC_Identity",
                     "// C binding to: user_gnc_identity",
-                    "// source_files: \"toy.c\"",
+                    "// source_files: toy.c",
                 ],
                 items: [
                     Use(
@@ -404,7 +404,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: TMTC_Identity",
                     "// C binding to: user_tmtc_identity",
-                    "// source_files: \"toy.c\"",
+                    "// source_files: toy.c",
                 ],
                 items: [
                     Use(

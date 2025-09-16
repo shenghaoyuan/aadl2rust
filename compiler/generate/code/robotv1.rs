@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-08 19:47:55
+// 生成时间: 2025-09-16 20:06:00
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -30,7 +30,7 @@ pub type Alpha_Type = bool;
 pub mod collecte_donnee_spg {
     // Auto-generated from AADL subprogram: collecte_donnee_spg
     // C binding to: collecte_donnee
-    // source_files: "robot.c"
+    // source_files: robot.c
     use super::{collecte_donnee};
     // Wrapper for C function collecte_donnee
     // Original AADL port: d_source
@@ -44,7 +44,7 @@ pub mod collecte_donnee_spg {
 pub mod traite_spg_in {
     // Auto-generated from AADL subprogram: traite_spg_in
     // C binding to: traite_in
-    // source_files: "robot.c"
+    // source_files: robot.c
     use super::{traite_in};
     // Wrapper for C function traite_in
     // Original AADL port: d_info
@@ -58,7 +58,7 @@ pub mod traite_spg_in {
 pub mod traite_spg_out {
     // Auto-generated from AADL subprogram: traite_spg_out
     // C binding to: traite_out
-    // source_files: "robot.c"
+    // source_files: robot.c
     use super::{traite_out};
     // Wrapper for C function traite_out
     // Original AADL port: d_ordre
@@ -72,7 +72,7 @@ pub mod traite_spg_out {
 pub mod action_spg {
     // Auto-generated from AADL subprogram: action_spg
     // C binding to: action
-    // source_files: "robot.c"
+    // source_files: robot.c
     use super::{action};
     // Wrapper for C function action
     // Original AADL port: d_action

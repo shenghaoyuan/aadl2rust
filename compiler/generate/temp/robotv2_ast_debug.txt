@@ -22,7 +22,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: action_spg",
                     "// C binding to: action",
-                    "// source_files: \"robot.c\"",
+                    "// source_files: robot.c",
                 ],
                 items: [
                     Use(

@@ -8,7 +8,7 @@ public
 
   processor the_processor
   properties
-    Deployment::Execution_Platform => native;
+    Deployment_Properties::Execution_Platform => native;
   end the_processor;
 
   processor implementation the_processor.Impl

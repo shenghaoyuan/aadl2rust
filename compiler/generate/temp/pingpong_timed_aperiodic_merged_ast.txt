@@ -443,7 +443,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: Do_Ping_Spg",
                     "// C binding to: user_do_ping_spg",
-                    "// source_files: \"ping.c\"",
+                    "// source_files: ping.c",
                 ],
                 items: [
                     Use(
@@ -524,7 +524,7 @@ RustModule {
                 docs: [
                     "// Auto-generated from AADL subprogram: Ping_Spg",
                     "// C binding to: user_ping_spg",
-                    "// source_files: \"ping.c\"",
+                    "// source_files: ping.c",
                 ],
                 items: [
                     Use(
