@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-16 20:01:59
+// 生成时间: 2025-09-18 15:31:24
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -48,18 +48,18 @@ pub struct A_Struct2 {
 
 // AADL Union: A_Union1
 #[derive(Debug, Clone)]
-pub enum A_Union1 {
-    f1(f32),
-    f2(char),
+pub union A_Union1 {
+    pub f1: f32,
+    pub f2: char,
 }
 
 // AADL Union: A_Union2
 #[derive(Debug, Clone)]
-pub enum A_Union2 {
+pub union A_Union2 {
     // 联合体字段: f1
-    f1(f32),
+    pub f1: f32,
     // 联合体字段: c2
-    c2(char),
+    pub c2: char,
 }
 
 // AADL Enum: An_Enum

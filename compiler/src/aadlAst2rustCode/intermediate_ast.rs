@@ -16,6 +16,7 @@ pub struct RustModule {
 pub enum Item {
     Struct(StructDef),
     Enum(EnumDef),
+    Union(UnionDef),  
     Function(FunctionDef),
     Impl(ImplBlock),
     Const(ConstDef),
@@ -35,6 +36,18 @@ pub struct StructDef {
     pub derives: Vec<String>, // #[derive(...)]
     pub docs: Vec<String>,
     pub vis: Visibility, //控制结构体的可见性
+}
+
+/// 联合体定义
+#[derive(Debug,Clone)]
+pub struct UnionDef {
+    pub name: String,
+    pub fields: Vec<Field>, // 联合体字段
+    pub properties: Vec<StruProperty>, // 存储属性
+    pub generics: Vec<GenericParam>,
+    pub derives: Vec<String>, // #[derive(...)]
+    pub docs: Vec<String>,
+    pub vis: Visibility, // 控制联合体的可见性
 }
 
 /// 枚举定义

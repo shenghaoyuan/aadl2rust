@@ -247,15 +247,15 @@ impl AadlConverter {
             else if unit_type.to_lowercase() == "union" {
                 // 从组件属性中提取属性列表
                 if let PropertyClause::Properties(props) = &comp.properties {
-                    let enum_def = self.determine_union_type(comp, props);
-                    if enum_def.variants.is_empty() { //说明是通过impl中子组件来获取字段的，而不是在此时type中
+                    let union_def = self.determine_union_type(comp, props);
+                    if union_def.fields.is_empty() { //说明是通过impl中子组件来获取字段的，而不是在此时type中
                         return Vec::new();
                     } else {
-                        return vec![Item::Enum(enum_def)];
+                        return vec![Item::Union(union_def)];
                     }
                 } else {
                     // 如果没有属性，返回空的枚举
-                    return vec![Item::Enum(self.determine_union_type(comp, &[]))];
+                    return vec![Item::Union(self.determine_union_type(comp, &[]))];
                 }
             }
             else if unit_type.to_lowercase() == "enum" {
@@ -501,7 +501,7 @@ impl AadlConverter {
     }
 
     /// 处理联合体类型,使用枚举类型来表示，不使用union类型,避免unsafe
-    fn determine_union_type(&mut self, comp: &ComponentType, props: &[Property]) -> EnumDef {
+    fn determine_union_type(&mut self, comp: &ComponentType, props: &[Property]) -> UnionDef {
         // 解析字段类型和字段名
         let mut field_names = Vec::new();
         let mut field_types = Vec::new();
@@ -557,6 +557,7 @@ impl AadlConverter {
                 }
             }
         }
+        
         // 判断是否获取到字段信息，理论上二者同时有或同时无
         if field_names.is_empty() || field_types.is_empty() {
             //说明没有获取到字段信息，需要根据组件实现impl来获取属性信息
@@ -564,20 +565,22 @@ impl AadlConverter {
             self.data_comp_type.insert(comp.identifier.clone(), "union".to_string());
         }
         
-        // 创建枚举变体
-        let mut variants = Vec::new();
+        // 创建联合体字段
+        let mut fields = Vec::new();
         for (name, ty) in field_names.iter().zip(field_types.iter()) {
-            variants.push(Variant {
+            fields.push(Field {
                 name: name.clone(),
-                data: Some(vec![ty.clone()]), // 每个变体包含一个数据类型
+                ty: ty.clone(),
                 docs: vec![],
+                attrs: vec![],
             });
         }
         
-        // 创建枚举定义
-        EnumDef {
+        // 创建联合体定义
+        UnionDef {
             name: comp.identifier.clone(),
-            variants,
+            fields,
+            properties: vec![],
             generics: vec![],
             derives: vec!["Debug".to_string(), "Clone".to_string()],
             docs: vec![format!("// AADL Union: {}", comp.identifier)],
@@ -1424,7 +1427,7 @@ impl AadlConverter {
                 if data_type_name == "struct" {
                     items.push(Item::Struct(self.determine_struct_impl(impl_, subcomponents)));
                 } else if data_type_name == "union" {
-                    items.push(Item::Enum(self.determine_union_impl(impl_, subcomponents)));
+                    items.push(Item::Union(self.determine_union_impl(impl_, subcomponents)));
                 }
             }
             
@@ -1496,10 +1499,10 @@ impl AadlConverter {
     }
 
     /// 处理联合体类型,使用枚举类型来表示，不使用union类型,避免unsafe
-    fn determine_union_impl(&self, impl_: &ComponentImplementation, subcomponents: &[Subcomponent]) -> EnumDef {
-        // 从子组件中解析字段类型和字段名
-        let mut variants = Vec::new();
+    fn determine_union_impl(&self, impl_: &ComponentImplementation, subcomponents: &[Subcomponent]) -> UnionDef {
+        let mut fields = Vec::new();
         
+        // 从子组件中解析字段类型和字段名
         for sub in subcomponents {
             // 获取字段名（子组件标识符）
             let field_name = sub.identifier.clone();
@@ -1536,18 +1539,20 @@ impl AadlConverter {
                 }
             };
             
-            // 创建枚举变体
-            variants.push(Variant {
+            // 创建字段
+            fields.push(Field {
                 name: field_name,
-                data: Some(vec![field_type]), // 每个变体包含一个数据类型
+                ty: field_type,
                 docs: vec![format!("// 联合体字段: {}", sub.identifier)],
+                attrs: vec![],
             });
         }
         
-        // 创建枚举定义
-        EnumDef {
+        // 创建联合体定义
+        UnionDef {
             name: impl_.name.type_identifier.clone(),
-            variants,
+            fields,
+            properties: vec![],
             generics: vec![],
             derives: vec!["Debug".to_string(), "Clone".to_string()],
             docs: vec![format!("// AADL Union: {}", impl_.name.type_identifier)],

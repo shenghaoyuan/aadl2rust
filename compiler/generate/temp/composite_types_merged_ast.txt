@@ -107,33 +107,28 @@ RustModule {
                 vis: Public,
             },
         ),
-        Enum(
-            EnumDef {
+        Union(
+            UnionDef {
                 name: "A_Union1",
-                variants: [
-                    Variant {
+                fields: [
+                    Field {
                         name: "f1",
-                        data: Some(
-                            [
-                                Named(
-                                    "f32",
-                                ),
-                            ],
+                        ty: Named(
+                            "f32",
                         ),
                         docs: [],
+                        attrs: [],
                     },
-                    Variant {
+                    Field {
                         name: "f2",
-                        data: Some(
-                            [
-                                Named(
-                                    "char",
-                                ),
-                            ],
+                        ty: Named(
+                            "char",
                         ),
                         docs: [],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -145,37 +140,32 @@ RustModule {
                 vis: Public,
             },
         ),
-        Enum(
-            EnumDef {
+        Union(
+            UnionDef {
                 name: "A_Union2",
-                variants: [
-                    Variant {
+                fields: [
+                    Field {
                         name: "f1",
-                        data: Some(
-                            [
-                                Named(
-                                    "f32",
-                                ),
-                            ],
+                        ty: Named(
+                            "f32",
                         ),
                         docs: [
                             "// 联合体字段: f1",
                         ],
+                        attrs: [],
                     },
-                    Variant {
+                    Field {
                         name: "c2",
-                        data: Some(
-                            [
-                                Named(
-                                    "char",
-                                ),
-                            ],
+                        ty: Named(
+                            "char",
                         ),
                         docs: [
                             "// 联合体字段: c2",
                         ],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",

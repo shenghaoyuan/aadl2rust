@@ -73,6 +73,7 @@ impl RustCodeGenerator {
         match item {
             Item::Struct(s) => self.generate_struct(s),
             Item::Enum(e) => self.generate_enum(e),
+            Item::Union(u) => self.generate_union(u),  // 新增
             Item::Function(f) => self.generate_function(f),
             Item::Impl(i) => self.generate_impl(i),
             Item::Const(c) => self.generate_const(c),
@@ -914,6 +915,61 @@ impl RustCodeGenerator {
         self.write(";");
         self.writeln("");
         
+        self.dedent();
+        self.writeln("}");
+        self.writeln("");
+    }
+
+    fn generate_union(&mut self, u: &UnionDef) {
+        // 文档注释
+        for doc in &u.docs {
+            self.writeln(doc);
+        }
+
+        // 派生属性
+        if !u.derives.is_empty() {
+            self.write("#[derive(");
+            for (i, derive) in u.derives.iter().enumerate() {
+                if i > 0 {
+                    self.write(", ");
+                }
+                self.write(derive);
+            }
+            self.writeln(")]");
+        }
+
+        // 联合体定义
+        self.write(&format!("{}union {} ", self.visibility(&u.vis), u.name));
+
+        if u.generics.is_empty() {
+            self.writeln("{");
+        } else {
+            self.write("<");
+            for (i, generic) in u.generics.iter().enumerate() {
+                if i > 0 {
+                    self.write(", ");
+                }
+                self.write(&generic.name);
+                if !generic.bounds.is_empty() {
+                    self.write(": ");
+                    for (j, bound) in generic.bounds.iter().enumerate() {
+                        if j > 0 {
+                            self.write(" + ");
+                        }
+                        self.write(bound);
+                    }
+                }
+            }
+            self.writeln("> {");
+        }
+
+        self.indent();
+
+        // 联合体字段
+        for field in &u.fields {
+            self.generate_field(field);
+        }
+
         self.dedent();
         self.writeln("}");
         self.writeln("");
