@@ -1,7 +1,6 @@
 // src/ir/intermediate_print.rs
 use super::intermediate_ast::*;
 use chrono::Local;
-use std::fmt::{self, Write};
 
 // Rust代码生成器
 pub struct RustCodeGenerator {

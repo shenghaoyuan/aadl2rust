@@ -6,7 +6,6 @@ pub mod transform;
 pub mod transform_annex;
 //mod output_ocarina;
 
-use aadlAst2rustCode::generate_build::*;
 use aadlAst2rustCode::intermediate_print::*;
 use aadlAst2rustCode::merge_utils::*;
 use aadlight_parser::AADLParser;
@@ -16,7 +15,6 @@ use printmessage::*;
 use std::fs;
 use std::io::{self, Write};
 
-use syn::{parse_str, ItemFn};
 
 use crate::{aadlAst2rustCode::converter::AadlConverter, ast::aadl_ast_cj::Package};
 
@@ -90,6 +88,12 @@ fn main() {
             name: "composite_types".to_string(),
             path: "AADLSource/composite_types.aadl".to_string(),
             output_name: "composite_types".to_string(),
+        },
+        TestCase {
+            id: 11,
+            name: "car".to_string(),
+            path: "AADLSource/car.aadl".to_string(),
+            output_name: "car".to_string(),
         },
     ];
 
@@ -171,8 +175,8 @@ fn process_test_case(test_case: &TestCase) {
             print_ast(&ast);
 
             println!("\n==================================== 生成Rust代码 ===================================");
-            for package in &ast {
-                generate_rust_code_for_test_case(package, test_case);
+            for (index, package) in ast.iter().enumerate() {
+                generate_rust_code_for_test_case(package, test_case,ast.len());
             }
             
             println!("✅ 代码生成完成！输出文件保存在 generate/ 目录下");
@@ -201,7 +205,7 @@ fn process_test_case(test_case: &TestCase) {
     }
 }
 
-pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase) -> () {
+pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase,number_of_packages: usize) -> () {
     // 第一级转换：语义转换
     let mut converter = AadlConverter::default();
 
@@ -222,10 +226,20 @@ pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase
     let mut code_generator = RustCodeGenerator::new();
     let rust_code = code_generator.generate_module_code(&merge_rust_module);
 
-    // 生成主Rust代码文件
-    let output_path = format!("generate/code/{}.rs", test_case.output_name);
-    fs::write(&output_path, rust_code).expect("Failed to write main.rs");
-    println!("Rust代码已生成: {}", output_path);
+    // 根据包数量决定输出路径
+    let package_name = aadl_pkg.name.to_string().replace("::", "_");
+    let output_path = if number_of_packages == 1 {
+        // 如果只有一个包，直接生成文件，文件名是test_case
+        format!("generate/code/{}.rs", test_case.output_name)
+    } else {
+        // 如果有多个包，使用文件夹结构
+        let output_dir = format!("generate/code/{}", test_case.output_name);
+        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+        format!("{}/{}.rs", output_dir, package_name)
+    };
+    
+    fs::write(&output_path, rust_code).expect("Failed to write Rust code");
+    println!("Rust代码已生成 (包: {}): {}", package_name, output_path);
 
     // 可选：生成build.rs
     // let build_rs_content = generate_build_rs(&merge_rust_module);

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-16 20:05:31
+// 生成时间: 2025-09-19 17:14:56
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -26,6 +26,9 @@ fn set_thread_affinity(cpu: isize) {
 
 // AADL Data Type: POS_Internal_Type
 pub type POS_Internal_Type = i32;
+
+// AADL Data Type: POS
+pub type POS = ();
 
 // Shared data type for POS
 // Auto-generated from AADL data implementation

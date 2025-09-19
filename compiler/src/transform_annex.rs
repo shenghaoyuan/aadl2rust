@@ -209,7 +209,7 @@ pub fn transform_transition_declaration(pair: Pair<aadlight_parser::Rule>) -> Tr
     
     // 第一个 identifier 是源状态
     let source_state = extract_identifier(inner_iter.next().unwrap());
-    let mut source_states = vec![source_state];
+    let source_states = vec![source_state];
     
     // 跳过 "-["
     //let _dash_bracket = inner_iter.next();
@@ -312,7 +312,7 @@ fn transform_dispatch_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCo
 /// 转换执行条件
 /// 处理 execute_condition 规则
 fn transform_execute_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCondition {
-    let mut inner_iter = pair.into_inner();
+    let inner_iter = pair.into_inner();
     let mut has_not = false;
     let mut identifier = String::new();
     

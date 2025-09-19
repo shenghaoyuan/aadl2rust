@@ -152,7 +152,7 @@ property_value = {
     component_classifier_value
 }
 
-literal_value = { (number | string_literal | boolean | enum_value ) ~ unit? } 
+literal_value = { (number | enum_value | string_literal | boolean  ) ~ unit? } 
 range_value = { 
     number ~ WHITESPACE* ~ unit? ~ WHITESPACE* ~ 
     ".." ~ WHITESPACE* ~ 
@@ -179,9 +179,16 @@ boolean = { "true" | "false"}
 // 枚举值规则（覆盖AADL属性集预定义值）
 enum_value = @{
     "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
-    "native" | "Integer" | "Struct" | 
-    "Boolean" | "Signed" | "Unsigned" | "Float" | "Simple" | "Double" | "Character" | "String" | 
-    "Struct" | "Union" | "Enum" | "Fixed" | "Array"
+    "native"  | "Struct" | 
+    "Boolean" | "Signed" |  "Float" | "Simple" | "Double" | "Character" | "String" | 
+    "Struct" | "Union" | "Enum" | "Fixed" | "Array" |
+    "struct" | "union" | "enum" | "fixed" | "array" |
+    "unsigned_8" | "unsigned_16" | "unsigned_32" | "unsigned_64" | "unsigned" |
+    "integer_8" | "integer_16" | "integer_32" | "integer_64" | "integer" |
+    "natural" | "float" | "float_32" | "float_64" | "character" | "string"|
+    "Unsigned_8" | "Unsigned_16" | "Unsigned_32" | "Unsigned_64" | "Unsigned" |
+    "Integer_8" | "Integer_16" | "Integer_32" | "Integer_64" | "Integer" |
+    "Natural" |  "Float_32" | "Float_64" | "Float" |"Character" | "String"
 }
 
 // 5.2 Subprogram Calls
@@ -662,4 +669,5 @@ calls = { "calls" ~ (call_sequence+ | "") }
 connections = { "connections" ~ (connection+ | "") }
 
 
-file = { SOI ~ package_declaration ~ EOI }
+// 注意：这个规则在 main.rs 中被使用，警告是误报
+file = { SOI ~ package_declaration+ ~ EOI }

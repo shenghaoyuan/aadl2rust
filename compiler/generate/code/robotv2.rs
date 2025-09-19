@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-16 20:06:26
+// 生成时间: 2025-09-19 17:17:31
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -196,13 +196,13 @@ impl controleThread {
                             state = State::s_inline;
                             // complete，需要停
                         },
-                        State::s1 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            panic!("Unexpected s1 state condition");
-                        },
                         State::s2 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             panic!("Unexpected s2 state condition");
+                        },
+                        State::s1 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            panic!("Unexpected s1 state condition");
                         },
                     };
                     break;

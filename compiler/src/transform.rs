@@ -467,7 +467,7 @@ impl AADLTransformer {
                 let parts: Vec<&str> = qname.split("::").collect();
                 let (package_prefix, type_id) = if parts.len() > 1 {
                     let package_name = parts[0..parts.len()-1].join("::");
-                    let type_name = parts.last().unwrap().to_string();
+                    let type_name = parts.last().unwrap().split(".").next().unwrap().to_string();
                     (Some(package_name), type_name)
                 } else {
                     (None, qname.to_string())
@@ -733,32 +733,24 @@ impl AADLTransformer {
                             }
                             _ => None,
                         };
-
                         // 主数字部分
                         let int_part = number_parts.next().unwrap().as_str().trim();
 
                         // 判断是否为浮点数
-                        let expr = match number_parts.peek() {
-                            Some(p) if p.as_rule() == aadlight_parser::Rule::dot => {
-                                number_parts.next(); // consume dot
-                                let frac_part = number_parts.next().unwrap().as_str();
-                                let full = format!("{}.{}", int_part, frac_part);
-                                let value = full.parse::<f64>().unwrap();
-                                PropertyExpression::Real(SignedRealOrConstant::Real(SignedReal {
-                                    sign,
-                                    value,
-                                    unit: unit.clone(),
-                                }))
-                            }
-                            _ => {
-                                //println!("尝试 parse 的 int_part = '{}'", int_part);
-                                let value = int_part.parse::<i64>().unwrap();
-                                PropertyExpression::Integer(SignedIntergerOrConstant::Real(SignedInteger {
-                                    sign,
-                                    value,
-                                    unit: unit.clone(),
-                                }))
-                            }
+                        let expr = if int_part.contains('.') {
+                            let value = int_part.parse::<f64>().unwrap();
+                            PropertyExpression::Real(SignedRealOrConstant::Real(SignedReal {
+                                sign,
+                                value,
+                                unit: unit.clone(),
+                            }))
+                        } else {
+                            let value = int_part.parse::<i64>().unwrap();
+                            PropertyExpression::Integer(SignedIntergerOrConstant::Real(SignedInteger {
+                                sign,
+                                value,
+                                unit: unit.clone(),
+                            }))
                         };
 
                         PropertyValue::Single(expr)

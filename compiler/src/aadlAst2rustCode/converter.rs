@@ -2,7 +2,7 @@
 use super::intermediate_ast::*;
 use super::converter_annex::AnnexConverter;
 use crate::ast::aadl_ast_cj::*;
-use std::{collections::HashMap, default};
+use std::collections::HashMap;
 
 // AADL到Rust中间表示的转换器
 pub struct AadlConverter {
@@ -20,30 +20,32 @@ struct PortHandlerConfig {
     // 端口处理配置
 }
 
+/// 为AadlConverter实现Default trait
+/// 初始化默认的类型映射关系，包括AADL基础类型到Rust类型的映射
 impl Default for AadlConverter {
     fn default() -> Self {
         let mut type_mappings = HashMap::new();
-        type_mappings.insert("Boolean".to_string(), Type::Named("bool".to_string()));
+        type_mappings.insert("boolean".to_string(), Type::Named("bool".to_string()));
 
-        type_mappings.insert("Integer".to_string(), Type::Named("i32".to_string()));
-        type_mappings.insert("Integer_8".to_string(), Type::Named("i8".to_string()));
-        type_mappings.insert("Integer_16".to_string(), Type::Named("i16".to_string()));
-        type_mappings.insert("Integer_32".to_string(), Type::Named("i32".to_string()));
-        type_mappings.insert("Integer_64".to_string(), Type::Named("i64".to_string()));
-        type_mappings.insert("Unsigned_8".to_string(), Type::Named("u8".to_string()));
-        type_mappings.insert("Unsigned_16".to_string(), Type::Named("u16".to_string()));
-        type_mappings.insert("Unsigned_32".to_string(), Type::Named("u32".to_string()));
-        type_mappings.insert("Unsigned_64".to_string(), Type::Named("u64".to_string()));
+        type_mappings.insert("integer".to_string(), Type::Named("i32".to_string()));
+        type_mappings.insert("integer_8".to_string(), Type::Named("i8".to_string()));
+        type_mappings.insert("integer_16".to_string(), Type::Named("i16".to_string()));
+        type_mappings.insert("integer_32".to_string(), Type::Named("i32".to_string()));
+        type_mappings.insert("integer_64".to_string(), Type::Named("i64".to_string()));
+        type_mappings.insert("unsigned_8".to_string(), Type::Named("u8".to_string()));
+        type_mappings.insert("unsigned_16".to_string(), Type::Named("u16".to_string()));
+        type_mappings.insert("unsigned_32".to_string(), Type::Named("u32".to_string()));
+        type_mappings.insert("unsigned_64".to_string(), Type::Named("u64".to_string()));
 
-        type_mappings.insert("Natural".to_string(), Type::Named("usize".to_string()));
+        type_mappings.insert("natural".to_string(), Type::Named("usize".to_string()));
 
-        type_mappings.insert("Float".to_string(), Type::Named("f32".to_string()));
-        type_mappings.insert("Float_32".to_string(), Type::Named("f32".to_string()));
-        type_mappings.insert("Float_64".to_string(), Type::Named("f64".to_string()));
+        type_mappings.insert("float".to_string(), Type::Named("f32".to_string()));
+        type_mappings.insert("float_32".to_string(), Type::Named("f32".to_string()));
+        type_mappings.insert("float_64".to_string(), Type::Named("f64".to_string()));
 
-        type_mappings.insert("Character".to_string(), Type::Named("char".to_string()));
+        type_mappings.insert("character".to_string(), Type::Named("char".to_string()));
 
-        type_mappings.insert("String".to_string(), Type::Named("String".to_string()));
+        type_mappings.insert("string".to_string(), Type::Named("String".to_string()));
 
         Self {
             type_mappings,
@@ -179,7 +181,7 @@ impl AadlConverter {
                     "String" => Expr::Literal(Literal::Str("".to_string())),
                     _ => {
                         // 检查是否是自定义类型，通过type_mappings查找对应的Rust类型
-                        if let Some(mapped_type) = self.type_mappings.get(type_name) {
+                        if let Some(mapped_type) = self.type_mappings.get(&type_name.to_string().to_lowercase()) {
                             // 递归调用，使用映射后的类型
                             self.generate_default_value_for_type(mapped_type)
                         } else {
@@ -200,9 +202,11 @@ impl AadlConverter {
     fn convert_declaration(&mut self, decl: &AadlDeclaration, module: &mut RustModule, package: &Package) {
         match decl {
             AadlDeclaration::ComponentType(comp) => {
+                // 转换组件类型声明，生成对应的Rust结构体或类型定义
                 module.items.extend(self.convert_component(comp, package));
             }
             AadlDeclaration::ComponentImplementation(impl_) => {
+                // 转换组件实现声明，生成对应的Rust实现块
                 module.items.extend(self.convert_implementation(impl_));
             }
             _ => {} // TODO:忽略其他声明类型
@@ -227,10 +231,7 @@ impl AadlConverter {
         // 当 determine_data_type 返回联合体类型时，生成枚举定义
         // 当 determine_data_type 返回枚举类型时，生成枚举定义
         if let Type::Named(unit_type) = &target_type {
-            if unit_type == "()" {
-                return Vec::new();
-            }
-            else if unit_type.to_lowercase() == "struct" {
+            if unit_type.to_lowercase() == "struct" {
                 // 从组件属性中提取属性列表
                 if let PropertyClause::Properties(props) = &comp.properties {
                     let struct_def = self.determine_struct_type(comp, props);
@@ -270,8 +271,8 @@ impl AadlConverter {
         }
         
         // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
-        if !self.type_mappings.contains_key(&comp.identifier) {
-            self.type_mappings.insert(comp.identifier.clone(), target_type.clone());
+        if !self.type_mappings.contains_key(&comp.identifier.to_lowercase()) {
+            self.type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
         }
         
         vec![Item::TypeAlias(TypeAlias {
@@ -284,7 +285,7 @@ impl AadlConverter {
 
     fn determine_data_type(&self, comp: &ComponentType) -> Type {
         // 首先检查组件标识符是否已经存在于type_mappings中
-        if let Some(existing_type) = self.type_mappings.get(&comp.identifier) {
+        if let Some(existing_type) = self.type_mappings.get(&comp.identifier.to_lowercase()) {
             return existing_type.clone();
         }
         
@@ -326,7 +327,7 @@ impl AadlConverter {
                                         // 使用 type_mappings 查找对应的类型，如果没有找到则使用原值
                                         return self
                                             .type_mappings
-                                            .get(&str_val.to_string())
+                                            .get(&str_val.to_string().to_lowercase())
                                             .cloned()
                                             .unwrap_or_else(|| Type::Named(str_val.to_string()));
                                     }
@@ -343,7 +344,7 @@ impl AadlConverter {
                         {
                             return self
                                 .type_mappings
-                                .get(&str_val.to_string())
+                                .get(&str_val.to_string().to_lowercase())
                                 .cloned()
                                 .unwrap_or_else(|| Type::Named(str_val.to_string()));
                         }
@@ -370,7 +371,7 @@ impl AadlConverter {
                     {
                         base_type = self
                             .type_mappings
-                            .get(type_name)
+                            .get(&type_name.to_lowercase())
                             .cloned()
                             .unwrap_or_else(|| Type::Named(type_name.clone()));
                     }
@@ -444,7 +445,7 @@ impl AadlConverter {
                                     
                                     // 映射到 Rust 类型
                                     let rust_type = self.type_mappings
-                                        .get(&type_name)
+                                        .get(&type_name.to_string().to_lowercase())
                                         .cloned()
                                         .unwrap_or_else(|| Type::Named(type_name));
                                     
@@ -529,7 +530,7 @@ impl AadlConverter {
                                     
                                     // 映射到 Rust 类型
                                     let rust_type = self.type_mappings
-                                        .get(&type_name)
+                                        .get(&type_name.to_string().to_lowercase())
                                         .cloned()
                                         .unwrap_or_else(|| Type::Named(type_name));
                                     
@@ -852,7 +853,7 @@ impl AadlConverter {
             )) => {
                 // 优先查找我们所自定义类型映射规则
                 self.type_mappings
-                    .get(&type_ref.implementation_name.type_identifier)
+                    .get(&type_ref.implementation_name.type_identifier.to_lowercase())
                     .cloned()
                     .unwrap_or_else(|| {
                         Type::Named(type_ref.implementation_name.type_identifier.clone())
@@ -1455,7 +1456,7 @@ impl AadlConverter {
                     
                     // 映射到 Rust 类型
                     self.type_mappings
-                        .get(&type_name)
+                        .get(&type_name.to_lowercase())
                         .cloned()
                         .unwrap_or_else(|| Type::Named(type_name))
                 }
@@ -1467,7 +1468,7 @@ impl AadlConverter {
                     
                     // 映射到 Rust 类型
                     self.type_mappings
-                        .get(&type_name)
+                        .get(&type_name.to_lowercase())
                         .cloned()
                         .unwrap_or_else(|| Type::Named(type_name))
                 }
@@ -1517,7 +1518,7 @@ impl AadlConverter {
                     
                     // 映射到 Rust 类型
                     self.type_mappings
-                        .get(&type_name)
+                        .get(&type_name.to_lowercase())
                         .cloned()
                         .unwrap_or_else(|| Type::Named(type_name))
                 }
@@ -1529,7 +1530,7 @@ impl AadlConverter {
                     
                     // 映射到 Rust 类型
                     self.type_mappings
-                        .get(&type_name)
+                        .get(&type_name.to_lowercase())
                         .cloned()
                         .unwrap_or_else(|| Type::Named(type_name))
                 }
@@ -2409,7 +2410,7 @@ impl AadlConverter {
     }
 
     fn create_component_type_docs(&self, comp: &ComponentType) -> Vec<String> {
-        let mut docs = vec![format!(
+        let docs = vec![format!(
             "// AADL {:?}: {}",
             comp.category,
             comp.identifier.to_lowercase()
@@ -2419,7 +2420,7 @@ impl AadlConverter {
     }
 
     fn create_component_impl_docs(&self, impl_: &ComponentImplementation) -> Vec<String> {
-        let mut docs = vec![format!(
+        let docs = vec![format!(
             "// AADL {:?}: {}",
             impl_.category,
             impl_.name.type_identifier.to_lowercase()

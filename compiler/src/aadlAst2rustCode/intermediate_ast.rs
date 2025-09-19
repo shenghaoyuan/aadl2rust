@@ -1,5 +1,4 @@
 // src/ir/intermediate_ast.rs
-use std::{clone, collections::HashMap};
 
 /// 轻量级Rust抽象语法树（模块级）
 #[derive(Debug,Clone)]

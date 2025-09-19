@@ -1238,11 +1238,4 @@ impl AnnexConverter {
             }
         }
     }
-
-    /// 获取组件类型
-    fn get_component_type(&self, impl_: &ComponentImplementation) -> Option<&ComponentType> {
-        // 这里需要从外部传入组件类型信息
-        // 暂时返回None，实际使用时需要修改
-        None
-    }
 } 

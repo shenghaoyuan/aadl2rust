@@ -18,6 +18,18 @@ RustModule {
         ),
         TypeAlias(
             TypeAlias {
+                name: "POS",
+                target: Named(
+                    "()",
+                ),
+                vis: Public,
+                docs: [
+                    "// AADL Data Type: POS",
+                ],
+            },
+        ),
+        TypeAlias(
+            TypeAlias {
                 name: "POSShared",
                 target: Generic(
                     "Arc",

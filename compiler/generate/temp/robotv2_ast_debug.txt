@@ -1031,35 +1031,6 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s1 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
                                                                                                     pattern: "State::s2",
                                                                                                     guard: None,
                                                                                                     body: Block {
@@ -1079,6 +1050,35 @@ RustModule {
                                                                                                                         Literal(
                                                                                                                             Str(
                                                                                                                                 "Unexpected s2 state condition",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "panic!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "Unexpected s1 state condition",
                                                                                                                             ),
                                                                                                                         ),
                                                                                                                     ],
