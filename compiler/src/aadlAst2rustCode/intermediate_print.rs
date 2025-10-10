@@ -161,25 +161,26 @@ impl RustCodeGenerator {
         }
 
         // 如果是进程结构体则不生成属性字段
-        if !s.name.ends_with("Process") && !s.properties.is_empty() {
-            self.writeln("\n    // --- AADL属性 ---");
-            for prop in &s.properties {
-                self.writeln(&format!(
-                    "pub {}: {}, {}",
-                    prop.name.to_lowercase(),
-                    self.type_for_property(&prop.value),
-                    prop.docs.join("\n")
-                ));
-            }
-        }
+        // if !s.name.ends_with("Process") && !s.properties.is_empty() {
+        //     self.writeln("\n    // --- AADL属性 ---");
+        //     for prop in &s.properties {
+        //         self.writeln(&format!(
+        //             "pub {}: {}, {}",
+        //             prop.name.to_lowercase(),
+        //             self.type_for_property(&prop.value),
+        //             prop.docs.join("\n")
+        //         ));
+        //     }
+        // }
         self.dedent();
         self.writeln("}");
         self.writeln("");
 
-        self.generate_properties_impl(s);
+        //self.generate_properties_impl(s);
     }
 
-    // 生成属性初始化impl块
+    // 生成属性初始化impl块(似乎默认process没有属性，实际按标准是可以有的，TODO)
+    // 2025.10.10 将这部分功能移动到converter.rs中，此处废弃
     fn generate_properties_impl(&mut self, s: &StructDef) {
         if s.properties.is_empty() {
             return;
@@ -201,7 +202,7 @@ impl RustCodeGenerator {
         self.writeln(") -> Self {");
         self.writeln("        Self {");
 
-        // 端口字段初始化，新增了针对cpu_id的特殊处理，将其作为特性
+        // 1端口字段初始化，新增了针对cpu_id的特殊处理，将其作为特性
         for field in &s.fields {
             //println!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!field.name: {:?}", field.ty);
             if field.name == "cpu_id" {
@@ -220,7 +221,7 @@ impl RustCodeGenerator {
             }
         }
 
-        // 属性字段初始化
+        // 2属性字段初始化
         for prop in &s.properties {
             let init_value = match &prop.value {
                 StruPropertyValue::Boolean(b) => b.to_string(),
@@ -229,6 +230,8 @@ impl RustCodeGenerator {
                 StruPropertyValue::String(s) => format!("\"{}\".to_string()", s),
                 StruPropertyValue::Duration(val, _) => val.to_string(),
                 StruPropertyValue::Range(min, max, _) => format!("({}, {})", min, max),
+                StruPropertyValue::None => "Default::default()".to_string(),
+                StruPropertyValue::Custom(s) => s.to_string(),
             };
             self.writeln(&format!(
                 "            {}: {}, // {}",
@@ -244,6 +247,7 @@ impl RustCodeGenerator {
     }
 
     // 根据属性值推断Rust类型
+    // 2025.10.10 将这部分功能移动到converter.rs中，此处废弃
     fn type_for_property(&self, value: &StruPropertyValue) -> String {
         match value {
             StruPropertyValue::Boolean(_) => "bool".to_string(),
@@ -252,21 +256,23 @@ impl RustCodeGenerator {
             StruPropertyValue::String(_) => "String".to_string(),
             StruPropertyValue::Duration(_, _) => "u64".to_string(),
             StruPropertyValue::Range(_, _, _) => "(u64, u64)".to_string(),
+            StruPropertyValue::None => "Default".to_string(),
+            StruPropertyValue::Custom(s) => s.to_string(),
         }
     }
 
     fn generate_field(&mut self, field: &Field) {
-        for doc in &field.docs {
-            self.writeln(doc);
-        }
         for attr in &field.attrs {
             self.generate_attribute(attr);
         }
-        self.writeln(&format!(
+        self.write(&format!(
             "pub {}: {},",
             field.name,
             self.type_to_string(&field.ty)
         ));
+        for doc in &field.docs {
+            self.writeln(doc);
+        }
     }
 
     fn generate_impl(&mut self, i: &ImplBlock) {

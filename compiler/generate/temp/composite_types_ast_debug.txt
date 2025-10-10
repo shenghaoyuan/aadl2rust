@@ -46,7 +46,9 @@ RustModule {
                         ty: Named(
                             "f32",
                         ),
-                        docs: [],
+                        docs: [
+                            "",
+                        ],
                         attrs: [],
                     },
                     Field {
@@ -54,7 +56,9 @@ RustModule {
                         ty: Named(
                             "char",
                         ),
-                        docs: [],
+                        docs: [
+                            "",
+                        ],
                         attrs: [],
                     },
                 ],
@@ -116,7 +120,9 @@ RustModule {
                         ty: Named(
                             "f32",
                         ),
-                        docs: [],
+                        docs: [
+                            "",
+                        ],
                         attrs: [],
                     },
                     Field {
@@ -124,7 +130,9 @@ RustModule {
                         ty: Named(
                             "char",
                         ),
-                        docs: [],
+                        docs: [
+                            "",
+                        ],
                         attrs: [],
                     },
                 ],
@@ -184,12 +192,16 @@ RustModule {
                     Variant {
                         name: "foo",
                         data: None,
-                        docs: [],
+                        docs: [
+                            "",
+                        ],
                     },
                     Variant {
                         name: "bar",
                         data: None,
-                        docs: [],
+                        docs: [
+                            "",
+                        ],
                     },
                 ],
                 generics: [],

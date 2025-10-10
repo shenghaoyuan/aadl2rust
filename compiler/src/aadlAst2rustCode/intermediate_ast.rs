@@ -205,6 +205,8 @@ pub enum StruPropertyValue {
     Boolean(bool),
     Duration(u64, String),      // (值, 单位)
     Range(i64, i64, Option<String>), // (最小值, 最大值, 单位)
+    None,                       // 表示没有属性值
+    Custom(String),             //自定义类型(如 Shared)
 }
 
 /// 代码块

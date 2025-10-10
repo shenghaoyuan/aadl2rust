@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-16 20:05:01
+// 生成时间: 2025-10-10 19:07:10
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -55,29 +55,25 @@ pub mod hello_spg_2 {
 // AADL Thread: task
 #[derive(Debug)]
 pub struct taskThread {
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub priority: u64,// AADL属性(impl): Priority
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): Deadline
 }
 
 impl taskThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
-        Self {
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 1, // AADL属性: Priority
-            period: 1000, // AADL属性: Period
-            deadline: 1000, // AADL属性: Deadline
-        }
+        return Self {
+            period: 1000, 
+            priority: 1, 
+            deadline: 1000, 
+            dispatch_protocol: "Periodic".to_string(), 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl taskThread {
+    
     // Thread execution entry point
     // Period: Some(1000) ms
     pub fn run(mut self) -> () {
@@ -110,29 +106,25 @@ impl taskThread {
 // AADL Thread: task2
 #[derive(Debug)]
 pub struct task2Thread {
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub priority: u64, // AADL属性: Priority
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub priority: u64,// AADL属性(impl): Priority
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): Deadline
 }
 
 impl task2Thread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
-        Self {
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            priority: 2, // AADL属性: Priority
-            period: 500, // AADL属性: Period
-            deadline: 500, // AADL属性: Deadline
-        }
+        return Self {
+            dispatch_protocol: "Periodic".to_string(), 
+            period: 500, 
+            deadline: 500, 
+            priority: 2, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl task2Thread {
+    
     // Thread execution entry point
     // Period: Some(500) ms
     pub fn run(mut self) -> () {
@@ -165,14 +157,11 @@ impl task2Thread {
 // AADL Process: node_a
 #[derive(Debug)]
 pub struct node_aProcess {
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 子组件线程（Task1 : thread Task）
+    pub cpu_id: isize,// 进程 CPU ID
     #[allow(dead_code)]
-    pub task1: taskThread,
-    // 子组件线程（Task2 : thread Task2）
+    pub task1: taskThread,// 子组件线程（Task1 : thread Task）
     #[allow(dead_code)]
-    pub task2: task2Thread,
+    pub task2: task2Thread,// 子组件线程（Task2 : thread Task2）
 }
 
 impl node_aProcess {
@@ -199,9 +188,8 @@ impl node_aProcess {
 // AADL System: rma
 #[derive(Debug)]
 pub struct rmaSystem {
-    // 子组件进程（node_a : process node_a）
     #[allow(dead_code)]
-    pub node_a: node_aProcess,
+    pub node_a: node_aProcess,// 子组件进程（node_a : process node_a）
 }
 
 impl rmaSystem {

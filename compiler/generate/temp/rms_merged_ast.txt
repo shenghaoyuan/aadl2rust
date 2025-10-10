@@ -148,36 +148,38 @@ RustModule {
                         ],
                         attrs: [],
                     },
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
+                        ),
+                        docs: [
+                            "// AADL属性(impl): Dispatch_Protocol",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
+                        ),
+                        docs: [
+                            "// AADL属性(impl): Period",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "deadline",
+                        ty: Named(
+                            "u64",
+                        ),
+                        docs: [
+                            "// AADL属性(impl): Deadline",
+                        ],
+                        attrs: [],
+                    },
                 ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
-                        ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            1000,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Deadline",
-                        value: Integer(
-                            1000,
-                        ),
-                        docs: [
-                            "// AADL属性: Deadline",
-                        ],
-                    },
-                ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -195,6 +197,38 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            deadline: 1000, \n            period: 1000, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",
@@ -581,36 +615,38 @@ RustModule {
                         ],
                         attrs: [],
                     },
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
+                        ),
+                        docs: [
+                            "// AADL属性(impl): Dispatch_Protocol",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
+                        ),
+                        docs: [
+                            "// AADL属性(impl): Period",
+                        ],
+                        attrs: [],
+                    },
+                    Field {
+                        name: "deadline",
+                        ty: Named(
+                            "u64",
+                        ),
+                        docs: [
+                            "// AADL属性(impl): Deadline",
+                        ],
+                        attrs: [],
+                    },
                 ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
-                        ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            500,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Deadline",
-                        value: Integer(
-                            500,
-                        ),
-                        docs: [
-                            "// AADL属性: Deadline",
-                        ],
-                    },
-                ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -628,6 +664,38 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            deadline: 500, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 500, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",

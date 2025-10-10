@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:28:04
+// 生成时间: 2025-10-10 19:04:01
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -27,14 +27,11 @@ fn set_thread_affinity(cpu: isize) {
 // AADL Process: a
 #[derive(Debug)]
 pub struct aProcess {
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 子组件线程（Pinger : thread P）
+    pub cpu_id: isize,// 进程 CPU ID
     #[allow(dead_code)]
-    pub pinger: pThread,
-    // 子组件线程（Ping_Me : thread Q）
+    pub pinger: pThread,// 子组件线程（Pinger : thread P）
     #[allow(dead_code)]
-    pub ping_me: qThread,
+    pub ping_me: qThread,// 子组件线程（Ping_Me : thread Q）
 }
 
 impl aProcess {
@@ -66,9 +63,8 @@ impl aProcess {
 // AADL System: PING
 #[derive(Debug)]
 pub struct pingSystem {
-    // 子组件进程（Node_A : process A）
     #[allow(dead_code)]
-    pub node_a: aProcess,
+    pub node_a: aProcess,// 子组件进程（Node_A : process A）
 }
 
 impl pingSystem {
@@ -119,36 +115,31 @@ pub mod ping_spg {
 // AADL Thread: p
 #[derive(Debug)]
 pub struct pThread {
-    // Port: Data_Source Out
-    pub data_source: Option<mpsc::Sender<custom_int>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub recover_entrypoint_source_text: String, // AADL属性: Recover_Entrypoint_Source_Text
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
-    pub priority: u64, // AADL属性: Priority
-    pub dispatch_offset: u64, // AADL属性: Dispatch_Offset
+    pub data_source: Option<mpsc::Sender<custom_int>>,// Port: Data_Source Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub recover_entrypoint_source_text: String,// AADL属性(impl): Recover_Entrypoint_Source_Text
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): Deadline
+    pub priority: u64,// AADL属性(impl): Priority
+    pub dispatch_offset: u64,// AADL属性(impl): Dispatch_Offset
 }
 
 impl pThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
-        Self {
-            data_source: None,
-            cpu_id: cpu_id,
-            recover_entrypoint_source_text: "recover".to_string(), // AADL属性: Recover_Entrypoint_Source_Text
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 2000, // AADL属性: Period
-            deadline: 2000, // AADL属性: Deadline
-            priority: 2, // AADL属性: Priority
-            dispatch_offset: 500, // AADL属性: Dispatch_Offset
-        }
+        return Self {
+            dispatch_protocol: "Periodic".to_string(), 
+            data_source: None, 
+            priority: 2, 
+            period: 2000, 
+            deadline: 2000, 
+            dispatch_offset: 500, 
+            recover_entrypoint_source_text: "recover".to_string(), 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl pThread {
+    
     // Thread execution entry point
     // Period: Some(2000) ms
     pub fn run(mut self) -> () {
@@ -185,32 +176,27 @@ impl pThread {
 // AADL Thread: q
 #[derive(Debug)]
 pub struct qThread {
-    // Port: Data_Sink In
-    pub data_sink: Option<mpsc::Receiver<custom_int>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: deadline
-    pub priority: u64, // AADL属性: Priority
+    pub data_sink: Option<mpsc::Receiver<custom_int>>,// Port: Data_Sink In
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): deadline
+    pub priority: u64,// AADL属性(impl): Priority
 }
 
 impl qThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
-        Self {
-            data_sink: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Sporadic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 10, // AADL属性: Period
-            deadline: 10, // AADL属性: deadline
-            priority: 1, // AADL属性: Priority
-        }
+        return Self {
+            deadline: 10, 
+            priority: 1, 
+            data_sink: None, 
+            dispatch_protocol: "Sporadic".to_string(), 
+            period: 10, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl qThread {
+    
     // Thread execution entry point
     // Period: Some(10) ms
     pub fn run(mut self) -> () {

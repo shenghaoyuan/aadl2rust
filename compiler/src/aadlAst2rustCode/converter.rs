@@ -13,6 +13,9 @@ pub struct AadlConverter {
     cpu_scheduling_protocols: HashMap<String, String>, // 存储CPU实现的调度协议信息
     cpu_name_to_id_mapping: HashMap<String, usize>, // 存储CPU名称到ID的映射关系
     data_comp_type: HashMap<String, String>, // 存储数据组件类型信息，key是数据组件名称，value是数据组件类型。是为了处理数据组件类型为结构体、联合体时，需要根据组件实现impl来获取属性信息
+    // 存储线程类型字段对应的属性值，key为线程结构体名(如 fooThread)，value为字段名到属性值的映射
+    thread_field_values: HashMap<String, HashMap<String, StruPropertyValue>>,
+    thread_field_types: HashMap<String, HashMap<String, Type>>,// 存储线程类型字段对应的类型，key为线程结构体名(如 fooThread)，value为字段名到类型的映射。为了Shared的字段作为参数的依据
 }
 
 #[derive(Debug)]
@@ -55,11 +58,26 @@ impl Default for AadlConverter {
             cpu_scheduling_protocols: HashMap::new(),
             cpu_name_to_id_mapping: HashMap::new(),
             data_comp_type: HashMap::new(),
+            thread_field_values: HashMap::new(),
+            thread_field_types: HashMap::new(),
         }
     }
 }
 
 impl AadlConverter {
+    // 根据属性值推断Rust类型（使用在为thread的属性值推断类型）
+    fn type_for_property(&self, value: &StruPropertyValue) -> String {
+        match value {
+            StruPropertyValue::Boolean(_) => "bool".to_string(),
+            StruPropertyValue::Integer(_) => "u64".to_string(),
+            StruPropertyValue::Float(_) => "f64".to_string(),
+            StruPropertyValue::String(_) => "String".to_string(),
+            StruPropertyValue::Duration(_, _) => "u64".to_string(),
+            StruPropertyValue::Range(_, _, _) => "(u64, u64)".to_string(),
+            StruPropertyValue::None => "None".to_string(),
+            StruPropertyValue::Custom(s) => s.to_string(),
+        }
+    }
     // 主转换入口
     pub fn convert_package(&mut self, pkg: &Package) -> RustModule {
         // 首先收集所有组件类型信息
@@ -484,7 +502,7 @@ impl AadlConverter {
             fields.push(Field {
                 name: name.clone(),
                 ty: ty.clone(),
-                docs: vec![],
+                docs: vec!["".to_string()],
                 attrs: vec![],
             });
         }
@@ -572,7 +590,7 @@ impl AadlConverter {
             fields.push(Field {
                 name: name.clone(),
                 ty: ty.clone(),
-                docs: vec![],
+                docs: vec!["".to_string()],
                 attrs: vec![],
             });
         }
@@ -620,7 +638,7 @@ impl AadlConverter {
             variants.push(Variant {
                 name: name.clone(),
                 data: None, // 枚举变体不包含数据类型
-                docs: vec![],
+                docs: vec!["".to_string()],
             });
         }
         
@@ -635,11 +653,48 @@ impl AadlConverter {
         }
     }
 
-    fn convert_thread_component(&self, comp: &ComponentType) -> Vec<Item> {
+    fn convert_thread_component(&mut self, comp: &ComponentType) -> Vec<Item> {
         let mut items = Vec::new();
 
         // 1. 结构体定义
         let mut fields = self.convert_type_features(&comp.features); //特征列表
+        // 将属性也整合为字段（不再单独放入properties）
+        // 收集属性：既向 fields 添加类型字段，又把值记录到 thread_field_values
+        let mut value_map: HashMap<String, StruPropertyValue> = HashMap::new();
+        let mut type_map: HashMap<String, Type> = HashMap::new();
+        
+        // 将特征字段也加入到 thread_field_values 和 thread_field_types 中，根据字段类型决定值，记录Shared的字段类型
+        for field in &fields {
+            let field_value = match &field.ty {
+                Type::Named(type_name) => {
+                    if type_name.ends_with("Shared") {
+                        StruPropertyValue::Custom(field.name.clone())
+                    } else {
+                        StruPropertyValue::None
+                    }
+                }
+                _ => StruPropertyValue::None,
+            };
+            value_map.insert(field.name.clone(), field_value);
+            type_map.insert(field.name.clone(), field.ty.clone());
+        }
+        if let PropertyClause::Properties(props) = &comp.properties {
+            for prop in props {
+                if let Property::BasicProperty(bp) = prop {
+                    if let Some(val) = self.parse_property_value(&bp.value) {
+                        let name_lc = bp.identifier.name.to_lowercase();
+                        let ty_name = self.type_for_property(&val);
+                        fields.push(Field {
+                            name: name_lc.clone(),
+                            ty: Type::Named(ty_name),
+                            docs: vec![format!("// AADL属性: {}", bp.identifier.name)],
+                            attrs: Vec::new(),
+                        });
+                        value_map.insert(name_lc, val);
+                    }
+                }
+            }
+        }
         // 添加 CPU ID 字段
         fields.push(Field {
             name: "cpu_id".to_string(),
@@ -648,10 +703,20 @@ impl AadlConverter {
             attrs: Vec::new(),
         });
         
+        let struct_name = format!("{}Thread", comp.identifier.to_lowercase());
+        // 将字段对应的属性值保存起来（仅保存存在值的属性字段）
+        if !value_map.is_empty() {
+            self.thread_field_values.insert(struct_name.clone(), value_map);
+        }
+        // 将字段对应的类型保存起来（仅保存存在值的属性字段）
+        if !type_map.is_empty() {
+            self.thread_field_types.insert(struct_name.clone(), type_map);
+        }
+
         let struct_def = StructDef {
-            name: format!("{}Thread", comp.identifier.to_lowercase()),
+            name: struct_name,
             fields, //特征列表
-            properties: self.convert_properties(ComponentRef::Type(&comp)), // 属性列表
+            properties: Vec::new(), // 属性字段已整合进 fields
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
             docs: self.create_component_type_docs(comp),
@@ -682,7 +747,7 @@ impl AadlConverter {
         let struct_def = StructDef {
             name: format!("{}Process", comp.identifier.to_lowercase()),
             fields, //特征列表
-            properties: self.convert_properties(ComponentRef::Type(&comp)), // 属性列表
+            properties: self.convert_properties(ComponentRef::Type(&comp)), // 属性列表，TODO:这个似乎没有作用，因为目前的例子中进程没有属性
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
             docs: self.create_component_type_docs(comp),
@@ -700,7 +765,7 @@ impl AadlConverter {
         let struct_def = StructDef {
             name: format!("{}System", comp.identifier.to_lowercase()),
             fields: vec![], // 系统类型不包含字段
-            properties: self.convert_properties(ComponentRef::Type(&comp)),
+            properties: self.convert_properties(ComponentRef::Type(&comp)),//TODO:这里似乎不需要
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
             docs: vec![format!("// AADL System: {}", comp.identifier)],
@@ -2433,19 +2498,46 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
-        let fields = Vec::new(); //对于线程来说是特征列表,thread_impl没有特征
-        // 添加 CPU ID 字段
-        // fields.push(Field {
-        //     name: "cpu_id".to_string(),
-        //     ty: Type::Named("isize".to_string()),
-        //     docs: vec!["// 新增 CPU ID".to_string()],
-        //     attrs: Vec::new(),
-        // });
+        let mut fields = Vec::new(); // 对于线程实现，没有特征，这里从属性生成字段
+        let struct_name = format!("{}Thread", impl_.name.type_identifier.to_lowercase());
+        let mut field_values = HashMap::new();
+
+        // 将实现上的属性整合为字段，并存储属性值
+        if let PropertyClause::Properties(props) = &impl_.properties {
+            for prop in props {
+                if let Property::BasicProperty(bp) = prop {
+                    if let Some(val) = self.parse_property_value(&bp.value) {
+                        let field_name = bp.identifier.name.to_lowercase();
+                        let ty_name = self.type_for_property(&val);
+                        
+                        // 存储属性值到 thread_field_values
+                        field_values.insert(field_name.clone(), val.clone());
+                        fields.push(Field {
+                            name: field_name,
+                            ty: Type::Named(ty_name),
+                            docs: vec![format!("// AADL属性(impl): {}", bp.identifier.name)],
+                            attrs: Vec::new(),
+                        });
+                    }
+                }
+            }
+        }
+        
+        // 将实现级别的属性值追加到 thread_field_values
+        if !field_values.is_empty() {
+            // 获取现有的字段值映射，如果不存在则创建新的
+            let existing_values = self.thread_field_values.entry(struct_name.clone()).or_insert_with(HashMap::new);
+            // 追加新的字段值，如果字段已存在则覆盖（实现级别的属性优先级更高）
+            for (key, value) in field_values {
+                existing_values.insert(key, value);
+            }
+        }
+        println!("!!!!!!!!!!!!thread_field_values: {:?}", self.thread_field_values);
         
         let struct_def = StructDef {
             name: format!("{}Thread", impl_.name.type_identifier.to_lowercase()),
-            fields, //对于线程来说是特征列表,thread_impl没有特征
-            properties: self.convert_properties(ComponentRef::Impl(&impl_)), // 属性列表
+            fields,
+            properties: Vec::new(), // 属性字段已整合进 fields
             generics: Vec::new(),
             derives: vec!["Debug".to_string()],
             docs: self.create_component_impl_docs(impl_),
@@ -2453,40 +2545,127 @@ impl AadlConverter {
         };
         items.push(Item::Struct(struct_def));
 
-        // 2. 实现块（包含run方法）
+        // 2. 实现块（包含new和run方法）
+        let mut impl_items = Vec::new();
+        
+        // 生成 new() 方法
+        let new_method = self.create_thread_new_method(impl_);
+        impl_items.push(ImplItem::Method(new_method));
+        
+        // 添加 run 方法
+        impl_items.push(ImplItem::Method(FunctionDef {
+            name: "run".to_string(),
+            params: vec![Param {
+                name: "".to_string(),
+                ty: Type::Reference(Box::new(Type::Named("self".to_string())), false, true),
+            }],
+            return_type: Type::Unit,
+            body: self.create_thread_run_body(impl_),
+            asyncness: false,
+            vis: Visibility::Public,
+            docs: vec![
+                "// Thread execution entry point".to_string(),
+                format!(
+                    "// Period: {:?} ms",
+                    self.extract_property_value(impl_, "period")
+                ),
+            ],
+            attrs: Vec::new(),
+        }));
+
         let impl_block = ImplBlock {
             target: Type::Named(format!(
                 "{}Thread",
                 impl_.name.type_identifier.to_lowercase()
             )),
             generics: Vec::new(),
-            items: vec![
-                // run方法
-                ImplItem::Method(FunctionDef {
-                    name: "run".to_string(),
-                    params: vec![Param {
-                        name: "".to_string(),
-                        ty: Type::Reference(Box::new(Type::Named("self".to_string())), false, true),
-                    }],
-                    return_type: Type::Unit,
-                    body: self.create_thread_run_body(impl_),
-                    asyncness: false,
-                    vis: Visibility::Public,
-                    docs: vec![
-                        "// Thread execution entry point".to_string(),
-                        format!(
-                            "// Period: {:?} ms",
-                            self.extract_property_value(impl_, "period")
-                        ),
-                    ],
-                    attrs: Vec::new(),
-                }),
-            ],
+            items: impl_items,
             trait_impl: None,
         };
         items.push(Item::Impl(impl_block));
 
         items
+    }
+
+    /// 创建线程的 new() 方法
+    /// 使用存储的属性值初始化线程结构体字段
+    fn create_thread_new_method(&mut self, impl_: &ComponentImplementation) -> FunctionDef {
+        let struct_name = format!("{}Thread", impl_.name.type_identifier.to_lowercase());
+        let key = struct_name.clone();
+        
+        // 获取存储的属性值
+        let field_values = self.thread_field_values.get(&key).cloned().unwrap_or_default();
+        let field_types = self.thread_field_types.get(&key).cloned().unwrap_or_default();
+        
+        // 生成结构体字面量初始化字符串
+        let mut field_initializations = Vec::new();
+        let mut params = vec![Param {
+            name: "cpu_id".to_string(),
+            ty: Type::Named("isize".to_string()),
+        }];
+        
+        // 为每个字段生成初始化表达式和注释
+        for (field_name, prop_value) in &field_values {
+            let init_value = self.property_value_to_initializer(prop_value);
+            let comment = format!("");
+            
+            // 对以"Shared"结尾的字段类型添加参数
+            if let Some(field_type) = field_types.get(field_name) {
+                match field_type {
+                    Type::Named(type_name) => {
+                        if type_name.ends_with("Shared") {
+                            params.push(Param {
+                                name: field_name.clone(),
+                                ty: field_type.clone(),
+                            });
+                        }
+                    }
+                    _ => {
+                        // 其他类型暂时不用作为new()的参数
+                    }
+                }
+            }
+            // 字段赋值
+            field_initializations.push(format!("            {}: {}, {}", field_name, init_value, comment));
+        }
+        
+        // 添加 CPU ID 字段初始化
+        field_initializations.push("            cpu_id: cpu_id, // CPU ID".to_string());
+        
+        // 创建结构体字面量返回语句
+        let struct_literal = format!("return Self {{\n{}\n        }}", field_initializations.join("\n"));
+        
+        // 创建方法体
+        let body = Block {
+            stmts: vec![Statement::Expr(Expr::Ident(struct_literal))],
+            expr: None,
+        };
+        
+        FunctionDef {
+            name: "new".to_string(),
+            params,
+            return_type: Type::Named("Self".to_string()),
+            body,
+            asyncness: false,
+            vis: Visibility::Public,
+            docs: vec!["// 创建组件并初始化AADL属性".to_string()],
+            attrs: Vec::new(),
+        }
+    }
+
+
+    /// 将属性值转换为初始化表达式字符串
+    fn property_value_to_initializer(&self, val: &StruPropertyValue) -> String {
+        match val {
+            StruPropertyValue::Boolean(b) => b.to_string(),
+            StruPropertyValue::Integer(i) => i.to_string(),
+            StruPropertyValue::Float(f) => f.to_string(),
+            StruPropertyValue::String(s) => format!("\"{}\".to_string()", s),
+            StruPropertyValue::Duration(v, _unit) => v.to_string(),
+            StruPropertyValue::Range(min, max, _unit) => format!("({}, {})", min, max),
+            StruPropertyValue::None => "None".to_string(),
+            StruPropertyValue::Custom(s) => s.to_string(),
+        }
     }
 
     /// 创建线程的 run() 方法体

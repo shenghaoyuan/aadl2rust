@@ -370,27 +370,28 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
                         ),
                         docs: [
-                            "// AADL属性: Dispatch_Protocol",
+                            "// AADL属性(impl): Dispatch_Protocol",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            110,
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Period",
+                            "// AADL属性(impl): Period",
                         ],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -455,27 +456,28 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
                         ),
                         docs: [
-                            "// AADL属性: Dispatch_Protocol",
+                            "// AADL属性(impl): Dispatch_Protocol",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            110,
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Period",
+                            "// AADL属性(impl): Period",
                         ],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -520,27 +522,28 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Sporadic",
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
                         ),
                         docs: [
-                            "// AADL属性: Dispatch_Protocol",
+                            "// AADL属性(impl): Dispatch_Protocol",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            10,
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Period",
+                            "// AADL属性(impl): Period",
                         ],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -558,6 +561,38 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            evenement: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",
@@ -998,6 +1033,38 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            info_capteur: None, \n            comm_servo: None, \n            period: 110, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",
@@ -1537,6 +1604,38 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            period: 10, \n            ordre: None, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",

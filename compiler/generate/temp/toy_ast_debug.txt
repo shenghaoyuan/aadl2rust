@@ -514,45 +514,49 @@ RustModule {
         Struct(
             StructDef {
                 name: "gnc_threadThread",
-                fields: [],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
+                fields: [
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
                         ),
                         docs: [
-                            "// AADL属性: Dispatch_Protocol",
+                            "// AADL属性(impl): Dispatch_Protocol",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            1000,
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Period",
+                            "// AADL属性(impl): Period",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Deadline",
-                        value: Integer(
-                            1000,
+                    Field {
+                        name: "deadline",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Deadline",
+                            "// AADL属性(impl): Deadline",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Priority",
-                        value: Integer(
-                            50,
+                    Field {
+                        name: "priority",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Priority",
+                            "// AADL属性(impl): Priority",
                         ],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -570,6 +574,44 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                                Param {
+                                    name: "gnc_pos",
+                                    ty: Named(
+                                        "POSShared",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            priority: 50, \n            gnc_pos: gnc_pos, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 1000, \n            deadline: 1000, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",
@@ -1123,45 +1165,49 @@ RustModule {
         Struct(
             StructDef {
                 name: "tmtc_threadThread",
-                fields: [],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
+                fields: [
+                    Field {
+                        name: "dispatch_protocol",
+                        ty: Named(
+                            "String",
                         ),
                         docs: [
-                            "// AADL属性: Dispatch_Protocol",
+                            "// AADL属性(impl): Dispatch_Protocol",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            100,
+                    Field {
+                        name: "period",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Period",
+                            "// AADL属性(impl): Period",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Deadline",
-                        value: Integer(
-                            100,
+                    Field {
+                        name: "deadline",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Deadline",
+                            "// AADL属性(impl): Deadline",
                         ],
+                        attrs: [],
                     },
-                    StruProperty {
-                        name: "Priority",
-                        value: Integer(
-                            20,
+                    Field {
+                        name: "priority",
+                        ty: Named(
+                            "u64",
                         ),
                         docs: [
-                            "// AADL属性: Priority",
+                            "// AADL属性(impl): Priority",
                         ],
+                        attrs: [],
                     },
                 ],
+                properties: [],
                 generics: [],
                 derives: [
                     "Debug",
@@ -1179,6 +1225,44 @@ RustModule {
                 ),
                 generics: [],
                 items: [
+                    Method(
+                        FunctionDef {
+                            name: "new",
+                            params: [
+                                Param {
+                                    name: "cpu_id",
+                                    ty: Named(
+                                        "isize",
+                                    ),
+                                },
+                                Param {
+                                    name: "tmtc_pos",
+                                    ty: Named(
+                                        "POSShared",
+                                    ),
+                                },
+                            ],
+                            return_type: Named(
+                                "Self",
+                            ),
+                            body: Block {
+                                stmts: [
+                                    Expr(
+                                        Ident(
+                                            "return Self {\n            period: 100, \n            deadline: 100, \n            tmtc_pos: tmtc_pos, \n            dispatch_protocol: \"Periodic\".to_string(), \n            priority: 20, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                        ),
+                                    ),
+                                ],
+                                expr: None,
+                            },
+                            asyncness: false,
+                            vis: Public,
+                            docs: [
+                                "// 创建组件并初始化AADL属性",
+                            ],
+                            attrs: [],
+                        },
+                    ),
                     Method(
                         FunctionDef {
                             name: "run",

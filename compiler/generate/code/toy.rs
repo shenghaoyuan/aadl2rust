@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:14:56
+// 生成时间: 2025-10-10 19:00:19
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -123,32 +123,27 @@ pub mod tmtc_identity {
 // AADL Thread: gnc_thread
 #[derive(Debug)]
 pub struct gnc_threadThread {
-    // AADL feature: GNC_POS : requires data access POS.Impl
-    pub gnc_pos: POSShared,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
-    pub priority: u64, // AADL属性: Priority
+    pub gnc_pos: POSShared,// AADL feature: GNC_POS : requires data access POS.Impl
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): Deadline
+    pub priority: u64,// AADL属性(impl): Priority
 }
 
 impl gnc_threadThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
-        Self {
-            gnc_pos: gnc_pos,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 1000, // AADL属性: Period
-            deadline: 1000, // AADL属性: Deadline
-            priority: 50, // AADL属性: Priority
-        }
+        return Self {
+            priority: 50, 
+            gnc_pos: gnc_pos, 
+            dispatch_protocol: "Periodic".to_string(), 
+            period: 1000, 
+            deadline: 1000, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl gnc_threadThread {
+    
     // Thread execution entry point
     // Period: Some(1000) ms
     pub fn run(mut self) -> () {
@@ -201,32 +196,27 @@ impl gnc_threadThread {
 // AADL Thread: tmtc_thread
 #[derive(Debug)]
 pub struct tmtc_threadThread {
-    // AADL feature: TMTC_POS : requires data access POS.Impl
-    pub tmtc_pos: POSShared,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
-    pub priority: u64, // AADL属性: Priority
+    pub tmtc_pos: POSShared,// AADL feature: TMTC_POS : requires data access POS.Impl
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): Deadline
+    pub priority: u64,// AADL属性(impl): Priority
 }
 
 impl tmtc_threadThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
-        Self {
-            tmtc_pos: tmtc_pos,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 100, // AADL属性: Period
-            deadline: 100, // AADL属性: Deadline
-            priority: 20, // AADL属性: Priority
-        }
+        return Self {
+            period: 100, 
+            deadline: 100, 
+            tmtc_pos: tmtc_pos, 
+            dispatch_protocol: "Periodic".to_string(), 
+            priority: 20, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl tmtc_threadThread {
+    
     // Thread execution entry point
     // Period: Some(100) ms
     pub fn run(mut self) -> () {
@@ -271,17 +261,13 @@ impl tmtc_threadThread {
 // AADL Process: toy_example_proc
 #[derive(Debug)]
 pub struct toy_example_procProcess {
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 子组件线程（GNC_Th : thread GNC_Thread）
+    pub cpu_id: isize,// 进程 CPU ID
     #[allow(dead_code)]
-    pub gnc_th: gnc_threadThread,
-    // 子组件线程（TMTC_Th : thread TMTC_Thread）
+    pub gnc_th: gnc_threadThread,// 子组件线程（GNC_Th : thread GNC_Thread）
     #[allow(dead_code)]
-    pub tmtc_th: tmtc_threadThread,
-    // 共享数据（POS_Data : data POS）
+    pub tmtc_th: tmtc_threadThread,// 子组件线程（TMTC_Th : thread TMTC_Thread）
     #[allow(dead_code)]
-    pub pos_data: POSShared,
+    pub pos_data: POSShared,// 共享数据（POS_Data : data POS）
 }
 
 impl toy_example_procProcess {
@@ -309,9 +295,8 @@ impl toy_example_procProcess {
 // AADL System: toy_example
 #[derive(Debug)]
 pub struct toy_exampleSystem {
-    // 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）
     #[allow(dead_code)]
-    pub gnc_tmtc_pos: toy_example_procProcess,
+    pub gnc_tmtc_pos: toy_example_procProcess,// 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）
 }
 
 impl toy_exampleSystem {
