@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-10 19:51:57
+// 生成时间: 2025-10-10 19:58:06
 
 #![allow(unused_imports)]
 use std::sync::{mpsc, Arc};
@@ -61,9 +61,7 @@ pub union A_Union2 {
 // AADL Enum: An_Enum
 #[derive(Debug, Clone)]
 pub enum An_Enum {
-    
     foo,
-    
     bar,
 }
 

@@ -638,7 +638,7 @@ impl AadlConverter {
             variants.push(Variant {
                 name: name.clone(),
                 data: None, // 枚举变体不包含数据类型
-                docs: vec!["".to_string()],
+                docs: vec![],
             });
         }
         

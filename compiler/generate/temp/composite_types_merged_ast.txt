@@ -192,16 +192,12 @@ RustModule {
                     Variant {
                         name: "foo",
                         data: None,
-                        docs: [
-                            "",
-                        ],
+                        docs: [],
                     },
                     Variant {
                         name: "bar",
                         data: None,
-                        docs: [
-                            "",
-                        ],
+                        docs: [],
                     },
                 ],
                 generics: [],
