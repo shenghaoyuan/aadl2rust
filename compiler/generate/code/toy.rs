@@ -1,9 +1,9 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-10 19:00:19
+// 生成时间: 2025-10-13 13:09:55
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
@@ -135,11 +135,11 @@ impl gnc_threadThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
         return Self {
-            priority: 50, 
             gnc_pos: gnc_pos, 
+            deadline: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
             period: 1000, 
-            deadline: 1000, 
+            priority: 50, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -208,11 +208,11 @@ impl tmtc_threadThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
         return Self {
-            period: 100, 
             deadline: 100, 
-            tmtc_pos: tmtc_pos, 
             dispatch_protocol: "Periodic".to_string(), 
+            period: 100, 
             priority: 20, 
+            tmtc_pos: tmtc_pos, 
             cpu_id: cpu_id, // CPU ID
         };
     }

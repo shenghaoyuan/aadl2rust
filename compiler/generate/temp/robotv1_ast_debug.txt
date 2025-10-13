@@ -346,7 +346,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -392,7 +392,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -412,7 +412,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -458,7 +458,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -555,7 +555,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            evenement: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            evenement: None, \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1063,7 +1063,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            info_capteur: None, \n            comm_servo: None, \n            period: 110, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            comm_servo: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            info_capteur: None, \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1421,7 +1421,7 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "Err(mpsc::TryRecvError::Empty)",
+                                                                                                    pattern: "Err(crossbeam_channel::TryRecvError::Empty)",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [],
@@ -1429,7 +1429,7 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "Err(mpsc::TryRecvError::Disconnected)",
+                                                                                                    pattern: "Err(crossbeam_channel::TryRecvError::Disconnected)",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
@@ -1670,7 +1670,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            period: 10, \n            ordre: None, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            ordre: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -2210,7 +2210,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2256,7 +2256,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2276,7 +2276,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2296,7 +2296,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2316,7 +2316,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2362,7 +2362,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2408,7 +2408,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2428,7 +2428,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2555,8 +2555,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -2843,7 +2843,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2863,7 +2863,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2883,7 +2883,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2903,7 +2903,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2923,7 +2923,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2943,7 +2943,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2963,7 +2963,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2983,7 +2983,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -3192,8 +3192,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3255,8 +3255,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3318,8 +3318,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3381,8 +3381,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4118,7 +4118,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -4138,7 +4138,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -4265,8 +4265,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4720,8 +4720,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4785,8 +4785,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4850,8 +4850,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4915,8 +4915,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -5121,6 +5121,92 @@ RustModule {
                 docs: [
                     "// CPU ID到调度策略的映射",
                 ],
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "period_to_priority",
+                params: [
+                    Param {
+                        name: "period_ms",
+                        ty: Named(
+                            "f64",
+                        ),
+                    },
+                ],
+                return_type: Named(
+                    "i32",
+                ),
+                body: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: false,
+                                name: "k",
+                                ty: Some(
+                                    Named(
+                                        "f64",
+                                    ),
+                                ),
+                                init: Some(
+                                    Ident(
+                                        "10.0",
+                                    ),
+                                ),
+                            },
+                        ),
+                        Let(
+                            LetStmt {
+                                ifmut: false,
+                                name: "raw",
+                                ty: Some(
+                                    Named(
+                                        "f64",
+                                    ),
+                                ),
+                                init: Some(
+                                    BinaryOp(
+                                        Ident(
+                                            "99.0",
+                                        ),
+                                        "-",
+                                        MethodCall(
+                                            BinaryOp(
+                                                Ident(
+                                                    "k",
+                                                ),
+                                                "*",
+                                                MethodCall(
+                                                    Ident(
+                                                        "period_ms",
+                                                    ),
+                                                    "log10",
+                                                    [],
+                                                ),
+                                            ),
+                                            "floor",
+                                            [],
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            Ident(
+                                "return raw.max(1.0).min(99.0) as i32",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: false,
+                vis: Public,
+                docs: [
+                    "// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))",
+                    "// 根据周期计算优先级，周期越短优先级越高",
+                    "// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)",
+                ],
+                attrs: [],
             },
         ),
     ],

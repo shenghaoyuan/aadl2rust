@@ -154,8 +154,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -609,7 +609,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "custom_int",
@@ -730,7 +730,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            data_source: None, \n            priority: 2, \n            period: 2000, \n            deadline: 2000, \n            dispatch_offset: 500, \n            recover_entrypoint_source_text: \"recover\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_offset: 500, \n            period: 2000, \n            recover_entrypoint_source_text: \"recover\".to_string(), \n            deadline: 2000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            data_source: None, \n            priority: 2, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1165,7 +1165,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "custom_int",
@@ -1266,7 +1266,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            deadline: 10, \n            priority: 1, \n            data_sink: None, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            data_sink: None, \n            deadline: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            priority: 1, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],

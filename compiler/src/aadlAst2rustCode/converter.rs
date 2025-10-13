@@ -111,7 +111,7 @@ impl AadlConverter {
 
         //处理CPU和分配ID的映射关系，生成的Rust代码中，初始化<ID,调度协议>的映射关系
         self.convert_cpu_schedule_mapping(&mut module, &self.cpu_scheduling_protocols, &self.cpu_name_to_id_mapping);
-        self.add_period_to_priority(&mut module, &self.cpu_scheduling_protocols);
+        self.add_period_to_priority_function(&mut module, &self.cpu_scheduling_protocols);
         println!("cpu_scheduling_protocols: {:?}", self.cpu_scheduling_protocols);
         println!("cpu_name_to_id_mapping: {:?}", self.cpu_name_to_id_mapping);
         module
@@ -887,9 +887,9 @@ impl AadlConverter {
     fn convert_port_type(&self, port: &PortSpec) -> Type {
         // 确定通道类型（Sender/Receiver）
         let channel_type = match port.direction {
-            PortDirection::In => "mpsc::Receiver",
-            PortDirection::Out => "mpsc::Sender",
-            PortDirection::InOut => "mpsc::Sender", //TODO:std::mpsc不支持双向通道，暂时这样写
+            PortDirection::In => "Receiver",
+            PortDirection::Out => "Sender",
+            PortDirection::InOut => "Sender", //TODO:std::mpsc不支持双向通道，暂时这样写
         };
 
         // 确定内部数据类型
@@ -1691,19 +1691,19 @@ impl AadlConverter {
                                     match self.convert_port_type(&port) {
                                         Type::Generic(option_name, inner_types) if option_name == "Option" => {
                                             if let Type::Generic(channel_name, channel_args) = &inner_types[0] {
-                                                if channel_name == "mpsc::Receiver" {
-                                                    // 从 Option<mpsc::Receiver<T>> 转换为 Option<mpsc::Sender<T>>
-                                                    Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Sender".to_string(), channel_args.clone())])
+                                                if channel_name == "Receiver" {
+                                                    // 从 Option<Receiver<T>> 转换为 Option<Sender<T>>
+                                                    Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), channel_args.clone())])
                                                 } else {
                                                     Type::Generic("Option".to_string(), vec![Type::Generic(channel_name.clone(), channel_args.clone())])
                                                 }
                                             } else {
-                                                Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Sender".to_string(), vec![inner_types[0].clone()])])
+                                                Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![inner_types[0].clone()])])
                                             }
                                         }
                                         _ => {
-                                            // 如果不是 Option 类型，创建 Option<mpsc::Sender<T>>
-                                            Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Sender".to_string(), vec![self.convert_port_type(&port)])])
+                                            // 如果不是 Option 类型，创建 Option<Sender<T>>
+                                            Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![self.convert_port_type(&port)])])
                                         }
                                     }
                                 }
@@ -1712,19 +1712,19 @@ impl AadlConverter {
                                     match self.convert_port_type(&port) {
                                         Type::Generic(option_name, inner_types) if option_name == "Option" => {
                                             if let Type::Generic(channel_name, channel_args) = &inner_types[0] {
-                                                if channel_name == "mpsc::Sender" {
-                                                    // 从 Option<mpsc::Sender<T>> 转换为 Option<mpsc::Receiver<T>>
-                                                    Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Receiver".to_string(), channel_args.clone())])
+                                                if channel_name == "Sender" {
+                                                    // 从 Option<Sender<T>> 转换为 Option<Receiver<T>>
+                                                    Type::Generic("Option".to_string(), vec![Type::Generic("Receiver".to_string(), channel_args.clone())])
                                                 } else {
                                                     Type::Generic("Option".to_string(), vec![Type::Generic(channel_name.clone(), channel_args.clone())])
                                                 }
                                             } else {
-                                                Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Receiver".to_string(), vec![inner_types[0].clone()])])
+                                                Type::Generic("Option".to_string(), vec![Type::Generic("Receiver".to_string(), vec![inner_types[0].clone()])])
                                             }
                                         }
                                         _ => {
-                                            // 如果不是 Option 类型，创建 Option<mpsc::Receiver<T>>
-                                            Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Receiver".to_string(), vec![self.convert_port_type(&port)])])
+                                            // 如果不是 Option 类型，创建 Option<Receiver<T>>
+                                            Type::Generic("Option".to_string(), vec![Type::Generic("Receiver".to_string(), vec![self.convert_port_type(&port)])])
                                         }
                                     }
                                 }
@@ -1733,19 +1733,19 @@ impl AadlConverter {
                                     match self.convert_port_type(&port) {
                                         Type::Generic(option_name, inner_types) if option_name == "Option" => {
                                             if let Type::Generic(channel_name, channel_args) = &inner_types[0] {
-                                                if channel_name == "mpsc::Receiver" {
-                                                    // 从 Option<mpsc::Receiver<T>> 转换为 Option<mpsc::Sender<T>>
-                                                    Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Sender".to_string(), channel_args.clone())])
+                                                if channel_name == "Receiver" {
+                                                    // 从 Option<Receiver<T>> 转换为 Option<Sender<T>>
+                                                    Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), channel_args.clone())])
                                                 } else {
                                                     Type::Generic("Option".to_string(), vec![Type::Generic(channel_name.clone(), channel_args.clone())])
                                                 }
                                             } else {
-                                                Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Sender".to_string(), vec![inner_types[0].clone()])])
+                                                Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![inner_types[0].clone()])])
                                             }
                                         }
                                         _ => {
-                                            // 如果不是 Option 类型，创建 Option<mpsc::Sender<T>>
-                                            Type::Generic("Option".to_string(), vec![Type::Generic("mpsc::Sender".to_string(), vec![self.convert_port_type(&port)])])
+                                            // 如果不是 Option 类型，创建 Option<Sender<T>>
+                                            Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![self.convert_port_type(&port)])])
                                         }
                                     }
                                 }
@@ -2342,7 +2342,7 @@ impl AadlConverter {
             ty: None, //这里的通道类型由编译器自动推导
             init: Some(Expr::Call(
                 Box::new(Expr::Path(
-                    vec!["mpsc".to_string(), "channel".to_string()],
+                    vec!["crossbeam_channel".to_string(), "unbounded".to_string()],
                     PathType::Namespace,
                 )),
                 Vec::new(),
@@ -3404,7 +3404,7 @@ impl AadlConverter {
                                     },
                                     // Err(RecvTimeoutError::Timeout) => 超时触发
                                     MatchArm {
-                                        pattern: "Err(std::sync::mpsc::RecvTimeoutError::Timeout)".to_string(),
+                                        pattern: "Err(crossbeam_channel::RecvTimeoutError::Timeout)".to_string(),
                                         guard: None,
                                         body: Block {
                                             stmts: vec![
@@ -3424,7 +3424,7 @@ impl AadlConverter {
                                     },
                                     // Err(_) => 通道关闭，退出循环
                                     MatchArm {
-                                        pattern: "Err(_)".to_string(),
+                                        pattern: "Err(crossbeam_channel::RecvTimeoutError::Disconnected)".to_string(),
                                         guard: None,
                                         body: Block {
                                             stmts: vec![
@@ -3608,12 +3608,12 @@ impl AadlConverter {
                                         },
                                     },
                                     MatchArm {
-                                        pattern: "Err(mpsc::TryRecvError::Empty)".to_string(),
+                                        pattern: "Err(crossbeam_channel::TryRecvError::Empty)".to_string(),
                                         guard: None,
                                         body: Block { stmts: vec![], expr: None },
                                     },
                                     MatchArm {
-                                        pattern: "Err(mpsc::TryRecvError::Disconnected)".to_string(),
+                                        pattern: "Err(crossbeam_channel::TryRecvError::Disconnected)".to_string(),
                                         guard: None,
                                         body: Block {
                                             stmts: vec![Statement::Expr(Expr::Call(
@@ -4202,7 +4202,7 @@ impl AadlConverter {
     /// 添加 period_to_priority 函数到模块中
     /// 该函数根据周期计算优先级：prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))
     /// 只有在检测到 RMS 或 DMS 调度协议时才生成此函数
-    fn add_period_to_priority(&self, module: &mut RustModule, cpu_scheduling_protocols: &HashMap<String, String>) {
+    fn add_period_to_priority_function(&self, module: &mut RustModule, cpu_scheduling_protocols: &HashMap<String, String>) {
         // 检查是否有 RMS 或 DMS 调度协议
         let has_rms_or_dms = cpu_scheduling_protocols.values().any(|protocol| {
             let protocol_upper = protocol.to_uppercase();

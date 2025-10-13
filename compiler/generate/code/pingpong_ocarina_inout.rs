@@ -1,9 +1,9 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-13 12:03:06
+// 生成时间: 2025-10-11 16:31:42
 
 #![allow(unused_imports)]
-use crossbeam_channel::{Receiver, Sender};
-use std::sync::{Arc,Mutex};
+use std::sync::{mpsc, Arc};
+use std::sync::Mutex;
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
@@ -39,7 +39,7 @@ impl aProcess {
     pub fn new(cpu_id: isize) -> Self {
         let mut pinger: pThread = pThread::new(cpu_id);
         let mut ping_me: qThread = qThread::new(cpu_id);
-        let channel = crossbeam_channel::unbounded();
+        let channel = mpsc::channel();
         // build connection: 
             pinger.data_source = Some(channel.0);
         // build connection: 
@@ -115,7 +115,7 @@ pub mod ping_spg {
 // AADL Thread: p
 #[derive(Debug)]
 pub struct pThread {
-    pub data_source: Option<Sender<custom_int>>,// Port: Data_Source Out
+    pub data_source: Option<mpsc::Sender<custom_int>>,// Port: Data_Source InOut
     pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub recover_entrypoint_source_text: String,// AADL属性(impl): Recover_Entrypoint_Source_Text
@@ -129,12 +129,12 @@ impl pThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_offset: 500, 
             period: 2000, 
             recover_entrypoint_source_text: "recover".to_string(), 
             deadline: 2000, 
-            dispatch_protocol: "Periodic".to_string(), 
+            dispatch_offset: 500, 
             data_source: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             priority: 2, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -176,7 +176,7 @@ impl pThread {
 // AADL Thread: q
 #[derive(Debug)]
 pub struct qThread {
-    pub data_sink: Option<Receiver<custom_int>>,// Port: Data_Sink In
+    pub data_sink: Option<mpsc::Receiver<custom_int>>,// Port: Data_Sink In
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
     pub period: u64,// AADL属性(impl): Period
@@ -191,8 +191,8 @@ impl qThread {
             data_sink: None, 
             deadline: 10, 
             dispatch_protocol: "Sporadic".to_string(), 
-            period: 10, 
             priority: 1, 
+            period: 10, 
             cpu_id: cpu_id, // CPU ID
         };
     }

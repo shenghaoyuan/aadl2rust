@@ -1,9 +1,9 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-10 19:10:17
+// 生成时间: 2025-10-13 13:10:40
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
@@ -86,7 +86,7 @@ pub mod action_spg {
 // AADL Thread: capteur
 #[derive(Debug)]
 pub struct capteurThread {
-    pub evenement: Option<mpsc::Sender<bool>>,// Port: evenement Out
+    pub evenement: Option<Sender<bool>>,// Port: evenement Out
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
     pub period: u64,// AADL属性(impl): Period
@@ -95,8 +95,8 @@ pub struct capteurThread {
 // AADL Thread: controle
 #[derive(Debug)]
 pub struct controleThread {
-    pub info_capteur: Option<mpsc::Receiver<bool>>,// Port: info_capteur In
-    pub comm_servo: Option<mpsc::Sender<bool>>,// Port: comm_servo Out
+    pub info_capteur: Option<Receiver<bool>>,// Port: info_capteur In
+    pub comm_servo: Option<Sender<bool>>,// Port: comm_servo Out
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
     pub period: u64,// AADL属性(impl): Period
@@ -105,7 +105,7 @@ pub struct controleThread {
 // AADL Thread: servomoteur
 #[derive(Debug)]
 pub struct servomoteurThread {
-    pub ordre: Option<mpsc::Receiver<bool>>,// Port: ordre In
+    pub ordre: Option<Receiver<bool>>,// Port: ordre In
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
     pub period: u64,// AADL属性(impl): Period
@@ -115,8 +115,8 @@ impl capteurThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
         return Self {
-            evenement: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            evenement: None, 
             period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -160,10 +160,10 @@ impl controleThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
         return Self {
-            info_capteur: None, 
             comm_servo: None, 
-            period: 110, 
             dispatch_protocol: "Periodic".to_string(), 
+            info_capteur: None, 
+            period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -195,10 +195,10 @@ impl controleThread {
                             // 收到消息 → 调用处理函数
                             traite_spg_in::receive(val);
                         },
-                        Err(mpsc::TryRecvError::Empty) => {
+                        Err(crossbeam_channel::TryRecvError::Empty) => {
                             // 没有消息，不阻塞，直接跳过
                         },
-                        Err(mpsc::TryRecvError::Disconnected) => {
+                        Err(crossbeam_channel::TryRecvError::Disconnected) => {
                             // 通道已关闭
                             eprintln!("channel closed");
                         },
@@ -222,9 +222,9 @@ impl servomoteurThread {
     // 创建组件并初始化AADL属性
     pub fn new(cpu_id: isize) -> Self {
         return Self {
+            dispatch_protocol: "Sporadic".to_string(), 
             period: 10, 
             ordre: None, 
-            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -277,9 +277,9 @@ impl servomoteurThread {
 // AADL Process: p_capteur
 #[derive(Debug)]
 pub struct p_capteurProcess {
-    pub evenement: Option<mpsc::Sender<bool>>,// Port: evenement Out
+    pub evenement: Option<Sender<bool>>,// Port: evenement Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub evenementRece: Option<mpsc::Receiver<bool>>,// 内部端口: evenement Out
+    pub evenementRece: Option<Receiver<bool>>,// 内部端口: evenement Out
     #[allow(dead_code)]
     pub th_c: capteurThread,// 子组件线程（th_c : thread capteur）
 }
@@ -287,15 +287,15 @@ pub struct p_capteurProcess {
 // AADL Process: p_controle
 #[derive(Debug)]
 pub struct p_controleProcess {
-    pub info_capteur_droit: Option<mpsc::Receiver<bool>>,// Port: info_capteur_droit In
-    pub comm_servo_droit: Option<mpsc::Sender<bool>>,// Port: comm_servo_droit Out
-    pub info_capteur_gauche: Option<mpsc::Receiver<bool>>,// Port: info_capteur_gauche In
-    pub comm_servo_gauche: Option<mpsc::Sender<bool>>,// Port: comm_servo_gauche Out
+    pub info_capteur_droit: Option<Receiver<bool>>,// Port: info_capteur_droit In
+    pub comm_servo_droit: Option<Sender<bool>>,// Port: comm_servo_droit Out
+    pub info_capteur_gauche: Option<Receiver<bool>>,// Port: info_capteur_gauche In
+    pub comm_servo_gauche: Option<Sender<bool>>,// Port: comm_servo_gauche Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub info_capteur_droitSend: Option<mpsc::Sender<bool>>,// 内部端口: info_capteur_droit In
-    pub comm_servo_droitRece: Option<mpsc::Receiver<bool>>,// 内部端口: comm_servo_droit Out
-    pub info_capteur_gaucheSend: Option<mpsc::Sender<bool>>,// 内部端口: info_capteur_gauche In
-    pub comm_servo_gaucheRece: Option<mpsc::Receiver<bool>>,// 内部端口: comm_servo_gauche Out
+    pub info_capteur_droitSend: Option<Sender<bool>>,// 内部端口: info_capteur_droit In
+    pub comm_servo_droitRece: Option<Receiver<bool>>,// 内部端口: comm_servo_droit Out
+    pub info_capteur_gaucheSend: Option<Sender<bool>>,// 内部端口: info_capteur_gauche In
+    pub comm_servo_gaucheRece: Option<Receiver<bool>>,// 内部端口: comm_servo_gauche Out
     #[allow(dead_code)]
     pub th_ctrl_droit: controleThread,// 子组件线程（th_ctrl_droit : thread controle）
     #[allow(dead_code)]
@@ -305,9 +305,9 @@ pub struct p_controleProcess {
 // AADL Process: p_servomoteur
 #[derive(Debug)]
 pub struct p_servomoteurProcess {
-    pub ordre: Option<mpsc::Receiver<bool>>,// Port: ordre In
+    pub ordre: Option<Receiver<bool>>,// Port: ordre In
     pub cpu_id: isize,// 进程 CPU ID
-    pub ordreSend: Option<mpsc::Sender<bool>>,// 内部端口: ordre In
+    pub ordreSend: Option<Sender<bool>>,// 内部端口: ordre In
     #[allow(dead_code)]
     pub th_servomoteur: servomoteurThread,// 子组件线程（th_servomoteur : thread servomoteur）
 }
@@ -317,7 +317,7 @@ impl p_capteurProcess {
     pub fn new(cpu_id: isize) -> Self {
         let mut th_c: capteurThread = capteurThread::new(cpu_id);
         let mut evenementRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             th_c.evenement = Some(channel.0);
         evenementRece = Some(channel.1);
@@ -356,19 +356,19 @@ impl p_controleProcess {
         let mut comm_servo_droitRece = None;
         let mut info_capteur_gaucheSend = None;
         let mut comm_servo_gaucheRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         info_capteur_droitSend = Some(channel.0);
         // build connection: 
             th_ctrl_droit.info_capteur = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             th_ctrl_droit.comm_servo = Some(channel.0);
         comm_servo_droitRece = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         info_capteur_gaucheSend = Some(channel.0);
         // build connection: 
             th_ctrl_gauche.info_capteur = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             th_ctrl_gauche.comm_servo = Some(channel.0);
         comm_servo_gaucheRece = Some(channel.1);
@@ -445,7 +445,7 @@ impl p_servomoteurProcess {
     pub fn new(cpu_id: isize) -> Self {
         let mut th_servomoteur: servomoteurThread = servomoteurThread::new(cpu_id);
         let mut ordreSend = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         ordreSend = Some(channel.0);
         // build connection: 
             th_servomoteur.ordre = Some(channel.1);
@@ -498,22 +498,22 @@ impl robotSystem {
         let mut proc_controle: p_controleProcess = p_controleProcess::new(0);
         let mut proc_servomoteur_droit: p_servomoteurProcess = p_servomoteurProcess::new(0);
         let mut proc_servomoteur_gauche: p_servomoteurProcess = p_servomoteurProcess::new(0);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             proc_capteur_droit.evenement = Some(channel.0);
         // build connection: 
             proc_controle.info_capteur_droit = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             proc_capteur_gauche.evenement = Some(channel.0);
         // build connection: 
             proc_controle.info_capteur_gauche = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             proc_controle.comm_servo_droit = Some(channel.0);
         // build connection: 
             proc_servomoteur_droit.ordre = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             proc_controle.comm_servo_gauche = Some(channel.0);
         // build connection: 
@@ -539,5 +539,14 @@ lazy_static! {
         map.insert(0, SCHED_FIFO);
         return map;
     };
+}
+
+// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))
+// 根据周期计算优先级，周期越短优先级越高
+// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)
+pub fn period_to_priority(period_ms: f64) -> i32 {
+    let k: f64 = 10.0;
+    let raw: f64 = 99.0 - k * period_ms.log10().floor();
+    return raw.max(1.0).min(99.0) as i32;
 }
 

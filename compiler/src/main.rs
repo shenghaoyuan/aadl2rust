@@ -95,6 +95,12 @@ fn main() {
             path: "AADLSource/car.aadl".to_string(),
             output_name: "car".to_string(),
         },
+        TestCase {
+            id: 12,
+            name: "pingpong_ocarina_inout".to_string(),
+            path: "AADLSource/pingpong_ocarina_inout.aadl".to_string(),
+            output_name: "pingpong_ocarina_inout".to_string(),
+        },
     ];
 
     // 显示可用的测试用例

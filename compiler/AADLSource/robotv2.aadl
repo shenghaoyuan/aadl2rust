@@ -184,6 +184,11 @@ public
   processor the_processor
   end the_processor;
 
+  processor implementation the_processor.impl
+  properties
+    Scheduling_Protocol => (RMS);
+  end the_processor.impl;
+
   system robot
   end robot;
 

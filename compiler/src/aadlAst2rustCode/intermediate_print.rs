@@ -28,8 +28,8 @@ impl RustCodeGenerator {
         ));
         self.writeln("");
         self.writeln("#![allow(unused_imports)]");
-        self.writeln("use std::sync::{mpsc, Arc};");
-        self.writeln("use std::sync::Mutex;");
+        self.writeln("use crossbeam_channel::{Receiver, Sender};");
+        self.writeln("use std::sync::{Arc,Mutex};");
         self.writeln("use std::thread;");
         self.writeln("use std::time::{Duration, Instant};");
         self.writeln("use lazy_static::lazy_static;");

@@ -18,22 +18,6 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                ],
-                properties: [],
-                generics: [],
-                derives: [
-                    "Debug",
-                ],
-                docs: [
-                    "// AADL Process: a",
-                ],
-                vis: Public,
-            },
-        ),
-        Struct(
-            StructDef {
-                name: "aProcess",
-                fields: [
                     Field {
                         name: "pinger",
                         ty: Named(
@@ -72,16 +56,6 @@ RustModule {
                             },
                         ],
                     },
-                    Field {
-                        name: "cpu_id",
-                        ty: Named(
-                            "isize",
-                        ),
-                        docs: [
-                            "// 新增 CPU ID",
-                        ],
-                        attrs: [],
-                    },
                 ],
                 properties: [],
                 generics: [],
@@ -89,8 +63,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// Process implementation: A",
-                    "// Auto-generated from AADL",
+                    "// AADL Process: a",
                 ],
                 vis: Public,
             },
@@ -181,8 +154,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "crossbeam_channel",
-                                                            "unbounded",
+                                                            "mpsc",
+                                                            "channel",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -349,21 +322,6 @@ RustModule {
         Struct(
             StructDef {
                 name: "pingSystem",
-                fields: [],
-                properties: [],
-                generics: [],
-                derives: [
-                    "Debug",
-                ],
-                docs: [
-                    "// AADL System: PING",
-                ],
-                vis: Public,
-            },
-        ),
-        Struct(
-            StructDef {
-                name: "pingSystem",
                 fields: [
                     Field {
                         name: "node_a",
@@ -391,8 +349,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// System implementation: PING",
-                    "// Auto-generated from AADL",
+                    "// AADL System: PING",
                 ],
                 vis: Public,
             },
@@ -652,7 +609,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "Sender",
+                                    "mpsc::Sender",
                                     [
                                         Named(
                                             "custom_int",
@@ -662,7 +619,7 @@ RustModule {
                             ],
                         ),
                         docs: [
-                            "// Port: Data_Source Out",
+                            "// Port: Data_Source InOut",
                         ],
                         attrs: [],
                     },
@@ -686,22 +643,6 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                ],
-                properties: [],
-                generics: [],
-                derives: [
-                    "Debug",
-                ],
-                docs: [
-                    "// AADL Thread: p",
-                ],
-                vis: Public,
-            },
-        ),
-        Struct(
-            StructDef {
-                name: "pThread",
-                fields: [
                     Field {
                         name: "recover_entrypoint_source_text",
                         ty: Named(
@@ -789,7 +730,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_offset: 500, \n            period: 2000, \n            recover_entrypoint_source_text: \"recover\".to_string(), \n            deadline: 2000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            data_source: None, \n            priority: 2, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 2000, \n            recover_entrypoint_source_text: \"recover\".to_string(), \n            deadline: 2000, \n            dispatch_offset: 500, \n            data_source: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            priority: 2, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1224,7 +1165,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "Receiver",
+                                    "mpsc::Receiver",
                                     [
                                         Named(
                                             "custom_int",
@@ -1248,22 +1189,6 @@ RustModule {
                         ],
                         attrs: [],
                     },
-                ],
-                properties: [],
-                generics: [],
-                derives: [
-                    "Debug",
-                ],
-                docs: [
-                    "// AADL Thread: q",
-                ],
-                vis: Public,
-            },
-        ),
-        Struct(
-            StructDef {
-                name: "qThread",
-                fields: [
                     Field {
                         name: "dispatch_protocol",
                         ty: Named(
@@ -1341,7 +1266,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            data_sink: None, \n            deadline: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            priority: 1, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            data_sink: None, \n            deadline: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            priority: 1, \n            period: 10, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
