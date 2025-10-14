@@ -243,6 +243,7 @@ pub enum Visibility {
     Public,
     Private,
     Restricted(Vec<String>), // pub(in path)
+    None, //trait实现时不需要可见性，跟trait保持一致
 }
 
 #[derive(Debug,Clone)]

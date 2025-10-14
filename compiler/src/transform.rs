@@ -649,6 +649,15 @@ impl AADLTransformer {
 
         let inner = pair.into_inner().next().unwrap();
         match inner.as_rule() {
+            aadlight_parser::Rule::apply_value => {
+                let mut parts = inner.into_inner();
+                let number = parts.next().unwrap().as_str().trim().to_string();
+                let applies_to = parts.next().unwrap().as_str().trim().to_string();
+                PropertyValue::Single(PropertyExpression::Apply(ApplyTerm {
+                    number,
+                    applies_to,
+                }))
+            }
             aadlight_parser::Rule::range_value => {
                 // println!("=== 调试 range_value ===");
                 // println!("inner = Rule::{:?}, text = {}", inner.as_rule(), inner.as_str());
@@ -997,7 +1006,6 @@ impl AADLTransformer {
             // 否则直接使用原字符串
             extract_identifier(qualified_identifier)
         };
-        println!("!!!!!!!!!!!!!!!!!!!!!name_str = {}", name_str);
         let mut name_parts = name_str.split(".");
         let classifier = SubcomponentClassifier::ClassifierReference(
             UniqueComponentClassifierReference::Implementation(UniqueImplementationReference {
@@ -1159,7 +1167,6 @@ impl AADLTransformer {
                     _ => panic!("Unknown connection direction"),
                 };
                 let destination = Self::transform_parameterport_reference(port_iter.next().unwrap());
-                println!("{:?}  {:?}cjcjcjcjcjjcjcjcjc",source,destination);
                 Connection::Parameter(ParameterConnection {
                     source,
                     destination,

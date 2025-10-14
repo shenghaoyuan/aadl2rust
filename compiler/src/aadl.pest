@@ -130,7 +130,8 @@ parameter_connection = {
     parameter_reference ~ connection_operator ~ parameter_reference
 }
 
-// 11 Properties 这里其实合并了property_association和contained_property_association（有applies子句，移动到了property_value的reference_value里）
+// 11 Properties 这里其实合并了property_association和
+//contained_property_association（applies子句，但做了简化处理）
 property_association = {
     identifier ~
     ( "::" ~ identifier )? ~
@@ -145,13 +146,14 @@ constant = { "constant" }
 
 //TODO：根据标准中的property_expression，完善
 property_value = {
+    apply_value |
     list_value |
     range_value | //优先于literal_value匹配
     literal_value | //字面量
     reference_value |
     component_classifier_value
 }
-
+apply_value = { number ~ "applies" ~ "to" ~ qualified_identifier } //contained_property_association（applies子句，但做了简化处理）
 literal_value = { (number | enum_value | string_literal | boolean  ) ~ unit? } 
 range_value = { 
     number ~ WHITESPACE* ~ unit? ~ WHITESPACE* ~ 

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-13 13:10:40
+// 生成时间: 2025-10-14 22:09:14
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -22,6 +22,27 @@ fn set_thread_affinity(cpu: isize) {
         CPU_SET(cpu as usize, &mut cpuset);
         sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);
     }
+}
+
+// ---------------- System ----------------
+pub trait System {
+    fn new() -> Self
+        where Self: Sized;
+    fn run(self);
+}
+
+// ---------------- Process ----------------
+pub trait Process {
+    fn new(cpu_id: isize) -> Self
+        where Self: Sized;
+    fn start(self);
+}
+
+// ---------------- Thread ----------------
+pub trait Thread {
+    fn new(cpu_id: isize) -> Self
+        where Self: Sized;
+    fn run(self);
 }
 
 // AADL Data Type: Alpha_Type
@@ -111,9 +132,9 @@ pub struct servomoteurThread {
     pub period: u64,// AADL属性(impl): Period
 }
 
-impl capteurThread {
+impl Thread for capteurThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
             dispatch_protocol: "Periodic".to_string(), 
             evenement: None, 
@@ -124,7 +145,7 @@ impl capteurThread {
     
     // Thread execution entry point
     // Period: Some(110) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let prio = period_to_priority(self.period as f64);
             let mut param: sched_param = sched_param { sched_priority: prio };
@@ -141,8 +162,8 @@ impl capteurThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // D_Spg();
-                // D_Spg;
+                           // d_spg();
+                // d_spg;
                 if let Some(sender) = &self.evenement {
                     let mut val = false;
                     collecte_donnee_spg::send(&mut val);
@@ -156,21 +177,21 @@ impl capteurThread {
     
 }
 
-impl controleThread {
+impl Thread for controleThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
             comm_servo: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            info_capteur: None, 
             period: 110, 
+            info_capteur: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(110) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let prio = period_to_priority(self.period as f64);
             let mut param: sched_param = sched_param { sched_priority: prio };
@@ -187,8 +208,8 @@ impl controleThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // T_Spg_in() -> T_Spg_out();
-                // T_Spg_in;
+                           // t_spg_in() -> t_spg_out();
+                // t_spg_in;
                 if let Some(receiver) = &self.info_capteur {
                     match receiver.try_recv() {
                         Ok(val) => {
@@ -204,7 +225,7 @@ impl controleThread {
                         },
                     };
                 };
-                // T_Spg_out;
+                // t_spg_out;
                 if let Some(sender) = &self.comm_servo {
                     let mut val = false;
                     traite_spg_out::send(&mut val);
@@ -218,20 +239,20 @@ impl controleThread {
     
 }
 
-impl servomoteurThread {
+impl Thread for servomoteurThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Sporadic".to_string(), 
-            period: 10, 
             ordre: None, 
+            period: 10, 
+            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(10) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let prio = period_to_priority(self.period as f64);
             let mut param: sched_param = sched_param { sched_priority: prio };
@@ -245,29 +266,35 @@ impl servomoteurThread {
         };
         let min_interarrival: std::time::Duration = Duration::from_millis(10);
         let mut last_dispatch: std::time::Instant = Instant::now();
+        let mut events = Vec::new();
         loop {
-            if let Some(receiver) = &self.ordre {
-                match receiver.recv() {
-                    Ok(val) => {
-                        // 收到消息 → 调用处理函数
-                        let now = Instant::now();
-                        let elapsed = now.duration_since(last_dispatch);
-                        if elapsed < min_interarrival {
-                            std::thread::sleep(min_interarrival - elapsed);
-                        };
-                        {
-                            // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // A_Spg();
-                            // A_Spg;
-                            action_spg::receive(val);
-                        };
-                        last_dispatch = Instant::now();
-                    },
-                    Err(_) => {
-                        eprintln!("servomoteurThread: channel closed");
-                        return;
-                    },
+            if events.is_empty() {
+                if let Some(rx) = &self.ordre {
+                    if let Ok(val) = rx.try_recv() {
+                        let ts = Instant::now();
+                        events.push(((val, 0, ts)));
+                    };
                 };
+            };
+            if let Some((idx, (val, _urgency, _ts))) = events.iter().enumerate().max_by(|a, b| match a.1.1.cmp(&b.1.1) {
+                        std::cmp::Ordering::Equal => b.1.2.cmp(&a.1.2),
+                        other => other,
+                    }) {
+                let (val, _, _) = events.remove(idx);
+                let now = Instant::now();
+                let elapsed = now.duration_since(last_dispatch);
+                if elapsed < min_interarrival {
+                    std::thread::sleep(min_interarrival - elapsed);
+                };
+                {
+                    // --- 调用序列（等价 AADL 的 Wrapper）---
+                           // a_spg();
+                    // a_spg;
+                    action_spg::receive(val);
+                };
+                last_dispatch = Instant::now();
+            } else {
+                std::thread::sleep(Duration::from_millis(1));
             };
         };
     }
@@ -312,9 +339,9 @@ pub struct p_servomoteurProcess {
     pub th_servomoteur: servomoteurThread,// 子组件线程（th_servomoteur : thread servomoteur）
 }
 
-impl p_capteurProcess {
+impl Process for p_capteurProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut th_c: capteurThread = capteurThread::new(cpu_id);
         let mut evenementRece = None;
         let channel = crossbeam_channel::unbounded();
@@ -325,7 +352,7 @@ impl p_capteurProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { evenement, evenementRece, th_c, cpu_id, .. } = self;
         thread::Builder::new()
             .name("th_c".to_string())
@@ -347,9 +374,9 @@ impl p_capteurProcess {
     
 }
 
-impl p_controleProcess {
+impl Process for p_controleProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut th_ctrl_droit: controleThread = controleThread::new(cpu_id);
         let mut th_ctrl_gauche: controleThread = controleThread::new(cpu_id);
         let mut info_capteur_droitSend = None;
@@ -376,7 +403,7 @@ impl p_controleProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { info_capteur_droit, info_capteur_droitSend, comm_servo_droit, comm_servo_droitRece, info_capteur_gauche, info_capteur_gaucheSend, comm_servo_gauche, comm_servo_gaucheRece, th_ctrl_droit, th_ctrl_gauche, cpu_id, .. } = self;
         thread::Builder::new()
             .name("th_ctrl_droit".to_string())
@@ -440,9 +467,9 @@ impl p_controleProcess {
     
 }
 
-impl p_servomoteurProcess {
+impl Process for p_servomoteurProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut th_servomoteur: servomoteurThread = servomoteurThread::new(cpu_id);
         let mut ordreSend = None;
         let channel = crossbeam_channel::unbounded();
@@ -453,7 +480,7 @@ impl p_servomoteurProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { ordre, ordreSend, th_servomoteur, cpu_id, .. } = self;
         thread::Builder::new()
             .name("th_servomoteur".to_string())
@@ -490,9 +517,9 @@ pub struct robotSystem {
     pub proc_servomoteur_gauche: p_servomoteurProcess,// 子组件进程（proc_servomoteur_gauche : process p_servomoteur）
 }
 
-impl robotSystem {
+impl System for robotSystem {
     // Creates a new system instance
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut proc_capteur_droit: p_capteurProcess = p_capteurProcess::new(0);
         let mut proc_capteur_gauche: p_capteurProcess = p_capteurProcess::new(0);
         let mut proc_controle: p_controleProcess = p_controleProcess::new(0);
@@ -522,7 +549,7 @@ impl robotSystem {
     }
     
     // Runs the system, starts all processes
-    pub fn run(self: Self) -> () {
+    fn run(self: Self) -> () {
         self.proc_capteur_droit.start();
         self.proc_capteur_gauche.start();
         self.proc_controle.start();

@@ -54,6 +54,30 @@ impl RustCodeGenerator {
         self.writeln("}");
         self.writeln("");
 
+        self.writeln("// ---------------- System ----------------");
+        self.writeln("pub trait System {");
+        self.writeln("    fn new() -> Self");
+        self.writeln("        where Self: Sized;");
+        self.writeln("    fn run(self);");
+        self.writeln("}");
+        self.writeln("");
+        
+        self.writeln("// ---------------- Process ----------------");
+        self.writeln("pub trait Process {");
+        self.writeln("    fn new(cpu_id: isize) -> Self");
+        self.writeln("        where Self: Sized;");
+        self.writeln("    fn start(self);");
+        self.writeln("}");
+        self.writeln("");
+        
+        self.writeln("// ---------------- Thread ----------------");
+        self.writeln("pub trait Thread {");
+        self.writeln("    fn new(cpu_id: isize) -> Self");
+        self.writeln("        where Self: Sized;");
+        self.writeln("    fn run(self);");
+        self.writeln("}");
+        self.writeln("");
+
         // 生成模块内容
         self.generate_items(&module.items);
 
@@ -89,6 +113,7 @@ impl RustCodeGenerator {
             Visibility::Public => self.write("pub "),
             Visibility::Private => (), // 私有模块不添加修饰符
             Visibility::Restricted(paths) => self.write(&format!("pub(in {} ) ", paths.join("::"))),
+            Visibility::None => (),
         }
 
         self.writeln(&format!("mod {} {{", m.name));
@@ -299,13 +324,14 @@ impl RustCodeGenerator {
             self.write(">");
         }
 
+        // trait实现
+        if let Some(trait_ty) = &i.trait_impl {
+            self.write(&format!(" {} for", self.type_to_string(trait_ty)));
+        }
         // 目标类型
         self.write(&format!(" {} ", self.type_to_string(&i.target)));
 
-        // trait实现
-        if let Some(trait_ty) = &i.trait_impl {
-            self.write(&format!("for {} ", self.type_to_string(trait_ty)));
-        }
+        
 
         self.writeln("{");
         self.indent();
@@ -891,6 +917,7 @@ impl RustCodeGenerator {
             Visibility::Public => "pub ".to_string(),
             Visibility::Private => "".to_string(),
             Visibility::Restricted(path) => format!("pub(in {}) ", path.join("::")),
+            Visibility::None => "".to_string(),
         }
     }
 

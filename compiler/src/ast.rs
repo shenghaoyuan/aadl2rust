@@ -1616,6 +1616,7 @@ pub mod aadl_ast_cj {
         BasicProperty(BasicPropertyAssociation),
         SubcomponentProperty(BasicPropertyAssociation), //TODO:暂时使用basic代替
         CallSequenceProperty(BasicPropertyAssociation),
+        //ContainedProperty(ContainedAssociation), //简化到BasicPropertyAssociation中PropertyValue中PropertyExpression里有Apply
         // 未来可扩展其他属性类型：
     }
 
@@ -1645,6 +1646,11 @@ pub mod aadl_ast_cj {
         Assign, // =>
         Append, // +=>
     }
+    // #[derive(Debug, Clone)]
+    // pub struct ContainedAssociation {
+    //     pub contained_element_point:String,
+    //     pub contained_element:String,
+    // }
     /* ========== 属性值系统 ========== */
     #[derive(Debug, Clone)]
     pub enum PropertyValue {
@@ -1678,6 +1684,7 @@ pub mod aadl_ast_cj {
         Reference(ReferenceTerm),
         //Record(RecordTerm),
         //Computed(ComputedTerm),
+        Apply(ApplyTerm), //contained_property_association（做了简化处理）
     }
     /* ========== 属性常量项 ========== */
     #[derive(Debug, Clone)]
@@ -1791,5 +1798,10 @@ pub mod aadl_ast_cj {
     #[derive(Debug, Clone)]
     pub struct ComponentClassifierTerm {
         pub unique_component_classifier_reference: UniqueComponentClassifierReference,
+    }
+    #[derive(Debug, Clone)]
+    pub struct ApplyTerm {
+        pub number: String,
+        pub applies_to: String,
     }
 } //end mod aadl_ast_cj

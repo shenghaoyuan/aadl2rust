@@ -101,6 +101,12 @@ fn main() {
             path: "AADLSource/pingpong_ocarina_inout.aadl".to_string(),
             output_name: "pingpong_ocarina_inout".to_string(),
         },
+        TestCase {
+            id: 13,
+            name: "pingpong_2trigger".to_string(),
+            path: "AADLSource/pingpong_2trigger.aadl".to_string(),
+            output_name: "pingpong_2trigger".to_string(),
+        },
     ];
 
     // 显示可用的测试用例

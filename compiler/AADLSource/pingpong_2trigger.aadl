@@ -1,3 +1,4 @@
+--该例子具有多触发器端口（优先级不同）特点
 package PING_Local
 public
   --with Deployment;
@@ -29,7 +30,8 @@ public
     Pinger        : thread P.Impl;
     Ping_Me       : thread Q.Impl;
   connections
-    cnx : port Pinger.Data_Source -> Ping_Me.Data_Sink;
+    cnx1 : port Pinger.Data_Source_1 -> Ping_Me.Data_Sink_1;
+    cnx2 : port Pinger.Data_Source_2 -> Ping_Me.Data_Sink_2;
   end A.Impl;
 
   ------------
@@ -96,7 +98,8 @@ end Ping_Spg;
 
 thread P
 features
-  Data_Source : out event data port Simple_Type;
+  Data_Source_1 : out event data port Simple_Type;
+  Data_Source_2 : out event data port Simple_Type;
 properties
   Dispatch_Protocol                  => Periodic;
 end P;
@@ -105,9 +108,11 @@ thread implementation P.Impl
 calls 
 Mycalls: {
   P_Spg : subprogram Do_Ping_Spg;
+  P_Spg2 : subprogram Do_Ping_Spg;
 };
 connections
-  cnx : parameter P_Spg.Data_Source -> Data_Source;
+  cnx1 : parameter P_Spg.Data_Source -> Data_Source_1; 
+  cnx2 : parameter P_Spg2.Data_Source -> Data_Source_2;
 properties
   Recover_Entrypoint_Source_Text     => "recover";
   --Dispatch_Protocol                  => Periodic;
@@ -119,22 +124,27 @@ end P.Impl;
 
 thread Q
 features
-  Data_Sink : in event data port Simple_Type;
+  Data_Sink_1 : in event data port Simple_Type;
+  Data_Sink_2 : in event data port Simple_Type;
 end Q;
 
 thread implementation Q.Impl
 calls 
 Mycalls: {
   Q_Spg : subprogram Ping_Spg;
+  Q_Spg2 : subprogram Ping_Spg;
 };
 connections
-  cnx : parameter Data_Sink -> Q_Spg.Data_Sink;
+  cnx1 : parameter Data_Sink_1 -> Q_Spg.Data_Sink;
+  cnx2 : parameter Data_Sink_2 -> Q_Spg2.Data_Sink;
 properties
   Dispatch_Protocol                  => Sporadic;
-  Dispatch_Trigger                   => (reference (Data_Sink));
+  Dispatch_Trigger                   => (reference (Data_Sink_1),reference (Data_Sink_2));
   Period                             => 10 Ms;
   deadline                           => 10 Ms;
   Priority                           => 1;
+  urgency                            => 5 applies to Data_Sink_1;
+  urgency                            => 10 applies to Data_Sink_2;
 end Q.Impl;
 
 end PING_Local;

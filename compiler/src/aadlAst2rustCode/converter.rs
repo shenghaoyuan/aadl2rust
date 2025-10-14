@@ -380,7 +380,7 @@ impl AadlConverter {
         
         // 查找 Base_Type 属性
         for prop in props {
-            println!("prop: {:?}", prop);
+            //println!("prop: {:?}", prop);
             if let Property::BasicProperty(bp) = prop {
                 if bp.identifier.name.to_lowercase() == "base_type" {
                     if let PropertyValue::Single(PropertyExpression::String(
@@ -786,7 +786,7 @@ impl AadlConverter {
             return_type: Type::Named("Self".to_string()),
             body: self.create_system_new_body(impl_),
             asyncness: false,
-            vis: Visibility::Public,
+            vis: Visibility::None,   
             docs: vec!["// Creates a new system instance".to_string()],
             attrs: Vec::new(),
         }));
@@ -801,7 +801,7 @@ impl AadlConverter {
             return_type: Type::Unit,
             body: self.create_system_run_body(impl_),
             asyncness: false,
-            vis: Visibility::Public,
+            vis: Visibility::None,
             docs: vec!["// Runs the system, starts all processes".to_string()],
             attrs: Vec::new(),
         }));
@@ -810,7 +810,7 @@ impl AadlConverter {
             target: Type::Named(format!("{}System", impl_.name.type_identifier.to_lowercase())),
             generics: Vec::new(),
             items,
-            trait_impl: None,
+            trait_impl: Some(Type::Named("System".to_string())),
         }
     }
 
@@ -1863,7 +1863,7 @@ impl AadlConverter {
             return_type: Type::Named("Self".to_string()),
             body: self.create_process_new_body(impl_),
             asyncness: false,
-            vis: Visibility::Public,
+            vis: Visibility::None,
             docs: vec!["// Creates a new process instance".to_string()],
             attrs: Vec::new(),
         }));
@@ -1878,7 +1878,7 @@ impl AadlConverter {
             return_type: Type::Unit,
             body: self.create_process_start_body(impl_),
             asyncness: false,
-            vis: Visibility::Public,
+            vis: Visibility::None,
             docs: vec!["// Starts all threads in the process".to_string()],
             attrs: Vec::new(),
         }));
@@ -1889,7 +1889,7 @@ impl AadlConverter {
             target: Type::Named(format! {"{}Process",impl_.name.type_identifier.to_lowercase()}),
             generics: Vec::new(),
             items,
-            trait_impl: None,
+            trait_impl: Some(Type::Named("Process".to_string())),
         }
     }
 
@@ -2532,7 +2532,7 @@ impl AadlConverter {
                 existing_values.insert(key, value);
             }
         }
-        println!("!!!!!!!!!!!!thread_field_values: {:?}", self.thread_field_values);
+        //println!("!!!!!!!!!!!!thread_field_values: {:?}", self.thread_field_values);
         
         let struct_def = StructDef {
             name: format!("{}Thread", impl_.name.type_identifier.to_lowercase()),
@@ -2562,7 +2562,7 @@ impl AadlConverter {
             return_type: Type::Unit,
             body: self.create_thread_run_body(impl_),
             asyncness: false,
-            vis: Visibility::Public,
+            vis: Visibility::None,
             docs: vec![
                 "// Thread execution entry point".to_string(),
                 format!(
@@ -2580,7 +2580,7 @@ impl AadlConverter {
             )),
             generics: Vec::new(),
             items: impl_items,
-            trait_impl: None,
+            trait_impl: Some(Type::Named("Thread".to_string())),
         };
         items.push(Item::Impl(impl_block));
 
@@ -2647,7 +2647,7 @@ impl AadlConverter {
             return_type: Type::Named("Self".to_string()),
             body,
             asyncness: false,
-            vis: Visibility::Public,
+            vis: Visibility::None,
             docs: vec!["// 创建组件并初始化AADL属性".to_string()],
             attrs: Vec::new(),
         }
@@ -3026,6 +3026,10 @@ impl AadlConverter {
 
         // 获取事件端口信息（事件端口或事件数据端口）
         let event_ports = self.extract_event_ports(impl_);
+
+        // 提取事件端口的优先级信息
+        let port_urgency = self.extract_event_port_urgency(impl_);
+        println!("port_urgency: {:?}", port_urgency);
         
         // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
         let receive_ports = if !event_ports.is_empty() {
@@ -3042,77 +3046,86 @@ impl AadlConverter {
         let subprogram_calls = self.extract_subprogram_calls(impl_);
         let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send);
 
-        // 生成偶发执行逻辑 - 事件驱动，等待消息
+        // 在循环外定义 events 变量
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: true,
+            name: "events".to_string(),
+            ty: None,
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(vec!["Vec".to_string(), "new".to_string()], PathType::Namespace)),
+                Vec::new(),
+            )),
+        }));
+
+        // 生成非周期性执行逻辑 - 按优先级处理事件
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
-            stmts: vec![
-                // 检查是否有接收端口，如果有则等待消息
-                // 动态获取第一个接收端口
-                Statement::Expr(Expr::IfLet {
-                    pattern: "Some(receiver)".to_string(),
-                    value: Box::new(Expr::Reference(
-                        Box::new(Expr::Path(
-                            vec!["self".to_string(), 
-                                if !receive_ports.is_empty() { 
-                                    receive_ports[0].to_lowercase() 
-                                } else { 
-                                    "error_sink".to_string() 
-                                }],
-                            PathType::Member,
+            stmts: {
+                let mut loop_stmts = Vec::new();
+                
+                // 添加生成事件收集逻辑
+                loop_stmts.extend(self.create_event_collection_logic(&port_urgency, &receive_ports));
+                
+                // 如果事件队列中有事件，则挑选出优先级最高的进行处理
+                loop_stmts.push(Statement::Expr(Expr::IfLet {
+                    pattern: "Some((idx, (val, _urgency, _ts)))".to_string(),
+                    value: Box::new(Expr::MethodCall(
+                        Box::new(Expr::MethodCall(
+                            Box::new(Expr::MethodCall(
+                                Box::new(Expr::Ident("events".to_string())),
+                                "iter".to_string(),
+                                Vec::new(),
+                            )),
+                            "enumerate".to_string(),
+                            Vec::new(),
                         )),
-                        true,
-                        false,
+                        "max_by".to_string(),
+                        vec![Expr::Ident("|a, b| match a.1.1.cmp(&b.1.1) {\n                        std::cmp::Ordering::Equal => b.1.2.cmp(&a.1.2),\n                        other => other,\n                    }".to_string())],
                     )),
                     then_branch: Block {
                         stmts: vec![
-                            // 阻塞等待消息
-                            Statement::Expr(Expr::Match {
-                                expr: Box::new(Expr::MethodCall(
-                                    Box::new(Expr::Ident("receiver".to_string())),
-                                    "recv".to_string(),
-                                    Vec::new(),
+                            // 移除已处理事件
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "(val, _, _)".to_string(),
+                                ty: None,
+                                init: Some(Expr::MethodCall(
+                                    Box::new(Expr::Ident("events".to_string())),
+                                    "remove".to_string(),
+                                    vec![Expr::Ident("idx".to_string())],
                                 )),
-                                arms: vec![
-                                    // Ok(val) => 处理接收到的消息
-                                    MatchArm {
-                                        pattern: "Ok(val)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                // 执行子程序调用处理，传递已读取的数据
-                                                Statement::Expr(Expr::Block(Block {
-                                                    stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
-                                                    expr: None,
-                                                })),                                               
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                    // Err(_) => 通道关闭，退出循环
-                                    MatchArm {
-                                        pattern: "Err(_)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                Statement::Expr(Expr::Call(
-                                                    Box::new(Expr::Path(
-                                                        vec!["eprintln!".to_string()],
-                                                        PathType::Namespace,
-                                                    )),
-                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: channel closed", impl_.name.type_identifier.to_lowercase())))],
-                                                )),
-                                                Statement::Expr(Expr::Ident("return".to_string())),
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                ],
                             }),
+                            // 执行子程序调用处理
+                            Statement::Expr(Expr::Block(Block {
+                                stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
+                                expr: None,
+                            })),
                         ],
                         expr: None,
                     },
-                    else_branch: None,
-                }),
-            ],
+                    else_branch: Some(Block {
+                        stmts: vec![
+                            // 如果没有事件，短暂休眠避免忙等待
+                            Statement::Expr(Expr::MethodCall(
+                                Box::new(Expr::Path(
+                                    vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                                    PathType::Namespace,
+                                )),
+                                "".to_string(),
+                                vec![Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["Duration".to_string(), "from_millis".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    vec![Expr::Literal(Literal::Int(1))], // 1ms
+                                )],
+                            )),
+                        ],
+                        expr: None,
+                    }),
+                }));
+                
+                loop_stmts
+            },
             expr: None,
         }))));
 
@@ -3162,6 +3175,10 @@ impl AadlConverter {
 
         // 获取事件端口信息（事件端口或事件数据端口）
         let event_ports = self.extract_event_ports(impl_);
+
+        // 提取事件端口的优先级信息
+        let port_urgency = self.extract_event_port_urgency(impl_);
+        println!("port_urgency: {:?}", port_urgency);
         
         // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
         let receive_ports = if !event_ports.is_empty() {
@@ -3178,138 +3195,147 @@ impl AadlConverter {
         let subprogram_calls = self.extract_subprogram_calls(impl_);
         let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send);
 
-        // 生成偶发执行逻辑 - 事件驱动，等待消息
+        // 在循环外定义 events 变量
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: true,
+            name: "events".to_string(),
+            ty: None,
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(vec!["Vec".to_string(), "new".to_string()], PathType::Namespace)),
+                Vec::new(),
+            )),
+        }));
+
+        // 生成偶发执行逻辑 - 按优先级处理事件
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
-            stmts: vec![
-                // 检查是否有接收端口，如果有则等待消息
-                // 动态获取第一个接收端口
-                Statement::Expr(Expr::IfLet {
-                    pattern: "Some(receiver)".to_string(),
-                    value: Box::new(Expr::Reference(
-                        Box::new(Expr::Path(
-                            vec!["self".to_string(), 
-                                if !receive_ports.is_empty() { 
-                                    receive_ports[0].to_lowercase() 
-                                } else { 
-                                    "error_sink".to_string() 
-                                }],
-                            PathType::Member,
+            stmts: {
+                let mut loop_stmts = Vec::new();
+                
+                // 添加生成事件收集逻辑
+                loop_stmts.extend(self.create_event_collection_logic(&port_urgency, &receive_ports));
+                
+                // 如果事件队列中有事件，则挑选出优先级最高的进行处理
+                loop_stmts.push(Statement::Expr(Expr::IfLet {
+                    pattern: "Some((idx, (val, _urgency, _ts)))".to_string(),
+                    value: Box::new(Expr::MethodCall(
+                        Box::new(Expr::MethodCall(
+                            Box::new(Expr::MethodCall(
+                                Box::new(Expr::Ident("events".to_string())),
+                                "iter".to_string(),
+                                Vec::new(),
+                            )),
+                            "enumerate".to_string(),
+                            Vec::new(),
                         )),
-                        true,
-                        false,
+                        "max_by".to_string(),
+                        vec![Expr::Ident("|a, b| match a.1.1.cmp(&b.1.1) {\n                        std::cmp::Ordering::Equal => b.1.2.cmp(&a.1.2),\n                        other => other,\n                    }".to_string())],
                     )),
                     then_branch: Block {
                         stmts: vec![
-                            // 阻塞等待消息
-                            Statement::Expr(Expr::Match {
-                                expr: Box::new(Expr::MethodCall(
-                                    Box::new(Expr::Ident("receiver".to_string())),
-                                    "recv".to_string(),
+                            // 移除已处理事件
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "(val, _, _)".to_string(),
+                                ty: None,
+                                init: Some(Expr::MethodCall(
+                                    Box::new(Expr::Ident("events".to_string())),
+                                    "remove".to_string(),
+                                    vec![Expr::Ident("idx".to_string())],
+                                )),
+                            }),
+                            // 记录当前时间
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "now".to_string(),
+                                ty: None,
+                                init: Some(Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["Instant".to_string(), "now".to_string()],
+                                        PathType::Namespace,
+                                    )),
                                     Vec::new(),
                                 )),
-                                arms: vec![
-                                    // Ok(val) => 处理接收到的消息
-                                    MatchArm {
-                                        pattern: "Ok(val)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                // 记录当前时间
-                                                Statement::Let(LetStmt {
-                                                    ifmut: false,
-                                                    name: "now".to_string(),
-                                                    ty: None,
-                                                    init: Some(Expr::Call(
-                                                        Box::new(Expr::Path(
-                                                            vec!["Instant".to_string(), "now".to_string()],
-                                                            PathType::Namespace,
-                                                        )),
-                                                        Vec::new(),
-                                                    )),
-                                                }),
-                                                // 计算距离上次调度的时间间隔
-                                                Statement::Let(LetStmt {
-                                                    ifmut: false,
-                                                    name: "elapsed".to_string(),
-                                                    ty: None,
-                                                    init: Some(Expr::MethodCall(
-                                                        Box::new(Expr::Ident("now".to_string())),
-                                                        "duration_since".to_string(),
-                                                        vec![Expr::Ident("last_dispatch".to_string())],
-                                                    )),
-                                                }),
-                                                // 如果比最小间隔快，等待补足
-                                                Statement::Expr(Expr::If {
-                                                    condition: Box::new(Expr::BinaryOp(
-                                                        Box::new(Expr::Ident("elapsed".to_string())),
-                                                        "<".to_string(),
-                                                        Box::new(Expr::Ident("min_interarrival".to_string())),
-                                                    )),
-                                                    then_branch: Block {
-                                                        stmts: vec![
-                                                            Statement::Expr(Expr::MethodCall(
-                                                                Box::new(Expr::Path(
-                                                                    vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                                                                    PathType::Namespace,
-                                                                )),
-                                                                "".to_string(),
-                                                                vec![Expr::BinaryOp(
-                                                                    Box::new(Expr::Ident("min_interarrival".to_string())),
-                                                                    "-".to_string(),
-                                                                    Box::new(Expr::Ident("elapsed".to_string())),
-                                                                )],
-                                                            )),
-                                                        ],
-                                                        expr: None,
-                                                    },
-                                                    else_branch: None,
-                                                }),
-                                                // 执行子程序调用处理，传递已读取的数据
-                                                Statement::Expr(Expr::Block(Block {
-                                                    stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
-                                                    expr: None,
-                                                })),
-                                                // 更新上次调度时间
-                                                Statement::Expr(Expr::Assign(
-                                                    Box::new(Expr::Ident("last_dispatch".to_string())),
-                                                    Box::new(Expr::Call(
-                                                        Box::new(Expr::Path(
-                                                            vec!["Instant".to_string(), "now".to_string()],
-                                                            PathType::Namespace,
-                                                        )),
-                                                        Vec::new(),
-                                                    ))
-                                                )),                                                
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                    // Err(_) => 通道关闭，退出循环
-                                    MatchArm {
-                                        pattern: "Err(_)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                Statement::Expr(Expr::Call(
-                                                    Box::new(Expr::Path(
-                                                        vec!["eprintln!".to_string()],
-                                                        PathType::Namespace,
-                                                    )),
-                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: channel closed", impl_.name.type_identifier.to_lowercase())))],
-                                                )),
-                                                Statement::Expr(Expr::Ident("return".to_string())),
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                ],
                             }),
+                            // 计算距离上次调度的时间间隔
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "elapsed".to_string(),
+                                ty: None,
+                                init: Some(Expr::MethodCall(
+                                    Box::new(Expr::Ident("now".to_string())),
+                                    "duration_since".to_string(),
+                                    vec![Expr::Ident("last_dispatch".to_string())],
+                                )),
+                            }),
+                            // 如果比最小间隔快，等待补足
+                            Statement::Expr(Expr::If {
+                                condition: Box::new(Expr::BinaryOp(
+                                    Box::new(Expr::Ident("elapsed".to_string())),
+                                    "<".to_string(),
+                                    Box::new(Expr::Ident("min_interarrival".to_string())),
+                                )),
+                                then_branch: Block {
+                                    stmts: vec![
+                                        Statement::Expr(Expr::MethodCall(
+                                            Box::new(Expr::Path(
+                                                vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                                                PathType::Namespace,
+                                            )),
+                                            "".to_string(),
+                                            vec![Expr::BinaryOp(
+                                                Box::new(Expr::Ident("min_interarrival".to_string())),
+                                                "-".to_string(),
+                                                Box::new(Expr::Ident("elapsed".to_string())),
+                                            )],
+                                        )),
+                                    ],
+                                    expr: None,
+                                },
+                                else_branch: None,
+                            }),
+                            // 执行子程序调用处理，传递已读取的数据
+                            Statement::Expr(Expr::Block(Block {
+                                stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
+                                expr: None,
+                            })),
+                            // 更新上次调度时间
+                            Statement::Expr(Expr::Assign(
+                                Box::new(Expr::Ident("last_dispatch".to_string())),
+                                Box::new(Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["Instant".to_string(), "now".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    Vec::new(),
+                                ))
+                            )),
                         ],
                         expr: None,
                     },
-                    else_branch: None,
-                }),
-            ],
+                    else_branch: Some(Block {
+                        stmts: vec![
+                            // 如果没有事件，短暂休眠避免忙等待
+                            Statement::Expr(Expr::MethodCall(
+                                Box::new(Expr::Path(
+                                    vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                                    PathType::Namespace,
+                                )),
+                                "".to_string(),
+                                vec![Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["Duration".to_string(), "from_millis".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    vec![Expr::Literal(Literal::Int(1))], // 1ms
+                                )],
+                            )),
+                        ],
+                        expr: None,
+                    }),
+                }));
+                
+                loop_stmts
+            },
             expr: None,
         }))));
 
@@ -3339,8 +3365,30 @@ impl AadlConverter {
             )),
         }));
 
+        // 记录开始时间
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: true,
+            name: "start_time".to_string(),
+            ty: Some(Type::Path(vec![
+                "std".to_string(),
+                "time".to_string(),
+                "Instant".to_string(),
+            ])),
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(
+                    vec!["Instant".to_string(), "now".to_string()],
+                    PathType::Namespace,
+                )),
+                Vec::new(),
+            )),
+        }));
+
         // 获取事件端口信息（事件端口或事件数据端口）
         let event_ports = self.extract_event_ports(impl_);
+
+        // 提取事件端口的优先级信息
+        let port_urgency = self.extract_event_port_urgency(impl_);
+        println!("port_urgency: {:?}", port_urgency);
         
         // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
         let receive_ports = if !event_ports.is_empty() {
@@ -3357,97 +3405,117 @@ impl AadlConverter {
         let subprogram_calls = self.extract_subprogram_calls(impl_);
         let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send);
 
-        // 生成定时执行逻辑 - 使用 recv_timeout 处理超时
+        // 在循环外定义 events 变量
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: true,
+            name: "events".to_string(),
+            ty: None,
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(vec!["Vec".to_string(), "new".to_string()], PathType::Namespace)),
+                Vec::new(),
+            )),
+        }));
+
+        // 生成定时执行逻辑 - 按优先级处理事件，支持超时
         stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
-            stmts: vec![
-                // 检查是否有接收端口，如果有则等待消息
-                // 动态获取第一个接收端口
-                Statement::Expr(Expr::IfLet {
-                    pattern: "Some(receiver)".to_string(),
-                    value: Box::new(Expr::Reference(
-                        Box::new(Expr::Path(
-                            vec!["self".to_string(), 
-                                if !receive_ports.is_empty() { 
-                                    receive_ports[0].to_lowercase() 
-                                } else { 
-                                    "error_sink".to_string() 
-                                }],
-                            PathType::Member,
+            stmts: {
+                let mut loop_stmts = Vec::new();
+                
+                // 添加生成事件收集逻辑
+                loop_stmts.extend(self.create_event_collection_logic(&port_urgency, &receive_ports));
+                
+                // 如果事件队列中有事件，则挑选出优先级最高的进行处理
+                loop_stmts.push(Statement::Expr(Expr::IfLet {
+                    pattern: "Some((idx, (val, _urgency, _ts)))".to_string(),
+                    value: Box::new(Expr::MethodCall(
+                        Box::new(Expr::MethodCall(
+                            Box::new(Expr::MethodCall(
+                                Box::new(Expr::Ident("events".to_string())),
+                                "iter".to_string(),
+                                Vec::new(),
+                            )),
+                            "enumerate".to_string(),
+                            Vec::new(),
                         )),
-                        true,
-                        false,
+                        "max_by".to_string(),
+                        vec![Expr::Ident("|a, b| match a.1.1.cmp(&b.1.1) {\n                        std::cmp::Ordering::Equal => b.1.2.cmp(&a.1.2),\n                        other => other,\n                    }".to_string())],
                     )),
                     then_branch: Block {
                         stmts: vec![
-                            // 使用 recv_timeout 等待消息，支持超时处理
-                            Statement::Expr(Expr::Match {
-                                expr: Box::new(Expr::MethodCall(
-                                    Box::new(Expr::Ident("receiver".to_string())),
-                                    "recv_timeout".to_string(),
-                                    vec![Expr::Ident("period".to_string())],
+                            // 移除已处理事件
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "(val, _, _)".to_string(),
+                                ty: None,
+                                init: Some(Expr::MethodCall(
+                                    Box::new(Expr::Ident("events".to_string())),
+                                    "remove".to_string(),
+                                    vec![Expr::Ident("idx".to_string())],
                                 )),
-                                arms: vec![
-                                    // Ok(val) => 正常触发，处理接收到的消息
-                                    MatchArm {
-                                        pattern: "Ok(val)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                // --- Compute Entrypoint (正常触发) ---
-                                                Statement::Expr(Expr::Block(Block {
-                                                    stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
-                                                    expr: None,
-                                                })),
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                    // Err(RecvTimeoutError::Timeout) => 超时触发
-                                    MatchArm {
-                                        pattern: "Err(crossbeam_channel::RecvTimeoutError::Timeout)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                // --- Recover Entrypoint (超时触发) ---
-                                                Statement::Expr(Expr::Call(
-                                                    Box::new(Expr::Path(
-                                                        vec!["eprintln!".to_string()],
-                                                        PathType::Namespace,
-                                                    )),
-                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: timeout dispatch → Recover_Entrypoint", impl_.name.type_identifier.to_lowercase())))],
-                                                )),
-                                                // recover_entrypoint();
-                                                Statement::Expr(Expr::Ident("// recover_entrypoint();".to_string())),
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                    // Err(_) => 通道关闭，退出循环
-                                    MatchArm {
-                                        pattern: "Err(crossbeam_channel::RecvTimeoutError::Disconnected)".to_string(),
-                                        guard: None,
-                                        body: Block {
-                                            stmts: vec![
-                                                Statement::Expr(Expr::Call(
-                                                    Box::new(Expr::Path(
-                                                        vec!["eprintln!".to_string()],
-                                                        PathType::Namespace,
-                                                    )),
-                                                    vec![Expr::Literal(Literal::Str(format!("{}Thread: channel closed", impl_.name.type_identifier.to_lowercase())))],
-                                                )),
-                                                Statement::Expr(Expr::Ident("return".to_string())),
-                                            ],
-                                            expr: None,
-                                        },
-                                    },
-                                ],
                             }),
+                            // --- Compute Entrypoint (正常触发) ---
+                            Statement::Expr(Expr::Block(Block {
+                                stmts: self.create_subprogram_call_logic_with_data(impl_, has_receiving_subprograms),
+                                expr: None,
+                            })),
                         ],
                         expr: None,
                     },
-                    else_branch: None,
-                }),
-            ],
+                    else_branch: Some(Block {
+                        stmts: vec![
+                            // 检查是否超时
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "now".to_string(),
+                                ty: None,
+                                init: Some(Expr::Call(
+                                    Box::new(Expr::Path(
+                                        vec!["Instant".to_string(), "now".to_string()],
+                                        PathType::Namespace,
+                                    )),
+                                    Vec::new(),
+                                )),
+                            }),
+                            Statement::Let(LetStmt {
+                                ifmut: false,
+                                name: "elapsed".to_string(),
+                                ty: None,
+                                init: Some(Expr::MethodCall(
+                                    Box::new(Expr::Ident("now".to_string())),
+                                    "duration_since".to_string(),
+                                    vec![Expr::Ident("start_time".to_string())],
+                                )),
+                            }),
+                            Statement::Expr(Expr::If {
+                                condition: Box::new(Expr::BinaryOp(
+                                    Box::new(Expr::Ident("elapsed".to_string())),
+                                    ">".to_string(),
+                                    Box::new(Expr::Ident("period".to_string())),
+                                )),
+                                then_branch: Block {
+                                    stmts: vec![
+                                        // 输出超时报错信息
+                                        Statement::Expr(Expr::Call(
+                                            Box::new(Expr::Path(
+                                                vec!["eprintln!".to_string()],
+                                                PathType::Namespace,
+                                            )),
+                                            vec![Expr::Literal(Literal::Str(format!("{}Thread: timeout dispatch → Recover_Entrypoint", impl_.name.type_identifier.to_lowercase())))],
+                                        )),
+                                        // recover_entrypoint();
+                                        Statement::Expr(Expr::Ident("// recover_entrypoint();".to_string())),
+                                    ],
+                                    expr: None,
+                                },
+                                else_branch: None,
+                            }),
+                        ],
+                        expr: None,
+                    }),
+                }));
+                
+                loop_stmts
+            },
             expr: None,
         }))));
 
@@ -3476,7 +3544,7 @@ impl AadlConverter {
                     ) = &subprocall.called
                     {
                         let subprogram_name = temp.implementation_name.type_identifier.to_lowercase();
-                        mycalls_sequence.push((subprocall.identifier.clone(), subprogram_name));
+                        mycalls_sequence.push((subprocall.identifier.to_lowercase(), subprogram_name));
                     }
                 }
             }
@@ -3491,11 +3559,11 @@ impl AadlConverter {
             shared_var_subprograms.insert(subprogram_name.clone(), shared_var_field.clone());
         }
         
-        // 创建有参数端口的子程序集合
+        // 创建子程序集合
         let subprograms_with_ports: std::collections::HashSet<String> = subprogram_calls.iter()
             .map(|(_, spg_name, _, _, _)| spg_name.clone())
             .collect();
-        
+        println!("subprograms_with_ports: {:?}", subprograms_with_ports);
         // 添加调用序列注释
         if !mycalls_sequence.is_empty() {
             let call_sequence = mycalls_sequence.iter()
@@ -3511,15 +3579,15 @@ impl AadlConverter {
 
         // 根据Mycalls中的顺序处理所有子程序调用
         for (call_id, subprogram_name) in mycalls_sequence {
-            let has_parameter_ports = subprograms_with_ports.contains(&subprogram_name);
+            let has_parameter_ports = subprograms_with_ports.contains(&call_id);
             
             port_handling_stmts.push(Statement::Expr(Expr::Ident(format!("// {}", call_id))));
             
             if has_parameter_ports {
                 // 有参数端口的子程序处理
                 if let Some((_, _, thread_port_name, is_send, port_type)) = subprogram_calls.iter()
-                    .find(|(_, spg_name, _, _, _)| spg_name == &subprogram_name) {
-                    
+                    .find(|(_, spg_identifier, _, _, _)| spg_identifier == &call_id) {
+
                     if *is_send {
                         // 发送模式
                         let mut send_stmts = Vec::new();
@@ -3731,6 +3799,175 @@ impl AadlConverter {
         None
     }
 
+    /// 创建事件收集代码
+    fn create_event_collection_logic(&self, port_urgency: &[(String, u32)], receive_ports: &[String]) -> Vec<Statement> {
+        let mut stmts = Vec::new();
+        
+        // 只有当事件队列为空时才尝试接收新消息
+        stmts.push(Statement::Expr(Expr::If {
+            condition: Box::new(Expr::MethodCall(
+                Box::new(Expr::Ident("events".to_string())),
+                "is_empty".to_string(),
+                Vec::new(),
+            )),
+            then_branch: Block {
+                stmts: {
+                    let mut collect_stmts = Vec::new();
+                    
+                    // 为每个有优先级的端口生成事件收集代码
+                    for (port_name, urgency) in port_urgency {
+                        let port_field_name = port_name.to_lowercase();
+                        
+                        // 生成 if let Some(rx) = &self.port_name 的代码
+                        collect_stmts.push(Statement::Expr(Expr::IfLet {
+                            pattern: "Some(rx)".to_string(),
+                            value: Box::new(Expr::Reference(
+                                Box::new(Expr::Path(
+                                    vec!["self".to_string(), port_field_name.clone()],
+                                    PathType::Member,
+                                )),
+                                true,
+                                false,
+                            )),
+                            then_branch: Block {
+                                stmts: vec![
+                                    // 生成 if let Ok(val) = rx.try_recv() 的代码
+                                    Statement::Expr(Expr::IfLet {
+                                        pattern: "Ok(val)".to_string(),
+                                        value: Box::new(Expr::MethodCall(
+                                            Box::new(Expr::Ident("rx".to_string())),
+                                            "try_recv".to_string(),
+                                            Vec::new(),
+                                        )),
+                                        then_branch: Block {
+                                            stmts: vec![
+                                                // events.push((val, urgency, ts))
+                                                Statement::Expr(Expr::MethodCall(
+                                                    Box::new(Expr::Ident("events".to_string())),
+                                                    "push".to_string(),
+                                                    vec![Expr::Parenthesized(Box::new(Expr::Call(
+                                                        Box::new(Expr::Ident("".to_string())), // 空标识符表示元组构造
+                                                        vec![
+                                                            Expr::Ident("val".to_string()),
+                                                            Expr::Literal(Literal::Int(*urgency as i64)),
+                                                            Expr::Ident("Instant::now()".to_string()),
+                                                        ],
+                                                    )))],
+                                                )),
+                                            ],
+                                            expr: None,
+                                        },
+                                        else_branch: None,
+                                    }),
+                                ],
+                                expr: None,
+                            },
+                            else_branch: None,
+                        }));
+                    }
+                    
+                    // 如果没有优先级信息，使用原来的逻辑处理接收端口
+                    if port_urgency.is_empty() && !receive_ports.is_empty() {
+                        let port_field_name = receive_ports[0].to_lowercase();
+                        collect_stmts.push(Statement::Expr(Expr::IfLet {
+                            pattern: "Some(rx)".to_string(),
+                            value: Box::new(Expr::Reference(
+                                Box::new(Expr::Path(
+                                    vec!["self".to_string(), port_field_name],
+                                    PathType::Member,
+                                )),
+                                true,
+                                false,
+                            )),
+                            then_branch: Block {
+                                stmts: vec![
+                                    Statement::Expr(Expr::IfLet {
+                                        pattern: "Ok(val)".to_string(),
+                                        value: Box::new(Expr::MethodCall(
+                                            Box::new(Expr::Ident("rx".to_string())),
+                                            "try_recv".to_string(),
+                                            Vec::new(),
+                                        )),
+                                        then_branch: Block {
+                                            stmts: vec![
+                                                // let ts = Instant::now();
+                                                Statement::Let(LetStmt {
+                                                    ifmut: false,
+                                                    name: "ts".to_string(),
+                                                    ty: None,
+                                                    init: Some(Expr::Call(
+                                                        Box::new(Expr::Path(
+                                                            vec!["Instant".to_string(), "now".to_string()],
+                                                            PathType::Namespace,
+                                                        )),
+                                                        Vec::new(),
+                                                    )),
+                                                }),
+                                                // events.push((val, 0, ts))
+                                                Statement::Expr(Expr::MethodCall(
+                                                    Box::new(Expr::Ident("events".to_string())),
+                                                    "push".to_string(),
+                                                    vec![Expr::Parenthesized(Box::new(Expr::Call(
+                                                        Box::new(Expr::Ident("".to_string())), // 空标识符表示元组构造
+                                                        vec![
+                                                            Expr::Ident("val".to_string()),
+                                                            Expr::Literal(Literal::Int(0)), // 默认优先级为0
+                                                            Expr::Ident("ts".to_string()),
+                                                        ],
+                                                    )))],
+                                                )),
+                                            ],
+                                            expr: None,
+                                        },
+                                        else_branch: None,
+                                    }),
+                                ],
+                                expr: None,
+                            },
+                            else_branch: None,
+                        }));
+                    }
+                    
+                    collect_stmts
+                },
+                expr: None,
+            },
+            else_branch: None,
+        }));
+        
+        stmts
+    }
+
+    // 辅助函数：提取事件端口的优先级信息
+    fn extract_event_port_urgency(&self, impl_: &ComponentImplementation) -> Vec<(String, u32)> {
+        let mut port_priorities = Vec::new();
+        
+        // 获取组件的属性
+        let properties = match &impl_.properties {
+            PropertyClause::Properties(props) => props,
+            _ => return port_priorities,
+        };
+        
+        // 查找 urgency 属性
+        for prop in properties {
+            if let Property::BasicProperty(bp) = prop {
+                if bp.identifier.name.to_lowercase() == "urgency" {
+                    // 解析属性值
+                    if let PropertyValue::Single(PropertyExpression::Apply(apply_term)) = &bp.value {
+                        // 解析优先级数值
+                        if let Ok(priority) = apply_term.number.parse::<u32>() {
+                            port_priorities.push((apply_term.applies_to.clone(), priority));
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 按优先级降序排序（优先级高的在前）
+        port_priorities.sort_by(|a, b| b.1.cmp(&a.1));
+        port_priorities
+    }
+
     // 辅助函数：提取调度协议
     fn extract_dispatch_protocol(&self, impl_: &ComponentImplementation) -> Option<String> {
         let target_name = "dispatch_protocol";
@@ -3788,7 +4025,8 @@ impl AadlConverter {
                                                 let port_type = self.get_subprogram_port_type(&subprogram_name, &sou_parameter);
                                                 calls.push((
                                                     sou_parameter.to_lowercase(),    // 子程序端口名
-                                                    subprogram_name.to_lowercase(),  // 子程序名
+                                                    //subprogram_name.to_lowercase(),  // 子程序名
+                                                    subprogram_identifier.to_lowercase(),  // 子程序标识符
                                                     thread_port_name.to_lowercase(), // 线程端口名
                                                     true,
                                                     port_type,
@@ -3814,7 +4052,8 @@ impl AadlConverter {
                                                 let port_type = self.get_subprogram_port_type(&subprogram_name, &des_parameter);
                                                 calls.push((
                                                     des_parameter.to_lowercase(),
-                                                    subprogram_name.to_lowercase(),
+                                                    //subprogram_name.to_lowercase(),
+                                                    subprogram_identifier.to_lowercase(),
                                                     thread_port_name.to_lowercase(),
                                                     false,
                                                     port_type,

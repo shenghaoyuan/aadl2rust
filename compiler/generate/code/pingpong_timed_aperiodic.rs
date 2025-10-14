@@ -1,9 +1,9 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-16 20:08:57
+// 生成时间: 2025-10-14 22:06:50
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
@@ -24,25 +24,43 @@ fn set_thread_affinity(cpu: isize) {
     }
 }
 
+// ---------------- System ----------------
+pub trait System {
+    fn new() -> Self
+        where Self: Sized;
+    fn run(self);
+}
+
+// ---------------- Process ----------------
+pub trait Process {
+    fn new(cpu_id: isize) -> Self
+        where Self: Sized;
+    fn start(self);
+}
+
+// ---------------- Thread ----------------
+pub trait Thread {
+    fn new(cpu_id: isize) -> Self
+        where Self: Sized;
+    fn run(self);
+}
+
 // AADL Process: a
 #[derive(Debug)]
 pub struct aProcess {
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 子组件线程（Pinger : thread P）
+    pub cpu_id: isize,// 进程 CPU ID
     #[allow(dead_code)]
-    pub pinger: pThread,
-    // 子组件线程（Ping_Me : thread Q）
+    pub pinger: pThread,// 子组件线程（Pinger : thread P）
     #[allow(dead_code)]
-    pub ping_me: qThread,
+    pub ping_me: qThread,// 子组件线程（Ping_Me : thread Q）
 }
 
-impl aProcess {
+impl Process for aProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut pinger: pThread = pThread::new(cpu_id);
         let mut ping_me: qThread = qThread::new(cpu_id);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             pinger.data_source = Some(channel.0);
         // build connection: 
@@ -51,7 +69,7 @@ impl aProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { pinger, ping_me, cpu_id, .. } = self;
         thread::Builder::new()
             .name("pinger".to_string())
@@ -66,20 +84,19 @@ impl aProcess {
 // AADL System: PING
 #[derive(Debug)]
 pub struct pingSystem {
-    // 子组件进程（Node_A : process A）
     #[allow(dead_code)]
-    pub node_a: aProcess,
+    pub node_a: aProcess,// 子组件进程（Node_A : process A）
 }
 
-impl pingSystem {
+impl System for pingSystem {
     // Creates a new system instance
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut node_a: aProcess = aProcess::new(0);
         return Self { node_a }  //显式return;
     }
     
     // Runs the system, starts all processes
-    pub fn run(self: Self) -> () {
+    fn run(self: Self) -> () {
         self.node_a.start();
     }
     
@@ -119,39 +136,34 @@ pub mod ping_spg {
 // AADL Thread: p
 #[derive(Debug)]
 pub struct pThread {
-    // Port: Data_Source Out
-    pub data_source: Option<mpsc::Sender<custom_int>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub recover_entrypoint_source_text: String, // AADL属性: Recover_Entrypoint_Source_Text
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub deadline: u64, // AADL属性: Deadline
-    pub priority: u64, // AADL属性: Priority
-    pub dispatch_offset: u64, // AADL属性: Dispatch_Offset
+    pub data_source: Option<Sender<custom_int>>,// Port: Data_Source Out
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub recover_entrypoint_source_text: String,// AADL属性(impl): Recover_Entrypoint_Source_Text
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub period: u64,// AADL属性(impl): Period
+    pub deadline: u64,// AADL属性(impl): Deadline
+    pub priority: u64,// AADL属性(impl): Priority
+    pub dispatch_offset: u64,// AADL属性(impl): Dispatch_Offset
 }
 
-impl pThread {
+impl Thread for pThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            data_source: None,
-            cpu_id: cpu_id,
-            recover_entrypoint_source_text: "recover".to_string(), // AADL属性: Recover_Entrypoint_Source_Text
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 2000, // AADL属性: Period
-            deadline: 2000, // AADL属性: Deadline
-            priority: 2, // AADL属性: Priority
-            dispatch_offset: 500, // AADL属性: Dispatch_Offset
-        }
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            data_source: None, 
+            recover_entrypoint_source_text: "recover".to_string(), 
+            dispatch_protocol: "Periodic".to_string(), 
+            deadline: 2000, 
+            dispatch_offset: 500, 
+            period: 2000, 
+            priority: 2, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl pThread {
+    
     // Thread execution entry point
     // Period: Some(2000) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 2 };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
@@ -167,8 +179,8 @@ impl pThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // P_Spg();
-                // P_Spg;
+                           // p_spg();
+                // p_spg;
                 if let Some(sender) = &self.data_source {
                     let mut val = 0;
                     do_ping_spg::send(&mut val);
@@ -185,31 +197,26 @@ impl pThread {
 // AADL Thread: q
 #[derive(Debug)]
 pub struct qThread {
-    // Port: Data_Sink In
-    pub data_sink: Option<mpsc::Receiver<custom_int>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
+    pub data_sink: Option<Receiver<custom_int>>,// Port: Data_Sink In
+    pub cpu_id: isize,// 结构体新增 CPU ID
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+    pub period: u64,// AADL属性(impl): Period
 }
 
-impl qThread {
+impl Thread for qThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            data_sink: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Timed".to_string(), // AADL属性: Dispatch_Protocol
-            period: 1000, // AADL属性: Period
-        }
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            period: 1000, 
+            data_sink: None, 
+            dispatch_protocol: "Timed".to_string(), 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl qThread {
+    
     // Thread execution entry point
     // Period: Some(1000) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let prio = period_to_priority(self.period as f64);
             let mut param: sched_param = sched_param { sched_priority: prio };
@@ -222,26 +229,34 @@ impl qThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(1000);
+        let mut start_time: std::time::Instant = Instant::now();
+        let mut events = Vec::new();
         loop {
-            if let Some(receiver) = &self.data_sink {
-                match receiver.recv_timeout(period) {
-                    Ok(val) => {
-                        // 收到消息 → 调用处理函数
-                        {
-                            // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // Q_Spg();
-                            // Q_Spg;
-                            ping_spg::receive(val);
-                        };
-                    },
-                    Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
-                        eprintln!("qThread: timeout dispatch → Recover_Entrypoint");
-                        // recover_entrypoint();;
-                    },
-                    Err(_) => {
-                        eprintln!("qThread: channel closed");
-                        return;
-                    },
+            if events.is_empty() {
+                if let Some(rx) = &self.data_sink {
+                    if let Ok(val) = rx.try_recv() {
+                        let ts = Instant::now();
+                        events.push(((val, 0, ts)));
+                    };
+                };
+            };
+            if let Some((idx, (val, _urgency, _ts))) = events.iter().enumerate().max_by(|a, b| match a.1.1.cmp(&b.1.1) {
+                        std::cmp::Ordering::Equal => b.1.2.cmp(&a.1.2),
+                        other => other,
+                    }) {
+                let (val, _, _) = events.remove(idx);
+                {
+                    // --- 调用序列（等价 AADL 的 Wrapper）---
+                           // q_spg();
+                    // q_spg;
+                    ping_spg::receive(val);
+                };
+            } else {
+                let now = Instant::now();
+                let elapsed = now.duration_since(start_time);
+                if elapsed > period {
+                    eprintln!("qThread: timeout dispatch → Recover_Entrypoint");
+                    // recover_entrypoint();;
                 };
             };
         };
