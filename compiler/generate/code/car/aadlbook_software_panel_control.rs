@@ -1,13 +1,14 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:00:16
+// 生成时间: 2025-11-12 12:15:15
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -27,40 +28,26 @@ fn set_thread_affinity(cpu: isize) {
 // AADL Process: panel_control
 #[derive(Debug)]
 pub struct panel_controlProcess {
-    // Port: increase_speed In
-    pub increase_speed: Option<mpsc::Receiver<()>>,
-    // Port: decrease_speed In
-    pub decrease_speed: Option<mpsc::Receiver<()>>,
-    // Port: current_speed In
-    pub current_speed: Option<mpsc::Receiver<speed>>,
-    // Port: desired_speed Out
-    pub desired_speed: Option<mpsc::Sender<speed>>,
-    // Port: tire_pressure_in In
-    pub tire_pressure_in: Option<mpsc::Receiver<pressure>>,
-    // Port: tire_pressure_out Out
-    pub tire_pressure_out: Option<mpsc::Sender<pressure>>,
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 内部端口: increase_speed In
-    pub increase_speedSend: Option<mpsc::Sender<()>>,
-    // 内部端口: decrease_speed In
-    pub decrease_speedSend: Option<mpsc::Sender<()>>,
-    // 内部端口: current_speed In
-    pub current_speedSend: Option<mpsc::Sender<speed>>,
-    // 内部端口: desired_speed Out
-    pub desired_speedRece: Option<mpsc::Receiver<speed>>,
-    // 内部端口: tire_pressure_in In
-    pub tire_pressure_inSend: Option<mpsc::Sender<pressure>>,
-    // 内部端口: tire_pressure_out Out
-    pub tire_pressure_outRece: Option<mpsc::Receiver<pressure>>,
-    // 子组件线程（thr : thread panel_control_thr）
+    pub increase_speed: Option<Receiver<()>>,// Port: increase_speed In
+    pub decrease_speed: Option<Receiver<()>>,// Port: decrease_speed In
+    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<Sender<u16>>,// Port: desired_speed Out
+    pub tire_pressure_in: Option<Receiver<i8>>,// Port: tire_pressure_in In
+    pub tire_pressure_out: Option<Sender<i8>>,// Port: tire_pressure_out Out
+    pub cpu_id: isize,// 进程 CPU ID
+    pub increase_speedSend: Option<Sender<()>>,// 内部端口: increase_speed In
+    pub decrease_speedSend: Option<Sender<()>>,// 内部端口: decrease_speed In
+    pub current_speedSend: Option<Sender<u16>>,// 内部端口: current_speed In
+    pub desired_speedRece: Option<Receiver<u16>>,// 内部端口: desired_speed Out
+    pub tire_pressure_inSend: Option<Sender<i8>>,// 内部端口: tire_pressure_in In
+    pub tire_pressure_outRece: Option<Receiver<i8>>,// 内部端口: tire_pressure_out Out
     #[allow(dead_code)]
-    pub thr: panel_control_thrThread,
+    pub thr: panel_control_thrThread,// 子组件线程（thr : thread panel_control_thr）
 }
 
-impl panel_controlProcess {
+impl Process for panel_controlProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut thr: panel_control_thrThread = panel_control_thrThread::new(cpu_id);
         let mut increase_speedSend = None;
         let mut decrease_speedSend = None;
@@ -68,27 +55,27 @@ impl panel_controlProcess {
         let mut desired_speedRece = None;
         let mut tire_pressure_inSend = None;
         let mut tire_pressure_outRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         increase_speedSend = Some(channel.0);
         // build connection: 
             thr.increase_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         decrease_speedSend = Some(channel.0);
         // build connection: 
             thr.decrease_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             thr.current_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         tire_pressure_inSend = Some(channel.0);
         // build connection: 
             thr.tire_pressure_in = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             thr.tire_pressure_out = Some(channel.0);
         tire_pressure_outRece = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             thr.desired_speed = Some(channel.0);
         desired_speedRece = Some(channel.1);
@@ -96,7 +83,7 @@ impl panel_controlProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { increase_speed, increase_speedSend, decrease_speed, decrease_speedSend, current_speed, current_speedSend, desired_speed, desired_speedRece, tire_pressure_in, tire_pressure_inSend, tire_pressure_out, tire_pressure_outRece, thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("thr".to_string())
@@ -186,19 +173,44 @@ impl panel_controlProcess {
 // AADL Thread: panel_control_thr
 #[derive(Debug)]
 pub struct panel_control_thrThread {
-    // Port: increase_speed In
-    pub increase_speed: Option<mpsc::Receiver<()>>,
-    // Port: decrease_speed In
-    pub decrease_speed: Option<mpsc::Receiver<()>>,
-    // Port: current_speed In
-    pub current_speed: Option<mpsc::Receiver<speed>>,
-    // Port: desired_speed Out
-    pub desired_speed: Option<mpsc::Sender<speed>>,
-    // Port: tire_pressure_in In
-    pub tire_pressure_in: Option<mpsc::Receiver<pressure>>,
-    // Port: tire_pressure_out Out
-    pub tire_pressure_out: Option<mpsc::Sender<pressure>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
+    pub increase_speed: Option<Receiver<()>>,// Port: increase_speed In
+    pub decrease_speed: Option<Receiver<()>>,// Port: decrease_speed In
+    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<Sender<u16>>,// Port: desired_speed Out
+    pub tire_pressure_in: Option<Receiver<i8>>,// Port: tire_pressure_in In
+    pub tire_pressure_out: Option<Sender<i8>>,// Port: tire_pressure_out Out
+    pub cpu_id: isize,// 结构体新增 CPU ID
+}
+
+impl Thread for panel_control_thrThread {
+    // 创建组件并初始化AADL属性
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            current_speed: None, 
+            increase_speed: None, 
+            tire_pressure_out: None, 
+            tire_pressure_in: None, 
+            desired_speed: None, 
+            decrease_speed: None, 
+            cpu_id: cpu_id, // CPU ID
+        };
+    }
+    
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
 }
 

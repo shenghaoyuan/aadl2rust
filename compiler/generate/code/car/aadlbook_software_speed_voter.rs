@@ -1,13 +1,14 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:00:16
+// 生成时间: 2025-11-12 12:15:15
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -27,41 +28,33 @@ fn set_thread_affinity(cpu: isize) {
 // AADL Process: speed_voter
 #[derive(Debug)]
 pub struct speed_voterProcess {
-    // Port: wheel_sensor In
-    pub wheel_sensor: Option<mpsc::Receiver<speed>>,
-    // Port: laser_sensor In
-    pub laser_sensor: Option<mpsc::Receiver<speed>>,
-    // Port: speed Out
-    pub speed: Option<mpsc::Sender<speed>>,
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 内部端口: wheel_sensor In
-    pub wheel_sensorSend: Option<mpsc::Sender<speed>>,
-    // 内部端口: laser_sensor In
-    pub laser_sensorSend: Option<mpsc::Sender<speed>>,
-    // 内部端口: speed Out
-    pub speedRece: Option<mpsc::Receiver<speed>>,
-    // 子组件线程（thr : thread speed_voter_thr）
+    pub wheel_sensor: Option<Receiver<u16>>,// Port: wheel_sensor In
+    pub laser_sensor: Option<Receiver<u16>>,// Port: laser_sensor In
+    pub speed: Option<Sender<u16>>,// Port: speed Out
+    pub cpu_id: isize,// 进程 CPU ID
+    pub wheel_sensorSend: Option<Sender<u16>>,// 内部端口: wheel_sensor In
+    pub laser_sensorSend: Option<Sender<u16>>,// 内部端口: laser_sensor In
+    pub speedRece: Option<Receiver<u16>>,// 内部端口: speed Out
     #[allow(dead_code)]
-    pub thr: speed_voter_thrThread,
+    pub thr: speed_voter_thrThread,// 子组件线程（thr : thread speed_voter_thr）
 }
 
-impl speed_voterProcess {
+impl Process for speed_voterProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut thr: speed_voter_thrThread = speed_voter_thrThread::new(cpu_id);
         let mut wheel_sensorSend = None;
         let mut laser_sensorSend = None;
         let mut speedRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         wheel_sensorSend = Some(channel.0);
         // build connection: 
             thr.wheel_sensor = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         laser_sensorSend = Some(channel.0);
         // build connection: 
             thr.laser_sensor = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             thr.speed = Some(channel.0);
         speedRece = Some(channel.1);
@@ -69,7 +62,7 @@ impl speed_voterProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { wheel_sensor, wheel_sensorSend, laser_sensor, laser_sensorSend, speed, speedRece, thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("thr".to_string())
@@ -120,39 +113,32 @@ impl speed_voterProcess {
 // AADL Thread: speed_voter_thr
 #[derive(Debug)]
 pub struct speed_voter_thrThread {
-    // Port: wheel_sensor In
-    pub wheel_sensor: Option<mpsc::Receiver<speed>>,
-    // Port: laser_sensor In
-    pub laser_sensor: Option<mpsc::Receiver<speed>>,
-    // Port: speed Out
-    pub speed: Option<mpsc::Sender<speed>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub mipsbudget: f64, // AADL属性: mipsbudget
+    pub wheel_sensor: Option<Receiver<u16>>,// Port: wheel_sensor In
+    pub laser_sensor: Option<Receiver<u16>>,// Port: laser_sensor In
+    pub speed: Option<Sender<u16>>,// Port: speed Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub period: u64,// AADL属性: Period
+    pub mipsbudget: f64,// AADL属性: mipsbudget
+    pub cpu_id: isize,// 结构体新增 CPU ID
 }
 
-impl speed_voter_thrThread {
+impl Thread for speed_voter_thrThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            wheel_sensor: None,
-            laser_sensor: None,
-            speed: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 8, // AADL属性: Period
-            mipsbudget: 8, // AADL属性: mipsbudget
-        }
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            dispatch_protocol: "Periodic".to_string(), 
+            laser_sensor: None, 
+            speed: None, 
+            mipsbudget: 8.0, 
+            wheel_sensor: None, 
+            period: 8, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
-}
-impl speed_voter_thrThread {
+    
     // Thread execution entry point
     // Period: None ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };

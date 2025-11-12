@@ -13,8 +13,8 @@ pub struct AadlConverter {
     cpu_scheduling_protocols: HashMap<String, String>, // 存储CPU实现的调度协议信息
     cpu_name_to_id_mapping: HashMap<String, usize>, // 存储CPU名称到ID的映射关系
     data_comp_type: HashMap<String, String>, // 存储数据组件类型信息，key是数据组件名称，value是数据组件类型。是为了处理数据组件类型为结构体、联合体时，需要根据组件实现impl来获取属性信息
-    // 存储线程类型字段对应的属性值，key为线程结构体名(如 fooThread)，value为字段名到属性值的映射
-    thread_field_values: HashMap<String, HashMap<String, StruPropertyValue>>,
+    
+    thread_field_values: HashMap<String, HashMap<String, StruPropertyValue>>,// 存储线程类型字段对应的属性值，key为线程结构体名(如 fooThread)，value为字段名到属性值的映射
     thread_field_types: HashMap<String, HashMap<String, Type>>,// 存储线程类型字段对应的类型，key为线程结构体名(如 fooThread)，value为字段名到类型的映射。为了Shared的字段作为参数的依据
 }
 
@@ -112,8 +112,8 @@ impl AadlConverter {
         //处理CPU和分配ID的映射关系，生成的Rust代码中，初始化<ID,调度协议>的映射关系
         self.convert_cpu_schedule_mapping(&mut module, &self.cpu_scheduling_protocols, &self.cpu_name_to_id_mapping);
         self.add_period_to_priority_function(&mut module, &self.cpu_scheduling_protocols);
-        println!("cpu_scheduling_protocols: {:?}", self.cpu_scheduling_protocols);
-        println!("cpu_name_to_id_mapping: {:?}", self.cpu_name_to_id_mapping);
+        //println!("cpu_scheduling_protocols: {:?}", self.cpu_scheduling_protocols);
+        //println!("cpu_name_to_id_mapping: {:?}", self.cpu_name_to_id_mapping);
         module
     }
 
@@ -238,21 +238,444 @@ impl AadlConverter {
             ComponentCategory::Subprogram => self.convert_subprogram(comp, package),
             ComponentCategory::System => self.convert_system_component(comp),
             ComponentCategory::Process => self.convert_process_component(comp),
+            ComponentCategory::Device => self.convert_device_component(comp),
             _ => Vec::default(), //TODO:其他组件类型还需要处理
+        }
+    }
+
+    fn convert_device_component(&mut self, comp: &ComponentType) -> Vec<Item> {
+        let mut items = Vec::new();
+
+        // 1. 结构体定义
+        let mut fields = self.convert_type_features(&comp.features); //特征列表（端口字段）
+        
+        // 添加周期字段
+        fields.push(Field {
+            name: "period_ms".to_string(),
+            ty: Type::Named("u64".to_string()),
+            docs: vec![format!("// 周期：{}ms", self.extract_period(comp).unwrap_or(10))],
+            attrs: Vec::new(),
+        });
+        
+        let struct_name = format!("{}Device", comp.identifier.to_lowercase());
+        let struct_def = StructDef {
+            name: struct_name.clone(),
+            fields,
+            properties: Vec::new(),
+            generics: Vec::new(),
+            derives: vec!["Debug".to_string()],
+            docs: vec![format!("// AADL Device: {}", comp.identifier)],
+            vis: Visibility::Public,
+        };
+        items.push(Item::Struct(struct_def));
+
+        // 2. 实现块（包含new和run方法）
+        let mut impl_items = Vec::new();
+        
+        // 生成 new() 方法
+        let period_ms = self.extract_period(comp).unwrap_or(10);
+        let new_method = self.create_device_new_method(comp, period_ms);
+        impl_items.push(ImplItem::Method(new_method));
+        
+        // 生成 run() 方法
+        let run_method = self.create_device_run_method(comp);
+        impl_items.push(ImplItem::Method(run_method));
+        
+        let impl_block = ImplBlock {
+            target: Type::Named(struct_name),
+            generics: Vec::new(),
+            items: impl_items,
+            trait_impl: None,
+        };
+        items.push(Item::Impl(impl_block));
+
+        items
+    }
+
+    /// 创建 device 的 new() 方法
+    fn create_device_new_method(&self, comp: &ComponentType, period_ms: u64) -> FunctionDef {
+        let mut field_initializations = Vec::new();
+        
+        // 初始化所有端口字段为 None
+        if let FeatureClause::Items(features) = &comp.features {
+            for feature in features {
+                if let Feature::Port(port) = feature {
+                    let port_name = port.identifier.to_lowercase();
+                    field_initializations.push(format!("            {}: None,", port_name));
+                }
+            }
+        }
+        
+        // 初始化周期字段
+        field_initializations.push(format!("            period_ms: {},", period_ms));
+        
+        // 创建结构体字面量返回语句
+        let struct_literal = format!("return Self {{\n{}\n        }}", field_initializations.join("\n"));
+        
+        // 创建方法体
+        let body = Block {
+            stmts: vec![Statement::Expr(Expr::Ident(struct_literal))],
+            expr: None,
+        };
+        
+        FunctionDef {
+            name: "new".to_string(),
+            params: Vec::new(),
+            return_type: Type::Named("Self".to_string()),
+            body,
+            asyncness: false,
+            vis: Visibility::None,
+            docs: vec!["// Creates a new device instance".to_string()],
+            attrs: Vec::new(),
+        }
+    }
+
+    /// 创建 device 的 run() 方法
+    fn create_device_run_method(&self, comp: &ComponentType) -> FunctionDef {
+        let mut stmts = Vec::new();
+        
+        // 获取所有输入端口
+        let mut input_ports = Vec::new();
+        if let FeatureClause::Items(features) = &comp.features {
+            for feature in features {
+                if let Feature::Port(port) = feature {
+                    if port.direction == PortDirection::In {
+                        input_ports.push(port.clone());
+                    }
+                }
+            }
+        }
+        
+        // 获取所有输出端口
+        let mut output_ports = Vec::new();
+        if let FeatureClause::Items(features) = &comp.features {
+            for feature in features {
+                if let Feature::Port(port) = feature {
+                    if port.direction == PortDirection::Out {
+                        output_ports.push(port.clone());
+                    }
+                }
+            }
+        }
+        
+        // 创建周期 Duration
+        stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "period".to_string(),
+            ty: Some(Type::Path(vec![
+                "std".to_string(),
+                "time".to_string(),
+                "Duration".to_string(),
+            ])),
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(
+                    vec!["Duration".to_string(), "from_millis".to_string()],
+                    PathType::Namespace,
+                )),
+                vec![Expr::Path(
+                    vec!["self".to_string(), "period_ms".to_string()],
+                    PathType::Member,
+                )],
+            )),
+        }));
+        
+        // 创建随机数生成器
+        if !output_ports.is_empty() {
+            stmts.push(Statement::Let(LetStmt {
+                ifmut: true,
+                name: "rng".to_string(),
+                ty: None,
+                init: Some(Expr::Call(
+                    Box::new(Expr::Path(
+                        vec!["rand".to_string(), "thread_rng".to_string()],
+                        PathType::Namespace,
+                    )),
+                    Vec::new(),
+                )),
+            }));
+        }
+        
+        // 创建主循环
+        let mut loop_stmts = Vec::new();
+        
+        // 记录开始时间
+        loop_stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "start".to_string(),
+            ty: None,
+            init: Some(Expr::Call(
+                Box::new(Expr::Path(
+                    vec!["Instant".to_string(), "now".to_string()],
+                    PathType::Namespace,
+                )),
+                Vec::new(),
+            )),
+        }));
+        println!("type_mappings: {:?}", self.type_mappings);
+        
+        if !input_ports.is_empty() {
+            loop_stmts.push(Statement::Comment("// --- 从输入端口接收数据 ---".to_string()));
+        }
+        
+        // 为每个输入端口尝试接收数据
+        for port in &input_ports {
+            let port_name = port.identifier.to_lowercase();
+            let received_var = format!("{}_in_val", port_name.clone());
+            let log_port_name = port_name.clone();
+            let field_port_name = port_name.clone();
+            
+            let inner_then_block = Block {
+                stmts: vec![
+                    Statement::Expr(Expr::Call(
+                        Box::new(Expr::Path(
+                            vec!["println!".to_string()],
+                            PathType::Namespace,
+                        )),
+                        vec![
+                            Expr::Literal(Literal::Str(format!(
+                                "[{}] Received {}: {{:?}}",
+                                comp.identifier.to_lowercase(),
+                                log_port_name
+                            ))),
+                            Expr::Ident(received_var.clone()),
+                        ],
+                    )),
+                    Statement::Comment("// TODO: 在此处加入执行逻辑".to_string()),
+                ],
+                expr: None,
+            };
+            
+            let receive_block = Block {
+                stmts: vec![Statement::Expr(Expr::IfLet {
+                    pattern: format!("Ok({})", received_var),
+                    value: Box::new(Expr::MethodCall(
+                        Box::new(Expr::Ident("rx".to_string())),
+                        "try_recv".to_string(),
+                        Vec::new(),
+                    )),
+                    then_branch: inner_then_block,
+                    else_branch: None,
+                })],
+                expr: None,
+            };
+            
+            loop_stmts.push(Statement::Expr(Expr::IfLet {
+                pattern: "Some(rx)".to_string(),
+                value: Box::new(Expr::Reference(
+                    Box::new(Expr::Path(
+                        vec!["self".to_string(), field_port_name],
+                        PathType::Member,
+                    )),
+                    true,
+                    false,
+                )),
+                then_branch: receive_block,
+                else_branch: None,
+            }));
+        }
+        
+        // 为每个输出端口生成数据并发送
+        for port in &output_ports {
+            let port_name = port.identifier.to_lowercase();
+            
+            // 确定端口的数据类型
+            let data_type = match &port.port_type {
+                PortType::Data { classifier } | PortType::EventData { classifier } => {
+                    classifier
+                        .as_ref()
+                        .map(|c| self.classifier_to_type(c))
+                        .unwrap_or(Type::Named("error_type".to_string()))
+                }
+                PortType::Event => Type::Named("()".to_string()),
+            };
+            println!("data_type: {:?}", data_type);
+            
+            // 生成随机数据值（根据类型）
+            let random_value = match &data_type {
+                Type::Named(type_name) => {
+                    match type_name.as_str() {
+                        "i32" | "i64" | "i16" | "i8" => {
+                            // 生成 0-200 的随机整数
+                            Expr::MethodCall(
+                                Box::new(Expr::Ident("rng".to_string())),
+                                "gen_range".to_string(),
+                                vec![
+                                    Expr::Literal(Literal::Int(0)),
+                                    Expr::Literal(Literal::Int(201)),
+                                ],
+                            )
+                        }
+                        "u32" | "u64" | "u16" | "u8" => {
+                            Expr::MethodCall(
+                                Box::new(Expr::Ident("rng".to_string())),
+                                "gen_range".to_string(),
+                                vec![
+                                    Expr::Literal(Literal::Int(0)),
+                                    Expr::Literal(Literal::Int(201)),
+                                ],
+                            )
+                        }
+                        "f32" | "f64" => {
+                            Expr::MethodCall(
+                                Box::new(Expr::Ident("rng".to_string())),
+                                "gen_range".to_string(),
+                                vec![
+                                    Expr::Literal(Literal::Float(0.0)),
+                                    Expr::Literal(Literal::Float(200.0)),
+                                ],
+                            )
+                        }
+                        "bool" => {
+                            Expr::MethodCall(
+                                Box::new(Expr::Ident("rng".to_string())),
+                                "gen_bool".to_string(),
+                                vec![Expr::Literal(Literal::Float(0.9))], // 90%概率为true
+                            )
+                        }
+                        "error_type" => {
+                            Expr::Ident("please customize".to_string())
+                        }
+                        _ => {
+                            Expr::Ident("please customize".to_string())
+                        } // 默认值
+                    }
+                }
+                _ => Expr::Literal(Literal::Int(0)),
+            };
+            
+            // 创建变量存储生成的值
+            let value_var = format!("{}_val", port_name);
+            loop_stmts.push(Statement::Let(LetStmt {
+                ifmut: false,
+                name: value_var.clone(),
+                ty: None,
+                init: Some(random_value),
+            }));
+            
+            // 发送数据（如果端口存在）
+            let send_block = Block {
+                stmts: vec![
+                    Statement::Let(LetStmt {
+                        ifmut: false,
+                        name: "_".to_string(),
+                        ty: None,
+                        init: Some(Expr::MethodCall(
+                            Box::new(Expr::Ident("tx".to_string())),
+                            "send".to_string(),
+                            vec![Expr::Ident(value_var.clone())],
+                        )),
+                    }),
+                    Statement::Expr(Expr::Call(
+                        Box::new(Expr::Path(
+                            vec!["println!".to_string()],
+                            PathType::Namespace,
+                        )),
+                        vec![
+                            Expr::Literal(Literal::Str(format!(
+                                "[{}] send {} = {{:?}}",
+                                comp.identifier.to_lowercase(),
+                                port_name
+                            ))),
+                            Expr::Ident(value_var),
+                        ],
+                    )),
+                ],
+                expr: None,
+            };
+            
+            loop_stmts.push(Statement::Expr(Expr::IfLet {
+                pattern: "Some(tx)".to_string(),
+                value: Box::new(Expr::Reference(
+                    Box::new(Expr::Path(
+                        vec!["self".to_string(), port_name.clone()],
+                        PathType::Member,
+                    )),
+                    true,
+                    false,
+                )),
+                then_branch: send_block,
+                else_branch: None,
+            }));
+        }
+        
+        // 计算已用时间并睡眠剩余时间
+        loop_stmts.push(Statement::Let(LetStmt {
+            ifmut: false,
+            name: "elapsed".to_string(),
+            ty: None,
+            init: Some(Expr::MethodCall(
+                Box::new(Expr::Ident("start".to_string())),
+                "elapsed".to_string(),
+                Vec::new(),
+            )),
+        }));
+        
+        // 睡眠剩余时间
+        loop_stmts.push(Statement::Expr(Expr::If {
+            condition: Box::new(Expr::BinaryOp(
+                Box::new(Expr::Ident("elapsed".to_string())),
+                "<".to_string(),
+                Box::new(Expr::Ident("period".to_string())),
+            )),
+            then_branch: Block {
+                stmts: vec![Statement::Expr(Expr::MethodCall(
+                    Box::new(Expr::Path(
+                        vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                        PathType::Namespace,
+                    )),
+                    "".to_string(),
+                    vec![Expr::MethodCall(
+                        Box::new(Expr::Ident("period".to_string())),
+                        "saturating_sub".to_string(),
+                        vec![Expr::Ident("elapsed".to_string())],
+                    )],
+                ))],
+                expr: None,
+            },
+            else_branch: None,
+        }));
+        
+        // 将循环语句添加到主语句列表
+        stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
+            stmts: loop_stmts,
+            expr: None,
+        }))));
+        
+        FunctionDef {
+            name: "run".to_string(),
+            params: vec![Param {
+                name: "self".to_string(),
+                ty: Type::Named("Self".to_string()),
+            }],
+            return_type: Type::Unit,
+            body: Block {
+                stmts,
+                expr: None,
+            },
+            asyncness: false,
+            vis: Visibility::None,
+            docs: vec!["// Device execution entry point - periodically generates and sends data".to_string()],
+            attrs: Vec::new(),
         }
     }
 
     fn convert_data_component(&mut self, comp: &ComponentType) -> Vec<Item> {
         let target_type = self.determine_data_type(comp);
-        // 当 determine_data_type 返回空元组类型时，不继续处理
         // 当 determine_data_type 返回结构体类型时，生成结构体定义
         // 当 determine_data_type 返回联合体类型时，生成枚举定义
         // 当 determine_data_type 返回枚举类型时，生成枚举定义
+        //TODO:这里需要处理，当确定为复杂类型时，需要将组件标识符添加到type_mappings中
         if let Type::Named(unit_type) = &target_type {
             if unit_type.to_lowercase() == "struct" {
                 // 从组件属性中提取属性列表
                 if let PropertyClause::Properties(props) = &comp.properties {
                     let struct_def = self.determine_struct_type(comp, props);
+
+                    // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
+                    if !self.type_mappings.contains_key(&comp.identifier.to_lowercase()) {
+                        self.type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
+                    }
+
                     if struct_def.fields.is_empty() { //说明是通过impl中子组件来获取字段的，而不是在此时type中
                         return Vec::new();
                     } else {
@@ -287,9 +710,9 @@ impl AadlConverter {
                 }
             }
         }
-        
         // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
         if !self.type_mappings.contains_key(&comp.identifier.to_lowercase()) {
+            println!("3333comp.identifier: {:?}", comp.identifier.to_lowercase());
             self.type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
         }
         
@@ -317,8 +740,6 @@ impl AadlConverter {
             for prop in props {
                 if let Property::BasicProperty(bp) = prop {
                     // 处理 Data_Model::Data_Representation 属性
-                    println!("bp: {:?}", bp);
-                    
                     // 检查属性集是否为 "Data_Model" 且属性名为 "Data_Representation"
                     if let Some(property_set) = &bp.identifier.property_set {
                         if property_set.to_lowercase() == "data_model" 
@@ -900,7 +1321,7 @@ impl AadlConverter {
                     .map(|c: &PortDataTypeReference| self.classifier_to_type(c)) //对 Option 类型调用 .map() 方法，用于在 Some(...) 中包裹的值c上应用一个函数。
                     .unwrap_or(Type::Named("()".to_string()))
             }
-            PortType::Event => Type::Named("()".to_string()), // 事件端口固定使用单元类型
+            PortType::Event => Type::Named("()".to_string()), // TODO:事件端口固定使用单元类型
         };
 
         // 组合成最终类型
@@ -1819,20 +2240,30 @@ impl AadlConverter {
 
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
-                // 只处理进程组件
-                if matches!(sub.category, ComponentCategory::Process) {
+                if matches!(sub.category, ComponentCategory::Process | ComponentCategory::Device) {
                     let type_name = match &sub.classifier {
                         SubcomponentClassifier::ClassifierReference(
                             UniqueComponentClassifierReference::Implementation(unirf),
-                        ) => {
-                            // 直接使用子组件标识符
-                            format!("{}", unirf.implementation_name.type_identifier)
-                        }
+                        ) => unirf.implementation_name.type_identifier.clone(),
                         _ => "UnsupportedComponent".to_string(),
                     };
 
-                    let field_ty = Type::Named(format!("{}Process", type_name.to_lowercase()));
-                    let doc = format!("// 子组件进程（{} : process {}）", sub.identifier, type_name);
+                    let type_suffix = match sub.category {
+                        ComponentCategory::Process => "Process",
+                        ComponentCategory::Device => "Device",
+                        _ => unreachable!("Filtered above"),
+                    };
+
+                    let field_ty = Type::Named(format!("{}{}", type_name.to_lowercase(), type_suffix));
+                    let doc = match sub.category {
+                        ComponentCategory::Process => {
+                            format!("// 子组件进程（{} : process {}）", sub.identifier, type_name)
+                        }
+                        ComponentCategory::Device => {
+                            format!("// 子组件设备（{} : device {}）", sub.identifier, type_name)
+                        }
+                        _ => unreachable!("Filtered above"),
+                    };
 
                     fields.push(Field {
                         name: sub.identifier.to_lowercase(),
@@ -2659,7 +3090,10 @@ impl AadlConverter {
         match val {
             StruPropertyValue::Boolean(b) => b.to_string(),
             StruPropertyValue::Integer(i) => i.to_string(),
-            StruPropertyValue::Float(f) => f.to_string(),
+            StruPropertyValue::Float(f) => {
+                let s = f.to_string();
+                if f.fract() == 0.0 && !s.contains('.') { format!("{s}.0") } else { s }
+            }
             StruPropertyValue::String(s) => format!("\"{}\".to_string()", s),
             StruPropertyValue::Duration(v, _unit) => v.to_string(),
             StruPropertyValue::Range(min, max, _unit) => format!("({}, {})", min, max),
@@ -3029,7 +3463,7 @@ impl AadlConverter {
 
         // 提取事件端口的优先级信息
         let port_urgency = self.extract_event_port_urgency(impl_);
-        println!("port_urgency: {:?}", port_urgency);
+        //println!("port_urgency: {:?}", port_urgency);
         
         // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
         let receive_ports = if !event_ports.is_empty() {
@@ -3178,7 +3612,7 @@ impl AadlConverter {
 
         // 提取事件端口的优先级信息
         let port_urgency = self.extract_event_port_urgency(impl_);
-        println!("port_urgency: {:?}", port_urgency);
+        //println!("port_urgency: {:?}", port_urgency);
         
         // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
         let receive_ports = if !event_ports.is_empty() {
@@ -3388,7 +3822,7 @@ impl AadlConverter {
 
         // 提取事件端口的优先级信息
         let port_urgency = self.extract_event_port_urgency(impl_);
-        println!("port_urgency: {:?}", port_urgency);
+        //println!("port_urgency: {:?}", port_urgency);
         
         // 如果没有找到事件端口，则从参数连接中获取接收端口作为备选
         let receive_ports = if !event_ports.is_empty() {
@@ -3563,7 +3997,7 @@ impl AadlConverter {
         let subprograms_with_ports: std::collections::HashSet<String> = subprogram_calls.iter()
             .map(|(_, spg_name, _, _, _)| spg_name.clone())
             .collect();
-        println!("subprograms_with_ports: {:?}", subprograms_with_ports);
+        //println!("subprograms_with_ports: {:?}", subprograms_with_ports);
         // 添加调用序列注释
         if !mycalls_sequence.is_empty() {
             let call_sequence = mycalls_sequence.iter()
@@ -4137,32 +4571,46 @@ impl AadlConverter {
             self.cpu_name_to_id_mapping.insert("default".to_string(), 0);
         }
 
-        // 2. 创建子组件实例 - 只处理进程组件
+        // 2. 创建子组件实例 - 处理进程和设备子组件
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
-                // 只处理进程组件
-                if matches!(sub.category, ComponentCategory::Process) {
-                    let var_name = sub.identifier.to_lowercase();
-                    let type_name = match &sub.classifier {
-                        SubcomponentClassifier::ClassifierReference(
-                            UniqueComponentClassifierReference::Implementation(unirf),
-                        ) => {
-                            format!("{}", unirf.implementation_name.type_identifier)
-                        }
-                        _ => "UnsupportedComponent".to_string(),
-                    };
+                let var_name = sub.identifier.to_lowercase();
+                let type_name = match &sub.classifier {
+                    SubcomponentClassifier::ClassifierReference(
+                        UniqueComponentClassifierReference::Implementation(unirf),
+                    ) => unirf.implementation_name.type_identifier.clone(),
+                    _ => "UnsupportedComponent".to_string(),
+                };
 
-                    // 查找该进程的CPU绑定
-                    let cpu_id = processor_bindings.iter()
-                        .find(|(process_name, _)| process_name == &sub.identifier)
-                        .and_then(|(_, cpu_name)| {
-                            self.cpu_name_to_id_mapping.get(cpu_name).copied()
-                        })
-                        .unwrap_or(0); // 默认使用CPU 0
-                    
-                    let creation_stmt = format!("let mut {}: {}Process = {}Process::new({})", 
-                        var_name, type_name.to_lowercase(), type_name.to_lowercase(), cpu_id);
-                    stmts.push(Statement::Expr(Expr::Ident(creation_stmt)));
+                match sub.category {
+                    ComponentCategory::Process => {
+                        // 查找该进程的CPU绑定
+                        let cpu_id = processor_bindings.iter()
+                            .find(|(process_name, _)| process_name == &sub.identifier)
+                            .and_then(|(_, cpu_name)| {
+                                self.cpu_name_to_id_mapping.get(cpu_name).copied()
+                            })
+                            .unwrap_or(0); // 默认使用CPU 0
+                        
+                        let creation_stmt = format!(
+                            "let mut {}: {}Process = {}Process::new({})",
+                            var_name,
+                            type_name.to_lowercase(),
+                            type_name.to_lowercase(),
+                            cpu_id
+                        );
+                        stmts.push(Statement::Expr(Expr::Ident(creation_stmt)));
+                    }
+                    ComponentCategory::Device => {
+                        let creation_stmt = format!(
+                            "let mut {}: {}Device = {}Device::new()",
+                            var_name,
+                            type_name.to_lowercase(),
+                            type_name.to_lowercase()
+                        );
+                        stmts.push(Statement::Expr(Expr::Ident(creation_stmt)));
+                    }
+                    _ => {}
                 }
             }
         }
@@ -4190,8 +4638,7 @@ impl AadlConverter {
         let mut field_names = Vec::new();
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
-                // 只包含进程组件的字段名
-                if matches!(sub.category, ComponentCategory::Process) {
+                if matches!(sub.category, ComponentCategory::Process | ComponentCategory::Device) {
                     field_names.push(sub.identifier.to_lowercase());
                 }
             }
@@ -4209,13 +4656,17 @@ impl AadlConverter {
 
         if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
             for sub in subcomponents {
-                // 仅对进程子组件启动，其他子组件忽略
-                if let ComponentCategory::Process = sub.category {
-                    let var_name = sub.identifier.to_lowercase();
-
-                    // 构建进程启动语句
-                    let start_stmt = format!("self.{}.start()", var_name);
-                    stmts.push(Statement::Expr(Expr::Ident(start_stmt)));
+                let var_name = sub.identifier.to_lowercase();
+                match sub.category {
+                    ComponentCategory::Process => {
+                        let start_stmt = format!("self.{}.start()", var_name);
+                        stmts.push(Statement::Expr(Expr::Ident(start_stmt)));
+                    }
+                    ComponentCategory::Device => {
+                        let run_stmt = format!("std::thread::spawn(|| self.{}.run());", var_name);
+                        stmts.push(Statement::Expr(Expr::Ident(run_stmt)));
+                    }
+                    _ => {}
                 }
             }
         }

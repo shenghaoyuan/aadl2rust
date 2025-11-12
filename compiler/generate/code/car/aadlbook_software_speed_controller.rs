@@ -1,13 +1,14 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:00:16
+// 生成时间: 2025-11-12 12:15:15
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -27,46 +28,30 @@ fn set_thread_affinity(cpu: isize) {
 // AADL Process: speed_controller
 #[derive(Debug)]
 pub struct speed_controllerProcess {
-    // Port: obstacle_position In
-    pub obstacle_position: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: current_speed In
-    pub current_speed: Option<mpsc::Receiver<speed>>,
-    // Port: desired_speed In
-    pub desired_speed: Option<mpsc::Receiver<speed>>,
-    // Port: brake_cmd Out
-    pub brake_cmd: Option<mpsc::Sender<brake_cmd>>,
-    // Port: speed_cmd Out
-    pub speed_cmd: Option<mpsc::Sender<speed_cmd>>,
-    // Port: warning Out
-    pub warning: Option<mpsc::Sender<bool>>,
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 内部端口: obstacle_position In
-    pub obstacle_positionSend: Option<mpsc::Sender<obstacle_position>>,
-    // 内部端口: current_speed In
-    pub current_speedSend: Option<mpsc::Sender<speed>>,
-    // 内部端口: desired_speed In
-    pub desired_speedSend: Option<mpsc::Sender<speed>>,
-    // 内部端口: brake_cmd Out
-    pub brake_cmdRece: Option<mpsc::Receiver<brake_cmd>>,
-    // 内部端口: speed_cmd Out
-    pub speed_cmdRece: Option<mpsc::Receiver<speed_cmd>>,
-    // 内部端口: warning Out
-    pub warningRece: Option<mpsc::Receiver<bool>>,
-    // 子组件线程（accel_thr : thread speed_controller_accel_thr）
+    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub brake_cmd: Option<Sender<i8>>,// Port: brake_cmd Out
+    pub speed_cmd: Option<Sender<i8>>,// Port: speed_cmd Out
+    pub warning: Option<Sender<bool>>,// Port: warning Out
+    pub cpu_id: isize,// 进程 CPU ID
+    pub obstacle_positionSend: Option<Sender<bool>>,// 内部端口: obstacle_position In
+    pub current_speedSend: Option<Sender<u16>>,// 内部端口: current_speed In
+    pub desired_speedSend: Option<Sender<u16>>,// 内部端口: desired_speed In
+    pub brake_cmdRece: Option<Receiver<i8>>,// 内部端口: brake_cmd Out
+    pub speed_cmdRece: Option<Receiver<i8>>,// 内部端口: speed_cmd Out
+    pub warningRece: Option<Receiver<bool>>,// 内部端口: warning Out
     #[allow(dead_code)]
-    pub accel_thr: speed_controller_accel_thrThread,
-    // 子组件线程（brake_thr : thread speed_controller_brake_thr）
+    pub accel_thr: speed_controller_accel_thrThread,// 子组件线程（accel_thr : thread speed_controller_accel_thr）
     #[allow(dead_code)]
-    pub brake_thr: speed_controller_brake_thrThread,
-    // 子组件线程（warning_thr : thread speed_controller_warning_thr）
+    pub brake_thr: speed_controller_brake_thrThread,// 子组件线程（brake_thr : thread speed_controller_brake_thr）
     #[allow(dead_code)]
-    pub warning_thr: speed_controller_warning_thrThread,
+    pub warning_thr: speed_controller_warning_thrThread,// 子组件线程（warning_thr : thread speed_controller_warning_thr）
 }
 
-impl speed_controllerProcess {
+impl Process for speed_controllerProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut accel_thr: speed_controller_accel_thrThread = speed_controller_accel_thrThread::new(cpu_id);
         let mut brake_thr: speed_controller_brake_thrThread = speed_controller_brake_thrThread::new(cpu_id);
         let mut warning_thr: speed_controller_warning_thrThread = speed_controller_warning_thrThread::new(cpu_id);
@@ -76,51 +61,51 @@ impl speed_controllerProcess {
         let mut brake_cmdRece = None;
         let mut speed_cmdRece = None;
         let mut warningRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         obstacle_positionSend = Some(channel.0);
         // build connection: 
             accel_thr.obstacle_position = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             accel_thr.current_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         desired_speedSend = Some(channel.0);
         // build connection: 
             accel_thr.desired_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             accel_thr.speed_cmd = Some(channel.0);
         speed_cmdRece = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         obstacle_positionSend = Some(channel.0);
         // build connection: 
             brake_thr.obstacle_position = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             brake_thr.current_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         desired_speedSend = Some(channel.0);
         // build connection: 
             brake_thr.desired_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             brake_thr.brake_cmd = Some(channel.0);
         brake_cmdRece = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         obstacle_positionSend = Some(channel.0);
         // build connection: 
             warning_thr.obstacle_position = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             warning_thr.current_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         desired_speedSend = Some(channel.0);
         // build connection: 
             warning_thr.desired_speed = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             warning_thr.warning = Some(channel.0);
         warningRece = Some(channel.1);
@@ -128,7 +113,7 @@ impl speed_controllerProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { obstacle_position, obstacle_positionSend, current_speed, current_speedSend, desired_speed, desired_speedSend, brake_cmd, brake_cmdRece, speed_cmd, speed_cmdRece, warning, warningRece, accel_thr, brake_thr, warning_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("accel_thr".to_string())
@@ -302,105 +287,138 @@ impl speed_controllerProcess {
 // AADL Thread: speed_controller_warning_thr
 #[derive(Debug)]
 pub struct speed_controller_warning_thrThread {
-    // Port: obstacle_position In
-    pub obstacle_position: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: current_speed In
-    pub current_speed: Option<mpsc::Receiver<speed>>,
-    // Port: desired_speed In
-    pub desired_speed: Option<mpsc::Receiver<speed>>,
-    // Port: warning Out
-    pub warning: Option<mpsc::Sender<bool>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub mipsbudget: f64, // AADL属性: mipsbudget
+    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub warning: Option<Sender<bool>>,// Port: warning Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub period: u64,// AADL属性: Period
+    pub mipsbudget: f64,// AADL属性: mipsbudget
+    pub cpu_id: isize,// 结构体新增 CPU ID
 }
 
-impl speed_controller_warning_thrThread {
-    // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            obstacle_position: None,
-            current_speed: None,
-            desired_speed: None,
-            warning: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 5, // AADL属性: Period
-            mipsbudget: 5, // AADL属性: mipsbudget
-        }
-    }
-}
 // AADL Thread: speed_controller_brake_thr
 #[derive(Debug)]
 pub struct speed_controller_brake_thrThread {
-    // Port: obstacle_position In
-    pub obstacle_position: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: current_speed In
-    pub current_speed: Option<mpsc::Receiver<speed>>,
-    // Port: desired_speed In
-    pub desired_speed: Option<mpsc::Receiver<speed>>,
-    // Port: brake_cmd Out
-    pub brake_cmd: Option<mpsc::Sender<brake_cmd>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub mipsbudget: f64, // AADL属性: mipsbudget
+    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub brake_cmd: Option<Sender<i8>>,// Port: brake_cmd Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub period: u64,// AADL属性: Period
+    pub mipsbudget: f64,// AADL属性: mipsbudget
+    pub cpu_id: isize,// 结构体新增 CPU ID
 }
 
-impl speed_controller_brake_thrThread {
-    // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            obstacle_position: None,
-            current_speed: None,
-            desired_speed: None,
-            brake_cmd: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 5, // AADL属性: Period
-            mipsbudget: 5, // AADL属性: mipsbudget
-        }
-    }
-}
 // AADL Thread: speed_controller_accel_thr
 #[derive(Debug)]
 pub struct speed_controller_accel_thrThread {
-    // Port: obstacle_position In
-    pub obstacle_position: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: current_speed In
-    pub current_speed: Option<mpsc::Receiver<speed>>,
-    // Port: desired_speed In
-    pub desired_speed: Option<mpsc::Receiver<speed>>,
-    // Port: speed_cmd Out
-    pub speed_cmd: Option<mpsc::Sender<speed_cmd>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub mipsbudget: f64, // AADL属性: mipsbudget
+    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub speed_cmd: Option<Sender<i8>>,// Port: speed_cmd Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub period: u64,// AADL属性: Period
+    pub mipsbudget: f64,// AADL属性: mipsbudget
+    pub cpu_id: isize,// 结构体新增 CPU ID
 }
 
-impl speed_controller_accel_thrThread {
+impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            obstacle_position: None,
-            current_speed: None,
-            desired_speed: None,
-            speed_cmd: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 5, // AADL属性: Period
-            mipsbudget: 5, // AADL属性: mipsbudget
-        }
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            dispatch_protocol: "Periodic".to_string(), 
+            period: 5, 
+            speed_cmd: None, 
+            mipsbudget: 5.0, 
+            obstacle_position: None, 
+            current_speed: None, 
+            desired_speed: None, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
+    
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
 }
+
+impl Thread for speed_controller_brake_thrThread {
+    // 创建组件并初始化AADL属性
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            obstacle_position: None, 
+            current_speed: None, 
+            desired_speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            period: 5, 
+            mipsbudget: 5.0, 
+            brake_cmd: None, 
+            cpu_id: cpu_id, // CPU ID
+        };
+    }
+    
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
+}
+
+impl Thread for speed_controller_warning_thrThread {
+    // 创建组件并初始化AADL属性
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            obstacle_position: None, 
+            desired_speed: None, 
+            mipsbudget: 5.0, 
+            period: 5, 
+            current_speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            warning: None, 
+            cpu_id: cpu_id, // CPU ID
+        };
+    }
+    
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
+}
+

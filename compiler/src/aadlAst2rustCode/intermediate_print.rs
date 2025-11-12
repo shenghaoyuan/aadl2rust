@@ -34,6 +34,7 @@ impl RustCodeGenerator {
         self.writeln("use std::time::{Duration, Instant};");
         self.writeln("use lazy_static::lazy_static;");
         self.writeln("use std::collections::HashMap;");
+        self.writeln("use crate::common_traits::*;");
         self.writeln("use libc::{");
         self.writeln("    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,");
         self.writeln("    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,");
@@ -54,29 +55,29 @@ impl RustCodeGenerator {
         self.writeln("}");
         self.writeln("");
 
-        self.writeln("// ---------------- System ----------------");
-        self.writeln("pub trait System {");
-        self.writeln("    fn new() -> Self");
-        self.writeln("        where Self: Sized;");
-        self.writeln("    fn run(self);");
-        self.writeln("}");
-        self.writeln("");
+        // self.writeln("// ---------------- System ----------------");
+        // self.writeln("pub trait System {");
+        // self.writeln("    fn new() -> Self");
+        // self.writeln("        where Self: Sized;");
+        // self.writeln("    fn run(self);");
+        // self.writeln("}");
+        // self.writeln("");
         
-        self.writeln("// ---------------- Process ----------------");
-        self.writeln("pub trait Process {");
-        self.writeln("    fn new(cpu_id: isize) -> Self");
-        self.writeln("        where Self: Sized;");
-        self.writeln("    fn start(self);");
-        self.writeln("}");
-        self.writeln("");
+        // self.writeln("// ---------------- Process ----------------");
+        // self.writeln("pub trait Process {");
+        // self.writeln("    fn new(cpu_id: isize) -> Self");
+        // self.writeln("        where Self: Sized;");
+        // self.writeln("    fn start(self);");
+        // self.writeln("}");
+        // self.writeln("");
         
-        self.writeln("// ---------------- Thread ----------------");
-        self.writeln("pub trait Thread {");
-        self.writeln("    fn new(cpu_id: isize) -> Self");
-        self.writeln("        where Self: Sized;");
-        self.writeln("    fn run(self);");
-        self.writeln("}");
-        self.writeln("");
+        // self.writeln("// ---------------- Thread ----------------");
+        // self.writeln("pub trait Thread {");
+        // self.writeln("    fn new(cpu_id: isize) -> Self");
+        // self.writeln("        where Self: Sized;");
+        // self.writeln("    fn run(self);");
+        // self.writeln("}");
+        // self.writeln("");
 
         // 生成模块内容
         self.generate_items(&module.items);

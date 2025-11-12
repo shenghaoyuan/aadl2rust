@@ -5,7 +5,7 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
     let mut items = module.items;
     let mut i = 0;
     
-    println!("开始合并重复的结构体定义...");
+    //println!("开始合并重复的结构体定义...");
     
     while i < items.len() {
         let current_name = match &items[i] {
@@ -28,10 +28,10 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
                     if let Item::Struct(target) = &mut left[i] {
                         if let Item::Struct(source) = &right[0] {
                             // 打印将被合并/删除的结构体信息
-                            println!("合并重复结构体: {}", name);
-                            println!("将被移除的结构体定义位置: {}", j);
-                            println!("源结构体字段数: {}", source.fields.len());
-                            println!("源结构体属性数: {}", source.properties.len());
+                            //println!("合并重复结构体: {}", name);
+                            //println!("将被移除的结构体定义位置: {}", j);
+                            //println!("源结构体字段数: {}", source.fields.len());
+                            //println!("源结构体属性数: {}", source.properties.len());
                             
                             // 创建source的完整克隆以避免引用问题
                             let source_clone = source.clone();
@@ -40,8 +40,8 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
                     }
                     let removed = items.remove(j);
                     if let Item::Struct(removed_struct) = removed {
-                        println!("-----------------------------成功移除重复结构体--------------------------: {}", removed_struct.name);
-                        println!("----------------------------------------");
+                        //println!("-----------------------------成功移除重复结构体--------------------------: {}", removed_struct.name);
+                        //println!("----------------------------------------");
                     }
                     continue;
                 }
@@ -71,10 +71,10 @@ fn merge_single_struct(target: &mut StructDef, source: &StructDef) {
             target.fields.push(src_field);
         }
     }
-    println!("合并字段: 原 {} 个 + 新增 {} 个 = 现在 {} 个",
-        original_field_count,
-        source.fields.len(),
-        target.fields.len());
+    // println!("合并字段: 原 {} 个 + 新增 {} 个 = 现在 {} 个",
+    //     original_field_count,
+    //     source.fields.len(),
+    //     target.fields.len());
 
     // 合并properties（按name去重）
     let original_prop_count = target.properties.len();
@@ -83,10 +83,10 @@ fn merge_single_struct(target: &mut StructDef, source: &StructDef) {
             target.properties.push(src_prop);
         }
     }
-    println!("合并属性: 原 {} 个 + 新增 {} 个 = 现在 {} 个",
-        original_prop_count,
-        source.properties.len(),
-        target.properties.len());
+    // println!("合并属性: 原 {} 个 + 新增 {} 个 = 现在 {} 个",
+    //     original_prop_count,
+    //     source.properties.len(),
+    //     target.properties.len());
 
     // 合并generics（按name去重）
     for src_generic in source.generics.iter().cloned() {

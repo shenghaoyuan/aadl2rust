@@ -1,13 +1,14 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:00:16
+// 生成时间: 2025-11-12 12:15:15
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -27,50 +28,40 @@ fn set_thread_affinity(cpu: isize) {
 // AADL Process: entertainment
 #[derive(Debug)]
 pub struct entertainmentProcess {
-    // Port: music_in In
-    pub music_in: Option<mpsc::Receiver<music>>,
-    // Port: contacts In
-    pub contacts: Option<mpsc::Receiver<contacts>>,
-    // Port: infos Out
-    pub infos: Option<mpsc::Sender<entertainment_infos>>,
-    // Port: music_out Out
-    pub music_out: Option<mpsc::Sender<music>>,
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 内部端口: music_in In
-    pub music_inSend: Option<mpsc::Sender<music>>,
-    // 内部端口: contacts In
-    pub contactsSend: Option<mpsc::Sender<contacts>>,
-    // 内部端口: infos Out
-    pub infosRece: Option<mpsc::Receiver<entertainment_infos>>,
-    // 内部端口: music_out Out
-    pub music_outRece: Option<mpsc::Receiver<music>>,
-    // 子组件线程（thr : thread entertainment_thr）
+    pub music_in: Option<Receiver<bool>>,// Port: music_in In
+    pub contacts: Option<Receiver<i8>>,// Port: contacts In
+    pub infos: Option<Sender<i8>>,// Port: infos Out
+    pub music_out: Option<Sender<bool>>,// Port: music_out Out
+    pub cpu_id: isize,// 进程 CPU ID
+    pub music_inSend: Option<Sender<bool>>,// 内部端口: music_in In
+    pub contactsSend: Option<Sender<i8>>,// 内部端口: contacts In
+    pub infosRece: Option<Receiver<i8>>,// 内部端口: infos Out
+    pub music_outRece: Option<Receiver<bool>>,// 内部端口: music_out Out
     #[allow(dead_code)]
-    pub thr: entertainment_thrThread,
+    pub thr: entertainment_thrThread,// 子组件线程（thr : thread entertainment_thr）
 }
 
-impl entertainmentProcess {
+impl Process for entertainmentProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
         let mut music_inSend = None;
         let mut contactsSend = None;
         let mut infosRece = None;
         let mut music_outRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         music_inSend = Some(channel.0);
         // build connection: 
             thr.music_in = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         contactsSend = Some(channel.0);
         // build connection: 
             thr.contacts = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             thr.infos = Some(channel.0);
         infosRece = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             thr.music_out = Some(channel.0);
         music_outRece = Some(channel.1);
@@ -78,7 +69,7 @@ impl entertainmentProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { music_in, music_inSend, contacts, contactsSend, infos, infosRece, music_out, music_outRece, thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("thr".to_string())
@@ -142,35 +133,46 @@ impl entertainmentProcess {
 // AADL Thread: entertainment_thr
 #[derive(Debug)]
 pub struct entertainment_thrThread {
-    // Port: music_in In
-    pub music_in: Option<mpsc::Receiver<music>>,
-    // Port: contacts In
-    pub contacts: Option<mpsc::Receiver<contacts>>,
-    // Port: infos Out
-    pub infos: Option<mpsc::Sender<entertainment_infos>>,
-    // Port: music_out Out
-    pub music_out: Option<mpsc::Sender<music>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub mipsbudget: f64, // AADL属性: mipsbudget
+    pub music_in: Option<Receiver<bool>>,// Port: music_in In
+    pub contacts: Option<Receiver<i8>>,// Port: contacts In
+    pub infos: Option<Sender<i8>>,// Port: infos Out
+    pub music_out: Option<Sender<bool>>,// Port: music_out Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub period: u64,// AADL属性: Period
+    pub mipsbudget: f64,// AADL属性: mipsbudget
+    pub cpu_id: isize,// 结构体新增 CPU ID
 }
 
-impl entertainment_thrThread {
+impl Thread for entertainment_thrThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            music_in: None,
-            contacts: None,
-            infos: None,
-            music_out: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 5, // AADL属性: Period
-            mipsbudget: 5, // AADL属性: mipsbudget
-        }
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            contacts: None, 
+            period: 5, 
+            music_in: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            infos: None, 
+            mipsbudget: 5.0, 
+            music_out: None, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
+    
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
 }
+

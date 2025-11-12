@@ -31,6 +31,7 @@ public
     Cnx_Pos_2 : subprogram access SpgRead   -> Read;
   properties
     Data_Model::Data_Representation => Struct;
+    concurrency_Control_protocol => Protected_Access;
   end POS.Impl;
 
   -----------------

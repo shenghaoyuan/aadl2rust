@@ -994,6 +994,7 @@ impl AADLTransformer {
             "memory" => ComponentCategory::Memory,
             "data" => ComponentCategory::Data,
             "subprogram" => ComponentCategory::Subprogram,
+            "device" => ComponentCategory::Device,
             s => panic!("Unknown subcomponent category: {}", s),
         };
         

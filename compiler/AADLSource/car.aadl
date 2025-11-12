@@ -20,16 +20,21 @@ public
 with base_types;
 with data_model;
 
+--修改了obstacle_position
+-- data obstacle_position
+-- properties
+-- 	Data_Model::Data_Representation => Struct;
+-- end obstacle_position;
+
+-- data implementation obstacle_position.i
+-- subcomponents
+--   present : data base_types::boolean;
+--   x       : data Base_Types::Unsigned_8;
+-- end obstacle_position.i;
 data obstacle_position
 properties
-	Data_Model::Data_Representation => Struct;
+	Data_Model::Data_Representation => Boolean;
 end obstacle_position;
-
-data implementation obstacle_position.i
-subcomponents
-  present : data base_types::boolean;
-  x       : data Base_Types::Unsigned_8;
-end obstacle_position.i;
 
 data speed
 properties
@@ -38,13 +43,14 @@ end speed;
 
 data picture 
 properties
-	data_size => 600 KByte;
 	data_model::data_representation => array;
+	data_model::base_type => classifier (Base_Types::Integer);
+	data_model::dimension => (4, 4);
 end picture; 
 
 data boolean
 properties
-	data_size => 1 bits;
+	Data_Model::Data_Representation => Boolean;
 end boolean;
 
 
@@ -75,16 +81,16 @@ properties
 end distance;
 
 data music
+properties
+	Data_Model::Data_Representation => Boolean;
 end music;
 
-data implementation music.i
-end music.i;
 
 data contacts
+properties
+	Data_Model::Data_Representation => Integer_8;
 end contacts;
 
-data implementation contacts.i
-end contacts.i;
 
 end aadlbook::icd;
 
@@ -104,16 +110,16 @@ with sei;
 
 process entertainment
 features
-	music_in  : in data port aadlbook::icd::music.i;
-	contacts  : in data port aadlbook::icd::contacts.i;
+	music_in  : in data port aadlbook::icd::music;
+	contacts  : in data port aadlbook::icd::contacts;
 	infos     : out data port aadlbook::icd::entertainment_infos;
-	music_out : out data port aadlbook::icd::music.i;
+	music_out : out data port aadlbook::icd::music;
 end entertainment;
 
 
 process implementation entertainment.i
 subcomponents
-   thr : thread entertainment_thr;
+   thr : thread entertainment_thr.i;
 connections
   c0 : port music_in -> thr.music_in;
   c1 : port contacts -> thr.contacts;
@@ -123,15 +129,18 @@ end entertainment.i;
 
 thread entertainment_thr
 features
-	music_in  : in data port aadlbook::icd::music.i;
-	contacts  : in data port aadlbook::icd::contacts.i;
+	music_in  : in data port aadlbook::icd::music;
+	contacts  : in data port aadlbook::icd::contacts;
 	infos     : out data port aadlbook::icd::entertainment_infos;
-	music_out : out data port aadlbook::icd::music.i;
+	music_out : out data port aadlbook::icd::music;
 properties
 	Dispatch_Protocol => Periodic;
 	Period            => 5ms;
 	sei::mipsbudget   => 5.0 MIPS;
 end entertainment_thr;
+
+thread implementation entertainment_thr.i
+end entertainment_thr.i;
 
 end aadlbook::software::entertainment;
 
@@ -152,7 +161,7 @@ with sei;
 process image_acquisition
 features
 	picture           : in data port aadlbook::icd::picture;
-	obstacle_detected : out data port aadlbook::icd::obstacle_position.i;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position;
 end image_acquisition;
 
 process implementation image_acquisition.i
@@ -166,7 +175,7 @@ end image_acquisition.i;
 thread image_acquisition_thr
 features
 	picture           : in data port aadlbook::icd::picture;
-	obstacle_detected : out data port aadlbook::icd::obstacle_position.i;
+obstacle_detected : out data port aadlbook::icd::obstacle_position;
 properties
 	sei::mipsbudget   => 25.0 MIPS;
 	Dispatch_Protocol => Periodic;
@@ -197,14 +206,14 @@ with sei;
 
 process obstacle_detection
 features
-	camera : in data port aadlbook::icd::obstacle_position.i;
-	radar : in data port aadlbook::icd::obstacle_position.i;
-	obstacle_position : out data port aadlbook::icd::obstacle_position.i;
+	camera : in data port aadlbook::icd::obstacle_position;
+	radar : in data port aadlbook::icd::obstacle_position;
+	obstacle_position : out data port aadlbook::icd::obstacle_position;
 end obstacle_detection;
 
 process implementation obstacle_detection.i
 subcomponents
-	thr : thread obstacle_detection_thr;
+	thr : thread obstacle_detection_thr.i;
 connections
 	c0 : port camera -> thr.camera;
 	c1 : port radar -> thr.radar;
@@ -213,9 +222,9 @@ end obstacle_detection.i;
 
 thread obstacle_detection_thr
 features
-	camera : in data port aadlbook::icd::obstacle_position.i;
-	radar : in data port aadlbook::icd::obstacle_position.i;
-	obstacle_detected : out data port aadlbook::icd::obstacle_position.i;
+	camera : in data port aadlbook::icd::obstacle_position;
+	radar : in data port aadlbook::icd::obstacle_position;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position;
 properties
 	Dispatch_Protocol => Periodic;
 	Period            => 100ms;
@@ -224,6 +233,8 @@ properties
 	sei::instructionsperdispatch => 0.9 kipd .. 0.98 mipd; 
 end obstacle_detection_thr;
 
+thread implementation obstacle_detection_thr.i
+end obstacle_detection_thr.i;
 
 end aadlbook::software::obstacle_detection;
 
@@ -237,8 +248,8 @@ with aadlbook::icd;
 
 process panel_control
 features
-	increase_speed : in event port;
-	decrease_speed : in event port;
+	increase_speed : in event port aadlbook::icd::speed;
+	decrease_speed : in event port aadlbook::icd::speed;
 	current_speed : in data port aadlbook::icd::speed;
 	desired_speed : out data port aadlbook::icd::speed;
 	tire_pressure_in : in data port aadlbook::icd::pressure;
@@ -247,7 +258,7 @@ end panel_control;
 
 process implementation panel_control.i
 subcomponents
-	thr : thread panel_control_thr;
+	thr : thread panel_control_thr.i;
 connections
 	c0 : port increase_speed -> thr.increase_speed;
 	c1 : port decrease_speed -> thr.decrease_speed;
@@ -259,13 +270,16 @@ end panel_control.i;
 
 thread panel_control_thr
 features
-	increase_speed : in event port;
-	decrease_speed : in event port;
+	increase_speed : in event port aadlbook::icd::speed;
+	decrease_speed : in event port aadlbook::icd::speed;
 	current_speed : in data port aadlbook::icd::speed;
 	desired_speed : out data port aadlbook::icd::speed;
 	tire_pressure_in : in data port aadlbook::icd::pressure;
 	tire_pressure_out : out data port aadlbook::icd::pressure; 
 end panel_control_thr;
+
+thread implementation panel_control_thr.i
+end panel_control_thr.i;
 
 end aadlbook::software::panel_control;
 
@@ -285,7 +299,7 @@ with sei;
 
 process speed_controller
 features
-	obstacle_position : in data port aadlbook::icd::obstacle_position.i;
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
 	current_speed     : in data port aadlbook::icd::speed;
 	desired_speed     : in data port aadlbook::icd::speed;
 	brake_cmd         : out data port aadlbook::icd::brake_cmd;
@@ -296,9 +310,9 @@ end speed_controller;
 
 process implementation speed_controller.i
 subcomponents
-	accel_thr : thread speed_controller_accel_thr;
-	brake_thr : thread speed_controller_brake_thr;
-	warning_thr : thread speed_controller_warning_thr;
+	accel_thr : thread speed_controller_accel_thr.i;
+	brake_thr : thread speed_controller_brake_thr.i;
+	warning_thr : thread speed_controller_warning_thr.i;
 connections
 	c00 : port obstacle_position    -> accel_thr.obstacle_position;
 	c01 : port current_speed        -> accel_thr.current_speed;
@@ -318,7 +332,7 @@ end speed_controller.i;
 
 thread speed_controller_warning_thr
 features
-	obstacle_position : in data port aadlbook::icd::obstacle_position.i;
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
 	current_speed     : in data port aadlbook::icd::speed;
 	desired_speed     : in data port aadlbook::icd::speed;
 	warning         : out data port aadlbook::icd::boolean;
@@ -330,7 +344,7 @@ end speed_controller_warning_thr;
 
 thread speed_controller_brake_thr
 features
-	obstacle_position : in data port aadlbook::icd::obstacle_position.i;
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
 	current_speed     : in data port aadlbook::icd::speed;
 	desired_speed     : in data port aadlbook::icd::speed;
 	brake_cmd         : out data port aadlbook::icd::brake_cmd;
@@ -342,7 +356,7 @@ end speed_controller_brake_thr;
 
 thread speed_controller_accel_thr
 features
-	obstacle_position : in data port aadlbook::icd::obstacle_position.i;
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
 	current_speed     : in data port aadlbook::icd::speed;
 	desired_speed     : in data port aadlbook::icd::speed;
 	speed_cmd         : out data port aadlbook::icd::speed_cmd;
@@ -352,6 +366,14 @@ properties
 	sei::mipsbudget   => 5.0 MIPS;
 end speed_controller_accel_thr;
 
+thread implementation speed_controller_accel_thr.i
+end speed_controller_accel_thr.i;
+
+thread implementation speed_controller_brake_thr.i
+end speed_controller_brake_thr.i;
+
+thread implementation speed_controller_warning_thr.i
+end speed_controller_warning_thr.i;
 
 end aadlbook::software::speed_controller;
 
@@ -379,7 +401,7 @@ end speed_voter;
 
 process implementation speed_voter.i
 subcomponents
-	thr : thread speed_voter_thr.i;
+	thr : thread speed_voter_thr;
 connections
 	c0 : port wheel_sensor -> thr.wheel_sensor;
 	c1 : port laser_sensor -> thr.laser_sensor;
@@ -402,3 +424,179 @@ end speed_voter_thr.i;
 
 
 end aadlbook::software::speed_voter;
+
+package aadlbook::devices
+
+
+public
+
+with aadlbook::icd;
+with aadlbook::platform;
+ 
+-----------------------------------
+--  Camera and Object Detection  --
+-----------------------------------
+   
+device camera
+features
+	picture : out data port aadlbook::icd::picture;
+properties 
+	Period => 200ms;
+	compute_execution_time => 20 ms .. 50 ms;
+end camera;
+
+device radar
+features
+	distance_estimate : out data port aadlbook::icd::obstacle_position;
+properties 
+	Period => 10ms;
+	compute_execution_time => 6 ms .. 8 ms;
+end radar;
+ 
+---------------------
+--  Speed Sensors  --
+---------------------
+
+device speed_wheel_sensor
+features
+	speed : out data port aadlbook::icd::speed;
+properties
+	Period => 10ms;
+	compute_execution_time => 6 ms .. 9 ms;
+end speed_wheel_sensor;
+
+device speed_laser_sensor
+features
+	speed : out data port aadlbook::icd::speed;
+properties
+	Period => 10ms;
+	compute_execution_time => 6 ms .. 9 ms;
+end speed_laser_sensor;
+
+
+-------------
+--  Brake  --
+-------------
+
+device brake 
+features
+	cmd : in data port aadlbook::icd::brake_cmd;
+properties
+	Period => 2 ms; 
+end brake;
+
+device acceleration
+features
+	cmd : in data port aadlbook::icd::speed_cmd;
+properties
+	Period => 2 ms;
+end acceleration;
+
+device panel
+features
+	increase_speed : out data port aadlbook::icd::speed;
+	decrease_speed : out data port aadlbook::icd::speed;
+end panel;
+
+device screen
+features
+	tire_pressure : in data port aadlbook::icd::pressure;
+	desired_speed : in data port aadlbook::icd::speed;
+	actual_speed : in data port aadlbook::icd::speed;
+	warning : in data port aadlbook::icd::boolean;
+	entertainment_infos : in data port aadlbook::icd::entertainment_infos;
+end screen;
+
+device tpms
+features
+	pressure : out data port aadlbook::icd::pressure;
+end tpms;
+
+device bluetooth_controller
+features
+	music     : out data port aadlbook::icd::music;
+	contacts  : out data port aadlbook::icd::contacts;
+end bluetooth_controller;
+
+device speaker
+features
+	music  : in data port aadlbook::icd::music;
+end speaker;
+
+end aadlbook::devices;
+
+
+package aadlbook::integration
+
+public
+
+with aadlbook::devices;
+with aadlbook::software::image_acquisition;
+with aadlbook::software::obstacle_detection;
+with aadlbook::software::panel_control;
+with aadlbook::software::speed_controller;
+with aadlbook::software::speed_voter;
+with aadlbook::software::entertainment;
+with aadlbook::platform;
+
+system integration
+end integration;
+
+--
+--  This is the functional system. This system is designed to be independent
+--  of the underlying deployment platform. It contains all components
+--  without associating connections or processes to processors.
+--
+--  The association to an execution platform is done later, in the
+--  system implementation integration.variation1 and integration.variation2
+--
+
+system implementation integration.functional
+subcomponents
+-- input devices
+	obstacle_camera    : device aadlbook::devices::camera;
+	obstacle_radar     : device aadlbook::devices::radar;
+	wheel_sensor       : device aadlbook::devices::speed_wheel_sensor;
+	laser_sensor       : device aadlbook::devices::speed_laser_sensor;
+	panel              : device aadlbook::devices::panel;
+	tire_pressure      : device aadlbook::devices::tpms;
+	bluetooth_ctrl     : device aadlbook::devices::bluetooth_controller;
+
+-- software and processing elements.
+    image_acquisition  : process aadlbook::software::image_acquisition::image_acquisition.i;
+    obstacle_detection : process aadlbook::software::obstacle_detection::obstacle_detection.i;
+    panel_controller   : process aadlbook::software::panel_control::panel_control.i;
+    speed_voter        : process aadlbook::software::speed_voter::speed_voter.i;
+    speed_ctrl         : process aadlbook::software::speed_controller::speed_controller.i;
+    entertainment      : process aadlbook::software::entertainment::entertainment.i;
+
+-- output devices
+	brake         : device aadlbook::devices::brake;
+	acceleration  : device aadlbook::devices::acceleration;
+	screen        : device aadlbook::devices::screen;
+	speaker       : device aadlbook::devices::speaker;
+connections
+    c00 : port obstacle_camera.picture               -> image_acquisition.picture;
+    c01 : port image_acquisition.obstacle_detected   -> obstacle_detection.camera; 
+    c02 : port obstacle_radar.distance_estimate      -> obstacle_detection.radar;
+    c03 : port obstacle_detection.obstacle_position  -> speed_ctrl.obstacle_position;
+    c04 : port wheel_sensor.speed                    -> speed_voter.wheel_sensor;
+    c05 : port laser_sensor.speed                    -> speed_voter.laser_sensor;
+    c06 : port speed_voter.speed                     -> speed_ctrl.current_speed;
+    c07 : port speed_voter.speed                     -> screen.actual_speed;
+    c08 : port speed_ctrl.speed_cmd                  -> acceleration.cmd;
+    c09 : port speed_ctrl.brake_cmd                  -> brake.cmd;
+    c10 : port speed_ctrl.warning                    -> screen.warning;
+    c11 : port panel.increase_speed                  -> panel_controller.increase_speed;
+    c12 : port panel.decrease_speed                  -> panel_controller.decrease_speed;
+    c13 : port panel_controller.desired_speed        -> speed_ctrl.desired_speed;
+    c14 : port speed_voter.speed                     -> panel_controller.current_speed;
+    c15 : port panel_controller.desired_speed        -> screen.desired_speed;
+	c16 : port bluetooth_ctrl.contacts               -> entertainment.contacts;
+	c17 : port bluetooth_ctrl.music                  -> entertainment.music_in;
+	c18 : port entertainment.music_out               -> speaker.music;
+	c19 : port entertainment.infos                   -> screen.entertainment_infos;
+	c20 : port panel_controller.tire_pressure_out    -> screen.tire_pressure;
+	c21 : port tire_pressure.pressure                -> panel_controller.tire_pressure_in;
+end integration.functional;
+end aadlbook::integration;

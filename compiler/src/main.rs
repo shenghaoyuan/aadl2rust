@@ -107,6 +107,12 @@ fn main() {
             path: "AADLSource/pingpong_2trigger.aadl".to_string(),
             output_name: "pingpong_2trigger".to_string(),
         },
+        TestCase{
+            id:14,
+            name: "pingpong_example".to_string(),
+            path:"AADLSource/pingpong_example.aadl".to_string(),
+            output_name:"pingpong_example".to_string(),
+        }
     ];
 
     // 显示可用的测试用例
@@ -187,8 +193,9 @@ fn process_test_case(test_case: &TestCase) {
             print_ast(&ast);
 
             println!("\n==================================== 生成Rust代码 ===================================");
+            let mut converter = AadlConverter::default();
             for (index, package) in ast.iter().enumerate() {
-                generate_rust_code_for_test_case(package, test_case,ast.len());
+                generate_rust_code_for_test_case(package, test_case,ast.len(),&mut converter);
             }
             
             println!("✅ 代码生成完成！输出文件保存在 generate/ 目录下");
@@ -217,23 +224,23 @@ fn process_test_case(test_case: &TestCase) {
     }
 }
 
-pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase,number_of_packages: usize) -> () {
+pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase,number_of_packages: usize,converter: &mut AadlConverter) -> () {
     // 第一级转换：语义转换
-    let mut converter = AadlConverter::default();
+    //let mut converter = AadlConverter::default();
 
     let rust_module = converter.convert_package(&aadl_pkg);
-    println!("\n==================================== rust_module ===================================");
+    //println!("\n==================================== rust_module ===================================");
     
     // 保存中间AST到文件
     let ast_debug_path = format!("generate/temp/{}_ast_debug.txt", test_case.output_name);
     fs::write(&ast_debug_path, format!("{:#?}", rust_module)).unwrap();
-    println!("中间AST已保存到: {}", ast_debug_path);
+    //println!("中间AST已保存到: {}", ast_debug_path);
     
     let merge_rust_module = merge_item_defs(rust_module);
     
     let merged_ast_path = format!("generate/temp/{}_merged_ast.txt", test_case.output_name);
     fs::write(&merged_ast_path, format!("{:#?}", merge_rust_module)).unwrap();
-    println!("合并后AST已保存到: {}", merged_ast_path);
+    //println!("合并后AST已保存到: {}", merged_ast_path);
 
     let mut code_generator = RustCodeGenerator::new();
     let rust_code = code_generator.generate_module_code(&merge_rust_module);

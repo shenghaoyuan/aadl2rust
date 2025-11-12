@@ -1,150 +1,324 @@
 RustModule {
-    name: "aadlbook_software_speed_voter",
+    name: "aadlbook_integration",
     docs: [
-        "// Auto-generated from AADL package: aadlbook::software::speed_voter",
+        "// Auto-generated from AADL package: aadlbook::integration",
     ],
     items: [
         Struct(
             StructDef {
-                name: "speed_voterProcess",
+                name: "integrationSystem",
                 fields: [
                     Field {
-                        name: "wheel_sensor",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
+                        name: "obstacle_camera",
+                        ty: Named(
+                            "cameraDevice",
                         ),
                         docs: [
-                            "// Port: wheel_sensor In",
+                            "// 子组件设备（obstacle_camera : device camera）",
                         ],
-                        attrs: [],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "obstacle_radar",
+                        ty: Named(
+                            "radarDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（obstacle_radar : device radar）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "wheel_sensor",
+                        ty: Named(
+                            "speed_wheel_sensorDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（wheel_sensor : device speed_wheel_sensor）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
                     },
                     Field {
                         name: "laser_sensor",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// Port: laser_sensor In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "speed",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// Port: speed Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "cpu_id",
                         ty: Named(
-                            "isize",
+                            "speed_laser_sensorDevice",
                         ),
                         docs: [
-                            "// 进程 CPU ID",
+                            "// 子组件设备（laser_sensor : device speed_laser_sensor）",
                         ],
-                        attrs: [],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
                     },
                     Field {
-                        name: "wheel_sensorSend",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: wheel_sensor In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "laser_sensorSend",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: laser_sensor In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "speedRece",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// 内部端口: speed Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "thr",
+                        name: "panel",
                         ty: Named(
-                            "speed_voter_thrThread",
+                            "panelDevice",
                         ),
                         docs: [
-                            "// 子组件线程（thr : thread speed_voter_thr）",
+                            "// 子组件设备（panel : device panel）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "tire_pressure",
+                        ty: Named(
+                            "tpmsDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（tire_pressure : device tpms）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "bluetooth_ctrl",
+                        ty: Named(
+                            "bluetooth_controllerDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（bluetooth_ctrl : device bluetooth_controller）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "image_acquisition",
+                        ty: Named(
+                            "image_acquisitionProcess",
+                        ),
+                        docs: [
+                            "// 子组件进程（image_acquisition : process image_acquisition）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "obstacle_detection",
+                        ty: Named(
+                            "obstacle_detectionProcess",
+                        ),
+                        docs: [
+                            "// 子组件进程（obstacle_detection : process obstacle_detection）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "panel_controller",
+                        ty: Named(
+                            "panel_controlProcess",
+                        ),
+                        docs: [
+                            "// 子组件进程（panel_controller : process panel_control）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "speed_voter",
+                        ty: Named(
+                            "speed_voterProcess",
+                        ),
+                        docs: [
+                            "// 子组件进程（speed_voter : process speed_voter）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "speed_ctrl",
+                        ty: Named(
+                            "speed_controllerProcess",
+                        ),
+                        docs: [
+                            "// 子组件进程（speed_ctrl : process speed_controller）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "entertainment",
+                        ty: Named(
+                            "entertainmentProcess",
+                        ),
+                        docs: [
+                            "// 子组件进程（entertainment : process entertainment）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "brake",
+                        ty: Named(
+                            "brakeDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（brake : device brake）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "acceleration",
+                        ty: Named(
+                            "accelerationDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（acceleration : device acceleration）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "screen",
+                        ty: Named(
+                            "screenDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（screen : device screen）",
+                        ],
+                        attrs: [
+                            Attribute {
+                                name: "allow",
+                                args: [
+                                    Ident(
+                                        "dead_code",
+                                    ),
+                                ],
+                            },
+                        ],
+                    },
+                    Field {
+                        name: "speaker",
+                        ty: Named(
+                            "speakerDevice",
+                        ),
+                        docs: [
+                            "// 子组件设备（speaker : device speaker）",
                         ],
                         attrs: [
                             Attribute {
@@ -164,7 +338,7 @@ RustModule {
                     "Debug",
                 ],
                 docs: [
-                    "// AADL Process: speed_voter",
+                    "// AADL System: integration",
                 ],
                 vis: Public,
             },
@@ -172,150 +346,102 @@ RustModule {
         Impl(
             ImplBlock {
                 target: Named(
-                    "speed_voterProcess",
+                    "integrationSystem",
                 ),
                 generics: [],
                 items: [
                     Method(
                         FunctionDef {
                             name: "new",
-                            params: [
-                                Param {
-                                    name: "cpu_id",
-                                    ty: Named(
-                                        "isize",
-                                    ),
-                                },
-                            ],
+                            params: [],
                             return_type: Named(
                                 "Self",
                             ),
                             body: Block {
                                 stmts: [
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "mut thr",
-                                            ty: Some(
-                                                Named(
-                                                    "speed_voter_thrThread",
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "speed_voter_thrThread",
-                                                            "new",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [
-                                                        Ident(
-                                                            "cpu_id",
-                                                        ),
-                                                    ],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: true,
-                                            name: "wheel_sensorSend",
-                                            ty: None,
-                                            init: Some(
-                                                Ident(
-                                                    "None",
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: true,
-                                            name: "laser_sensorSend",
-                                            ty: None,
-                                            init: Some(
-                                                Ident(
-                                                    "None",
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: true,
-                                            name: "speedRece",
-                                            ty: None,
-                                            init: Some(
-                                                Ident(
-                                                    "None",
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "channel",
-                                            ty: None,
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "mpsc",
-                                                            "channel",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
-                                        BinaryOp(
-                                            Ident(
-                                                "wheel_sensorSend",
-                                            ),
-                                            "=",
-                                            Call(
-                                                Path(
-                                                    [
-                                                        "Some",
-                                                    ],
-                                                    Member,
-                                                ),
-                                                [
-                                                    Ident(
-                                                        "channel.0",
-                                                    ),
-                                                ],
-                                            ),
+                                        Ident(
+                                            "let mut obstacle_camera: cameraDevice = cameraDevice::new()",
                                         ),
                                     ),
                                     Expr(
-                                        MethodCall(
-                                            Ident(
-                                                "thr.wheel_sensor",
-                                            ),
-                                            "receive",
-                                            [
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "Some",
-                                                        ],
-                                                        Member,
-                                                    ),
-                                                    [
-                                                        Ident(
-                                                            "channel.1",
-                                                        ),
-                                                    ],
-                                                ),
-                                            ],
+                                        Ident(
+                                            "let mut obstacle_radar: radarDevice = radarDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut wheel_sensor: speed_wheel_sensorDevice = speed_wheel_sensorDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut laser_sensor: speed_laser_sensorDevice = speed_laser_sensorDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut panel: panelDevice = panelDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut tire_pressure: tpmsDevice = tpmsDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut bluetooth_ctrl: bluetooth_controllerDevice = bluetooth_controllerDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut image_acquisition: image_acquisitionProcess = image_acquisitionProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut obstacle_detection: obstacle_detectionProcess = obstacle_detectionProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut panel_controller: panel_controlProcess = panel_controlProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut speed_voter: speed_voterProcess = speed_voterProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut speed_ctrl: speed_controllerProcess = speed_controllerProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut entertainment: entertainmentProcess = entertainmentProcess::new(0)",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut brake: brakeDevice = brakeDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut acceleration: accelerationDevice = accelerationDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut screen: screenDevice = screenDevice::new()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "let mut speaker: speakerDevice = speakerDevice::new()",
                                         ),
                                     ),
                                     Let(
@@ -327,71 +453,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Expr(
-                                        BinaryOp(
-                                            Ident(
-                                                "laser_sensorSend",
-                                            ),
-                                            "=",
-                                            Call(
-                                                Path(
-                                                    [
-                                                        "Some",
-                                                    ],
-                                                    Member,
-                                                ),
-                                                [
-                                                    Ident(
-                                                        "channel.0",
-                                                    ),
-                                                ],
-                                            ),
-                                        ),
-                                    ),
-                                    Expr(
-                                        MethodCall(
-                                            Ident(
-                                                "thr.laser_sensor",
-                                            ),
-                                            "receive",
-                                            [
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "Some",
-                                                        ],
-                                                        Member,
-                                                    ),
-                                                    [
-                                                        Ident(
-                                                            "channel.1",
-                                                        ),
-                                                    ],
-                                                ),
-                                            ],
-                                        ),
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "channel",
-                                            ty: None,
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -403,7 +466,7 @@ RustModule {
                                     Expr(
                                         MethodCall(
                                             Ident(
-                                                "thr.speed",
+                                                "obstacle_camera.picture",
                                             ),
                                             "send",
                                             [
@@ -424,45 +487,1412 @@ RustModule {
                                         ),
                                     ),
                                     Expr(
-                                        BinaryOp(
+                                        MethodCall(
                                             Ident(
-                                                "speedRece",
+                                                "image_acquisition.picture",
                                             ),
-                                            "=",
-                                            Call(
-                                                Path(
-                                                    [
-                                                        "Some",
-                                                    ],
-                                                    Member,
-                                                ),
-                                                [
-                                                    Ident(
-                                                        "channel.1",
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
                                                     ),
-                                                ],
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
                                             ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "image_acquisition.obstacle_detected",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "obstacle_detection.camera",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "obstacle_radar.distance_estimate",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "obstacle_detection.radar",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "obstacle_detection.obstacle_position",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_ctrl.obstacle_position",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "wheel_sensor.speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_voter.wheel_sensor",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "laser_sensor.speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_voter.laser_sensor",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_voter.speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_ctrl.current_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_voter.speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "screen.actual_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_ctrl.speed_cmd",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "acceleration.cmd",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_ctrl.brake_cmd",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "brake.cmd",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_ctrl.warning",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "screen.warning",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel.increase_speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.increase_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel.decrease_speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.decrease_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.desired_speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_ctrl.desired_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speed_voter.speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.current_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.desired_speed",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "screen.desired_speed",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "bluetooth_ctrl.contacts",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "entertainment.contacts",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "bluetooth_ctrl.music",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "entertainment.music_in",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "entertainment.music_out",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "speaker.music",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "entertainment.infos",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "screen.entertainment_infos",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.tire_pressure_out",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "screen.tire_pressure",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: false,
+                                            name: "channel",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "crossbeam_channel",
+                                                            "unbounded",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "tire_pressure.pressure",
+                                            ),
+                                            "send",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.0",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
+                                        ),
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            Ident(
+                                                "panel_controller.tire_pressure_in",
+                                            ),
+                                            "receive",
+                                            [
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Some",
+                                                        ],
+                                                        Member,
+                                                    ),
+                                                    [
+                                                        Ident(
+                                                            "channel.1",
+                                                        ),
+                                                    ],
+                                                ),
+                                            ],
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "return Self { wheel_sensor: None, wheel_sensorSend, laser_sensor: None, laser_sensorSend, speed: None, speedRece, thr, cpu_id }  //显式return",
+                                            "return Self { obstacle_camera, obstacle_radar, wheel_sensor, laser_sensor, panel, tire_pressure, bluetooth_ctrl, image_acquisition, obstacle_detection, panel_controller, speed_voter, speed_ctrl, entertainment, brake, acceleration, screen, speaker }  //显式return",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
-                                "// Creates a new process instance",
+                                "// Creates a new system instance",
                             ],
                             attrs: [],
                         },
                     ),
                     Method(
                         FunctionDef {
-                            name: "start",
+                            name: "run",
                             params: [
                                 Param {
                                     name: "self",
@@ -474,790 +1904,190 @@ RustModule {
                             return_type: Unit,
                             body: Block {
                                 stmts: [
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "Self { wheel_sensor, wheel_sensorSend, laser_sensor, laser_sensorSend, speed, speedRece, thr, cpu_id, .. }",
-                                            ty: None,
-                                            init: Some(
-                                                Ident(
-                                                    "self",
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
-                                        MethodCall(
-                                            BuilderChain(
-                                                [
-                                                    Named(
-                                                        "\"thr\".to_string()",
-                                                    ),
-                                                    Spawn {
-                                                        closure: Closure(
-                                                            [],
-                                                            MethodCall(
-                                                                Ident(
-                                                                    "thr",
-                                                                ),
-                                                                "run",
-                                                                [],
-                                                            ),
-                                                        ),
-                                                        move_kw: false,
-                                                    },
-                                                ],
-                                            ),
-                                            "unwrap",
-                                            [],
+                                        Ident(
+                                            "std::thread::spawn(|| self.obstacle_camera.run());",
                                         ),
                                     ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "wheel_sensor_rx",
-                                            ty: None,
-                                            init: Some(
-                                                MethodCall(
-                                                    Ident(
-                                                        "wheel_sensor",
-                                                    ),
-                                                    "unwrap",
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
-                                        MethodCall(
-                                            BuilderChain(
-                                                [
-                                                    Named(
-                                                        "\"data_forwarder_wheel_sensor\".to_string()",
-                                                    ),
-                                                    Spawn {
-                                                        closure: Closure(
-                                                            [],
-                                                            Block(
-                                                                Block {
-                                                                    stmts: [
-                                                                        Expr(
-                                                                            Loop(
-                                                                                Block {
-                                                                                    stmts: [
-                                                                                        Expr(
-                                                                                            IfLet {
-                                                                                                pattern: "Ok(msg)",
-                                                                                                value: MethodCall(
-                                                                                                    Ident(
-                                                                                                        "wheel_sensor_rx",
-                                                                                                    ),
-                                                                                                    "try_recv",
-                                                                                                    [],
-                                                                                                ),
-                                                                                                then_branch: Block {
-                                                                                                    stmts: [
-                                                                                                        Expr(
-                                                                                                            IfLet {
-                                                                                                                pattern: "Some(tx)",
-                                                                                                                value: Reference(
-                                                                                                                    Ident(
-                                                                                                                        "wheel_sensorSend",
-                                                                                                                    ),
-                                                                                                                    true,
-                                                                                                                    false,
-                                                                                                                ),
-                                                                                                                then_branch: Block {
-                                                                                                                    stmts: [
-                                                                                                                        Let(
-                                                                                                                            LetStmt {
-                                                                                                                                ifmut: false,
-                                                                                                                                name: "_",
-                                                                                                                                ty: None,
-                                                                                                                                init: Some(
-                                                                                                                                    MethodCall(
-                                                                                                                                        Ident(
-                                                                                                                                            "tx",
-                                                                                                                                        ),
-                                                                                                                                        "send",
-                                                                                                                                        [
-                                                                                                                                            Ident(
-                                                                                                                                                "msg",
-                                                                                                                                            ),
-                                                                                                                                        ],
-                                                                                                                                    ),
-                                                                                                                                ),
-                                                                                                                            },
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                    expr: None,
-                                                                                                                },
-                                                                                                                else_branch: None,
-                                                                                                            },
-                                                                                                        ),
-                                                                                                    ],
-                                                                                                    expr: None,
-                                                                                                },
-                                                                                                else_branch: None,
-                                                                                            },
-                                                                                        ),
-                                                                                        Expr(
-                                                                                            MethodCall(
-                                                                                                Path(
-                                                                                                    [
-                                                                                                        "std",
-                                                                                                        "thread",
-                                                                                                        "sleep",
-                                                                                                    ],
-                                                                                                    Namespace,
-                                                                                                ),
-                                                                                                "",
-                                                                                                [
-                                                                                                    MethodCall(
-                                                                                                        Path(
-                                                                                                            [
-                                                                                                                "std",
-                                                                                                                "time",
-                                                                                                                "Duration",
-                                                                                                                "from_millis",
-                                                                                                            ],
-                                                                                                            Namespace,
-                                                                                                        ),
-                                                                                                        "",
-                                                                                                        [
-                                                                                                            Literal(
-                                                                                                                Int(
-                                                                                                                    1,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                        ),
-                                                                                    ],
-                                                                                    expr: None,
-                                                                                },
-                                                                            ),
-                                                                        ),
-                                                                    ],
-                                                                    expr: None,
-                                                                },
-                                                            ),
-                                                        ),
-                                                        move_kw: true,
-                                                    },
-                                                ],
-                                            ),
-                                            "unwrap",
-                                            [],
+                                        Ident(
+                                            "std::thread::spawn(|| self.obstacle_radar.run());",
                                         ),
                                     ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "laser_sensor_rx",
-                                            ty: None,
-                                            init: Some(
-                                                MethodCall(
-                                                    Ident(
-                                                        "laser_sensor",
-                                                    ),
-                                                    "unwrap",
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
                                     Expr(
-                                        MethodCall(
-                                            BuilderChain(
-                                                [
-                                                    Named(
-                                                        "\"data_forwarder_laser_sensor\".to_string()",
-                                                    ),
-                                                    Spawn {
-                                                        closure: Closure(
-                                                            [],
-                                                            Block(
-                                                                Block {
-                                                                    stmts: [
-                                                                        Expr(
-                                                                            Loop(
-                                                                                Block {
-                                                                                    stmts: [
-                                                                                        Expr(
-                                                                                            IfLet {
-                                                                                                pattern: "Ok(msg)",
-                                                                                                value: MethodCall(
-                                                                                                    Ident(
-                                                                                                        "laser_sensor_rx",
-                                                                                                    ),
-                                                                                                    "try_recv",
-                                                                                                    [],
-                                                                                                ),
-                                                                                                then_branch: Block {
-                                                                                                    stmts: [
-                                                                                                        Expr(
-                                                                                                            IfLet {
-                                                                                                                pattern: "Some(tx)",
-                                                                                                                value: Reference(
-                                                                                                                    Ident(
-                                                                                                                        "laser_sensorSend",
-                                                                                                                    ),
-                                                                                                                    true,
-                                                                                                                    false,
-                                                                                                                ),
-                                                                                                                then_branch: Block {
-                                                                                                                    stmts: [
-                                                                                                                        Let(
-                                                                                                                            LetStmt {
-                                                                                                                                ifmut: false,
-                                                                                                                                name: "_",
-                                                                                                                                ty: None,
-                                                                                                                                init: Some(
-                                                                                                                                    MethodCall(
-                                                                                                                                        Ident(
-                                                                                                                                            "tx",
-                                                                                                                                        ),
-                                                                                                                                        "send",
-                                                                                                                                        [
-                                                                                                                                            Ident(
-                                                                                                                                                "msg",
-                                                                                                                                            ),
-                                                                                                                                        ],
-                                                                                                                                    ),
-                                                                                                                                ),
-                                                                                                                            },
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                    expr: None,
-                                                                                                                },
-                                                                                                                else_branch: None,
-                                                                                                            },
-                                                                                                        ),
-                                                                                                    ],
-                                                                                                    expr: None,
-                                                                                                },
-                                                                                                else_branch: None,
-                                                                                            },
-                                                                                        ),
-                                                                                        Expr(
-                                                                                            MethodCall(
-                                                                                                Path(
-                                                                                                    [
-                                                                                                        "std",
-                                                                                                        "thread",
-                                                                                                        "sleep",
-                                                                                                    ],
-                                                                                                    Namespace,
-                                                                                                ),
-                                                                                                "",
-                                                                                                [
-                                                                                                    MethodCall(
-                                                                                                        Path(
-                                                                                                            [
-                                                                                                                "std",
-                                                                                                                "time",
-                                                                                                                "Duration",
-                                                                                                                "from_millis",
-                                                                                                            ],
-                                                                                                            Namespace,
-                                                                                                        ),
-                                                                                                        "",
-                                                                                                        [
-                                                                                                            Literal(
-                                                                                                                Int(
-                                                                                                                    1,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                        ),
-                                                                                    ],
-                                                                                    expr: None,
-                                                                                },
-                                                                            ),
-                                                                        ),
-                                                                    ],
-                                                                    expr: None,
-                                                                },
-                                                            ),
-                                                        ),
-                                                        move_kw: true,
-                                                    },
-                                                ],
-                                            ),
-                                            "unwrap",
-                                            [],
+                                        Ident(
+                                            "std::thread::spawn(|| self.wheel_sensor.run());",
                                         ),
                                     ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "speedRece_rx",
-                                            ty: None,
-                                            init: Some(
-                                                MethodCall(
-                                                    Ident(
-                                                        "speedRece",
-                                                    ),
-                                                    "unwrap",
-                                                    [],
-                                                ),
-                                            ),
-                                        },
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.laser_sensor.run());",
+                                        ),
                                     ),
                                     Expr(
-                                        MethodCall(
-                                            BuilderChain(
-                                                [
-                                                    Named(
-                                                        "\"data_forwarder_speedRece\".to_string()",
-                                                    ),
-                                                    Spawn {
-                                                        closure: Closure(
-                                                            [],
-                                                            Block(
-                                                                Block {
-                                                                    stmts: [
-                                                                        Expr(
-                                                                            Loop(
-                                                                                Block {
-                                                                                    stmts: [
-                                                                                        Expr(
-                                                                                            IfLet {
-                                                                                                pattern: "Ok(msg)",
-                                                                                                value: MethodCall(
-                                                                                                    Ident(
-                                                                                                        "speedRece_rx",
-                                                                                                    ),
-                                                                                                    "try_recv",
-                                                                                                    [],
-                                                                                                ),
-                                                                                                then_branch: Block {
-                                                                                                    stmts: [
-                                                                                                        Expr(
-                                                                                                            IfLet {
-                                                                                                                pattern: "Some(tx)",
-                                                                                                                value: Reference(
-                                                                                                                    Ident(
-                                                                                                                        "speed",
-                                                                                                                    ),
-                                                                                                                    true,
-                                                                                                                    false,
-                                                                                                                ),
-                                                                                                                then_branch: Block {
-                                                                                                                    stmts: [
-                                                                                                                        Let(
-                                                                                                                            LetStmt {
-                                                                                                                                ifmut: false,
-                                                                                                                                name: "_",
-                                                                                                                                ty: None,
-                                                                                                                                init: Some(
-                                                                                                                                    MethodCall(
-                                                                                                                                        Ident(
-                                                                                                                                            "tx",
-                                                                                                                                        ),
-                                                                                                                                        "send",
-                                                                                                                                        [
-                                                                                                                                            Ident(
-                                                                                                                                                "msg",
-                                                                                                                                            ),
-                                                                                                                                        ],
-                                                                                                                                    ),
-                                                                                                                                ),
-                                                                                                                            },
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                    expr: None,
-                                                                                                                },
-                                                                                                                else_branch: None,
-                                                                                                            },
-                                                                                                        ),
-                                                                                                    ],
-                                                                                                    expr: None,
-                                                                                                },
-                                                                                                else_branch: None,
-                                                                                            },
-                                                                                        ),
-                                                                                        Expr(
-                                                                                            MethodCall(
-                                                                                                Path(
-                                                                                                    [
-                                                                                                        "std",
-                                                                                                        "thread",
-                                                                                                        "sleep",
-                                                                                                    ],
-                                                                                                    Namespace,
-                                                                                                ),
-                                                                                                "",
-                                                                                                [
-                                                                                                    MethodCall(
-                                                                                                        Path(
-                                                                                                            [
-                                                                                                                "std",
-                                                                                                                "time",
-                                                                                                                "Duration",
-                                                                                                                "from_millis",
-                                                                                                            ],
-                                                                                                            Namespace,
-                                                                                                        ),
-                                                                                                        "",
-                                                                                                        [
-                                                                                                            Literal(
-                                                                                                                Int(
-                                                                                                                    1,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                        ),
-                                                                                    ],
-                                                                                    expr: None,
-                                                                                },
-                                                                            ),
-                                                                        ),
-                                                                    ],
-                                                                    expr: None,
-                                                                },
-                                                            ),
-                                                        ),
-                                                        move_kw: true,
-                                                    },
-                                                ],
-                                            ),
-                                            "unwrap",
-                                            [],
+                                        Ident(
+                                            "std::thread::spawn(|| self.panel.run());",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.tire_pressure.run());",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.bluetooth_ctrl.run());",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "self.image_acquisition.start()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "self.obstacle_detection.start()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "self.panel_controller.start()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "self.speed_voter.start()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "self.speed_ctrl.start()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "self.entertainment.start()",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.brake.run());",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.acceleration.run());",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.screen.run());",
+                                        ),
+                                    ),
+                                    Expr(
+                                        Ident(
+                                            "std::thread::spawn(|| self.speaker.run());",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
-                                "// Starts all threads in the process",
+                                "// Runs the system, starts all processes",
                             ],
                             attrs: [],
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "System",
+                    ),
+                ),
             },
         ),
-        Struct(
-            StructDef {
-                name: "speed_voter_thrThread",
-                fields: [
-                    Field {
-                        name: "wheel_sensor",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// Port: wheel_sensor In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "laser_sensor",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Receiver",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// Port: laser_sensor In",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "speed",
-                        ty: Generic(
-                            "Option",
-                            [
-                                Generic(
-                                    "mpsc::Sender",
-                                    [
-                                        Named(
-                                            "speed",
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                        docs: [
-                            "// Port: speed Out",
-                        ],
-                        attrs: [],
-                    },
-                    Field {
-                        name: "cpu_id",
-                        ty: Named(
+        LazyStatic(
+            LazyStaticDef {
+                name: "CPU_ID_TO_SCHED_POLICY",
+                ty: Generic(
+                    "HashMap",
+                    [
+                        Named(
                             "isize",
                         ),
-                        docs: [
-                            "// 结构体新增 CPU ID",
-                        ],
-                        attrs: [],
-                    },
-                ],
-                properties: [
-                    StruProperty {
-                        name: "Dispatch_Protocol",
-                        value: String(
-                            "Periodic",
+                        Named(
+                            "i32",
                         ),
-                        docs: [
-                            "// AADL属性: Dispatch_Protocol",
-                        ],
-                    },
-                    StruProperty {
-                        name: "Period",
-                        value: Integer(
-                            8,
-                        ),
-                        docs: [
-                            "// AADL属性: Period",
-                        ],
-                    },
-                    StruProperty {
-                        name: "mipsbudget",
-                        value: Float(
-                            8.0,
-                        ),
-                        docs: [
-                            "// AADL属性: mipsbudget",
-                        ],
-                    },
-                ],
-                generics: [],
-                derives: [
-                    "Debug",
-                ],
-                docs: [
-                    "// AADL Thread: speed_voter_thr",
-                ],
-                vis: Public,
-            },
-        ),
-        Impl(
-            ImplBlock {
-                target: Named(
-                    "speed_voter_thrThread",
+                    ],
                 ),
-                generics: [],
-                items: [
-                    Method(
-                        FunctionDef {
-                            name: "run",
-                            params: [
-                                Param {
-                                    name: "",
-                                    ty: Reference(
-                                        Named(
-                                            "self",
+                init: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: true,
+                                name: "map",
+                                ty: Some(
+                                    Generic(
+                                        "HashMap",
+                                        [
+                                            Named(
+                                                "isize",
+                                            ),
+                                            Named(
+                                                "i32",
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                                init: Some(
+                                    Call(
+                                        Path(
+                                            [
+                                                "HashMap",
+                                                "new",
+                                            ],
+                                            Namespace,
                                         ),
-                                        false,
-                                        true,
+                                        [],
                                     ),
-                                },
-                            ],
-                            return_type: Unit,
-                            body: Block {
-                                stmts: [
-                                    Expr(
-                                        If {
-                                            condition: BinaryOp(
-                                                Path(
-                                                    [
-                                                        "self",
-                                                        "cpu_id",
-                                                    ],
-                                                    Member,
-                                                ),
-                                                ">",
-                                                Literal(
-                                                    Int(
-                                                        -1,
-                                                    ),
-                                                ),
-                                            ),
-                                            then_branch: Block {
-                                                stmts: [
-                                                    Expr(
-                                                        Call(
-                                                            Path(
-                                                                [
-                                                                    "set_thread_affinity",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            [
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "cpu_id",
-                                                                    ],
-                                                                    Member,
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
-                                            else_branch: None,
-                                        },
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
-                                            name: "period",
-                                            ty: Some(
-                                                Path(
-                                                    [
-                                                        "std",
-                                                        "time",
-                                                        "Duration",
-                                                    ],
-                                                ),
-                                            ),
-                                            init: Some(
-                                                Call(
-                                                    Path(
-                                                        [
-                                                            "Duration",
-                                                            "from_millis",
-                                                        ],
-                                                        Namespace,
-                                                    ),
-                                                    [
-                                                        Literal(
-                                                            Int(
-                                                                2000,
-                                                            ),
-                                                        ),
-                                                    ],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Expr(
-                                        Loop(
-                                            Block {
-                                                stmts: [
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "start",
-                                                            ty: None,
-                                                            init: Some(
-                                                                Call(
-                                                                    Path(
-                                                                        [
-                                                                            "Instant",
-                                                                            "now",
-                                                                        ],
-                                                                        Namespace,
-                                                                    ),
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
-                                                    Expr(
-                                                        Block(
-                                                            Block {
-                                                                stmts: [],
-                                                                expr: None,
-                                                            },
-                                                        ),
-                                                    ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "elapsed",
-                                                            ty: None,
-                                                            init: Some(
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "start",
-                                                                    ),
-                                                                    "elapsed",
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
-                                                    Expr(
-                                                        MethodCall(
-                                                            Path(
-                                                                [
-                                                                    "std",
-                                                                    "thread",
-                                                                    "sleep",
-                                                                ],
-                                                                Namespace,
-                                                            ),
-                                                            "",
-                                                            [
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "period",
-                                                                    ),
-                                                                    "saturating_sub",
-                                                                    [
-                                                                        Ident(
-                                                                            "elapsed",
-                                                                        ),
-                                                                    ],
-                                                                ),
-                                                            ],
-                                                        ),
-                                                    ),
-                                                ],
-                                                expr: None,
-                                            },
+                                ),
+                            },
+                        ),
+                        Expr(
+                            MethodCall(
+                                Ident(
+                                    "map",
+                                ),
+                                "insert",
+                                [
+                                    Literal(
+                                        Int(
+                                            0,
                                         ),
+                                    ),
+                                    Path(
+                                        [
+                                            "SCHED_FIFO",
+                                        ],
+                                        Namespace,
                                     ),
                                 ],
-                                expr: None,
-                            },
-                            asyncness: false,
-                            vis: Public,
-                            docs: [
-                                "// Thread execution entry point",
-                                "// Period: None ms",
-                            ],
-                            attrs: [],
-                        },
-                    ),
+                            ),
+                        ),
+                        Expr(
+                            Ident(
+                                "return map",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                vis: Public,
+                docs: [
+                    "// CPU ID到调度策略的映射",
                 ],
-                trait_impl: None,
             },
         ),
     ],

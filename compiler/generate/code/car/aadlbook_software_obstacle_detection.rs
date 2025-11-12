@@ -1,13 +1,14 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-09-19 17:00:16
+// 生成时间: 2025-11-12 12:15:15
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -27,41 +28,33 @@ fn set_thread_affinity(cpu: isize) {
 // AADL Process: obstacle_detection
 #[derive(Debug)]
 pub struct obstacle_detectionProcess {
-    // Port: camera In
-    pub camera: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: radar In
-    pub radar: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: obstacle_position Out
-    pub obstacle_position: Option<mpsc::Sender<obstacle_position>>,
-    // 进程 CPU ID
-    pub cpu_id: isize,
-    // 内部端口: camera In
-    pub cameraSend: Option<mpsc::Sender<obstacle_position>>,
-    // 内部端口: radar In
-    pub radarSend: Option<mpsc::Sender<obstacle_position>>,
-    // 内部端口: obstacle_position Out
-    pub obstacle_positionRece: Option<mpsc::Receiver<obstacle_position>>,
-    // 子组件线程（thr : thread obstacle_detection_thr）
+    pub camera: Option<Receiver<bool>>,// Port: camera In
+    pub radar: Option<Receiver<bool>>,// Port: radar In
+    pub obstacle_position: Option<Sender<bool>>,// Port: obstacle_position Out
+    pub cpu_id: isize,// 进程 CPU ID
+    pub cameraSend: Option<Sender<bool>>,// 内部端口: camera In
+    pub radarSend: Option<Sender<bool>>,// 内部端口: radar In
+    pub obstacle_positionRece: Option<Receiver<bool>>,// 内部端口: obstacle_position Out
     #[allow(dead_code)]
-    pub thr: obstacle_detection_thrThread,
+    pub thr: obstacle_detection_thrThread,// 子组件线程（thr : thread obstacle_detection_thr）
 }
 
-impl obstacle_detectionProcess {
+impl Process for obstacle_detectionProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
         let mut cameraSend = None;
         let mut radarSend = None;
         let mut obstacle_positionRece = None;
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         cameraSend = Some(channel.0);
         // build connection: 
             thr.camera = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         radarSend = Some(channel.0);
         // build connection: 
             thr.radar = Some(channel.1);
-        let channel = mpsc::channel();
+        let channel = crossbeam_channel::unbounded();
         // build connection: 
             thr.obstacle_detected = Some(channel.0);
         obstacle_positionRece = Some(channel.1);
@@ -69,7 +62,7 @@ impl obstacle_detectionProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { camera, cameraSend, radar, radarSend, obstacle_position, obstacle_positionRece, thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("thr".to_string())
@@ -120,32 +113,44 @@ impl obstacle_detectionProcess {
 // AADL Thread: obstacle_detection_thr
 #[derive(Debug)]
 pub struct obstacle_detection_thrThread {
-    // Port: camera In
-    pub camera: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: radar In
-    pub radar: Option<mpsc::Receiver<obstacle_position>>,
-    // Port: obstacle_detected Out
-    pub obstacle_detected: Option<mpsc::Sender<obstacle_position>>,
-    // 结构体新增 CPU ID
-    pub cpu_id: isize,
-    
-    // --- AADL属性 ---
-    pub dispatch_protocol: String, // AADL属性: Dispatch_Protocol
-    pub period: u64, // AADL属性: Period
-    pub mipsbudget: f64, // AADL属性: mipsbudget
+    pub camera: Option<Receiver<bool>>,// Port: camera In
+    pub radar: Option<Receiver<bool>>,// Port: radar In
+    pub obstacle_detected: Option<Sender<bool>>,// Port: obstacle_detected Out
+    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+    pub period: u64,// AADL属性: Period
+    pub mipsbudget: f64,// AADL属性: mipsbudget
+    pub cpu_id: isize,// 结构体新增 CPU ID
 }
 
-impl obstacle_detection_thrThread {
+impl Thread for obstacle_detection_thrThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
-        Self {
-            camera: None,
-            radar: None,
-            obstacle_detected: None,
-            cpu_id: cpu_id,
-            dispatch_protocol: "Periodic".to_string(), // AADL属性: Dispatch_Protocol
-            period: 100, // AADL属性: Period
-            mipsbudget: 10, // AADL属性: mipsbudget
-        }
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            camera: None, 
+            mipsbudget: 10.0, 
+            obstacle_detected: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            radar: None, 
+            period: 100, 
+            cpu_id: cpu_id, // CPU ID
+        };
     }
+    
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        loop {
+            let start = Instant::now();
+            {
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        };
+    }
+    
 }
+
