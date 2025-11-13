@@ -135,11 +135,20 @@ features
 	music_out : out data port aadlbook::icd::music;
 properties
 	Dispatch_Protocol => Periodic;
-	Period            => 5ms;
+	Period            => 5 ms;
 	sei::mipsbudget   => 5.0 MIPS;
 end entertainment_thr;
 
 thread implementation entertainment_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[on dispatch]-> s0 {
+		infos := 16;
+		music_out := false
+	 };
+	**};
 end entertainment_thr.i;
 
 end aadlbook::software::entertainment;
@@ -175,17 +184,25 @@ end image_acquisition.i;
 thread image_acquisition_thr
 features
 	picture           : in data port aadlbook::icd::picture;
-obstacle_detected : out data port aadlbook::icd::obstacle_position;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position;
 properties
 	sei::mipsbudget   => 25.0 MIPS;
 	Dispatch_Protocol => Periodic;
-	Period            => 50ms;
+	Period            => 50 ms;
 	compute_execution_time => 10 ms .. 40 ms;
 --	reference_processor => classifier (::platform::ecu);
-	sei::instructionsperdispatch => 1.24 kipd .. 1.25 mipd; 
+	sei::instructionsperdispatch => 1.24 kipd .. 1.25 mipd;
 end image_acquisition_thr;
 
 thread implementation image_acquisition_thr.i
+annex Behavior_specification {**
+	 states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[on dispatch]-> s0 {
+		obstacle_detected := false
+	 };
+	**};
 end image_acquisition_thr.i;
 
 end aadlbook::software::image_acquisition;
@@ -227,13 +244,36 @@ features
 	obstacle_detected : out data port aadlbook::icd::obstacle_position;
 properties
 	Dispatch_Protocol => Periodic;
-	Period            => 100ms;
+	Period            => 100 ms;
 	Compute_Execution_Time => 20 ms .. 50 ms; 
 	sei::mipsbudget   => 10.0 MIPS; 
 	sei::instructionsperdispatch => 0.9 kipd .. 0.98 mipd; 
 end obstacle_detection_thr;
 
 thread implementation obstacle_detection_thr.i
+annex Behavior_specification {**
+	variables
+	 obstacle_detected_temp : Base_Types::Boolean := false;
+	 states
+	 s0 : initial complete final state;
+	 s1 : state;
+	 transitions
+	 s0 -[camera]-> s0 {
+		obstacle_detected := true
+	 };
+	 s0 -[not camera]-> s1{
+		obstacle_detected_temp := false
+	 };
+	 s0 -[radar]-> s0 {
+		obstacle_detected := true
+	 };
+	 s0 -[not radar]-> s0 {
+		obstacle_detected_temp := false
+	 };
+	 s1 -[on dispatch]-> s0 {
+		obstacle_detected := obstacle_detected_temp
+	 }; 
+	**};
 end obstacle_detection_thr.i;
 
 end aadlbook::software::obstacle_detection;
@@ -278,7 +318,22 @@ features
 	tire_pressure_out : out data port aadlbook::icd::pressure; 
 end panel_control_thr;
 
+--只是简单的逻辑，为了示意
 thread implementation panel_control_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 s1 : state;
+	 s2 : state;
+	 transitions
+	 s0 -[0 < current_speed]-> s1 {
+		desired_speed := current_speed + 1
+	 };
+	 s1 -[0 < tire_pressure_in]-> s2 {
+		tire_pressure_out := tire_pressure_in
+	 };
+	 s2 -[]-> s0;
+	**};
 end panel_control_thr.i;
 
 end aadlbook::software::panel_control;
@@ -338,7 +393,7 @@ features
 	warning         : out data port aadlbook::icd::boolean;
 properties
 	Dispatch_Protocol => Periodic;
-	Period            => 5ms;
+	Period            => 5 ms;
 	sei::mipsbudget   => 5.0 MIPS;
 end speed_controller_warning_thr;
 
@@ -350,7 +405,7 @@ features
 	brake_cmd         : out data port aadlbook::icd::brake_cmd;
 properties
 	Dispatch_Protocol => Periodic;
-	Period            => 5ms;
+	Period            => 5 ms;
 	sei::mipsbudget   => 5.0 MIPS;
 end speed_controller_brake_thr;
 
@@ -362,17 +417,41 @@ features
 	speed_cmd         : out data port aadlbook::icd::speed_cmd;
 properties
 	Dispatch_Protocol => Periodic;
-	Period            => 5ms;
+	Period            => 5 ms;
 	sei::mipsbudget   => 5.0 MIPS;
 end speed_controller_accel_thr;
 
 thread implementation speed_controller_accel_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[60 < current_speed]-> s0 {
+		speed_cmd := 0
+	 };
+	**};
 end speed_controller_accel_thr.i;
 
 thread implementation speed_controller_brake_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[80 < current_speed]-> s0 {
+		brake_cmd := 10
+	 };
+	**};
 end speed_controller_brake_thr.i;
 
 thread implementation speed_controller_warning_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[obstacle_position]-> s0 {
+		warning := true
+	 };
+	**};
 end speed_controller_warning_thr.i;
 
 end aadlbook::software::speed_controller;
@@ -415,11 +494,26 @@ features
 	speed        : out data port aadlbook::icd::speed;
 properties
 	Dispatch_Protocol => Periodic;
-	Period            => 8ms;
-	sei::mipsbudget   => 8.0 MIPS; 
+	Period            => 8 ms;
+	sei::mipsbudget   => 8.0 MIPS;
 end speed_voter_thr;
 
 thread implementation speed_voter_thr.i
+annex Behavior_specification {**
+	variables
+	 speed_value : Base_Types::Unsigned_16 := 0;
+	 states
+	 s0 : initial complete final state;
+	 s1 : state;
+	 transitions
+	 s0 -[0 < wheel_sensor]-> s1 {
+		speed_value := wheel_sensor
+	 };
+	 s1 -[0 < laser_sensor]-> s0 {
+	 speed_value := laser_sensor + speed_value;
+	 speed := speed_value/2
+	 };
+	**};
 end speed_voter_thr.i;
 
 
@@ -441,7 +535,7 @@ device camera
 features
 	picture : out data port aadlbook::icd::picture;
 properties 
-	Period => 200ms;
+	Period => 2000 ms;
 	compute_execution_time => 20 ms .. 50 ms;
 end camera;
 
@@ -449,7 +543,7 @@ device radar
 features
 	distance_estimate : out data port aadlbook::icd::obstacle_position;
 properties 
-	Period => 10ms;
+	Period => 1000 ms;
 	compute_execution_time => 6 ms .. 8 ms;
 end radar;
  
@@ -461,7 +555,7 @@ device speed_wheel_sensor
 features
 	speed : out data port aadlbook::icd::speed;
 properties
-	Period => 10ms;
+	Period => 1000 ms;
 	compute_execution_time => 6 ms .. 9 ms;
 end speed_wheel_sensor;
 
@@ -469,7 +563,7 @@ device speed_laser_sensor
 features
 	speed : out data port aadlbook::icd::speed;
 properties
-	Period => 10ms;
+	Period => 1000 ms;
 	compute_execution_time => 6 ms .. 9 ms;
 end speed_laser_sensor;
 
@@ -482,14 +576,14 @@ device brake
 features
 	cmd : in data port aadlbook::icd::brake_cmd;
 properties
-	Period => 2 ms; 
+	Period => 100 ms; 
 end brake;
 
 device acceleration
 features
 	cmd : in data port aadlbook::icd::speed_cmd;
 properties
-	Period => 2 ms;
+	Period => 100 ms;
 end acceleration;
 
 device panel

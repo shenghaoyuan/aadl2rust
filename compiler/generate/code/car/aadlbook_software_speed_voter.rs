@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -126,12 +126,12 @@ impl Thread for speed_voter_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
-            laser_sensor: None, 
-            speed: None, 
-            mipsbudget: 8.0, 
-            wheel_sensor: None, 
             period: 8, 
+            speed: None, 
+            laser_sensor: None, 
+            mipsbudget: 8.0, 
+            dispatch_protocol: "Periodic".to_string(), 
+            wheel_sensor: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -143,9 +143,49 @@ impl Thread for speed_voter_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut speed_value: u16 = 0;
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+            // State: s1
+            s1,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
+            let laser_sensor_val = self.laser_sensor.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let wheel_sensor_val = self.wheel_sensor.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if 0 < wheel_sensor_val => {
+                            speed_value = wheel_sensor;
+                            state = State::s1;
+                            continue;
+                        },
+                        State::s1 if 0 < laser_sensor_val => {
+                            speed_value = laser_sensor + speed_value;
+                            if let Some(sender) = &self.speed {
+                                let _ = sender.send(speed_value / 2);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                        State::s1 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

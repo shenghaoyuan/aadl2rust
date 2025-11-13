@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -327,13 +327,13 @@ impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             period: 5, 
             speed_cmd: None, 
-            mipsbudget: 5.0, 
             obstacle_position: None, 
+            mipsbudget: 5.0, 
             current_speed: None, 
             desired_speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -345,9 +345,35 @@ impl Thread for speed_controller_accel_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
+            let current_speed_val = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if 60 < current_speed_val => {
+                            if let Some(sender) = &self.speed_cmd {
+                                let _ = sender.send(0);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));
@@ -360,13 +386,13 @@ impl Thread for speed_controller_brake_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_position: None, 
-            current_speed: None, 
+            mipsbudget: 5.0, 
             desired_speed: None, 
+            current_speed: None, 
+            brake_cmd: None, 
             dispatch_protocol: "Periodic".to_string(), 
             period: 5, 
-            mipsbudget: 5.0, 
-            brake_cmd: None, 
+            obstacle_position: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -378,9 +404,35 @@ impl Thread for speed_controller_brake_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
+            let current_speed_val = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if 80 < current_speed_val => {
+                            if let Some(sender) = &self.brake_cmd {
+                                let _ = sender.send(10);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));
@@ -393,13 +445,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_position: None, 
-            desired_speed: None, 
-            mipsbudget: 5.0, 
-            period: 5, 
-            current_speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            period: 5, 
+            obstacle_position: None, 
+            mipsbudget: 5.0, 
             warning: None, 
+            current_speed: None, 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -411,9 +463,35 @@ impl Thread for speed_controller_warning_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
+            let obstacle_position_val = self.obstacle_position.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if obstacle_position_val == true => {
+                            if let Some(sender) = &self.warning {
+                                let _ = sender.send(true);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

@@ -276,6 +276,8 @@ pub fn transform_guard(pair: Pair<aadlight_parser::Rule>) -> BehaviorCondition {
             BehaviorCondition::Execute(DispatchConjunction {
                 not: false,
                 dispatch_triggers: vec![],
+                number: None,
+                less_than: false,
             })
         }
     }
@@ -315,7 +317,8 @@ fn transform_execute_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCon
     let inner_iter = pair.into_inner();
     let mut has_not = false;
     let mut identifier = String::new();
-    
+    let mut number = String::new();
+    let mut less_than = false;
     // 遍历所有内部元素
     for inner in inner_iter {
         match inner.as_rule() {
@@ -324,6 +327,12 @@ fn transform_execute_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCon
             }
             aadlight_parser::Rule::identifier => {
                 identifier = inner.as_str().to_string();
+            }
+            aadlight_parser::Rule::number => {
+                number = inner.as_str().trim().to_string();
+            }
+            aadlight_parser::Rule::less_than_operator => {
+                less_than = true;
             }
             _ => {
                 // 忽略其他规则
@@ -335,6 +344,8 @@ fn transform_execute_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCon
     let conjunction = DispatchConjunction {
         not: has_not,
         dispatch_triggers: vec![DispatchTrigger::InEventPort(identifier)],
+        number: Some(number),
+        less_than: less_than,
     };
     
     BehaviorCondition::Execute(conjunction)
@@ -392,6 +403,8 @@ fn transform_dispatch_conjunction(pair: Pair<aadlight_parser::Rule>) -> Dispatch
     DispatchConjunction {
         not: false, // 简化处理，暂时不支持 not
         dispatch_triggers: triggers,
+        number: None,
+        less_than: false,
     }
 }
 

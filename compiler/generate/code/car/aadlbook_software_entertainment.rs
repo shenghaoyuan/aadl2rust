@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -147,13 +147,13 @@ impl Thread for entertainment_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            contacts: None, 
             period: 5, 
-            music_in: None, 
             dispatch_protocol: "Periodic".to_string(), 
-            infos: None, 
             mipsbudget: 5.0, 
+            contacts: None, 
+            music_in: None, 
             music_out: None, 
+            infos: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -165,9 +165,34 @@ impl Thread for entertainment_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 => {
+                            if let Some(sender) = &self.infos {
+                                let _ = sender.send(16);
+                            };
+                            if let Some(sender) = &self.music_out {
+                                let _ = sender.send(false);
+                            };
+                            // on dispatch → s0
+                            state = State::s0;
+                            // complete，需要停
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

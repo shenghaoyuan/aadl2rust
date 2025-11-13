@@ -254,11 +254,13 @@ pub mod aadl_ast_cj {
     }
     
     /// 分发合取表达式
-    /// 对应标准中的 dispatch_conjunction 语法,自定义了not
+    /// 后面说法错误的（已经不属于“调度条件了”）：对应标准中的 dispatch_conjunction 语法,自定义了not
     #[derive(Debug, Clone)]
     pub struct DispatchConjunction {
         pub not: bool,
         pub dispatch_triggers: Vec<DispatchTrigger>,
+        pub number: Option<String>,
+        pub less_than: bool,
     }
     
     /// 分发触发器

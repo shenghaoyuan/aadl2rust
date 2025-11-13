@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -29,15 +29,15 @@ fn set_thread_affinity(cpu: isize) {
 #[derive(Debug)]
 pub struct cameraDevice {
     pub picture: Option<Sender<[[i32; 4]; 4]>>,// Port: picture Out
-    pub period_ms: u64,// 周期：200ms
+    pub period_ms: u64,// 周期：2000ms
 }
 
-impl cameraDevice {
+impl Device for cameraDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             picture: None,
-            period_ms: 200,
+            period_ms: 2000,
         };
     }
     
@@ -65,15 +65,15 @@ impl cameraDevice {
 #[derive(Debug)]
 pub struct radarDevice {
     pub distance_estimate: Option<Sender<bool>>,// Port: distance_estimate Out
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：1000ms
 }
 
-impl radarDevice {
+impl Device for radarDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             distance_estimate: None,
-            period_ms: 10,
+            period_ms: 1000,
         };
     }
     
@@ -101,15 +101,15 @@ impl radarDevice {
 #[derive(Debug)]
 pub struct speed_wheel_sensorDevice {
     pub speed: Option<Sender<u16>>,// Port: speed Out
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：1000ms
 }
 
-impl speed_wheel_sensorDevice {
+impl Device for speed_wheel_sensorDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             speed: None,
-            period_ms: 10,
+            period_ms: 1000,
         };
     }
     
@@ -137,15 +137,15 @@ impl speed_wheel_sensorDevice {
 #[derive(Debug)]
 pub struct speed_laser_sensorDevice {
     pub speed: Option<Sender<u16>>,// Port: speed Out
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：1000ms
 }
 
-impl speed_laser_sensorDevice {
+impl Device for speed_laser_sensorDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             speed: None,
-            period_ms: 10,
+            period_ms: 1000,
         };
     }
     
@@ -173,15 +173,15 @@ impl speed_laser_sensorDevice {
 #[derive(Debug)]
 pub struct brakeDevice {
     pub cmd: Option<Receiver<i8>>,// Port: cmd In
-    pub period_ms: u64,// 周期：2ms
+    pub period_ms: u64,// 周期：100ms
 }
 
-impl brakeDevice {
+impl Device for brakeDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             cmd: None,
-            period_ms: 2,
+            period_ms: 100,
         };
     }
     
@@ -210,15 +210,15 @@ impl brakeDevice {
 #[derive(Debug)]
 pub struct accelerationDevice {
     pub cmd: Option<Receiver<i8>>,// Port: cmd In
-    pub period_ms: u64,// 周期：2ms
+    pub period_ms: u64,// 周期：100ms
 }
 
-impl accelerationDevice {
+impl Device for accelerationDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             cmd: None,
-            period_ms: 2,
+            period_ms: 100,
         };
     }
     
@@ -248,16 +248,16 @@ impl accelerationDevice {
 pub struct panelDevice {
     pub increase_speed: Option<Sender<u16>>,// Port: increase_speed Out
     pub decrease_speed: Option<Sender<u16>>,// Port: decrease_speed Out
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：2000ms
 }
 
-impl panelDevice {
+impl Device for panelDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             increase_speed: None,
             decrease_speed: None,
-            period_ms: 10,
+            period_ms: 2000,
         };
     }
     
@@ -294,10 +294,10 @@ pub struct screenDevice {
     pub actual_speed: Option<Receiver<u16>>,// Port: actual_speed In
     pub warning: Option<Receiver<bool>>,// Port: warning In
     pub entertainment_infos: Option<Receiver<i8>>,// Port: entertainment_infos In
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：2000ms
 }
 
-impl screenDevice {
+impl Device for screenDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
@@ -306,7 +306,7 @@ impl screenDevice {
             actual_speed: None,
             warning: None,
             entertainment_infos: None,
-            period_ms: 10,
+            period_ms: 2000,
         };
     }
     
@@ -359,15 +359,15 @@ impl screenDevice {
 #[derive(Debug)]
 pub struct tpmsDevice {
     pub pressure: Option<Sender<i8>>,// Port: pressure Out
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：2000ms
 }
 
-impl tpmsDevice {
+impl Device for tpmsDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             pressure: None,
-            period_ms: 10,
+            period_ms: 2000,
         };
     }
     
@@ -396,16 +396,16 @@ impl tpmsDevice {
 pub struct bluetooth_controllerDevice {
     pub music: Option<Sender<bool>>,// Port: music Out
     pub contacts: Option<Sender<i8>>,// Port: contacts Out
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：2000ms
 }
 
-impl bluetooth_controllerDevice {
+impl Device for bluetooth_controllerDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             music: None,
             contacts: None,
-            period_ms: 10,
+            period_ms: 2000,
         };
     }
     
@@ -438,15 +438,15 @@ impl bluetooth_controllerDevice {
 #[derive(Debug)]
 pub struct speakerDevice {
     pub music: Option<Receiver<bool>>,// Port: music In
-    pub period_ms: u64,// 周期：10ms
+    pub period_ms: u64,// 周期：2000ms
 }
 
-impl speakerDevice {
+impl Device for speakerDevice {
     // Creates a new device instance
     fn new() -> Self {
         return Self {
             music: None,
-            period_ms: 10,
+            period_ms: 2000,
         };
     }
     

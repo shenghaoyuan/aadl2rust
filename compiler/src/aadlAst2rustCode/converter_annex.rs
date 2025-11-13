@@ -266,54 +266,7 @@ impl AnnexConverter {
                 ifmut: false,
                 name: format!("{}_val", port_name),
                 ty: None,
-                init: Some(Expr::Match {
-                    expr: Box::new(Expr::Path(
-                        vec!["&self".to_string(), port_name.clone()],
-                        PathType::Member,
-                    )),
-                    arms: vec![
-                        MatchArm {
-                            pattern: "Some(rx)".to_string(),
-                            guard: None,
-                            body: Block {
-                                stmts: vec![],
-                                expr: Some(Box::new(Expr::Match {
-                                    expr: Box::new(Expr::MethodCall(
-                                        Box::new(Expr::Ident("rx".to_string())),
-                                        "try_recv".to_string(),
-                                        Vec::new(),
-                                    )),
-                                    arms: vec![
-                                        MatchArm {
-                                            pattern: "Ok(val)".to_string(),
-                                            guard: None,
-                                            body: Block {
-                                                stmts: vec![],
-                                                expr: Some(Box::new(Expr::Ident("val".to_string()))),
-                                            },
-                                        },
-                                        MatchArm {
-                                            pattern: "_".to_string(),
-                                            guard: None,
-                                            body: Block {
-                                                stmts: vec![],
-                                                expr: Some(Box::new(Expr::Literal(Literal::Bool(false)))),
-                                            },
-                                        },
-                                    ],
-                                })),
-                            },
-                        },
-                        MatchArm {
-                            pattern: "None".to_string(),
-                            guard: None,
-                            body: Block {
-                                stmts: vec![],
-                                expr: Some(Box::new(Expr::Literal(Literal::Bool(false)))),
-                            },
-                        },
-                    ],
-                }),
+                init: Some(self.build_port_receive_expr(&port_name)),
             });
 
             stmts.push(receive_stmt);
@@ -370,6 +323,41 @@ impl AnnexConverter {
         }
     }
 
+    /// 构造端口接收表达式：self.port.as_ref().and_then(|rx| rx.try_recv().ok()).unwrap_or_default()
+    fn build_port_receive_expr(&self, port_name: &str) -> Expr {
+        let base_expr = Expr::Path(
+            vec!["self".to_string(), port_name.to_string()],
+            PathType::Member,
+        );
+        let as_ref_expr = Expr::MethodCall(
+            Box::new(base_expr),
+            "as_ref".to_string(),
+            Vec::new(),
+        );
+        let try_recv_expr = Expr::MethodCall(
+            Box::new(Expr::Ident("rx".to_string())),
+            "try_recv".to_string(),
+            Vec::new(),
+        );
+        let ok_expr = Expr::MethodCall(
+            Box::new(try_recv_expr),
+            "ok".to_string(),
+            Vec::new(),
+        );
+        let closure_expr = Expr::Closure(vec!["rx".to_string()], Box::new(ok_expr));
+        let and_then_expr = Expr::MethodCall(
+            Box::new(as_ref_expr),
+            "and_then".to_string(),
+            vec![closure_expr],
+        );
+
+        Expr::MethodCall(
+            Box::new(and_then_expr),
+            "unwrap_or_else".to_string(),
+            vec![Expr::Closure(vec!["".to_string()], Box::new(Expr::Ident("Default::default()".to_string())))],
+        )
+    }
+
     /// 生成状态转换逻辑
     fn generate_state_transition_logic(&mut self, transitions: &[Transition]) -> Vec<Statement> {
         let mut stmts = Vec::new();
@@ -399,13 +387,7 @@ impl AnnexConverter {
                 body: Block {
                     stmts: vec![
                         Statement::Comment(format!("理论上不会执行到这里，但编译器需要这个分支")),
-                        Statement::Expr(Expr::Call(
-                            Box::new(Expr::Path(
-                                vec!["panic!".to_string()],
-                                PathType::Namespace,
-                            )),
-                            vec![Expr::Literal(Literal::Str(format!("Unexpected {} state condition", state_name)))],
-                        )),
+                        Statement::Expr(Expr::Ident("break".to_string())),
                     ],
                     expr: None,
                 },
@@ -483,7 +465,7 @@ impl AnnexConverter {
                     if self.should_continue_state(&transition.destination_state) {
                         stmts.push(Statement::Continue);
                     } else {
-                        stmts.push(Statement::Comment("complete，需要停".to_string()));
+                        stmts.push(Statement::Comment("complete,需要停".to_string()));
                     }
                 }
             }
@@ -522,34 +504,61 @@ impl AnnexConverter {
         } else {
             // 有端口条件，生成检查表达式
             let mut conditions = Vec::new();
+            let not_flag = execute_cond.not;
+            let parsed_number = execute_cond.number.as_ref().and_then(|num_str| {
+                if let Ok(int_val) = num_str.parse::<i64>() {
+                    Some(Literal::Int(int_val))
+                } else if let Ok(float_val) = num_str.parse::<f64>() {
+                    Some(Literal::Float(float_val))
+                } else {
+                    None
+                }
+            });
+            let use_less_than = execute_cond.less_than && parsed_number.is_some();
             
             for trigger in &execute_cond.dispatch_triggers {
                 match trigger {
                     DispatchTrigger::InEventPort(port_name) => {
                         let port_var = format!("{}_val", port_name.to_lowercase());
-                        // 根据not字段直接生成正确的比较
-                        let expected_value = if execute_cond.not { false } else { true };
-                        conditions.push(Expr::BinaryOp(
-                            Box::new(Expr::Ident(port_var)),
-                            "==".to_string(),
-                            Box::new(Expr::Literal(Literal::Bool(expected_value))),
-                        ));
+                        let mut condition = if use_less_than {
+                            let number_literal = parsed_number.as_ref().unwrap().clone();
+                            Expr::BinaryOp(
+                                Box::new(Expr::Literal(number_literal)),
+                                "<".to_string(),
+                                Box::new(Expr::Ident(port_var.clone())),
+                            )
+                        } else {
+                            let expected_value = if not_flag { false } else { true };
+                            Expr::BinaryOp(
+                                Box::new(Expr::Ident(port_var.clone())),
+                                "==".to_string(),
+                                Box::new(Expr::Literal(Literal::Bool(expected_value))),
+                            )
+                        };
+                        
+                        if use_less_than && not_flag {
+                            condition = Expr::UnaryOp("!".to_string(), Box::new(condition));
+                        }
+                        
+                        conditions.push(condition);
                     }
-                    //TODO: 需要处理事件数据端口,以下不正确
                     DispatchTrigger::InEventDataPort(port_name) => {
                         let port_var = format!("{}_val", port_name.to_lowercase());
-                        conditions.push(Expr::MethodCall(
+                        let mut condition = Expr::MethodCall(
                             Box::new(Expr::Ident(port_var)),
                             "is_some".to_string(),
                             Vec::new(),
-                        ));
+                        );
+                        if not_flag {
+                            condition = Expr::UnaryOp("!".to_string(), Box::new(condition));
+                        }
+                        conditions.push(condition);
                     }
                 }
             }
-            
-            // 生成条件（已经考虑了not字段）
+            // 生成条件
             if conditions.len() == 1 {
-                conditions.remove(0)
+                conditions[0].clone()
             } else {
                 let mut result = conditions.remove(0);
                 for condition in conditions {
@@ -794,12 +803,14 @@ impl AnnexConverter {
     }
 
     /// 转换AADL类型到Rust类型
-    fn convert_aadl_type_to_rust(&self, aadl_type: &str) -> Type {
+    fn convert_aadl_type_to_rust(&self, aadl_type: &str) -> Type { //TODO：待修改，这里只处理了部分类型，需要处理所有类型
         match aadl_type.to_lowercase().as_str() {
             "integer" | "i32" | "base_types::integer" => Type::Named("i32".to_string()),
             "boolean" | "bool" => Type::Named("bool".to_string()),
             "string" => Type::Named("String".to_string()),
             "real" | "f64" => Type::Named("f64".to_string()),
+            "base_types::unsigned_16" => Type::Named("u16".to_string()),
+            "base_types::boolean" => Type::Named("bool".to_string()),
             _ => Type::Named(aadl_type.to_string()),
         }
     }
@@ -1034,9 +1045,9 @@ impl AnnexConverter {
     fn convert_value_variable(&self, var: &ValueVariable) -> Expr {
         match var {
             ValueVariable::IncomingPort(port_name) => {
-                // 端口变量，转换为 self.port_name
+                // 端口变量，转换为port_name_val
                 Expr::Path(
-                    vec!["self".to_string(), port_name.clone()],
+                    vec![port_name.clone(),"_val".to_string()],
                     PathType::Member,
                 )
             }

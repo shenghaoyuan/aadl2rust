@@ -106,7 +106,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -152,7 +152,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -172,7 +172,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -218,7 +218,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -315,14 +315,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            info_capteur: None, \n            comm_servo: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            comm_servo: None, \n            info_capteur: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -829,7 +829,7 @@ RustModule {
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Comment(
-                                                                                                                "complete，需要停",
+                                                                                                                "complete,需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -911,7 +911,7 @@ RustModule {
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Comment(
-                                                                                                                "complete，需要停",
+                                                                                                                "complete,需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -976,7 +976,7 @@ RustModule {
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Comment(
-                                                                                                                "complete，需要停",
+                                                                                                                "complete,需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -1058,36 +1058,7 @@ RustModule {
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Comment(
-                                                                                                                "complete，需要停",
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
-                                                                                                    pattern: "State::s1",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s1 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
+                                                                                                                "complete,需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -1113,6 +1084,35 @@ RustModule {
                                                                                                                         Literal(
                                                                                                                             Str(
                                                                                                                                 "Unexpected s2 state condition",
+                                                                                                                            ),
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s1",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Call(
+                                                                                                                    Path(
+                                                                                                                        [
+                                                                                                                            "panic!",
+                                                                                                                        ],
+                                                                                                                        Namespace,
+                                                                                                                    ),
+                                                                                                                    [
+                                                                                                                        Literal(
+                                                                                                                            Str(
+                                                                                                                                "Unexpected s1 state condition",
                                                                                                                             ),
                                                                                                                         ),
                                                                                                                     ],
@@ -1187,7 +1187,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(110) ms",
@@ -1196,7 +1196,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -1260,14 +1264,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            period: 110, \n            evenement: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            evenement: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -1805,7 +1809,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(110) ms",
@@ -1814,7 +1818,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -1878,14 +1886,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            ordre: None, \n            period: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            ordre: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -2174,217 +2182,354 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "events",
+                                            ty: None,
+                                            init: Some(
+                                                Call(
+                                                    Path(
+                                                        [
+                                                            "Vec",
+                                                            "new",
+                                                        ],
+                                                        Namespace,
+                                                    ),
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
                                                 stmts: [
                                                     Expr(
-                                                        IfLet {
-                                                            pattern: "Some(receiver)",
-                                                            value: Reference(
-                                                                Path(
-                                                                    [
-                                                                        "self",
-                                                                        "ordre",
-                                                                    ],
-                                                                    Member,
+                                                        If {
+                                                            condition: MethodCall(
+                                                                Ident(
+                                                                    "events",
                                                                 ),
-                                                                true,
-                                                                false,
+                                                                "is_empty",
+                                                                [],
                                                             ),
                                                             then_branch: Block {
                                                                 stmts: [
                                                                     Expr(
-                                                                        Match {
-                                                                            expr: MethodCall(
-                                                                                Ident(
-                                                                                    "receiver",
+                                                                        IfLet {
+                                                                            pattern: "Some(rx)",
+                                                                            value: Reference(
+                                                                                Path(
+                                                                                    [
+                                                                                        "self",
+                                                                                        "ordre",
+                                                                                    ],
+                                                                                    Member,
                                                                                 ),
-                                                                                "recv",
-                                                                                [],
+                                                                                true,
+                                                                                false,
                                                                             ),
-                                                                            arms: [
-                                                                                MatchArm {
-                                                                                    pattern: "Ok(val)",
-                                                                                    guard: None,
-                                                                                    body: Block {
-                                                                                        stmts: [
-                                                                                            Let(
-                                                                                                LetStmt {
-                                                                                                    ifmut: false,
-                                                                                                    name: "now",
-                                                                                                    ty: None,
-                                                                                                    init: Some(
-                                                                                                        Call(
-                                                                                                            Path(
-                                                                                                                [
-                                                                                                                    "Instant",
-                                                                                                                    "now",
-                                                                                                                ],
-                                                                                                                Namespace,
-                                                                                                            ),
-                                                                                                            [],
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                },
+                                                                            then_branch: Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        IfLet {
+                                                                                            pattern: "Ok(val)",
+                                                                                            value: MethodCall(
+                                                                                                Ident(
+                                                                                                    "rx",
+                                                                                                ),
+                                                                                                "try_recv",
+                                                                                                [],
                                                                                             ),
-                                                                                            Let(
-                                                                                                LetStmt {
-                                                                                                    ifmut: false,
-                                                                                                    name: "elapsed",
-                                                                                                    ty: None,
-                                                                                                    init: Some(
-                                                                                                        MethodCall(
-                                                                                                            Ident(
-                                                                                                                "now",
-                                                                                                            ),
-                                                                                                            "duration_since",
-                                                                                                            [
-                                                                                                                Ident(
-                                                                                                                    "last_dispatch",
-                                                                                                                ),
-                                                                                                            ],
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                },
-                                                                                            ),
-                                                                                            Expr(
-                                                                                                If {
-                                                                                                    condition: BinaryOp(
-                                                                                                        Ident(
-                                                                                                            "elapsed",
-                                                                                                        ),
-                                                                                                        "<",
-                                                                                                        Ident(
-                                                                                                            "min_interarrival",
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                    then_branch: Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                MethodCall(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "std",
-                                                                                                                            "thread",
-                                                                                                                            "sleep",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    "",
-                                                                                                                    [
-                                                                                                                        BinaryOp(
-                                                                                                                            Ident(
-                                                                                                                                "min_interarrival",
-                                                                                                                            ),
-                                                                                                                            "-",
-                                                                                                                            Ident(
-                                                                                                                                "elapsed",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                    else_branch: None,
-                                                                                                },
-                                                                                            ),
-                                                                                            Expr(
-                                                                                                Block(
-                                                                                                    Block {
-                                                                                                        stmts: [
-                                                                                                            Expr(
-                                                                                                                Ident(
-                                                                                                                    "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // A_Spg()",
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Ident(
-                                                                                                                    "// A_Spg",
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                            Expr(
+                                                                                            then_branch: Block {
+                                                                                                stmts: [
+                                                                                                    Let(
+                                                                                                        LetStmt {
+                                                                                                            ifmut: false,
+                                                                                                            name: "ts",
+                                                                                                            ty: None,
+                                                                                                            init: Some(
                                                                                                                 Call(
                                                                                                                     Path(
                                                                                                                         [
-                                                                                                                            "action_spg",
-                                                                                                                            "receive",
+                                                                                                                            "Instant",
+                                                                                                                            "now",
                                                                                                                         ],
                                                                                                                         Namespace,
                                                                                                                     ),
-                                                                                                                    [
-                                                                                                                        Ident(
-                                                                                                                            "val",
-                                                                                                                        ),
-                                                                                                                    ],
+                                                                                                                    [],
                                                                                                                 ),
                                                                                                             ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                ),
-                                                                                            ),
-                                                                                            Expr(
-                                                                                                Assign(
-                                                                                                    Ident(
-                                                                                                        "last_dispatch",
+                                                                                                        },
                                                                                                     ),
-                                                                                                    Call(
-                                                                                                        Path(
-                                                                                                            [
-                                                                                                                "Instant",
-                                                                                                                "now",
-                                                                                                            ],
-                                                                                                            Namespace,
-                                                                                                        ),
-                                                                                                        [],
-                                                                                                    ),
-                                                                                                ),
-                                                                                            ),
-                                                                                        ],
-                                                                                        expr: None,
-                                                                                    },
-                                                                                },
-                                                                                MatchArm {
-                                                                                    pattern: "Err(_)",
-                                                                                    guard: None,
-                                                                                    body: Block {
-                                                                                        stmts: [
-                                                                                            Expr(
-                                                                                                Call(
-                                                                                                    Path(
-                                                                                                        [
-                                                                                                            "eprintln!",
-                                                                                                        ],
-                                                                                                        Namespace,
-                                                                                                    ),
-                                                                                                    [
-                                                                                                        Literal(
-                                                                                                            Str(
-                                                                                                                "servomoteurThread: channel closed",
+                                                                                                    Expr(
+                                                                                                        MethodCall(
+                                                                                                            Ident(
+                                                                                                                "events",
                                                                                                             ),
+                                                                                                            "push",
+                                                                                                            [
+                                                                                                                Parenthesized(
+                                                                                                                    Call(
+                                                                                                                        Ident(
+                                                                                                                            "",
+                                                                                                                        ),
+                                                                                                                        [
+                                                                                                                            Ident(
+                                                                                                                                "val",
+                                                                                                                            ),
+                                                                                                                            Literal(
+                                                                                                                                Int(
+                                                                                                                                    0,
+                                                                                                                                ),
+                                                                                                                            ),
+                                                                                                                            Ident(
+                                                                                                                                "ts",
+                                                                                                                            ),
+                                                                                                                        ],
+                                                                                                                    ),
+                                                                                                                ),
+                                                                                                            ],
                                                                                                         ),
-                                                                                                    ],
-                                                                                                ),
-                                                                                            ),
-                                                                                            Expr(
-                                                                                                Ident(
-                                                                                                    "return",
-                                                                                                ),
-                                                                                            ),
-                                                                                        ],
-                                                                                        expr: None,
-                                                                                    },
-                                                                                },
-                                                                            ],
+                                                                                                    ),
+                                                                                                ],
+                                                                                                expr: None,
+                                                                                            },
+                                                                                            else_branch: None,
+                                                                                        },
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                            else_branch: None,
                                                                         },
                                                                     ),
                                                                 ],
                                                                 expr: None,
                                                             },
                                                             else_branch: None,
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        IfLet {
+                                                            pattern: "Some((idx, (val, _urgency, _ts)))",
+                                                            value: MethodCall(
+                                                                MethodCall(
+                                                                    MethodCall(
+                                                                        Ident(
+                                                                            "events",
+                                                                        ),
+                                                                        "iter",
+                                                                        [],
+                                                                    ),
+                                                                    "enumerate",
+                                                                    [],
+                                                                ),
+                                                                "max_by",
+                                                                [
+                                                                    Ident(
+                                                                        "|a, b| match a.1.1.cmp(&b.1.1) {\n                        std::cmp::Ordering::Equal => b.1.2.cmp(&a.1.2),\n                        other => other,\n                    }",
+                                                                    ),
+                                                                ],
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Let(
+                                                                        LetStmt {
+                                                                            ifmut: false,
+                                                                            name: "(val, _, _)",
+                                                                            ty: None,
+                                                                            init: Some(
+                                                                                MethodCall(
+                                                                                    Ident(
+                                                                                        "events",
+                                                                                    ),
+                                                                                    "remove",
+                                                                                    [
+                                                                                        Ident(
+                                                                                            "idx",
+                                                                                        ),
+                                                                                    ],
+                                                                                ),
+                                                                            ),
+                                                                        },
+                                                                    ),
+                                                                    Let(
+                                                                        LetStmt {
+                                                                            ifmut: false,
+                                                                            name: "now",
+                                                                            ty: None,
+                                                                            init: Some(
+                                                                                Call(
+                                                                                    Path(
+                                                                                        [
+                                                                                            "Instant",
+                                                                                            "now",
+                                                                                        ],
+                                                                                        Namespace,
+                                                                                    ),
+                                                                                    [],
+                                                                                ),
+                                                                            ),
+                                                                        },
+                                                                    ),
+                                                                    Let(
+                                                                        LetStmt {
+                                                                            ifmut: false,
+                                                                            name: "elapsed",
+                                                                            ty: None,
+                                                                            init: Some(
+                                                                                MethodCall(
+                                                                                    Ident(
+                                                                                        "now",
+                                                                                    ),
+                                                                                    "duration_since",
+                                                                                    [
+                                                                                        Ident(
+                                                                                            "last_dispatch",
+                                                                                        ),
+                                                                                    ],
+                                                                                ),
+                                                                            ),
+                                                                        },
+                                                                    ),
+                                                                    Expr(
+                                                                        If {
+                                                                            condition: BinaryOp(
+                                                                                Ident(
+                                                                                    "elapsed",
+                                                                                ),
+                                                                                "<",
+                                                                                Ident(
+                                                                                    "min_interarrival",
+                                                                                ),
+                                                                            ),
+                                                                            then_branch: Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        MethodCall(
+                                                                                            Path(
+                                                                                                [
+                                                                                                    "std",
+                                                                                                    "thread",
+                                                                                                    "sleep",
+                                                                                                ],
+                                                                                                Namespace,
+                                                                                            ),
+                                                                                            "",
+                                                                                            [
+                                                                                                BinaryOp(
+                                                                                                    Ident(
+                                                                                                        "min_interarrival",
+                                                                                                    ),
+                                                                                                    "-",
+                                                                                                    Ident(
+                                                                                                        "elapsed",
+                                                                                                    ),
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                            else_branch: None,
+                                                                        },
+                                                                    ),
+                                                                    Expr(
+                                                                        Block(
+                                                                            Block {
+                                                                                stmts: [
+                                                                                    Expr(
+                                                                                        Ident(
+                                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // a_spg()",
+                                                                                        ),
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Ident(
+                                                                                            "// a_spg",
+                                                                                        ),
+                                                                                    ),
+                                                                                    Expr(
+                                                                                        Call(
+                                                                                            Path(
+                                                                                                [
+                                                                                                    "action_spg",
+                                                                                                    "receive",
+                                                                                                ],
+                                                                                                Namespace,
+                                                                                            ),
+                                                                                            [
+                                                                                                Ident(
+                                                                                                    "val",
+                                                                                                ),
+                                                                                            ],
+                                                                                        ),
+                                                                                    ),
+                                                                                ],
+                                                                                expr: None,
+                                                                            },
+                                                                        ),
+                                                                    ),
+                                                                    Expr(
+                                                                        Assign(
+                                                                            Ident(
+                                                                                "last_dispatch",
+                                                                            ),
+                                                                            Call(
+                                                                                Path(
+                                                                                    [
+                                                                                        "Instant",
+                                                                                        "now",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                [],
+                                                                            ),
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: Some(
+                                                                Block {
+                                                                    stmts: [
+                                                                        Expr(
+                                                                            MethodCall(
+                                                                                Path(
+                                                                                    [
+                                                                                        "std",
+                                                                                        "thread",
+                                                                                        "sleep",
+                                                                                    ],
+                                                                                    Namespace,
+                                                                                ),
+                                                                                "",
+                                                                                [
+                                                                                    Call(
+                                                                                        Path(
+                                                                                            [
+                                                                                                "Duration",
+                                                                                                "from_millis",
+                                                                                            ],
+                                                                                            Namespace,
+                                                                                        ),
+                                                                                        [
+                                                                                            Literal(
+                                                                                                Int(
+                                                                                                    1,
+                                                                                                ),
+                                                                                            ),
+                                                                                        ],
+                                                                                    ),
+                                                                                ],
+                                                                            ),
+                                                                        ),
+                                                                    ],
+                                                                    expr: None,
+                                                                },
+                                                            ),
                                                         },
                                                     ),
                                                 ],
@@ -2396,7 +2541,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(10) ms",
@@ -2405,7 +2550,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -2418,7 +2567,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2464,7 +2613,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2484,7 +2633,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2504,7 +2653,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2524,7 +2673,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2570,7 +2719,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2616,7 +2765,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -2636,7 +2785,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -2763,8 +2912,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -2826,7 +2975,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new process instance",
                             ],
@@ -3030,7 +3179,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Starts all threads in the process",
                             ],
@@ -3038,7 +3187,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Process",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -3051,7 +3204,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -3071,7 +3224,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -3091,7 +3244,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -3111,7 +3264,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -3131,7 +3284,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -3151,7 +3304,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -3171,7 +3324,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -3191,7 +3344,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -3400,8 +3553,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3463,8 +3616,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3526,8 +3679,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3589,8 +3742,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -3652,7 +3805,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new process instance",
                             ],
@@ -4305,7 +4458,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Starts all threads in the process",
                             ],
@@ -4313,7 +4466,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Process",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -4326,7 +4483,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Receiver",
+                                    "Receiver",
                                     [
                                         Named(
                                             "bool",
@@ -4346,7 +4503,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "mpsc::Sender",
+                                    "Sender",
                                     [
                                         Named(
                                             "bool",
@@ -4473,8 +4630,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4536,7 +4693,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new process instance",
                             ],
@@ -4740,7 +4897,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Starts all threads in the process",
                             ],
@@ -4748,7 +4905,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Process",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -4928,8 +5089,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -4993,8 +5154,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -5058,8 +5219,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -5123,8 +5284,8 @@ RustModule {
                                                 Call(
                                                     Path(
                                                         [
-                                                            "mpsc",
-                                                            "channel",
+                                                            "crossbeam_channel",
+                                                            "unbounded",
                                                         ],
                                                         Namespace,
                                                     ),
@@ -5188,7 +5349,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new system instance",
                             ],
@@ -5238,7 +5399,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Runs the system, starts all processes",
                             ],
@@ -5246,7 +5407,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "System",
+                    ),
+                ),
             },
         ),
         LazyStatic(
@@ -5329,6 +5494,92 @@ RustModule {
                 docs: [
                     "// CPU ID到调度策略的映射",
                 ],
+            },
+        ),
+        Function(
+            FunctionDef {
+                name: "period_to_priority",
+                params: [
+                    Param {
+                        name: "period_ms",
+                        ty: Named(
+                            "f64",
+                        ),
+                    },
+                ],
+                return_type: Named(
+                    "i32",
+                ),
+                body: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: false,
+                                name: "k",
+                                ty: Some(
+                                    Named(
+                                        "f64",
+                                    ),
+                                ),
+                                init: Some(
+                                    Ident(
+                                        "10.0",
+                                    ),
+                                ),
+                            },
+                        ),
+                        Let(
+                            LetStmt {
+                                ifmut: false,
+                                name: "raw",
+                                ty: Some(
+                                    Named(
+                                        "f64",
+                                    ),
+                                ),
+                                init: Some(
+                                    BinaryOp(
+                                        Ident(
+                                            "99.0",
+                                        ),
+                                        "-",
+                                        MethodCall(
+                                            BinaryOp(
+                                                Ident(
+                                                    "k",
+                                                ),
+                                                "*",
+                                                MethodCall(
+                                                    Ident(
+                                                        "period_ms",
+                                                    ),
+                                                    "log10",
+                                                    [],
+                                                ),
+                                            ),
+                                            "floor",
+                                            [],
+                                        ),
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            Ident(
+                                "return raw.max(1.0).min(99.0) as i32",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                asyncness: false,
+                vis: Public,
+                docs: [
+                    "// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))",
+                    "// 根据周期计算优先级，周期越短优先级越高",
+                    "// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)",
+                ],
+                attrs: [],
             },
         ),
     ],

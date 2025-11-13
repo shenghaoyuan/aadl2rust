@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -105,11 +105,11 @@ impl Thread for image_acquisition_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             obstacle_detected: None, 
-            period: 50, 
-            picture: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             mipsbudget: 25.0, 
+            picture: None, 
+            period: 50, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -121,9 +121,31 @@ impl Thread for image_acquisition_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 => {
+                            if let Some(sender) = &self.obstacle_detected {
+                                let _ = sender.send(false);
+                            };
+                            // on dispatch → s0
+                            state = State::s0;
+                            // complete，需要停
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

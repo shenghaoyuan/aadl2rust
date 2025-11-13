@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -186,12 +186,12 @@ impl Thread for panel_control_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            current_speed: None, 
+            decrease_speed: None, 
             increase_speed: None, 
             tire_pressure_out: None, 
-            tire_pressure_in: None, 
             desired_speed: None, 
-            decrease_speed: None, 
+            tire_pressure_in: None, 
+            current_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -203,9 +203,55 @@ impl Thread for panel_control_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+            // State: s1
+            s1,
+            // State: s2
+            s2,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
+            let current_speed_val = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let tire_pressure_in_val = self.tire_pressure_in.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if 0 < current_speed_val => {
+                            if let Some(sender) = &self.desired_speed {
+                                let _ = sender.send(current_speed + 1);
+                            };
+                            state = State::s1;
+                            continue;
+                        },
+                        State::s1 if 0 < tire_pressure_in_val => {
+                            if let Some(sender) = &self.tire_pressure_out {
+                                let _ = sender.send(tire_pressure_in);
+                            };
+                            state = State::s2;
+                            continue;
+                        },
+                        State::s2 => {
+                            state = State::s0;
+                            // complete，停
+                        },
+                        State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                        State::s1 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

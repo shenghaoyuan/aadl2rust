@@ -253,7 +253,7 @@ impl AadlConverter {
         fields.push(Field {
             name: "period_ms".to_string(),
             ty: Type::Named("u64".to_string()),
-            docs: vec![format!("// 周期：{}ms", self.extract_period(comp).unwrap_or(10))],
+            docs: vec![format!("// 周期：{}ms", self.extract_period(comp).unwrap_or(2000))],
             attrs: Vec::new(),
         });
         
@@ -273,7 +273,7 @@ impl AadlConverter {
         let mut impl_items = Vec::new();
         
         // 生成 new() 方法
-        let period_ms = self.extract_period(comp).unwrap_or(10);
+        let period_ms = self.extract_period(comp).unwrap_or(2000);
         let new_method = self.create_device_new_method(comp, period_ms);
         impl_items.push(ImplItem::Method(new_method));
         
@@ -285,7 +285,7 @@ impl AadlConverter {
             target: Type::Named(struct_name),
             generics: Vec::new(),
             items: impl_items,
-            trait_impl: None,
+            trait_impl: Some(Type::Named("Device".to_string())),
         };
         items.push(Item::Impl(impl_block));
 

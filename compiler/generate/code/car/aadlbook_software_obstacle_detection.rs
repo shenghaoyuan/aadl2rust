@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 12:15:15
+// 生成时间: 2025-11-13 19:47:35
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -126,11 +126,11 @@ impl Thread for obstacle_detection_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            camera: None, 
-            mipsbudget: 10.0, 
             obstacle_detected: None, 
-            dispatch_protocol: "Periodic".to_string(), 
             radar: None, 
+            mipsbudget: 10.0, 
+            dispatch_protocol: "Periodic".to_string(), 
+            camera: None, 
             period: 100, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -143,9 +143,64 @@ impl Thread for obstacle_detection_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut obstacle_detected_temp: bool = false;
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+            // State: s1
+            s1,
+        }
+        
+        let mut state: State = State::s0;
         loop {
             let start = Instant::now();
+            let radar_val = self.radar.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let camera_val = self.camera.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if camera_val == true => {
+                            if let Some(sender) = &self.obstacle_detected {
+                                let _ = sender.send(true);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s0 if camera_val == false => {
+                            obstacle_detected_temp = false;
+                            state = State::s1;
+                            continue;
+                        },
+                        State::s0 if radar_val == true => {
+                            if let Some(sender) = &self.obstacle_detected {
+                                let _ = sender.send(true);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s0 if radar_val == false => {
+                            obstacle_detected_temp = false;
+                            state = State::s0;
+                            // complete,需要停
+                        },
+                        State::s1 => {
+                            if let Some(sender) = &self.obstacle_detected {
+                                let _ = sender.send(obstacle_detected_temp);
+                            };
+                            // on dispatch → s0
+                            state = State::s0;
+                            // complete，需要停
+                        },
+                        State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                    };
+                    break;
+                };
             };
             let elapsed = start.elapsed();
             std::thread::sleep(period.saturating_sub(elapsed));

@@ -318,9 +318,13 @@ frozen_ports = {
 }
 
 // execute_condition ::= logical_value_expression | otherwise
+// logical_value_expression在标准中没找到
+// TODO 特殊处理number < identifier的情况
 execute_condition = {
-    unary_boolean_operator? ~ identifier
+    (unary_boolean_operator? ~ identifier) |
+    (number ~ less_than_operator ~ identifier)
 }
+less_than_operator = { "<" }
 
 
 // 行为动作（重命名以避免递归）
