@@ -1,0 +1,227 @@
+[speed_wheel_sensor] send speed = 44
+[tpms] send pressure = 12
+[speed_laser_sensor] send speed = 168
+[panel] send increase_speed = 141
+[panel] send decrease_speed = 64
+[camera] send picture = [[97, 97, 97, 97], [97, 97, 97, 97], [97, 97, 97, 97], [97, 97, 97, 97]]
+[radar] send distance_estimate = true
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 7
+[screen] Received actual_speed: 106
+thread:music_in_val: true
+thread:contacts_val: 7
+[speed_wheel_sensor] send speed = 161
+[speed_laser_sensor] send speed = 146
+[radar] send distance_estimate = true
+[speed_wheel_sensor] send speed = 176
+[tpms] send pressure = 3
+[radar] send distance_estimate = true
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 2
+[speed_laser_sensor] send speed = 93
+[camera] send picture = [[159, 159, 159, 159], [159, 159, 159, 159], [159, 159, 159, 159], [159, 159, 159, 159]]
+[panel] send increase_speed = 185
+[panel] send decrease_speed = 148
+[screen] Received tire_pressure: 3
+[screen] Received desired_speed: 107
+[screen] Received actual_speed: 153
+[screen] Received entertainment_infos: 7
+[speaker] Received music: true
+thread:music_in_val: true
+thread:contacts_val: 2
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 41
+[speed_laser_sensor] send speed = 157
+[radar] send distance_estimate = true
+[speed_wheel_sensor] send speed = 79
+[tpms] send pressure = 14
+[panel] send increase_speed = 117
+[panel] send decrease_speed = 17
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 14
+[camera] send picture = [[126, 126, 126, 126], [126, 126, 126, 126], [126, 126, 126, 126], [126, 126, 126, 126]]
+[speed_laser_sensor] send speed = 91
+[radar] send distance_estimate = true
+[screen] Received desired_speed: 154
+[screen] Received actual_speed: 134
+[screen] Received entertainment_infos: 2
+[speaker] Received music: true
+thread:music_in_val: true
+thread:contacts_val: 14
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 50
+[speed_laser_sensor] send speed = 29
+[radar] send distance_estimate = true
+[speed_wheel_sensor] send speed = 34
+[tpms] send pressure = 10
+[panel] send increase_speed = 137
+[panel] send decrease_speed = 116
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 8
+[camera] send picture = [[58, 58, 58, 58], [58, 58, 58, 58], [58, 58, 58, 58], [58, 58, 58, 58]]
+[speed_laser_sensor] send speed = 158
+[radar] send distance_estimate = true
+[screen] Received tire_pressure: 14
+[screen] Received desired_speed: 135
+[screen] Received actual_speed: 99
+[screen] Received entertainment_infos: 14
+[speaker] Received music: true
+thread:music_in_val: true
+thread:contacts_val: 8
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 38
+[speed_laser_sensor] send speed = 194
+[radar] send distance_estimate = true
+[speed_wheel_sensor] send speed = 94
+[tpms] send pressure = 5
+[panel] send increase_speed = 198
+[panel] send decrease_speed = 169
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 8
+[camera] send picture = [[75, 75, 75, 75], [75, 75, 75, 75], [75, 75, 75, 75], [75, 75, 75, 75]]
+[speed_laser_sensor] send speed = 25
+[radar] send distance_estimate = true
+[screen] Received tire_pressure: 10
+[screen] Received desired_speed: 100
+[screen] Received actual_speed: 85
+[screen] Received entertainment_infos: 8
+[speaker] Received music: true
+[acceleration] Received cmd: 0
+thread:music_in_val: true
+thread:contacts_val: 8
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 45
+[speed_laser_sensor] send speed = 9
+[radar] send distance_estimate = false
+[speed_wheel_sensor] send speed = 15
+[tpms] send pressure = 14
+[panel] send increase_speed = 45
+[panel] send decrease_speed = 46
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 7
+[camera] send picture = [[58, 58, 58, 58], [58, 58, 58, 58], [58, 58, 58, 58], [58, 58, 58, 58]]
+[speed_laser_sensor] send speed = 66
+[radar] send distance_estimate = true
+[screen] Received tire_pressure: 5
+[screen] Received desired_speed: 86
+[screen] Received actual_speed: 39
+[screen] Received entertainment_infos: 8
+[speaker] Received music: true
+thread:music_in_val: true
+thread:contacts_val: 7
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 66
+[speed_laser_sensor] send speed = 54
+[radar] send distance_estimate = true
+[tpms] send pressure = 8
+[speed_wheel_sensor] send speed = 69
+[bluetooth_controller] send music = false
+[bluetooth_controller] send contacts = 4
+[speed_laser_sensor] send speed = 199
+[panel] send increase_speed = 136
+[radar] send distance_estimate = true
+[panel] send decrease_speed = 155
+[camera] send picture = [[108, 108, 108, 108], [108, 108, 108, 108], [108, 108, 108, 108], [108, 108, 108, 108]]
+[screen] Received tire_pressure: 14
+[screen] Received desired_speed: 40
+[screen] Received actual_speed: 96
+[screen] Received entertainment_infos: 7
+thread:music_in_val: false
+thread:contacts_val: 4
+[speaker] Received music: true
+[speed_wheel_sensor] send speed = 87
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 88
+[tpms] send pressure = 9
+[speed_wheel_sensor] send speed = 82
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 11
+[camera] send picture = [[68, 68, 68, 68], [68, 68, 68, 68], [68, 68, 68, 68], [68, 68, 68, 68]]
+[panel] send increase_speed = 29
+[panel] send decrease_speed = 0
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 154
+[screen] Received tire_pressure: 8
+[screen] Received desired_speed: 97
+[screen] Received actual_speed: 116
+[screen] Received entertainment_infos: 4
+thread:music_in_val: true
+thread:contacts_val: 11
+[speaker] Received music: false
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 34
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 90
+[tpms] send pressure = 0
+[bluetooth_controller] send music = false
+[bluetooth_controller] send contacts = 11
+[camera] send picture = [[162, 162, 162, 162], [162, 162, 162, 162], [162, 162, 162, 162], [162, 162, 162, 162]]
+[panel] send increase_speed = 99
+[panel] send decrease_speed = 160
+[speed_wheel_sensor] send speed = 5
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 75
+[screen] Received tire_pressure: 9
+[screen] Received desired_speed: 117
+[screen] Received actual_speed: 59
+[screen] Received entertainment_infos: 11
+thread:music_in_val: false
+thread:contacts_val: 11
+[speaker] Received music: true
+[acceleration] Received cmd: 0
+[speed_wheel_sensor] send speed = 190
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 65
+[tpms] send pressure = 13
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 2
+[camera] send picture = [[22, 22, 22, 22], [22, 22, 22, 22], [22, 22, 22, 22], [22, 22, 22, 22]]
+[panel] send increase_speed = 196
+[panel] send decrease_speed = 124
+[speed_wheel_sensor] send speed = 7
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 146
+[screen] Received entertainment_infos: 11
+thread:music_in_val: true
+thread:contacts_val: 2
+[speaker] Received music: false
+[speed_wheel_sensor] send speed = 178
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 162
+[tpms] send pressure = 10
+[bluetooth_controller] send music = true
+[camera] send picture = [[193, 193, 193, 193], [193, 193, 193, 193], [193, 193, 193, 193], [193, 193, 193, 193]]
+[bluetooth_controller] send contacts = 6
+[panel] send increase_speed = 51
+[panel] send decrease_speed = 6
+[speed_wheel_sensor] send speed = 72
+[radar] send distance_estimate = false
+[speed_laser_sensor] send speed = 82
+[screen] Received tire_pressure: 13
+[screen] Received actual_speed: 27
+[screen] Received entertainment_infos: 2
+thread:music_in_val: true
+thread:contacts_val: 6
+[speaker] Received music: true
+[speed_wheel_sensor] send speed = 188
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 140
+[tpms] send pressure = 1
+[bluetooth_controller] send music = true
+[bluetooth_controller] send contacts = 12
+[camera] send picture = [[185, 185, 185, 185], [185, 185, 185, 185], [185, 185, 185, 185], [185, 185, 185, 185]]
+[panel] send increase_speed = 54
+[panel] send decrease_speed = 57
+[speed_wheel_sensor] send speed = 89
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 119
+[screen] Received tire_pressure: 10
+[screen] Received desired_speed: 28
+[screen] Received actual_speed: 40
+[screen] Received entertainment_infos: 6
+[speaker] Received music: true
+thread:music_in_val: true
+thread:contacts_val: 12
+[speed_wheel_sensor] send speed = 165
+[radar] send distance_estimate = true
+[speed_laser_sensor] send speed = 182

@@ -1,0 +1,228 @@
+// 自动生成的 Rust 代码 - 来自 AADL 模型
+// 生成时间: 2025-11-11 18:58:30
+
+#![allow(unused_imports)]
+use crate::aadlbook_icd::*;
+use crate::common_traits::*;
+use crossbeam_channel::{Receiver, Sender};
+use lazy_static::lazy_static;
+use libc::{
+    cpu_set_t, pthread_self, pthread_setschedparam, sched_param, sched_setaffinity, CPU_SET,
+    CPU_ZERO, SCHED_FIFO,
+};
+use std::collections::HashMap;
+use std::default;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::{Duration, Instant};
+include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
+use tokio::sync::broadcast::{Sender as BcSender, Receiver as BcReceiver};
+
+// ---------------- cpu ----------------
+fn set_thread_affinity(cpu: isize) {
+    unsafe {
+        let mut cpuset: cpu_set_t = std::mem::zeroed();
+        CPU_ZERO(&mut cpuset);
+        CPU_SET(cpu as usize, &mut cpuset);
+        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);
+    }
+}
+
+// AADL Process: speed_voter
+#[derive(Debug)]
+pub struct speed_voterProcess {
+    pub wheel_sensor: Option<Receiver<u16>>, // Port: wheel_sensor In
+    pub laser_sensor: Option<Receiver<u16>>, // Port: laser_sensor In
+    pub speed: Option<BcSender<u16>>,          // Port: speed Out
+    pub cpu_id: isize,                       // 进程 CPU ID
+    pub wheel_sensorSend: Option<Sender<u16>>, // 内部端口: wheel_sensor In
+    pub laser_sensorSend: Option<Sender<u16>>, // 内部端口: laser_sensor In
+    pub speedRece: Option<Receiver<u16>>,    // 内部端口: speed Out
+    #[allow(dead_code)]
+    pub thr: speed_voter_thrThread, // 子组件线程（thr : thread speed_voter_thr）
+}
+
+impl Process for speed_voterProcess {
+    // Creates a new process instance
+    fn new(cpu_id: isize) -> Self {
+        let mut thr: speed_voter_thrThread = speed_voter_thrThread::new(cpu_id);
+        let mut wheel_sensorSend = None;
+        let mut laser_sensorSend = None;
+        let mut speedRece = None;
+        let channel = crossbeam_channel::unbounded();
+        wheel_sensorSend = Some(channel.0);
+        // build connection:
+        thr.wheel_sensor = Some(channel.1);
+        let channel = crossbeam_channel::unbounded();
+        laser_sensorSend = Some(channel.0);
+        // build connection:
+        thr.laser_sensor = Some(channel.1);
+        let channel = crossbeam_channel::unbounded();
+        // build connection:
+        thr.speed = Some(channel.0);
+        speedRece = Some(channel.1);
+        return Self {
+            wheel_sensor: None,
+            wheel_sensorSend,
+            laser_sensor: None,
+            laser_sensorSend,
+            speed: None,
+            speedRece,
+            thr,
+            cpu_id,
+        }; //显式return;
+    }
+
+    // Starts all threads in the process
+    fn start(self: Self) -> () {
+        let Self {
+            wheel_sensor,
+            wheel_sensorSend,
+            laser_sensor,
+            laser_sensorSend,
+            speed,
+            speedRece,
+            thr,
+            cpu_id,
+            ..
+        } = self;
+        thread::Builder::new()
+            .name("voter_thr".to_string())
+            .spawn(|| thr.run())
+            .unwrap();
+        let wheel_sensor_rx = wheel_sensor.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_wheel_sensor".to_string())
+            .spawn(move || loop {
+                if let Ok(msg) = wheel_sensor_rx.try_recv() {
+                    if let Some(tx) = &wheel_sensorSend {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            })
+            .unwrap();
+        let laser_sensor_rx = laser_sensor.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_laser_sensor".to_string())
+            .spawn(move || loop {
+                if let Ok(msg) = laser_sensor_rx.try_recv() {
+                    if let Some(tx) = &laser_sensorSend {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            })
+            .unwrap();
+        let speedRece_rx = speedRece.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_speedRece".to_string())
+            .spawn(move || loop {
+                if let Ok(msg) = speedRece_rx.try_recv() {
+                    if let Some(tx) = &speed {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            })
+            .unwrap();
+    }
+}
+
+// AADL Thread: speed_voter_thr
+#[derive(Debug)]
+pub struct speed_voter_thrThread {
+    pub wheel_sensor: Option<Receiver<u16>>, // Port: wheel_sensor In
+    pub laser_sensor: Option<Receiver<u16>>, // Port: laser_sensor In
+    pub speed: Option<Sender<u16>>,          // Port: speed Out
+    pub dispatch_protocol: String,           // AADL属性: Dispatch_Protocol
+    pub period: u64,                         // AADL属性: Period
+    pub mipsbudget: f64,                     // AADL属性: mipsbudget
+    pub cpu_id: isize,                       // 结构体新增 CPU ID
+}
+
+impl Thread for speed_voter_thrThread {
+    // 创建组件并初始化AADL属性
+    fn new(cpu_id: isize) -> Self {
+        return Self {
+            dispatch_protocol: "Periodic".to_string(),
+            mipsbudget: 8.0,
+            laser_sensor: None,
+            wheel_sensor: None,
+            speed: None,
+            period: 8,
+            cpu_id: cpu_id, // CPU ID
+        };
+    }
+
+    // Thread execution entry point
+    // Period: None ms
+    fn run(mut self) -> () {
+        if self.cpu_id > -1 {
+            set_thread_affinity(self.cpu_id);
+        };
+        let period: std::time::Duration = Duration::from_millis(2000);
+        let mut speed_value: u16 = 0;
+        // Behavior Annex state machine states
+        #[derive(Debug, Clone)]
+        enum State {
+            // State: s0
+            s0,
+            // State: s1
+            s1,
+        }
+
+        let mut state: State = State::s0;
+        loop {
+            let t0 = std::time::Instant::now();
+            while t0.elapsed().as_millis() < 20 {}
+            
+            let start = Instant::now();
+            let laser_sensor_val = self
+                .laser_sensor
+                .as_ref()
+                .and_then(|rx| rx.try_recv().ok())
+                .unwrap_or_else(|| {
+                    // 不打印 Empty
+                    Default::default()
+                });
+            let wheel_sensor_val = self
+                .wheel_sensor
+                .as_ref()
+                .and_then(|rx| rx.try_recv().ok())
+                .unwrap_or_else(|| {
+                    // 不打印 Empty
+                    Default::default()
+                });
+            {
+                // --- BA 宏步执行 ---
+                loop {
+                    match state {
+                        State::s0 if 0 < wheel_sensor_val => {
+                            speed_value = wheel_sensor_val;
+                            state = State::s1;
+                            continue;
+                        }
+                        State::s1 if 0 < laser_sensor_val => {
+                            speed_value = laser_sensor_val + speed_value;
+                            if let Some(sender) = &self.speed {
+                                let _ = sender.send(speed_value / 2);
+                            };
+                            state = State::s0;
+                            // complete,需要停
+                        }
+                        State::s1 => {
+                            break;
+                        }
+                        State::s0 => {
+                            break;
+                        }
+                    };
+                    break;
+                }
+            };
+            let elapsed = start.elapsed();
+            std::thread::sleep(period.saturating_sub(elapsed));
+        }
+    }
+}

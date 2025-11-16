@@ -10,3 +10,6 @@ Cargo.lock
 
 # 忽略系统文件（如 macOS 的 .DS_Store）
 .DS_Store
+
+# Node modules
+node_modules/
