@@ -119,12 +119,12 @@ end entertainment;
 
 process implementation entertainment.i
 subcomponents
-   thr : thread entertainment_thr.i;
+   enter_thr : thread entertainment_thr.i;
 connections
-  c0 : port music_in -> thr.music_in;
-  c1 : port contacts -> thr.contacts;
-  c2 : port thr.infos -> infos;
-  c3 : port thr.music_out -> music_out;
+  c0 : port music_in -> enter_thr.music_in;
+  c1 : port contacts -> enter_thr.contacts;
+  c2 : port enter_thr.infos -> infos;
+  c3 : port enter_thr.music_out -> music_out;
 end entertainment.i;
 
 thread entertainment_thr
@@ -175,10 +175,10 @@ end image_acquisition;
 
 process implementation image_acquisition.i
 subcomponents
-	thr_acq : thread image_acquisition_thr.i;
+	acq_thr : thread image_acquisition_thr.i;
 connections
-	c0 : port picture -> thr_acq.picture;
-	c1 : port thr_acq.obstacle_detected -> obstacle_detected;
+	c0 : port picture -> acq_thr.picture;
+	c1 : port acq_thr.obstacle_detected -> obstacle_detected;
 end image_acquisition.i;
 
 thread image_acquisition_thr
@@ -230,11 +230,11 @@ end obstacle_detection;
 
 process implementation obstacle_detection.i
 subcomponents
-	thr : thread obstacle_detection_thr.i;
+	obst_thr : thread obstacle_detection_thr.i;
 connections
-	c0 : port camera -> thr.camera;
-	c1 : port radar -> thr.radar;
-	c2 : port thr.obstacle_detected -> obstacle_position;
+	c0 : port camera -> obst_thr.camera;
+	c1 : port radar -> obst_thr.radar;
+	c2 : port obst_thr.obstacle_detected -> obstacle_position;
 end obstacle_detection.i;
 
 thread obstacle_detection_thr
@@ -298,14 +298,14 @@ end panel_control;
 
 process implementation panel_control.i
 subcomponents
-	thr : thread panel_control_thr.i;
+	panel_thr : thread panel_control_thr.i;
 connections
-	c0 : port increase_speed -> thr.increase_speed;
-	c1 : port decrease_speed -> thr.decrease_speed;
-	c2 : port current_speed -> thr.current_speed;
-	c3 : port tire_pressure_in -> thr.tire_pressure_in;
-	c4 : port thr.tire_pressure_out -> tire_pressure_out;
-	c5 : port thr.desired_speed -> desired_speed; 
+	c0 : port increase_speed -> panel_thr.increase_speed;
+	c1 : port decrease_speed -> panel_thr.decrease_speed;
+	c2 : port current_speed -> panel_thr.current_speed;
+	c3 : port tire_pressure_in -> panel_thr.tire_pressure_in;
+	c4 : port panel_thr.tire_pressure_out -> tire_pressure_out;
+	c5 : port panel_thr.desired_speed -> desired_speed; 
 end panel_control.i;
 
 thread panel_control_thr
@@ -480,11 +480,11 @@ end speed_voter;
 
 process implementation speed_voter.i
 subcomponents
-	thr : thread speed_voter_thr;
+	speed_thr : thread speed_voter_thr;
 connections
-	c0 : port wheel_sensor -> thr.wheel_sensor;
-	c1 : port laser_sensor -> thr.laser_sensor;
-	c2 : port thr.speed -> speed;
+	c0 : port wheel_sensor -> speed_thr.wheel_sensor;
+	c1 : port laser_sensor -> speed_thr.laser_sensor;
+	c2 : port speed_thr.speed -> speed;
 end speed_voter.i;
 
 thread speed_voter_thr
@@ -648,13 +648,13 @@ end integration;
 system implementation integration.functional
 subcomponents
 -- input devices
-	obstacle_camera    : device aadlbook::devices::camera;
-	obstacle_radar     : device aadlbook::devices::radar;
-	wheel_sensor       : device aadlbook::devices::speed_wheel_sensor;
-	laser_sensor       : device aadlbook::devices::speed_laser_sensor;
-	panel              : device aadlbook::devices::panel;
-	tire_pressure      : device aadlbook::devices::tpms;
-	bluetooth_ctrl     : device aadlbook::devices::bluetooth_controller;
+	obstacle_camera_dev    : device aadlbook::devices::camera;
+	obstacle_radar_dev     : device aadlbook::devices::radar;
+	wheel_sensor_dev       : device aadlbook::devices::speed_wheel_sensor;
+	laser_sensor_dev       : device aadlbook::devices::speed_laser_sensor;
+	panel_dev              : device aadlbook::devices::panel;
+	tire_pressure_dev      : device aadlbook::devices::tpms;
+	bluetooth_ctrl_dev     : device aadlbook::devices::bluetooth_controller;
 
 -- software and processing elements.
     image_acquisition  : process aadlbook::software::image_acquisition::image_acquisition.i;
@@ -665,32 +665,32 @@ subcomponents
     entertainment      : process aadlbook::software::entertainment::entertainment.i;
 
 -- output devices
-	brake         : device aadlbook::devices::brake;
-	acceleration  : device aadlbook::devices::acceleration;
-	screen        : device aadlbook::devices::screen;
-	speaker       : device aadlbook::devices::speaker;
+	brake_dev         : device aadlbook::devices::brake;
+	acceleration_dev  : device aadlbook::devices::acceleration;
+	screen_dev        : device aadlbook::devices::screen;
+	speaker_dev       : device aadlbook::devices::speaker;
 connections
-    c00 : port obstacle_camera.picture               -> image_acquisition.picture;
+    c00 : port obstacle_camera_dev.picture               -> image_acquisition.picture;
     c01 : port image_acquisition.obstacle_detected   -> obstacle_detection.camera; 
-    c02 : port obstacle_radar.distance_estimate      -> obstacle_detection.radar;
+    c02 : port obstacle_radar_dev.distance_estimate      -> obstacle_detection.radar;
     c03 : port obstacle_detection.obstacle_position  -> speed_ctrl.obstacle_position;
-    c04 : port wheel_sensor.speed                    -> speed_voter.wheel_sensor;
-    c05 : port laser_sensor.speed                    -> speed_voter.laser_sensor;
+    c04 : port wheel_sensor_dev.speed                    -> speed_voter.wheel_sensor;
+    c05 : port laser_sensor_dev.speed                    -> speed_voter.laser_sensor;
     c06 : port speed_voter.speed                     -> speed_ctrl.current_speed;
-    c07 : port speed_voter.speed                     -> screen.actual_speed;
-    c08 : port speed_ctrl.speed_cmd                  -> acceleration.cmd;
-    c09 : port speed_ctrl.brake_cmd                  -> brake.cmd;
-    c10 : port speed_ctrl.warning                    -> screen.warning;
-    c11 : port panel.increase_speed                  -> panel_controller.increase_speed;
-    c12 : port panel.decrease_speed                  -> panel_controller.decrease_speed;
+    c07 : port speed_voter.speed                     -> screen_dev.actual_speed;
+    c08 : port speed_ctrl.speed_cmd                  -> acceleration_dev.cmd;
+    c09 : port speed_ctrl.brake_cmd                  -> brake_dev.cmd;
+    c10 : port speed_ctrl.warning                    -> screen_dev.warning;
+    c11 : port panel_dev.increase_speed                  -> panel_controller.increase_speed;
+    c12 : port panel_dev.decrease_speed                  -> panel_controller.decrease_speed;
     c13 : port panel_controller.desired_speed        -> speed_ctrl.desired_speed;
     c14 : port speed_voter.speed                     -> panel_controller.current_speed;
-    c15 : port panel_controller.desired_speed        -> screen.desired_speed;
-	c16 : port bluetooth_ctrl.contacts               -> entertainment.contacts;
-	c17 : port bluetooth_ctrl.music                  -> entertainment.music_in;
-	c18 : port entertainment.music_out               -> speaker.music;
-	c19 : port entertainment.infos                   -> screen.entertainment_infos;
-	c20 : port panel_controller.tire_pressure_out    -> screen.tire_pressure;
-	c21 : port tire_pressure.pressure                -> panel_controller.tire_pressure_in;
+    c15 : port panel_controller.desired_speed        -> screen_dev.desired_speed;
+	c16 : port bluetooth_ctrl_dev.contacts               -> entertainment.contacts;
+	c17 : port bluetooth_ctrl_dev.music                  -> entertainment.music_in;
+	c18 : port entertainment.music_out               -> speaker_dev.music;
+	c19 : port entertainment.infos                   -> screen_dev.entertainment_infos;
+	c20 : port panel_controller.tire_pressure_out    -> tire_pressure_dev.pressure;
+	c21 : port panel_controller.tire_pressure_in                -> tire_pressure_dev.pressure;
 end integration.functional;
 end aadlbook::integration;

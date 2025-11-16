@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-13 19:47:35
+// 生成时间: 2025-11-14 15:55:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -126,12 +126,12 @@ impl Thread for obstacle_detection_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_detected: None, 
-            radar: None, 
-            mipsbudget: 10.0, 
-            dispatch_protocol: "Periodic".to_string(), 
             camera: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            obstacle_detected: None, 
+            mipsbudget: 10.0, 
             period: 100, 
+            radar: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -156,8 +156,8 @@ impl Thread for obstacle_detection_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let radar_val = self.radar.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             let camera_val = self.camera.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let radar_val = self.radar.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {

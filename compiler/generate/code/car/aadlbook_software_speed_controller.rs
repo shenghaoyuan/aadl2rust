@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-13 19:47:35
+// 生成时间: 2025-11-14 15:55:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -327,13 +327,13 @@ impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            period: 5, 
-            speed_cmd: None, 
-            obstacle_position: None, 
             mipsbudget: 5.0, 
-            current_speed: None, 
-            desired_speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            obstacle_position: None, 
+            current_speed: None, 
+            speed_cmd: None, 
+            desired_speed: None, 
+            period: 5, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -386,13 +386,13 @@ impl Thread for speed_controller_brake_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 5.0, 
-            desired_speed: None, 
-            current_speed: None, 
-            brake_cmd: None, 
             dispatch_protocol: "Periodic".to_string(), 
             period: 5, 
+            mipsbudget: 5.0, 
             obstacle_position: None, 
+            current_speed: None, 
+            desired_speed: None, 
+            brake_cmd: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -445,13 +445,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             period: 5, 
-            obstacle_position: None, 
             mipsbudget: 5.0, 
-            warning: None, 
-            current_speed: None, 
             desired_speed: None, 
+            current_speed: None, 
+            obstacle_position: None, 
+            warning: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

@@ -1905,38 +1905,213 @@ RustModule {
                             body: Block {
                                 stmts: [
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.obstacle_camera.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"obstacle_camera\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "obstacle_camera",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.obstacle_radar.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"obstacle_radar\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "obstacle_radar",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.wheel_sensor.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"wheel_sensor\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "wheel_sensor",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.laser_sensor.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"laser_sensor\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "laser_sensor",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.panel.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"panel\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "panel",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.tire_pressure.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"tire_pressure\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "tire_pressure",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.bluetooth_ctrl.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"bluetooth_ctrl\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "bluetooth_ctrl",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
@@ -1970,23 +2145,123 @@ RustModule {
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.brake.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"brake\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "brake",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.acceleration.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"acceleration\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "acceleration",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.screen.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"screen\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "screen",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                     Expr(
-                                        Ident(
-                                            "std::thread::spawn(|| self.speaker.run());",
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"speaker\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            MethodCall(
+                                                                Path(
+                                                                    [
+                                                                        "self",
+                                                                        "speaker",
+                                                                    ],
+                                                                    Member,
+                                                                ),
+                                                                "run",
+                                                                [],
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
                                         ),
                                     ),
                                 ],

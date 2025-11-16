@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-13 19:47:35
+// 生成时间: 2025-11-14 15:55:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};

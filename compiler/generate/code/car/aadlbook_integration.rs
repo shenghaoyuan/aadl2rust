@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-13 19:47:35
+// 生成时间: 2025-11-14 15:55:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -199,23 +199,45 @@ impl System for integrationSystem {
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        std::thread::spawn(|| self.obstacle_camera.run());;
-        std::thread::spawn(|| self.obstacle_radar.run());;
-        std::thread::spawn(|| self.wheel_sensor.run());;
-        std::thread::spawn(|| self.laser_sensor.run());;
-        std::thread::spawn(|| self.panel.run());;
-        std::thread::spawn(|| self.tire_pressure.run());;
-        std::thread::spawn(|| self.bluetooth_ctrl.run());;
+        thread::Builder::new()
+            .name("obstacle_camera".to_string())
+            .spawn(move || { self.obstacle_camera.run() }).unwrap();
+        thread::Builder::new()
+            .name("obstacle_radar".to_string())
+            .spawn(move || { self.obstacle_radar.run() }).unwrap();
+        thread::Builder::new()
+            .name("wheel_sensor".to_string())
+            .spawn(move || { self.wheel_sensor.run() }).unwrap();
+        thread::Builder::new()
+            .name("laser_sensor".to_string())
+            .spawn(move || { self.laser_sensor.run() }).unwrap();
+        thread::Builder::new()
+            .name("panel".to_string())
+            .spawn(move || { self.panel.run() }).unwrap();
+        thread::Builder::new()
+            .name("tire_pressure".to_string())
+            .spawn(move || { self.tire_pressure.run() }).unwrap();
+        thread::Builder::new()
+            .name("bluetooth_ctrl".to_string())
+            .spawn(move || { self.bluetooth_ctrl.run() }).unwrap();
         self.image_acquisition.start();
         self.obstacle_detection.start();
         self.panel_controller.start();
         self.speed_voter.start();
         self.speed_ctrl.start();
         self.entertainment.start();
-        std::thread::spawn(|| self.brake.run());;
-        std::thread::spawn(|| self.acceleration.run());;
-        std::thread::spawn(|| self.screen.run());;
-        std::thread::spawn(|| self.speaker.run());;
+        thread::Builder::new()
+            .name("brake".to_string())
+            .spawn(move || { self.brake.run() }).unwrap();
+        thread::Builder::new()
+            .name("acceleration".to_string())
+            .spawn(move || { self.acceleration.run() }).unwrap();
+        thread::Builder::new()
+            .name("screen".to_string())
+            .spawn(move || { self.screen.run() }).unwrap();
+        thread::Builder::new()
+            .name("speaker".to_string())
+            .spawn(move || { self.speaker.run() }).unwrap();
     }
     
 }

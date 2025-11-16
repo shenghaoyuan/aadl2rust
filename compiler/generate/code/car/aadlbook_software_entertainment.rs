@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-13 19:47:35
+// 生成时间: 2025-11-14 15:55:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -147,13 +147,13 @@ impl Thread for entertainment_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            period: 5, 
-            dispatch_protocol: "Periodic".to_string(), 
-            mipsbudget: 5.0, 
-            contacts: None, 
             music_in: None, 
             music_out: None, 
+            contacts: None, 
             infos: None, 
+            mipsbudget: 5.0, 
+            period: 5, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

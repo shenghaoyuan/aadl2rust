@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-13 19:47:35
+// 生成时间: 2025-11-14 15:55:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -126,12 +126,12 @@ impl Thread for speed_voter_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            dispatch_protocol: "Periodic".to_string(), 
+            mipsbudget: 8.0, 
+            laser_sensor: None, 
+            wheel_sensor: None, 
             period: 8, 
             speed: None, 
-            laser_sensor: None, 
-            mipsbudget: 8.0, 
-            dispatch_protocol: "Periodic".to_string(), 
-            wheel_sensor: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }

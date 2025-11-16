@@ -4663,8 +4663,33 @@ impl AadlConverter {
                         stmts.push(Statement::Expr(Expr::Ident(start_stmt)));
                     }
                     ComponentCategory::Device => {
-                        let run_stmt = format!("std::thread::spawn(|| self.{}.run());", var_name);
-                        stmts.push(Statement::Expr(Expr::Ident(run_stmt)));
+                        // 构建线程闭包（使用move语义捕获self）
+                        let closure = Expr::Closure(
+                            Vec::new(), // 无参数
+                            Box::new(Expr::MethodCall(
+                                Box::new(Expr::Path(
+                                    vec!["self".to_string(), var_name.clone()],
+                                    PathType::Member,
+                                )),
+                                "run".to_string(),
+                                Vec::new(),
+                            )),
+                        );
+
+                        // 构建线程构建器表达式链
+                        let builder_chain = vec![
+                            BuilderMethod::Named(format!("\"{}\".to_string()", var_name)),
+                            BuilderMethod::Spawn {
+                                closure: Box::new(closure),
+                                move_kw: true, // 使用move关键字捕获self
+                            },
+                        ];
+
+                        stmts.push(Statement::Expr(Expr::MethodCall(
+                            Box::new(Expr::BuilderChain(builder_chain)),
+                            "unwrap".to_string(),
+                            Vec::new(),
+                        )));
                     }
                     _ => {}
                 }
