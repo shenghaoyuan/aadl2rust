@@ -315,7 +315,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            comm_servo: None, \n            info_capteur: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 110, \n            info_capteur: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            comm_servo: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -676,80 +676,54 @@ RustModule {
                                                     Let(
                                                         LetStmt {
                                                             ifmut: false,
-                                                            name: "info_capteur_val",
+                                                            name: "info_capteur",
                                                             ty: None,
                                                             init: Some(
-                                                                Match {
-                                                                    expr: Path(
+                                                                MethodCall(
+                                                                    MethodCall(
+                                                                        MethodCall(
+                                                                            Path(
+                                                                                [
+                                                                                    "self",
+                                                                                    "info_capteur",
+                                                                                ],
+                                                                                Member,
+                                                                            ),
+                                                                            "as_ref",
+                                                                            [],
+                                                                        ),
+                                                                        "and_then",
                                                                         [
-                                                                            "&self",
-                                                                            "info_capteur",
-                                                                        ],
-                                                                        Member,
-                                                                    ),
-                                                                    arms: [
-                                                                        MatchArm {
-                                                                            pattern: "Some(rx)",
-                                                                            guard: None,
-                                                                            body: Block {
-                                                                                stmts: [],
-                                                                                expr: Some(
-                                                                                    Match {
-                                                                                        expr: MethodCall(
-                                                                                            Ident(
-                                                                                                "rx",
-                                                                                            ),
-                                                                                            "try_recv",
-                                                                                            [],
+                                                                            Closure(
+                                                                                [
+                                                                                    "rx",
+                                                                                ],
+                                                                                MethodCall(
+                                                                                    MethodCall(
+                                                                                        Ident(
+                                                                                            "rx",
                                                                                         ),
-                                                                                        arms: [
-                                                                                            MatchArm {
-                                                                                                pattern: "Ok(val)",
-                                                                                                guard: None,
-                                                                                                body: Block {
-                                                                                                    stmts: [],
-                                                                                                    expr: Some(
-                                                                                                        Ident(
-                                                                                                            "val",
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                },
-                                                                                            },
-                                                                                            MatchArm {
-                                                                                                pattern: "_",
-                                                                                                guard: None,
-                                                                                                body: Block {
-                                                                                                    stmts: [],
-                                                                                                    expr: Some(
-                                                                                                        Literal(
-                                                                                                            Bool(
-                                                                                                                false,
-                                                                                                            ),
-                                                                                                        ),
-                                                                                                    ),
-                                                                                                },
-                                                                                            },
-                                                                                        ],
-                                                                                    },
-                                                                                ),
-                                                                            },
-                                                                        },
-                                                                        MatchArm {
-                                                                            pattern: "None",
-                                                                            guard: None,
-                                                                            body: Block {
-                                                                                stmts: [],
-                                                                                expr: Some(
-                                                                                    Literal(
-                                                                                        Bool(
-                                                                                            false,
-                                                                                        ),
+                                                                                        "try_recv",
+                                                                                        [],
                                                                                     ),
+                                                                                    "ok",
+                                                                                    [],
                                                                                 ),
-                                                                            },
-                                                                        },
+                                                                            ),
+                                                                        ],
+                                                                    ),
+                                                                    "unwrap_or_else",
+                                                                    [
+                                                                        Closure(
+                                                                            [
+                                                                                "",
+                                                                            ],
+                                                                            Ident(
+                                                                                "Default::default()",
+                                                                            ),
+                                                                        ),
                                                                     ],
-                                                                },
+                                                                ),
                                                             ),
                                                         },
                                                     ),
@@ -802,7 +776,7 @@ RustModule {
                                                                                                     guard: Some(
                                                                                                         BinaryOp(
                                                                                                             Ident(
-                                                                                                                "info_capteur_val",
+                                                                                                                "info_capteur",
                                                                                                             ),
                                                                                                             "==",
                                                                                                             Literal(
@@ -840,7 +814,7 @@ RustModule {
                                                                                                     guard: Some(
                                                                                                         BinaryOp(
                                                                                                             Ident(
-                                                                                                                "info_capteur_val",
+                                                                                                                "info_capteur",
                                                                                                             ),
                                                                                                             "==",
                                                                                                             Literal(
@@ -949,7 +923,7 @@ RustModule {
                                                                                                     guard: Some(
                                                                                                         BinaryOp(
                                                                                                             Ident(
-                                                                                                                "info_capteur_val",
+                                                                                                                "info_capteur",
                                                                                                             ),
                                                                                                             "==",
                                                                                                             Literal(
@@ -987,7 +961,7 @@ RustModule {
                                                                                                     guard: Some(
                                                                                                         BinaryOp(
                                                                                                             Ident(
-                                                                                                                "info_capteur_val",
+                                                                                                                "info_capteur",
                                                                                                             ),
                                                                                                             "==",
                                                                                                             Literal(
@@ -1065,35 +1039,6 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s2",
-                                                                                                    guard: None,
-                                                                                                    body: Block {
-                                                                                                        stmts: [
-                                                                                                            Comment(
-                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
-                                                                                                            ),
-                                                                                                            Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s2 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                        expr: None,
-                                                                                                    },
-                                                                                                },
-                                                                                                MatchArm {
                                                                                                     pattern: "State::s1",
                                                                                                     guard: None,
                                                                                                     body: Block {
@@ -1102,20 +1047,25 @@ RustModule {
                                                                                                                 "理论上不会执行到这里，但编译器需要这个分支",
                                                                                                             ),
                                                                                                             Expr(
-                                                                                                                Call(
-                                                                                                                    Path(
-                                                                                                                        [
-                                                                                                                            "panic!",
-                                                                                                                        ],
-                                                                                                                        Namespace,
-                                                                                                                    ),
-                                                                                                                    [
-                                                                                                                        Literal(
-                                                                                                                            Str(
-                                                                                                                                "Unexpected s1 state condition",
-                                                                                                                            ),
-                                                                                                                        ),
-                                                                                                                    ],
+                                                                                                                Ident(
+                                                                                                                    "break",
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                        expr: None,
+                                                                                                    },
+                                                                                                },
+                                                                                                MatchArm {
+                                                                                                    pattern: "State::s2",
+                                                                                                    guard: None,
+                                                                                                    body: Block {
+                                                                                                        stmts: [
+                                                                                                            Comment(
+                                                                                                                "理论上不会执行到这里，但编译器需要这个分支",
+                                                                                                            ),
+                                                                                                            Expr(
+                                                                                                                Ident(
+                                                                                                                    "break",
                                                                                                                 ),
                                                                                                             ),
                                                                                                         ],
@@ -1264,7 +1214,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            evenement: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            evenement: None, \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1738,7 +1688,7 @@ RustModule {
                                                                                                                 ),
                                                                                                             ),
                                                                                                             Comment(
-                                                                                                                "complete，需要停",
+                                                                                                                "complete,需要停",
                                                                                                             ),
                                                                                                         ],
                                                                                                         expr: None,
@@ -1886,7 +1836,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            ordre: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            ordre: None, \n            period: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],

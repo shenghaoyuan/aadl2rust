@@ -582,14 +582,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            gnc_pos: gnc_pos, \n            deadline: 1000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 1000, \n            priority: 50, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            priority: 50, \n            deadline: 1000, \n            period: 1000, \n            gnc_pos: gnc_pos, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -858,12 +858,12 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // Welcome() -> Update_POS() -> GNC_Work() -> Read_POS() -> Bye()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // welcome() -> update_pos() -> gnc_work() -> read_pos() -> bye()",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Welcome",
+                                                                            "// welcome",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -880,7 +880,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Update_POS",
+                                                                            "// update_pos",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -945,7 +945,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// GNC_Work",
+                                                                            "// gnc_work",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -962,7 +962,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Read_POS",
+                                                                            "// read_pos",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1027,7 +1027,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Bye",
+                                                                            "// bye",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1098,7 +1098,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(1000) ms",
@@ -1107,7 +1107,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -1217,14 +1221,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            deadline: 100, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 100, \n            priority: 20, \n            tmtc_pos: tmtc_pos, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            tmtc_pos: tmtc_pos, \n            priority: 20, \n            deadline: 100, \n            period: 100, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -1493,12 +1497,12 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // Welcome() -> TMTC_Work() -> Update() -> Bye()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // welcome() -> tmtc_work() -> update() -> bye()",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Welcome",
+                                                                            "// welcome",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1515,7 +1519,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// TMTC_Work",
+                                                                            "// tmtc_work",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1532,7 +1536,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Update",
+                                                                            "// update",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1597,7 +1601,7 @@ RustModule {
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// Bye",
+                                                                            "// bye",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1668,7 +1672,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(100) ms",
@@ -1677,7 +1681,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -1903,7 +1911,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new process instance",
                             ],
@@ -1992,7 +2000,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Starts all threads in the process",
                             ],
@@ -2000,7 +2008,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Process",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -2068,7 +2080,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new system instance",
                             ],
@@ -2098,7 +2110,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Runs the system, starts all processes",
                             ],
@@ -2106,7 +2118,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "System",
+                    ),
+                ),
             },
         ),
         LazyStatic(

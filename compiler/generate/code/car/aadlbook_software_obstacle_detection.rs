@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-14 15:55:49
+// 生成时间: 2025-12-04 21:01:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -9,6 +9,8 @@ use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -36,37 +38,35 @@ pub struct obstacle_detectionProcess {
     pub radarSend: Option<Sender<bool>>,// 内部端口: radar In
     pub obstacle_positionRece: Option<Receiver<bool>>,// 内部端口: obstacle_position Out
     #[allow(dead_code)]
-    pub thr: obstacle_detection_thrThread,// 子组件线程（thr : thread obstacle_detection_thr）
+    pub obst_thr: obstacle_detection_thrThread,// 子组件线程（obst_thr : thread obstacle_detection_thr）
 }
 
 impl Process for obstacle_detectionProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
+        let mut obst_thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
         let mut cameraSend = None;
         let mut radarSend = None;
         let mut obstacle_positionRece = None;
-        let channel = crossbeam_channel::unbounded();
         cameraSend = Some(channel.0);
         // build connection: 
-            thr.camera = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            obst_thr.camera = Some(channel.1);
         radarSend = Some(channel.0);
         // build connection: 
-            thr.radar = Some(channel.1);
+            obst_thr.radar = Some(channel.1);
         let channel = crossbeam_channel::unbounded();
         // build connection: 
-            thr.obstacle_detected = Some(channel.0);
+            obst_thr.obstacle_detected = Some(channel.0);
         obstacle_positionRece = Some(channel.1);
-        return Self { camera: None, cameraSend, radar: None, radarSend, obstacle_position: None, obstacle_positionRece, thr, cpu_id }  //显式return;
+        return Self { camera: None, cameraSend, radar: None, radarSend, obstacle_position: None, obstacle_positionRece, obst_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
     fn start(self: Self) -> () {
-        let Self { camera, cameraSend, radar, radarSend, obstacle_position, obstacle_positionRece, thr, cpu_id, .. } = self;
+        let Self { camera, cameraSend, radar, radarSend, obstacle_position, obstacle_positionRece, obst_thr, cpu_id, .. } = self;
         thread::Builder::new()
-            .name("thr".to_string())
-            .spawn(|| { thr.run() }).unwrap();
+            .name("obst_thr".to_string())
+            .spawn(|| { obst_thr.run() }).unwrap();
         let camera_rx = camera.unwrap();
         thread::Builder::new()
             .name("data_forwarder_camera".to_string())
@@ -127,11 +127,11 @@ impl Thread for obstacle_detection_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             camera: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            obstacle_detected: None, 
-            mipsbudget: 10.0, 
-            period: 100, 
             radar: None, 
+            period: 100, 
+            dispatch_protocol: "Periodic".to_string(), 
+            mipsbudget: 10.0, 
+            obstacle_detected: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -143,7 +143,6 @@ impl Thread for obstacle_detection_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
-        let mut obstacle_detected_temp: bool = false;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -156,45 +155,42 @@ impl Thread for obstacle_detection_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let camera_val = self.camera.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
-            let radar_val = self.radar.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let camera = self.camera.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let radar = self.radar.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
-                        State::s0 if camera_val == true => {
+                        State::s0 if camera == true => {
                             if let Some(sender) = &self.obstacle_detected {
                                 let _ = sender.send(true);
                             };
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 if camera_val == false => {
-                            obstacle_detected_temp = false;
+                        State::s0 if camera == false => {
                             state = State::s1;
                             continue;
                         },
-                        State::s0 if radar_val == true => {
+                        State::s1 if radar == true => {
                             if let Some(sender) = &self.obstacle_detected {
                                 let _ = sender.send(true);
                             };
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 if radar_val == false => {
-                            obstacle_detected_temp = false;
+                        State::s1 if radar == false => {
+                            if let Some(sender) = &self.obstacle_detected {
+                                let _ = sender.send(false);
+                            };
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s1 => {
-                            if let Some(sender) = &self.obstacle_detected {
-                                let _ = sender.send(obstacle_detected_temp);
-                            };
-                            // on dispatch → s0
-                            state = State::s0;
-                            // complete，需要停
-                        },
                         State::s0 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
+                        },
+                        State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
@@ -207,5 +203,14 @@ impl Thread for obstacle_detection_thrThread {
         };
     }
     
+}
+
+// CPU ID到调度策略的映射
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

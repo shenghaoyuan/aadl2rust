@@ -639,13 +639,15 @@ pub fn transform_assignment_action(pair: Pair<aadlight_parser::Rule>) -> BasicAc
 /// 处理 communication_action 规则
 pub fn transform_communication_action(pair: Pair<aadlight_parser::Rule>) -> BasicAction {
     let inner = pair.into_inner().next().unwrap();
+    println!("22222222222222222222222222222222222222communication_action: {:?}", inner);
     
     match inner.as_rule() {
         aadlight_parser::Rule::port_communication => {
+            let mut inner_iter = inner.into_inner();
             BasicAction::Communication(CommunicationAction::PortCommunication(
                 PortCommunication::Output {
-                    port: extract_identifier(inner),
-                    value: None,
+                    port: extract_identifier(inner_iter.next().unwrap()),
+                    value: Some(transform_behavior_expression(inner_iter.next().unwrap())),
                 }
             ))
         }

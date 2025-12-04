@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-13 13:09:55
+// 生成时间: 2025-12-04 21:05:26
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -8,6 +8,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -131,22 +134,22 @@ pub struct gnc_threadThread {
     pub priority: u64,// AADL属性(impl): Priority
 }
 
-impl gnc_threadThread {
+impl Thread for gnc_threadThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
+    fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
         return Self {
-            gnc_pos: gnc_pos, 
-            deadline: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
-            period: 1000, 
             priority: 50, 
+            deadline: 1000, 
+            period: 1000, 
+            gnc_pos: gnc_pos, 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(1000) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 50 };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
@@ -162,10 +165,10 @@ impl gnc_threadThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // Welcome() -> Update_POS() -> GNC_Work() -> Read_POS() -> Bye();
-                // Welcome;
+                           // welcome() -> update_pos() -> gnc_work() -> read_pos() -> bye();
+                // welcome;
                 gnc_identity::execute();
-                // Update_POS;
+                // update_pos;
                 {
                     {
                         if let Ok(mut guard) = self.gnc_pos.lock() {
@@ -173,9 +176,9 @@ impl gnc_threadThread {
                         };
                     };
                 };
-                // GNC_Work;
+                // gnc_work;
                 gnc_job::execute();
-                // Read_POS;
+                // read_pos;
                 {
                     {
                         if let Ok(mut guard) = self.gnc_pos.lock() {
@@ -183,7 +186,7 @@ impl gnc_threadThread {
                         };
                     };
                 };
-                // Bye;
+                // bye;
                 gnc_identity::execute();
             };
             let elapsed = start.elapsed();
@@ -204,22 +207,22 @@ pub struct tmtc_threadThread {
     pub priority: u64,// AADL属性(impl): Priority
 }
 
-impl tmtc_threadThread {
+impl Thread for tmtc_threadThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
+    fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
         return Self {
-            deadline: 100, 
             dispatch_protocol: "Periodic".to_string(), 
-            period: 100, 
-            priority: 20, 
             tmtc_pos: tmtc_pos, 
+            priority: 20, 
+            deadline: 100, 
+            period: 100, 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(100) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 20 };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
@@ -235,12 +238,12 @@ impl tmtc_threadThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // Welcome() -> TMTC_Work() -> Update() -> Bye();
-                // Welcome;
+                           // welcome() -> tmtc_work() -> update() -> bye();
+                // welcome;
                 tmtc_identity::execute();
-                // TMTC_Work;
+                // tmtc_work;
                 tmtc_job::execute();
-                // Update;
+                // update;
                 {
                     {
                         if let Ok(mut guard) = self.tmtc_pos.lock() {
@@ -248,7 +251,7 @@ impl tmtc_threadThread {
                         };
                     };
                 };
-                // Bye;
+                // bye;
                 tmtc_identity::execute();
             };
             let elapsed = start.elapsed();
@@ -270,9 +273,9 @@ pub struct toy_example_procProcess {
     pub pos_data: POSShared,// 共享数据（POS_Data : data POS）
 }
 
-impl toy_example_procProcess {
+impl Process for toy_example_procProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut pos_data: POSShared = Arc::new(Mutex::new(0));
         let mut gnc_th: gnc_threadThread = gnc_threadThread::new(cpu_id, pos_data.clone());
         let mut tmtc_th: tmtc_threadThread = tmtc_threadThread::new(cpu_id, pos_data.clone());
@@ -280,7 +283,7 @@ impl toy_example_procProcess {
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { gnc_th, tmtc_th, pos_data, cpu_id, .. } = self;
         thread::Builder::new()
             .name("gnc_th".to_string())
@@ -299,15 +302,15 @@ pub struct toy_exampleSystem {
     pub gnc_tmtc_pos: toy_example_procProcess,// 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）
 }
 
-impl toy_exampleSystem {
+impl System for toy_exampleSystem {
     // Creates a new system instance
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut gnc_tmtc_pos: toy_example_procProcess = toy_example_procProcess::new(0);
         return Self { gnc_tmtc_pos }  //显式return;
     }
     
     // Runs the system, starts all processes
-    pub fn run(self: Self) -> () {
+    fn run(self: Self) -> () {
         self.gnc_tmtc_pos.start();
     }
     

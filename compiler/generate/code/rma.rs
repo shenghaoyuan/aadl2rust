@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-13 13:09:02
+// 生成时间: 2025-12-04 21:02:40
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -8,6 +8,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -62,21 +65,21 @@ pub struct taskThread {
     pub deadline: u64,// AADL属性(impl): Deadline
 }
 
-impl taskThread {
+impl Thread for taskThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
+            deadline: 1000, 
+            period: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
             priority: 1, 
-            period: 1000, 
-            deadline: 1000, 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(1000) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 1 };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
@@ -92,8 +95,8 @@ impl taskThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // P_Spg();
-                // P_Spg;
+                           // p_spg();
+                // p_spg;
                 hello_spg_1::execute();
             };
             let elapsed = start.elapsed();
@@ -113,21 +116,21 @@ pub struct task2Thread {
     pub deadline: u64,// AADL属性(impl): Deadline
 }
 
-impl task2Thread {
+impl Thread for task2Thread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 2, 
-            period: 500, 
             deadline: 500, 
             dispatch_protocol: "Periodic".to_string(), 
+            priority: 2, 
+            period: 500, 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(500) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let mut param: sched_param = sched_param { sched_priority: 2 };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
@@ -143,8 +146,8 @@ impl task2Thread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // P_Spg();
-                // P_Spg;
+                           // p_spg();
+                // p_spg;
                 hello_spg_2::execute();
             };
             let elapsed = start.elapsed();
@@ -164,16 +167,16 @@ pub struct node_aProcess {
     pub task2: task2Thread,// 子组件线程（Task2 : thread Task2）
 }
 
-impl node_aProcess {
+impl Process for node_aProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut task1: taskThread = taskThread::new(cpu_id);
         let mut task2: task2Thread = task2Thread::new(cpu_id);
         return Self { task1, task2, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { task1, task2, cpu_id, .. } = self;
         thread::Builder::new()
             .name("task1".to_string())
@@ -192,15 +195,15 @@ pub struct rmaSystem {
     pub node_a: node_aProcess,// 子组件进程（node_a : process node_a）
 }
 
-impl rmaSystem {
+impl System for rmaSystem {
     // Creates a new system instance
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut node_a: node_aProcess = node_aProcess::new(0);
         return Self { node_a }  //显式return;
     }
     
     // Runs the system, starts all processes
-    pub fn run(self: Self) -> () {
+    fn run(self: Self) -> () {
         self.node_a.start();
     }
     

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-14 15:55:49
+// 生成时间: 2025-12-04 21:01:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -9,6 +9,8 @@ use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -29,8 +31,8 @@ fn set_thread_affinity(cpu: isize) {
 #[derive(Debug)]
 pub struct speed_controllerProcess {
     pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
-    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
-    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub current_speed: Option<BcReceiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<BcReceiver<u16>>,// Port: desired_speed In
     pub brake_cmd: Option<Sender<i8>>,// Port: brake_cmd Out
     pub speed_cmd: Option<Sender<i8>>,// Port: speed_cmd Out
     pub warning: Option<Sender<bool>>,// Port: warning Out
@@ -61,15 +63,12 @@ impl Process for speed_controllerProcess {
         let mut brake_cmdRece = None;
         let mut speed_cmdRece = None;
         let mut warningRece = None;
-        let channel = crossbeam_channel::unbounded();
         obstacle_positionSend = Some(channel.0);
         // build connection: 
             accel_thr.obstacle_position = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             accel_thr.current_speed = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         desired_speedSend = Some(channel.0);
         // build connection: 
             accel_thr.desired_speed = Some(channel.1);
@@ -77,15 +76,12 @@ impl Process for speed_controllerProcess {
         // build connection: 
             accel_thr.speed_cmd = Some(channel.0);
         speed_cmdRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         obstacle_positionSend = Some(channel.0);
         // build connection: 
             brake_thr.obstacle_position = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             brake_thr.current_speed = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         desired_speedSend = Some(channel.0);
         // build connection: 
             brake_thr.desired_speed = Some(channel.1);
@@ -93,15 +89,12 @@ impl Process for speed_controllerProcess {
         // build connection: 
             brake_thr.brake_cmd = Some(channel.0);
         brake_cmdRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         obstacle_positionSend = Some(channel.0);
         // build connection: 
             warning_thr.obstacle_position = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         current_speedSend = Some(channel.0);
         // build connection: 
             warning_thr.current_speed = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
         desired_speedSend = Some(channel.0);
         // build connection: 
             warning_thr.desired_speed = Some(channel.1);
@@ -327,13 +320,13 @@ impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 5.0, 
-            dispatch_protocol: "Periodic".to_string(), 
             obstacle_position: None, 
             current_speed: None, 
             speed_cmd: None, 
-            desired_speed: None, 
             period: 5, 
+            mipsbudget: 5.0, 
+            dispatch_protocol: "Periodic".to_string(), 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -355,12 +348,12 @@ impl Thread for speed_controller_accel_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let current_speed_val = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let current_speed = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
-                        State::s0 if 60 < current_speed_val => {
+                        State::s0 if 60 < current_speed => {
                             if let Some(sender) = &self.speed_cmd {
                                 let _ = sender.send(0);
                             };
@@ -386,13 +379,13 @@ impl Thread for speed_controller_brake_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
-            period: 5, 
-            mipsbudget: 5.0, 
             obstacle_position: None, 
-            current_speed: None, 
-            desired_speed: None, 
             brake_cmd: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            mipsbudget: 5.0, 
+            current_speed: None, 
+            period: 5, 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -414,14 +407,14 @@ impl Thread for speed_controller_brake_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let current_speed_val = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let obstacle_position = self.obstacle_position.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
-                        State::s0 if 80 < current_speed_val => {
+                        State::s0 if obstacle_position == true => {
                             if let Some(sender) = &self.brake_cmd {
-                                let _ = sender.send(10);
+                                let _ = sender.send(1);
                             };
                             state = State::s0;
                             // complete,需要停
@@ -445,13 +438,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            period: 5, 
-            mipsbudget: 5.0, 
-            desired_speed: None, 
-            current_speed: None, 
             obstacle_position: None, 
             warning: None, 
+            mipsbudget: 5.0, 
             dispatch_protocol: "Periodic".to_string(), 
+            period: 5, 
+            current_speed: None, 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -473,12 +466,12 @@ impl Thread for speed_controller_warning_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let obstacle_position_val = self.obstacle_position.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let obstacle_position = self.obstacle_position.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
-                        State::s0 if obstacle_position_val == true => {
+                        State::s0 if obstacle_position == true => {
                             if let Some(sender) = &self.warning {
                                 let _ = sender.send(true);
                             };
@@ -498,5 +491,14 @@ impl Thread for speed_controller_warning_thrThread {
         };
     }
     
+}
+
+// CPU ID到调度策略的映射
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

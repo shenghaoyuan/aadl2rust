@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-12 17:58:15
+// 生成时间: 2025-12-04 21:15:14
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -9,6 +9,8 @@ use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -74,10 +76,10 @@ impl Thread for controleThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            comm_servo: None, 
+            period: 110, 
             info_capteur: None, 
             dispatch_protocol: "Periodic".to_string(), 
-            period: 110, 
+            comm_servo: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -113,18 +115,7 @@ impl Thread for controleThread {
         let mut state: State = State::s_inline;
         loop {
             let start = Instant::now();
-            let info_capteur_val = match &self.info_capteur {
-                Some(rx) => {
-                    match rx.try_recv() {
-                        Ok(val) => {
-                            // 收到消息 → 调用处理函数
-                            val},
-                        _ => {
-                            false},
-                    }},
-                None => {
-                    false},
-            };
+            let info_capteur = self.info_capteur.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -134,11 +125,11 @@ impl Thread for controleThread {
                             state = State::s1;
                             continue;
                         },
-                        State::s1 if info_capteur_val == true => {
+                        State::s1 if info_capteur == true => {
                             state = State::s_inline;
                             // complete,需要停
                         },
-                        State::s1 if info_capteur_val == false => {
+                        State::s1 if info_capteur == false => {
                             if let Some(sender) = &self.comm_servo {
                                 let _ = sender.send(false);
                             };
@@ -150,24 +141,24 @@ impl Thread for controleThread {
                             state = State::s2;
                             continue;
                         },
-                        State::s2 if info_capteur_val == false => {
+                        State::s2 if info_capteur == false => {
                             state = State::s_outline;
                             // complete,需要停
                         },
-                        State::s2 if info_capteur_val == true => {
+                        State::s2 if info_capteur == true => {
                             if let Some(sender) = &self.comm_servo {
                                 let _ = sender.send(true);
                             };
                             state = State::s_inline;
                             // complete,需要停
                         },
-                        State::s2 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            panic!("Unexpected s2 state condition");
-                        },
                         State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
-                            panic!("Unexpected s1 state condition");
+                            break;
+                        },
+                        State::s2 => {
+                            // 理论上不会执行到这里，但编译器需要这个分支
+                            break;
                         },
                     };
                     break;
@@ -185,8 +176,8 @@ impl Thread for capteurThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             dispatch_protocol: "Periodic".to_string(), 
-            period: 110, 
             evenement: None, 
+            period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -229,7 +220,7 @@ impl Thread for capteurThread {
                             };
                             // on dispatch → s0
                             state = State::s0;
-                            // complete，需要停
+                            // complete,需要停
                         },
                     };
                     break;
@@ -246,9 +237,9 @@ impl Thread for servomoteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Sporadic".to_string(), 
-            period: 10, 
             ordre: None, 
+            period: 10, 
+            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

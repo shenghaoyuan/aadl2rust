@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-11-14 15:55:49
+// 生成时间: 2025-12-04 21:01:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -9,6 +9,8 @@ use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -38,42 +40,40 @@ pub struct entertainmentProcess {
     pub infosRece: Option<Receiver<i8>>,// 内部端口: infos Out
     pub music_outRece: Option<Receiver<bool>>,// 内部端口: music_out Out
     #[allow(dead_code)]
-    pub thr: entertainment_thrThread,// 子组件线程（thr : thread entertainment_thr）
+    pub enter_thr: entertainment_thrThread,// 子组件线程（enter_thr : thread entertainment_thr）
 }
 
 impl Process for entertainmentProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
+        let mut enter_thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
         let mut music_inSend = None;
         let mut contactsSend = None;
         let mut infosRece = None;
         let mut music_outRece = None;
-        let channel = crossbeam_channel::unbounded();
         music_inSend = Some(channel.0);
         // build connection: 
-            thr.music_in = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            enter_thr.music_in = Some(channel.1);
         contactsSend = Some(channel.0);
         // build connection: 
-            thr.contacts = Some(channel.1);
+            enter_thr.contacts = Some(channel.1);
         let channel = crossbeam_channel::unbounded();
         // build connection: 
-            thr.infos = Some(channel.0);
+            enter_thr.infos = Some(channel.0);
         infosRece = Some(channel.1);
         let channel = crossbeam_channel::unbounded();
         // build connection: 
-            thr.music_out = Some(channel.0);
+            enter_thr.music_out = Some(channel.0);
         music_outRece = Some(channel.1);
-        return Self { music_in: None, music_inSend, contacts: None, contactsSend, infos: None, infosRece, music_out: None, music_outRece, thr, cpu_id }  //显式return;
+        return Self { music_in: None, music_inSend, contacts: None, contactsSend, infos: None, infosRece, music_out: None, music_outRece, enter_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
     fn start(self: Self) -> () {
-        let Self { music_in, music_inSend, contacts, contactsSend, infos, infosRece, music_out, music_outRece, thr, cpu_id, .. } = self;
+        let Self { music_in, music_inSend, contacts, contactsSend, infos, infosRece, music_out, music_outRece, enter_thr, cpu_id, .. } = self;
         thread::Builder::new()
-            .name("thr".to_string())
-            .spawn(|| { thr.run() }).unwrap();
+            .name("enter_thr".to_string())
+            .spawn(|| { enter_thr.run() }).unwrap();
         let music_in_rx = music_in.unwrap();
         thread::Builder::new()
             .name("data_forwarder_music_in".to_string())
@@ -147,13 +147,13 @@ impl Thread for entertainment_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            music_in: None, 
             music_out: None, 
-            contacts: None, 
-            infos: None, 
-            mipsbudget: 5.0, 
             period: 5, 
+            music_in: None, 
+            infos: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            mipsbudget: 5.0, 
+            contacts: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -165,6 +165,7 @@ impl Thread for entertainment_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut infos_value: Base_Types::Integer_8 = 0;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -188,7 +189,7 @@ impl Thread for entertainment_thrThread {
                             };
                             // on dispatch → s0
                             state = State::s0;
-                            // complete，需要停
+                            // complete,需要停
                         },
                     };
                     break;
@@ -199,5 +200,14 @@ impl Thread for entertainment_thrThread {
         };
     }
     
+}
+
+// CPU ID到调度策略的映射
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-14 22:09:14
+// 生成时间: 2025-12-04 21:14:46
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -8,6 +8,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -22,27 +25,6 @@ fn set_thread_affinity(cpu: isize) {
         CPU_SET(cpu as usize, &mut cpuset);
         sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);
     }
-}
-
-// ---------------- System ----------------
-pub trait System {
-    fn new() -> Self
-        where Self: Sized;
-    fn run(self);
-}
-
-// ---------------- Process ----------------
-pub trait Process {
-    fn new(cpu_id: isize) -> Self
-        where Self: Sized;
-    fn start(self);
-}
-
-// ---------------- Thread ----------------
-pub trait Thread {
-    fn new(cpu_id: isize) -> Self
-        where Self: Sized;
-    fn run(self);
 }
 
 // AADL Data Type: Alpha_Type
@@ -136,9 +118,9 @@ impl Thread for capteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             evenement: None, 
             period: 110, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -181,10 +163,10 @@ impl Thread for controleThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            comm_servo: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             period: 110, 
             info_capteur: None, 
-            dispatch_protocol: "Periodic".to_string(), 
+            comm_servo: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -243,9 +225,9 @@ impl Thread for servomoteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            dispatch_protocol: "Sporadic".to_string(), 
             ordre: None, 
             period: 10, 
-            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

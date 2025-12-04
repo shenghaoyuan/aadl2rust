@@ -264,7 +264,7 @@ impl AnnexConverter {
         for port_name in ports_to_receive {
             let receive_stmt = Statement::Let(LetStmt {
                 ifmut: false,
-                name: format!("{}_val", port_name),
+                name: format!("{}", port_name),
                 ty: None,
                 init: Some(self.build_port_receive_expr(&port_name)),
             });
@@ -441,7 +441,7 @@ impl AnnexConverter {
                     if self.should_continue_state(&transition.destination_state) {
                         stmts.push(Statement::Continue);
                     } else {
-                        stmts.push(Statement::Comment("complete，需要停".to_string()));
+                        stmts.push(Statement::Comment("complete,需要停".to_string()));
                     }
                 }
                 BehaviorCondition::Execute(execute_cond) => {
@@ -519,7 +519,7 @@ impl AnnexConverter {
             for trigger in &execute_cond.dispatch_triggers {
                 match trigger {
                     DispatchTrigger::InEventPort(port_name) => {
-                        let port_var = format!("{}_val", port_name.to_lowercase());
+                        let port_var = format!("{}", port_name.to_lowercase());
                         let mut condition = if use_less_than {
                             let number_literal = parsed_number.as_ref().unwrap().clone();
                             Expr::BinaryOp(
@@ -658,6 +658,7 @@ impl AnnexConverter {
                     Box::new(value_expr),
                 )));
             }
+            //TODO：待修改，输出端口赋值这个动作，不该有发送操作，只是赋值，发送是!(value)
             Target::OutgoingPort(port_name) => {
                 // 输出端口赋值 - 生成发送代码
                 let value_expr = match &assignment.value {

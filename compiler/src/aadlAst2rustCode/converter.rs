@@ -2,6 +2,7 @@
 use super::intermediate_ast::*;
 use super::converter_annex::AnnexConverter;
 use crate::ast::aadl_ast_cj::*;
+use crate::aadlAst2rustCode::tool;
 use std::collections::HashMap;
 
 // AADL到Rust中间表示的转换器
@@ -16,6 +17,14 @@ pub struct AadlConverter {
     
     thread_field_values: HashMap<String, HashMap<String, StruPropertyValue>>,// 存储线程类型字段对应的属性值，key为线程结构体名(如 fooThread)，value为字段名到属性值的映射
     thread_field_types: HashMap<String, HashMap<String, Type>>,// 存储线程类型字段对应的类型，key为线程结构体名(如 fooThread)，value为字段名到类型的映射。为了Shared的字段作为参数的依据
+
+    //List列表存储system内process之间的多连接关系，每条数据是组件和端口
+    process_broadcast_send: Vec<(String, String)>,
+    //HashMap存储system内process之间的多连接关系，key为组件和端口，value为接收(组件和端口)列表
+    process_broadcast_receive: HashMap<(String, String), Vec<(String, String)>>,
+    //HashMap存储system内subcomponent的identify和真实实现类型的映射关系
+    system_subcomponent_identify_to_type: HashMap<String, String>,
+    
 }
 
 #[derive(Debug)]
@@ -60,6 +69,9 @@ impl Default for AadlConverter {
             data_comp_type: HashMap::new(),
             thread_field_values: HashMap::new(),
             thread_field_types: HashMap::new(),
+            process_broadcast_send: Vec::new(),
+            process_broadcast_receive: HashMap::new(),
+            system_subcomponent_identify_to_type: HashMap::new(),
         }
     }
 }
@@ -82,7 +94,15 @@ impl AadlConverter {
     pub fn convert_package(&mut self, pkg: &Package) -> RustModule {
         // 首先收集所有组件类型信息
         self.collect_component_types(pkg);
-        
+
+        //收集system内process之间的多连接关系
+        self.collect_process_connections(pkg);
+        println!("process_broadcast_send: {:?}", self.process_broadcast_send);
+        println!("process_broadcast_receive: {:?}", self.process_broadcast_receive);
+        println!("system_subcomponent_identify_to_type: {:?}", self.system_subcomponent_identify_to_type);
+        println!("system_subcomponent_identify_to_type length: {}", self.system_subcomponent_identify_to_type.len());
+
+
         let mut module = RustModule {
             name: pkg.name.0.join("_").to_lowercase(),
             docs: vec![format!(
@@ -136,6 +156,99 @@ impl AadlConverter {
                 }
             }
         }
+    }
+
+    //收集system内process之间的多连接关系
+    fn collect_process_connections(&mut self, pkg: &Package) {
+        //创建一个映射，存储已经出现的，key为子组件名称，value为端口名称。用来判断是否是重复出现的端口
+        // let mut subcomponent_ports = HashMap::new();
+
+        if let Some(public_section) = &pkg.public_section {
+            for decl in &public_section.declarations {
+                if let AadlDeclaration::ComponentImplementation(impl_) = decl {
+                    if impl_.category == ComponentCategory::System {
+                        if let ConnectionClause::Items(connections) = &impl_.connections {
+                            for conn in connections {
+                                if let Connection::Port(port_conn) = conn {
+                                    if let PortEndpoint::SubcomponentPort { subcomponent, port } = &port_conn.source {
+
+                                        self.process_broadcast_send.push((subcomponent.clone(), port.clone()));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //筛选重复出现的（发送）端口。保留。
+        let temp_dedup_with_min_two_unique = tool::dedup_with_min_two_unique(&mut self.process_broadcast_send);
+        //现在process_connections_alias中存储的是重复出现的（发送）端口。
+        //还需要根据它，再次遍历连接关系connections，找到所有与它们连接的接收端口，加入process_connections_alias
+        for ele in &temp_dedup_with_min_two_unique {
+            if let Some(public_section) = &pkg.public_section {
+                for decl in &public_section.declarations {
+                    if let AadlDeclaration::ComponentImplementation(impl_) = decl {
+                        if impl_.category == ComponentCategory::System {
+                            if let ConnectionClause::Items(connections) = &impl_.connections {
+                                for conn in connections {
+                                    if let Connection::Port(port_conn) = conn {
+                                        if let PortEndpoint::SubcomponentPort { subcomponent, port } = &port_conn.source {
+
+                                            if subcomponent.eq(&ele.0) && port.eq(&ele.1) {
+                                                if let PortEndpoint::SubcomponentPort{ subcomponent: d_subcomponent, port: d_port} = &port_conn.destination {
+                                                    //self.process_broadcast_send.push((d_subcomponent.clone(), d_port.clone()));
+                                                    self.process_broadcast_receive.entry(ele.clone()).or_insert(Vec::new()).push((d_subcomponent.clone(), d_port.clone()));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //遍历process_broadcast_receive的键值对中所有键和值中的组件，查看该系统中的subcomponent部分，把有广播发送和接收的端口，找到它的真实类型，并记录下来存储到system_subcomponent_identify_to_type。
+        for (sendcomp, vercport) in &self.process_broadcast_receive {
+            for (comp, _) in vercport {
+                if let Some(public_section) = &pkg.public_section {
+                    for decl in &public_section.declarations {
+                        if let AadlDeclaration::ComponentImplementation(impl_) = decl {
+                            if impl_.category == ComponentCategory::System {
+
+                                if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+
+                                    for sub in subcomponents {
+                                        if sub.identifier.eq(&comp.clone()) {
+                                            if let SubcomponentClassifier::ClassifierReference(classifier) = &sub.classifier {
+                                                if let UniqueComponentClassifierReference::Implementation(unirf) = classifier {
+                                                    self.system_subcomponent_identify_to_type.insert(sub.identifier.clone(), unirf.implementation_name.type_identifier.clone());
+                                                }
+                                            }
+                                        }
+                                        else if sub.identifier.eq(&sendcomp.0.clone()) {
+                                            if let SubcomponentClassifier::ClassifierReference(classifier) = &sub.classifier {
+                                                if let UniqueComponentClassifierReference::Implementation(unirf) = classifier {
+                                                    self.system_subcomponent_identify_to_type.insert(sub.identifier.clone(), unirf.implementation_name.type_identifier.clone());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        
+        
+        
+
+
     }
 
 
@@ -247,7 +360,7 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
-        let mut fields = self.convert_type_features(&comp.features); //特征列表（端口字段）
+        let mut fields = self.convert_type_features(&comp.features, comp.identifier.clone()); //特征列表（端口字段）
         
         // 添加周期字段
         fields.push(Field {
@@ -411,7 +524,7 @@ impl AadlConverter {
                 Vec::new(),
             )),
         }));
-        println!("type_mappings: {:?}", self.type_mappings);
+        //println!("type_mappings: {:?}", self.type_mappings);
         
         if !input_ports.is_empty() {
             loop_stmts.push(Statement::Comment("// --- 从输入端口接收数据 ---".to_string()));
@@ -712,7 +825,7 @@ impl AadlConverter {
         }
         // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
         if !self.type_mappings.contains_key(&comp.identifier.to_lowercase()) {
-            println!("3333comp.identifier: {:?}", comp.identifier.to_lowercase());
+            //println!("3333comp.identifier: {:?}", comp.identifier.to_lowercase());
             self.type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
         }
         
@@ -1078,7 +1191,7 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
-        let mut fields = self.convert_type_features(&comp.features); //特征列表
+        let mut fields = self.convert_type_features(&comp.features, comp.identifier.clone()); //特征列表
         // 将属性也整合为字段（不再单独放入properties）
         // 收集属性：既向 fields 添加类型字段，又把值记录到 thread_field_values
         let mut value_map: HashMap<String, StruPropertyValue> = HashMap::new();
@@ -1156,7 +1269,7 @@ impl AadlConverter {
         let mut items = Vec::new();
 
         // 1. 结构体定义
-        let mut fields = self.convert_type_features(&comp.features); //特征列表
+        let mut fields = self.convert_type_features(&comp.features,comp.identifier.clone()); //特征列表
         // 添加 CPU ID 字段
         fields.push(Field {
             name: "cpu_id".to_string(),
@@ -1235,7 +1348,7 @@ impl AadlConverter {
         }
     }
 
-    fn convert_type_features(&self, features: &FeatureClause) -> Vec<Field> {
+    fn convert_type_features(&self, features: &FeatureClause, comp_identifier: String) -> Vec<Field> {
         let mut fields = Vec::new();
 
         if let FeatureClause::Items(feature_items) = features {
@@ -1244,7 +1357,7 @@ impl AadlConverter {
                     Feature::Port(port) => {
                         fields.push(Field {
                             name: port.identifier.to_lowercase(),
-                            ty: self.convert_port_type(&port),
+                            ty: self.convert_port_type(&port,comp_identifier.clone()),
                             docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
                             attrs: Vec::new(),
                         });
@@ -1305,13 +1418,50 @@ impl AadlConverter {
         fields
     }
 
-    fn convert_port_type(&self, port: &PortSpec) -> Type {
+    fn convert_port_type(&self, port: &PortSpec, comp_identifier: String) -> Type {
         // 确定通道类型（Sender/Receiver）
-        let channel_type = match port.direction {
-            PortDirection::In => "Receiver",
-            PortDirection::Out => "Sender",
-            PortDirection::InOut => "Sender", //TODO:std::mpsc不支持双向通道，暂时这样写
-        };
+        let mut channel_type = String::new();
+        //如果comp_identifier不为空，首先需要查看process_broadcast_receive中的键值对中的键或值中是否包含port.identifier
+        //如果有，则根据该项的键，在system_subcomponent_identify_to_type中找到它对应的组件identify值，判断该值和comp_identifier是否相同
+        //如果相同，则说明该端口是广播端口，通道类型需要设置为BcReceiver或BcSender，否则设置为Receiver或Sender
+        if !comp_identifier.is_empty() {
+            for (subcomponent_port, vercport) in &self.process_broadcast_receive {
+                //先判断键（发送）是否包含port.identifier
+                
+                if subcomponent_port.1.eq(&port.identifier) {
+                    if let Some(subcomponent_identify) = self.system_subcomponent_identify_to_type.get(&subcomponent_port.0.clone()) {
+                        if subcomponent_identify.eq(&comp_identifier) {
+                            channel_type = match port.direction {
+                                PortDirection::Out => "BcSender".to_string(),
+                                _ => panic!("error, In port is not allowed in broadcast send ports"),
+                            };
+                            continue;
+                        }
+                    }
+                };
+                //再判断值（接收）是否包含port.identifier
+                for (comp, port_identifier) in vercport {
+                    if port_identifier.eq(&port.identifier) {
+                        if let Some(subcomponent_identify) = self.system_subcomponent_identify_to_type.get(&comp.clone()) {
+                            if subcomponent_identify.eq(&comp_identifier) {
+                                channel_type = match port.direction {
+                                        PortDirection::In => "BcReceiver".to_string(),
+                                        _ => panic!("error, Out port is not allowed in broadcast receive ports"),
+                                };
+                            }
+                        };
+                        
+                    }
+                }
+            }
+        }
+        if channel_type.is_empty() {
+            channel_type = match port.direction {
+                PortDirection::In => "Receiver".to_string(),
+                PortDirection::Out => "Sender".to_string(),
+                PortDirection::InOut => "Sender".to_string(), //TODO:不支持双向通道，暂时这样写
+            };
+        }
 
         // 确定内部数据类型
         let inner_type = match &port.port_type {
@@ -1495,7 +1645,7 @@ impl AadlConverter {
                         name: format!("handle_{}", port.identifier),
                         params: vec![Param {
                             name: "port".to_string(),
-                            ty: self.convert_port_type(&port),
+                            ty: self.convert_port_type(&port,comp.identifier.clone()),
                         }],
                         return_type: Type::Unit,
                         body: Block {
@@ -2094,7 +2244,7 @@ impl AadlConverter {
                             // 添加对外端口
                             fields.push(Field {
                                 name: port.identifier.to_lowercase(),
-                                ty: self.convert_port_type(&port),
+                                ty: self.convert_port_type(&port,"".to_string()),
                                 docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
                                 attrs: Vec::new(),
                             });
@@ -2109,7 +2259,7 @@ impl AadlConverter {
                             let internal_port_type = match port.direction {
                                 PortDirection::In => {
                                     // 对外是接收端口，内部需要发送端口
-                                    match self.convert_port_type(&port) {
+                                    match self.convert_port_type(&port,"".to_string()) {
                                         Type::Generic(option_name, inner_types) if option_name == "Option" => {
                                             if let Type::Generic(channel_name, channel_args) = &inner_types[0] {
                                                 if channel_name == "Receiver" {
@@ -2124,13 +2274,13 @@ impl AadlConverter {
                                         }
                                         _ => {
                                             // 如果不是 Option 类型，创建 Option<Sender<T>>
-                                            Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![self.convert_port_type(&port)])])
+                                            Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![self.convert_port_type(&port,"".to_string())])])
                                         }
                                     }
                                 }
                                 PortDirection::Out => {
                                     // 对外是发送端口，内部需要接收端口
-                                    match self.convert_port_type(&port) {
+                                    match self.convert_port_type(&port,"".to_string()) {
                                         Type::Generic(option_name, inner_types) if option_name == "Option" => {
                                             if let Type::Generic(channel_name, channel_args) = &inner_types[0] {
                                                 if channel_name == "Sender" {
@@ -2145,13 +2295,13 @@ impl AadlConverter {
                                         }
                                         _ => {
                                             // 如果不是 Option 类型，创建 Option<Receiver<T>>
-                                            Type::Generic("Option".to_string(), vec![Type::Generic("Receiver".to_string(), vec![self.convert_port_type(&port)])])
+                                            Type::Generic("Option".to_string(), vec![Type::Generic("Receiver".to_string(), vec![self.convert_port_type(&port,"".to_string())])])
                                         }
                                     }
                                 }
                                 PortDirection::InOut => {
                                     // InOut 暂时按 In 处理
-                                    match self.convert_port_type(&port) {
+                                    match self.convert_port_type(&port,"".to_string()) {
                                         Type::Generic(option_name, inner_types) if option_name == "Option" => {
                                             if let Type::Generic(channel_name, channel_args) = &inner_types[0] {
                                                 if channel_name == "Receiver" {
@@ -2166,7 +2316,7 @@ impl AadlConverter {
                                         }
                                         _ => {
                                             // 如果不是 Option 类型，创建 Option<Sender<T>>
-                                            Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![self.convert_port_type(&port)])])
+                                            Type::Generic("Option".to_string(), vec![Type::Generic("Sender".to_string(), vec![self.convert_port_type(&port,"".to_string())])])
                                         }
                                     }
                                 }
@@ -2766,19 +2916,43 @@ impl AadlConverter {
     fn create_channel_connection(&self, conn: &PortConnection) -> Vec<Statement> {
         let mut stmts = Vec::new();
 
-        // 这里简化处理，实际应根据连接类型创建适当的channel
-        stmts.push(Statement::Let(LetStmt {
-            ifmut: false,
-            name: "channel".to_string(),
-            ty: None, //这里的通道类型由编译器自动推导
-            init: Some(Expr::Call(
-                Box::new(Expr::Path(
-                    vec!["crossbeam_channel".to_string(), "unbounded".to_string()],
-                    PathType::Namespace,
+        // 定义标志位，标志是否创建了通道
+        let mut is_channel_created = false;
+
+        // 根据连接是否是广播，创建适当的channel。
+        // 目前这种检查只存在于针对system中的连接。
+        let mut is_broadcast = false;
+        if let PortEndpoint::SubcomponentPort { subcomponent, port } = &conn.source {
+            if self.process_broadcast_send.contains(&(subcomponent.clone(), port.clone())) {
+                //广播的channel使用tokio::sync::broadcast::channel::<>。
+                is_broadcast = true;
+                stmts.push(Statement::Let(LetStmt {
+                    ifmut: false,
+                    name: "channel".to_string(),
+                    ty: None,
+                    init: Some(Expr::Call(
+                        Box::new(Expr::Path(vec!["broadcast".to_string(), "channel".to_string(), "<>".to_string()], PathType::Namespace)),
+                        vec![Expr::Literal(Literal::Int(100))],
+                    )),
+                }));
+                is_channel_created = true;
+            }
+        }
+        if !is_channel_created {
+            //非广播的channel使用crossbeam_channel::unbounded。
+            stmts.push(Statement::Let(LetStmt {
+                ifmut: false,
+                name: "channel".to_string(),
+                ty: None, //这里的通道类型由编译器自动推导
+                init: Some(Expr::Call(
+                    Box::new(Expr::Path(
+                        vec!["crossbeam_channel".to_string(), "unbounded".to_string()],
+                        PathType::Namespace,
+                    )),
+                    Vec::new(),
                 )),
-                Vec::new(),
-            )),
-        }));
+            }));
+        }
 
         // 处理源端和目标端
         match (&conn.source, &conn.destination) {
@@ -2801,26 +2975,32 @@ impl AadlConverter {
                     ))),
                     "send".to_string(), //这个关键字的固定的，例如cnx: port the_sender.p -> the_receiver.p;，前者发送，后者接收
                     //vec![Expr::Ident("channel.0".to_string())],
+                    //需要根据标志位if_broadcast判断是否是广播端口，它的语法是channel.0.clone()
                     vec![Expr::Call(
                         Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                        vec![Expr::Ident("channel.0".to_string())],
+                        vec![if is_broadcast { Expr::MethodCall(Box::new(Expr::Ident("channel.0.clone".to_string())), "".to_string(), Vec::new()) } else{ Expr::Ident("channel.0".to_string()) }],
                     )],
                 )));
 
                 // 分配接收端
-                stmts.push(Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Ident(format!(
-                        "{}.{}",
-                        dst_comp.to_lowercase(),
-                        dst_port.to_lowercase()
-                    ))),
-                    "receive".to_string(),
-                    //vec![Expr::Ident("channel.1".to_string())],
-                    vec![Expr::Call(
-                        Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                        vec![Expr::Ident("channel.1".to_string())],
-                    )],
-                )));
+                //需要根据标志位if_broadcast判断是否是广播端口，如果是，暂不处理，如果不是，生成channel.1
+                if !is_broadcast {
+                    stmts.push(Statement::Expr(Expr::MethodCall(
+                        Box::new(Expr::Ident(format!(
+                            "{}.{}",
+                            dst_comp.to_lowercase(),
+                            dst_port.to_lowercase()
+                        ))),
+                        "receive".to_string(),
+                        //vec![Expr::Ident("channel.1".to_string())],
+                        
+                        vec![Expr::Call(
+                            Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
+                            vec![Expr::Ident("channel.1".to_string())],
+                        )],
+                    )));
+                }
+                
             }
             (
                 PortEndpoint::ComponentPort(port_name),
@@ -2902,6 +3082,27 @@ impl AadlConverter {
             }
         }
 
+        //如果is_broadcast为true，则在此处一次性解决所有它的订阅者的订阅操作，根据process_broadcast_receive中的记录，依次订阅channel.0.subscribe()
+        if is_broadcast {
+            if let PortEndpoint::SubcomponentPort { subcomponent, port } = &conn.source {
+                if let Some(vercport) = self.process_broadcast_receive.get(&(subcomponent.clone(), port.clone())) {
+                    for (subcomponent, port) in vercport {
+                        stmts.push(Statement::Expr(Expr::MethodCall(
+                            Box::new(Expr::Ident(format!("{}.{}", subcomponent, port))),
+                            "receive".to_string(),
+                            vec![Expr::Call(
+                                Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
+                                vec![Expr::Ident("channel.0.subscribe()".to_string())],
+                            )],
+                        )));
+                    }
+                }
+            }
+
+            
+            
+        }
+        
         stmts
     }
 
@@ -4616,10 +4817,23 @@ impl AadlConverter {
         }
 
         // 2. 构建连接（如果有的话）
+        // 函数内存储已处理过的广播连接，避免二次处理。
+        let mut processed_broadcast_connections = Vec::new();
+
         if let ConnectionClause::Items(connections) = &impl_.connections {
             for conn in connections {
                 match conn {
                     Connection::Port(port_conn) => {
+                        //查看连接是否是已处理过的广播，如果是，则不需要再处理，跳过。
+                        if let PortEndpoint::SubcomponentPort { subcomponent, port } = &port_conn.source {
+                            if self.process_broadcast_send.contains(&(subcomponent.clone(), port.clone())) {
+                                if processed_broadcast_connections.contains(&(subcomponent.clone(), port.clone())) {
+                                    continue;
+                                } else{
+                                    processed_broadcast_connections.push((subcomponent.clone(), port.clone()));
+                                }
+                            } 
+                        }
                         // 处理端口连接，使用与进程相同的逻辑
                         stmts.extend(self.create_channel_connection(port_conn));
                     }
