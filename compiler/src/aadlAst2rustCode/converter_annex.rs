@@ -323,15 +323,15 @@ impl AnnexConverter {
         }
     }
 
-    /// 构造端口接收表达式：self.port.as_ref().and_then(|rx| rx.try_recv().ok()).unwrap_or_default()
+    /// 构造端口接收表达式：self.port.as_mut().and_then(|rx| rx.try_recv().ok()).unwrap_or_default()
     fn build_port_receive_expr(&self, port_name: &str) -> Expr {
         let base_expr = Expr::Path(
             vec!["self".to_string(), port_name.to_string()],
             PathType::Member,
         );
-        let as_ref_expr = Expr::MethodCall(
+        let as_mut_expr = Expr::MethodCall(
             Box::new(base_expr),
-            "as_ref".to_string(),
+            "as_mut".to_string(),
             Vec::new(),
         );
         let try_recv_expr = Expr::MethodCall(
@@ -346,7 +346,7 @@ impl AnnexConverter {
         );
         let closure_expr = Expr::Closure(vec!["rx".to_string()], Box::new(ok_expr));
         let and_then_expr = Expr::MethodCall(
-            Box::new(as_ref_expr),
+            Box::new(as_mut_expr),
             "and_then".to_string(),
             vec![closure_expr],
         );

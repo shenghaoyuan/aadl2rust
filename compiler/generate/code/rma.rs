@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-04 21:02:40
+// 生成时间: 2025-12-08 18:09:01
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
 use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
 use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
@@ -69,10 +70,10 @@ impl Thread for taskThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            deadline: 1000, 
             period: 1000, 
-            dispatch_protocol: "Periodic".to_string(), 
             priority: 1, 
+            deadline: 1000, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -120,10 +121,10 @@ impl Thread for task2Thread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            deadline: 500, 
-            dispatch_protocol: "Periodic".to_string(), 
             priority: 2, 
+            deadline: 500, 
             period: 500, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-04 21:15:14
+// 生成时间: 2025-12-08 18:11:03
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
 use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
 use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
@@ -76,10 +77,10 @@ impl Thread for controleThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            period: 110, 
-            info_capteur: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            info_capteur: None, 
             comm_servo: None, 
+            period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -115,7 +116,7 @@ impl Thread for controleThread {
         let mut state: State = State::s_inline;
         loop {
             let start = Instant::now();
-            let info_capteur = self.info_capteur.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let info_capteur = self.info_capteur.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -175,8 +176,8 @@ impl Thread for capteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             evenement: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -237,9 +238,9 @@ impl Thread for servomoteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            dispatch_protocol: "Sporadic".to_string(), 
             ordre: None, 
             period: 10, 
-            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -313,9 +314,9 @@ pub struct p_controleProcess {
     pub info_capteur_gauche: Option<Receiver<bool>>,// Port: info_capteur_gauche In
     pub comm_servo_gauche: Option<Sender<bool>>,// Port: comm_servo_gauche Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub info_capteur_droitSend: Option<Sender<bool>>,// 内部端口: info_capteur_droit In
+    pub info_capteur_droitSend: Option<BcSender<bool>>,// 内部端口: info_capteur_droit In
     pub comm_servo_droitRece: Option<Receiver<bool>>,// 内部端口: comm_servo_droit Out
-    pub info_capteur_gaucheSend: Option<Sender<bool>>,// 内部端口: info_capteur_gauche In
+    pub info_capteur_gaucheSend: Option<BcSender<bool>>,// 内部端口: info_capteur_gauche In
     pub comm_servo_gaucheRece: Option<Receiver<bool>>,// 内部端口: comm_servo_gauche Out
     #[allow(dead_code)]
     pub th_ctrl_droit: controleThread,// 子组件线程（th_ctrl_droit : thread controle）
@@ -328,7 +329,7 @@ pub struct p_controleProcess {
 pub struct p_servomoteurProcess {
     pub ordre: Option<Receiver<bool>>,// Port: ordre In
     pub cpu_id: isize,// 进程 CPU ID
-    pub ordreSend: Option<Sender<bool>>,// 内部端口: ordre In
+    pub ordreSend: Option<BcSender<bool>>,// 内部端口: ordre In
     #[allow(dead_code)]
     pub th_servomoteur: servomoteurThread,// 子组件线程（th_servomoteur : thread servomoteur）
 }
@@ -351,7 +352,7 @@ impl Process for p_capteurProcess {
         thread::Builder::new()
             .name("th_c".to_string())
             .spawn(|| { th_c.run() }).unwrap();
-        let evenementRece_rx = evenementRece.unwrap();
+        let mut evenementRece_rx = evenementRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_evenementRece".to_string())
             .spawn(move || {
@@ -405,20 +406,7 @@ impl Process for p_controleProcess {
         thread::Builder::new()
             .name("th_ctrl_gauche".to_string())
             .spawn(|| { th_ctrl_gauche.run() }).unwrap();
-        let info_capteur_droit_rx = info_capteur_droit.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_info_capteur_droit".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = info_capteur_droit_rx.try_recv() {
-                    if let Some(tx) = &info_capteur_droitSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let comm_servo_droitRece_rx = comm_servo_droitRece.unwrap();
+        let mut comm_servo_droitRece_rx = comm_servo_droitRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_comm_servo_droitRece".to_string())
             .spawn(move || {
@@ -431,26 +419,39 @@ impl Process for p_controleProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let info_capteur_gauche_rx = info_capteur_gauche.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_info_capteur_gauche".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = info_capteur_gauche_rx.try_recv() {
-                    if let Some(tx) = &info_capteur_gaucheSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let comm_servo_gaucheRece_rx = comm_servo_gaucheRece.unwrap();
+        let mut comm_servo_gaucheRece_rx = comm_servo_gaucheRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_comm_servo_gaucheRece".to_string())
             .spawn(move || {
             loop {
                 if let Ok(msg) = comm_servo_gaucheRece_rx.try_recv() {
                     if let Some(tx) = &comm_servo_gauche {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut info_capteur_droit_rx = info_capteur_droit.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_info_capteur_droit".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = info_capteur_droit_rx.try_recv() {
+                    if let Some(tx) = &info_capteur_droitSend {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut info_capteur_gauche_rx = info_capteur_gauche.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_info_capteur_gauche".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = info_capteur_gauche_rx.try_recv() {
+                    if let Some(tx) = &info_capteur_gaucheSend {
                         let _ = tx.send(msg);
                     };
                 };
@@ -479,7 +480,7 @@ impl Process for p_servomoteurProcess {
         thread::Builder::new()
             .name("th_servomoteur".to_string())
             .spawn(|| { th_servomoteur.run() }).unwrap();
-        let ordre_rx = ordre.unwrap();
+        let mut ordre_rx = ordre.unwrap();
         thread::Builder::new()
             .name("data_forwarder_ordre".to_string())
             .spawn(move || {

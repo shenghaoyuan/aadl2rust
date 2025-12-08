@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-04 21:01:10
+// 生成时间: 2025-12-08 16:53:27
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
 use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
 use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
@@ -37,9 +38,9 @@ pub struct speed_controllerProcess {
     pub speed_cmd: Option<Sender<i8>>,// Port: speed_cmd Out
     pub warning: Option<Sender<bool>>,// Port: warning Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub obstacle_positionSend: Option<Sender<bool>>,// 内部端口: obstacle_position In
-    pub current_speedSend: Option<Sender<u16>>,// 内部端口: current_speed In
-    pub desired_speedSend: Option<Sender<u16>>,// 内部端口: desired_speed In
+    pub obstacle_positionSend: Option<BcSender<bool>>,// 内部端口: obstacle_position In
+    pub current_speedSend: Option<BcSender<u16>>,// 内部端口: current_speed In
+    pub desired_speedSend: Option<BcSender<u16>>,// 内部端口: desired_speed In
     pub brake_cmdRece: Option<Receiver<i8>>,// 内部端口: brake_cmd Out
     pub speed_cmdRece: Option<Receiver<i8>>,// 内部端口: speed_cmd Out
     pub warningRece: Option<Receiver<bool>>,// 内部端口: warning Out
@@ -63,41 +64,38 @@ impl Process for speed_controllerProcess {
         let mut brake_cmdRece = None;
         let mut speed_cmdRece = None;
         let mut warningRece = None;
-        obstacle_positionSend = Some(channel.0);
+        let channel = broadcast::channel::<>(100);
+        obstacle_positionSend = Some(channel.0.clone());
         // build connection: 
-            accel_thr.obstacle_position = Some(channel.1);
-        current_speedSend = Some(channel.0);
+            accel_thr.obstacle_position = Some(channel.0.subscribe());
         // build connection: 
-            accel_thr.current_speed = Some(channel.1);
-        desired_speedSend = Some(channel.0);
+            brake_thr.obstacle_position = Some(channel.0.subscribe());
         // build connection: 
-            accel_thr.desired_speed = Some(channel.1);
+            warning_thr.obstacle_position = Some(channel.0.subscribe());
+        let channel = broadcast::channel::<>(100);
+        current_speedSend = Some(channel.0.clone());
+        // build connection: 
+            accel_thr.current_speed = Some(channel.0.subscribe());
+        // build connection: 
+            brake_thr.current_speed = Some(channel.0.subscribe());
+        // build connection: 
+            warning_thr.current_speed = Some(channel.0.subscribe());
+        let channel = broadcast::channel::<>(100);
+        desired_speedSend = Some(channel.0.clone());
+        // build connection: 
+            accel_thr.desired_speed = Some(channel.0.subscribe());
+        // build connection: 
+            brake_thr.desired_speed = Some(channel.0.subscribe());
+        // build connection: 
+            warning_thr.desired_speed = Some(channel.0.subscribe());
         let channel = crossbeam_channel::unbounded();
         // build connection: 
             accel_thr.speed_cmd = Some(channel.0);
         speed_cmdRece = Some(channel.1);
-        obstacle_positionSend = Some(channel.0);
-        // build connection: 
-            brake_thr.obstacle_position = Some(channel.1);
-        current_speedSend = Some(channel.0);
-        // build connection: 
-            brake_thr.current_speed = Some(channel.1);
-        desired_speedSend = Some(channel.0);
-        // build connection: 
-            brake_thr.desired_speed = Some(channel.1);
         let channel = crossbeam_channel::unbounded();
         // build connection: 
             brake_thr.brake_cmd = Some(channel.0);
         brake_cmdRece = Some(channel.1);
-        obstacle_positionSend = Some(channel.0);
-        // build connection: 
-            warning_thr.obstacle_position = Some(channel.1);
-        current_speedSend = Some(channel.0);
-        // build connection: 
-            warning_thr.current_speed = Some(channel.1);
-        desired_speedSend = Some(channel.0);
-        // build connection: 
-            warning_thr.desired_speed = Some(channel.1);
         let channel = crossbeam_channel::unbounded();
         // build connection: 
             warning_thr.warning = Some(channel.0);
@@ -117,98 +115,7 @@ impl Process for speed_controllerProcess {
         thread::Builder::new()
             .name("warning_thr".to_string())
             .spawn(|| { warning_thr.run() }).unwrap();
-        let obstacle_position_rx = obstacle_position.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_obstacle_position".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = obstacle_position_rx.try_recv() {
-                    if let Some(tx) = &obstacle_positionSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let current_speed_rx = current_speed.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_current_speed".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = current_speed_rx.try_recv() {
-                    if let Some(tx) = &current_speedSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let desired_speed_rx = desired_speed.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_desired_speed".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = desired_speed_rx.try_recv() {
-                    if let Some(tx) = &desired_speedSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let speed_cmdRece_rx = speed_cmdRece.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_speed_cmdRece".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = speed_cmdRece_rx.try_recv() {
-                    if let Some(tx) = &speed_cmd {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let obstacle_position_rx = obstacle_position.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_obstacle_position".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = obstacle_position_rx.try_recv() {
-                    if let Some(tx) = &obstacle_positionSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let current_speed_rx = current_speed.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_current_speed".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = current_speed_rx.try_recv() {
-                    if let Some(tx) = &current_speedSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let desired_speed_rx = desired_speed.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_desired_speed".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = desired_speed_rx.try_recv() {
-                    if let Some(tx) = &desired_speedSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let brake_cmdRece_rx = brake_cmdRece.unwrap();
+        let mut brake_cmdRece_rx = brake_cmdRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_brake_cmdRece".to_string())
             .spawn(move || {
@@ -221,20 +128,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let obstacle_position_rx = obstacle_position.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_obstacle_position".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = obstacle_position_rx.try_recv() {
-                    if let Some(tx) = &obstacle_positionSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let current_speed_rx = current_speed.unwrap();
+        let mut current_speed_rx = current_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_current_speed".to_string())
             .spawn(move || {
@@ -247,7 +141,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let desired_speed_rx = desired_speed.unwrap();
+        let mut desired_speed_rx = desired_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_desired_speed".to_string())
             .spawn(move || {
@@ -260,7 +154,33 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let warningRece_rx = warningRece.unwrap();
+        let mut obstacle_position_rx = obstacle_position.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_obstacle_position".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = obstacle_position_rx.try_recv() {
+                    if let Some(tx) = &obstacle_positionSend {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut speed_cmdRece_rx = speed_cmdRece.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_speed_cmdRece".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = speed_cmdRece_rx.try_recv() {
+                    if let Some(tx) = &speed_cmd {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut warningRece_rx = warningRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_warningRece".to_string())
             .spawn(move || {
@@ -280,9 +200,9 @@ impl Process for speed_controllerProcess {
 // AADL Thread: speed_controller_warning_thr
 #[derive(Debug)]
 pub struct speed_controller_warning_thrThread {
-    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
-    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
-    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub obstacle_position: Option<BcReceiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<BcReceiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<BcReceiver<u16>>,// Port: desired_speed In
     pub warning: Option<Sender<bool>>,// Port: warning Out
     pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
     pub period: u64,// AADL属性: Period
@@ -293,9 +213,9 @@ pub struct speed_controller_warning_thrThread {
 // AADL Thread: speed_controller_brake_thr
 #[derive(Debug)]
 pub struct speed_controller_brake_thrThread {
-    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
-    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
-    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub obstacle_position: Option<BcReceiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<BcReceiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<BcReceiver<u16>>,// Port: desired_speed In
     pub brake_cmd: Option<Sender<i8>>,// Port: brake_cmd Out
     pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
     pub period: u64,// AADL属性: Period
@@ -306,9 +226,9 @@ pub struct speed_controller_brake_thrThread {
 // AADL Thread: speed_controller_accel_thr
 #[derive(Debug)]
 pub struct speed_controller_accel_thrThread {
-    pub obstacle_position: Option<Receiver<bool>>,// Port: obstacle_position In
-    pub current_speed: Option<Receiver<u16>>,// Port: current_speed In
-    pub desired_speed: Option<Receiver<u16>>,// Port: desired_speed In
+    pub obstacle_position: Option<BcReceiver<bool>>,// Port: obstacle_position In
+    pub current_speed: Option<BcReceiver<u16>>,// Port: current_speed In
+    pub desired_speed: Option<BcReceiver<u16>>,// Port: desired_speed In
     pub speed_cmd: Option<Sender<i8>>,// Port: speed_cmd Out
     pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
     pub period: u64,// AADL属性: Period
@@ -321,12 +241,12 @@ impl Thread for speed_controller_accel_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             obstacle_position: None, 
+            mipsbudget: 5.0, 
+            desired_speed: None, 
             current_speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             speed_cmd: None, 
             period: 5, 
-            mipsbudget: 5.0, 
-            dispatch_protocol: "Periodic".to_string(), 
-            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -348,7 +268,7 @@ impl Thread for speed_controller_accel_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let current_speed = self.current_speed.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -379,13 +299,13 @@ impl Thread for speed_controller_brake_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_position: None, 
-            brake_cmd: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            obstacle_position: None, 
             mipsbudget: 5.0, 
+            desired_speed: None, 
+            brake_cmd: None, 
             current_speed: None, 
             period: 5, 
-            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -407,7 +327,7 @@ impl Thread for speed_controller_brake_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let obstacle_position = self.obstacle_position.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let obstacle_position = self.obstacle_position.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -438,13 +358,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_position: None, 
-            warning: None, 
             mipsbudget: 5.0, 
+            obstacle_position: None, 
+            desired_speed: None, 
+            warning: None, 
+            current_speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
             period: 5, 
-            current_speed: None, 
-            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -466,7 +386,7 @@ impl Thread for speed_controller_warning_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let obstacle_position = self.obstacle_position.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let obstacle_position = self.obstacle_position.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {

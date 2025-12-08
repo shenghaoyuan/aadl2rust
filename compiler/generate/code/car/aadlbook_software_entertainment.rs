@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-04 21:01:10
+// 生成时间: 2025-12-08 16:53:27
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
 use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
 use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
@@ -35,8 +36,8 @@ pub struct entertainmentProcess {
     pub infos: Option<Sender<i8>>,// Port: infos Out
     pub music_out: Option<Sender<bool>>,// Port: music_out Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub music_inSend: Option<Sender<bool>>,// 内部端口: music_in In
-    pub contactsSend: Option<Sender<i8>>,// 内部端口: contacts In
+    pub music_inSend: Option<BcSender<bool>>,// 内部端口: music_in In
+    pub contactsSend: Option<BcSender<i8>>,// 内部端口: contacts In
     pub infosRece: Option<Receiver<i8>>,// 内部端口: infos Out
     pub music_outRece: Option<Receiver<bool>>,// 内部端口: music_out Out
     #[allow(dead_code)]
@@ -51,9 +52,11 @@ impl Process for entertainmentProcess {
         let mut contactsSend = None;
         let mut infosRece = None;
         let mut music_outRece = None;
+        let channel = crossbeam_channel::unbounded();
         music_inSend = Some(channel.0);
         // build connection: 
             enter_thr.music_in = Some(channel.1);
+        let channel = crossbeam_channel::unbounded();
         contactsSend = Some(channel.0);
         // build connection: 
             enter_thr.contacts = Some(channel.1);
@@ -74,20 +77,7 @@ impl Process for entertainmentProcess {
         thread::Builder::new()
             .name("enter_thr".to_string())
             .spawn(|| { enter_thr.run() }).unwrap();
-        let music_in_rx = music_in.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_music_in".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = music_in_rx.try_recv() {
-                    if let Some(tx) = &music_inSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let contacts_rx = contacts.unwrap();
+        let mut contacts_rx = contacts.unwrap();
         thread::Builder::new()
             .name("data_forwarder_contacts".to_string())
             .spawn(move || {
@@ -100,7 +90,7 @@ impl Process for entertainmentProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let infosRece_rx = infosRece.unwrap();
+        let mut infosRece_rx = infosRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_infosRece".to_string())
             .spawn(move || {
@@ -113,7 +103,20 @@ impl Process for entertainmentProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let music_outRece_rx = music_outRece.unwrap();
+        let mut music_in_rx = music_in.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_music_in".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = music_in_rx.try_recv() {
+                    if let Some(tx) = &music_inSend {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut music_outRece_rx = music_outRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_music_outRece".to_string())
             .spawn(move || {
@@ -147,13 +150,13 @@ impl Thread for entertainment_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            music_out: None, 
-            period: 5, 
             music_in: None, 
-            infos: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            mipsbudget: 5.0, 
             contacts: None, 
+            period: 5, 
+            infos: None, 
+            mipsbudget: 5.0, 
+            dispatch_protocol: "Periodic".to_string(), 
+            music_out: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }

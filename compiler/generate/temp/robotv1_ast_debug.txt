@@ -555,7 +555,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            evenement: None, \n            period: 110, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 110, \n            dispatch_protocol: \"Periodic\".to_string(), \n            evenement: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1067,7 +1067,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            info_capteur: None, \n            comm_servo: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            comm_servo: None, \n            period: 110, \n            info_capteur: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1678,7 +1678,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            ordre: None, \n            period: 10, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 10, \n            ordre: None, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -2828,7 +2828,7 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
+                                            ifmut: true,
                                             name: "evenementRece_rx",
                                             ty: None,
                                             init: Some(
@@ -3016,7 +3016,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "Sender",
+                                    "BcSender",
                                     [
                                         Named(
                                             "bool",
@@ -3096,7 +3096,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "Sender",
+                                    "BcSender",
                                     [
                                         Named(
                                             "bool",
@@ -3684,148 +3684,7 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
-                                            name: "info_capteur_droit_rx",
-                                            ty: None,
-                                            init: Some(
-                                                MethodCall(
-                                                    Ident(
-                                                        "info_capteur_droit",
-                                                    ),
-                                                    "unwrap",
-                                                    [],
-                                                ),
-                                            ),
-                                        },
-                                    ),
-                                    Expr(
-                                        MethodCall(
-                                            BuilderChain(
-                                                [
-                                                    Named(
-                                                        "\"data_forwarder_info_capteur_droit\".to_string()",
-                                                    ),
-                                                    Spawn {
-                                                        closure: Closure(
-                                                            [],
-                                                            Block(
-                                                                Block {
-                                                                    stmts: [
-                                                                        Expr(
-                                                                            Loop(
-                                                                                Block {
-                                                                                    stmts: [
-                                                                                        Expr(
-                                                                                            IfLet {
-                                                                                                pattern: "Ok(msg)",
-                                                                                                value: MethodCall(
-                                                                                                    Ident(
-                                                                                                        "info_capteur_droit_rx",
-                                                                                                    ),
-                                                                                                    "try_recv",
-                                                                                                    [],
-                                                                                                ),
-                                                                                                then_branch: Block {
-                                                                                                    stmts: [
-                                                                                                        Expr(
-                                                                                                            IfLet {
-                                                                                                                pattern: "Some(tx)",
-                                                                                                                value: Reference(
-                                                                                                                    Ident(
-                                                                                                                        "info_capteur_droitSend",
-                                                                                                                    ),
-                                                                                                                    true,
-                                                                                                                    false,
-                                                                                                                ),
-                                                                                                                then_branch: Block {
-                                                                                                                    stmts: [
-                                                                                                                        Let(
-                                                                                                                            LetStmt {
-                                                                                                                                ifmut: false,
-                                                                                                                                name: "_",
-                                                                                                                                ty: None,
-                                                                                                                                init: Some(
-                                                                                                                                    MethodCall(
-                                                                                                                                        Ident(
-                                                                                                                                            "tx",
-                                                                                                                                        ),
-                                                                                                                                        "send",
-                                                                                                                                        [
-                                                                                                                                            Ident(
-                                                                                                                                                "msg",
-                                                                                                                                            ),
-                                                                                                                                        ],
-                                                                                                                                    ),
-                                                                                                                                ),
-                                                                                                                            },
-                                                                                                                        ),
-                                                                                                                    ],
-                                                                                                                    expr: None,
-                                                                                                                },
-                                                                                                                else_branch: None,
-                                                                                                            },
-                                                                                                        ),
-                                                                                                    ],
-                                                                                                    expr: None,
-                                                                                                },
-                                                                                                else_branch: None,
-                                                                                            },
-                                                                                        ),
-                                                                                        Expr(
-                                                                                            MethodCall(
-                                                                                                Path(
-                                                                                                    [
-                                                                                                        "std",
-                                                                                                        "thread",
-                                                                                                        "sleep",
-                                                                                                    ],
-                                                                                                    Namespace,
-                                                                                                ),
-                                                                                                "",
-                                                                                                [
-                                                                                                    MethodCall(
-                                                                                                        Path(
-                                                                                                            [
-                                                                                                                "std",
-                                                                                                                "time",
-                                                                                                                "Duration",
-                                                                                                                "from_millis",
-                                                                                                            ],
-                                                                                                            Namespace,
-                                                                                                        ),
-                                                                                                        "",
-                                                                                                        [
-                                                                                                            Literal(
-                                                                                                                Int(
-                                                                                                                    1,
-                                                                                                                ),
-                                                                                                            ),
-                                                                                                        ],
-                                                                                                    ),
-                                                                                                ],
-                                                                                            ),
-                                                                                        ),
-                                                                                    ],
-                                                                                    expr: None,
-                                                                                },
-                                                                            ),
-                                                                        ),
-                                                                    ],
-                                                                    expr: None,
-                                                                },
-                                                            ),
-                                                        ),
-                                                        move_kw: true,
-                                                    },
-                                                ],
-                                            ),
-                                            "unwrap",
-                                            [],
-                                        ),
-                                    ),
-                                    Let(
-                                        LetStmt {
-                                            ifmut: false,
+                                            ifmut: true,
                                             name: "comm_servo_droitRece_rx",
                                             ty: None,
                                             init: Some(
@@ -3966,13 +3825,13 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
-                                            name: "info_capteur_gauche_rx",
+                                            ifmut: true,
+                                            name: "comm_servo_gaucheRece_rx",
                                             ty: None,
                                             init: Some(
                                                 MethodCall(
                                                     Ident(
-                                                        "info_capteur_gauche",
+                                                        "comm_servo_gaucheRece",
                                                     ),
                                                     "unwrap",
                                                     [],
@@ -3985,7 +3844,7 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"data_forwarder_info_capteur_gauche\".to_string()",
+                                                        "\"data_forwarder_comm_servo_gaucheRece\".to_string()",
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
@@ -4002,7 +3861,7 @@ RustModule {
                                                                                                 pattern: "Ok(msg)",
                                                                                                 value: MethodCall(
                                                                                                     Ident(
-                                                                                                        "info_capteur_gauche_rx",
+                                                                                                        "comm_servo_gaucheRece_rx",
                                                                                                     ),
                                                                                                     "try_recv",
                                                                                                     [],
@@ -4014,7 +3873,7 @@ RustModule {
                                                                                                                 pattern: "Some(tx)",
                                                                                                                 value: Reference(
                                                                                                                     Ident(
-                                                                                                                        "info_capteur_gaucheSend",
+                                                                                                                        "comm_servo_gauche",
                                                                                                                     ),
                                                                                                                     true,
                                                                                                                     false,
@@ -4107,13 +3966,13 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
-                                            name: "comm_servo_gaucheRece_rx",
+                                            ifmut: true,
+                                            name: "info_capteur_droit_rx",
                                             ty: None,
                                             init: Some(
                                                 MethodCall(
                                                     Ident(
-                                                        "comm_servo_gaucheRece",
+                                                        "info_capteur_droit",
                                                     ),
                                                     "unwrap",
                                                     [],
@@ -4126,7 +3985,7 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"data_forwarder_comm_servo_gaucheRece\".to_string()",
+                                                        "\"data_forwarder_info_capteur_droit\".to_string()",
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
@@ -4143,7 +4002,7 @@ RustModule {
                                                                                                 pattern: "Ok(msg)",
                                                                                                 value: MethodCall(
                                                                                                     Ident(
-                                                                                                        "comm_servo_gaucheRece_rx",
+                                                                                                        "info_capteur_droit_rx",
                                                                                                     ),
                                                                                                     "try_recv",
                                                                                                     [],
@@ -4155,7 +4014,148 @@ RustModule {
                                                                                                                 pattern: "Some(tx)",
                                                                                                                 value: Reference(
                                                                                                                     Ident(
-                                                                                                                        "comm_servo_gauche",
+                                                                                                                        "info_capteur_droitSend",
+                                                                                                                    ),
+                                                                                                                    true,
+                                                                                                                    false,
+                                                                                                                ),
+                                                                                                                then_branch: Block {
+                                                                                                                    stmts: [
+                                                                                                                        Let(
+                                                                                                                            LetStmt {
+                                                                                                                                ifmut: false,
+                                                                                                                                name: "_",
+                                                                                                                                ty: None,
+                                                                                                                                init: Some(
+                                                                                                                                    MethodCall(
+                                                                                                                                        Ident(
+                                                                                                                                            "tx",
+                                                                                                                                        ),
+                                                                                                                                        "send",
+                                                                                                                                        [
+                                                                                                                                            Ident(
+                                                                                                                                                "msg",
+                                                                                                                                            ),
+                                                                                                                                        ],
+                                                                                                                                    ),
+                                                                                                                                ),
+                                                                                                                            },
+                                                                                                                        ),
+                                                                                                                    ],
+                                                                                                                    expr: None,
+                                                                                                                },
+                                                                                                                else_branch: None,
+                                                                                                            },
+                                                                                                        ),
+                                                                                                    ],
+                                                                                                    expr: None,
+                                                                                                },
+                                                                                                else_branch: None,
+                                                                                            },
+                                                                                        ),
+                                                                                        Expr(
+                                                                                            MethodCall(
+                                                                                                Path(
+                                                                                                    [
+                                                                                                        "std",
+                                                                                                        "thread",
+                                                                                                        "sleep",
+                                                                                                    ],
+                                                                                                    Namespace,
+                                                                                                ),
+                                                                                                "",
+                                                                                                [
+                                                                                                    MethodCall(
+                                                                                                        Path(
+                                                                                                            [
+                                                                                                                "std",
+                                                                                                                "time",
+                                                                                                                "Duration",
+                                                                                                                "from_millis",
+                                                                                                            ],
+                                                                                                            Namespace,
+                                                                                                        ),
+                                                                                                        "",
+                                                                                                        [
+                                                                                                            Literal(
+                                                                                                                Int(
+                                                                                                                    1,
+                                                                                                                ),
+                                                                                                            ),
+                                                                                                        ],
+                                                                                                    ),
+                                                                                                ],
+                                                                                            ),
+                                                                                        ),
+                                                                                    ],
+                                                                                    expr: None,
+                                                                                },
+                                                                            ),
+                                                                        ),
+                                                                    ],
+                                                                    expr: None,
+                                                                },
+                                                            ),
+                                                        ),
+                                                        move_kw: true,
+                                                    },
+                                                ],
+                                            ),
+                                            "unwrap",
+                                            [],
+                                        ),
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "info_capteur_gauche_rx",
+                                            ty: None,
+                                            init: Some(
+                                                MethodCall(
+                                                    Ident(
+                                                        "info_capteur_gauche",
+                                                    ),
+                                                    "unwrap",
+                                                    [],
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Expr(
+                                        MethodCall(
+                                            BuilderChain(
+                                                [
+                                                    Named(
+                                                        "\"data_forwarder_info_capteur_gauche\".to_string()",
+                                                    ),
+                                                    Spawn {
+                                                        closure: Closure(
+                                                            [],
+                                                            Block(
+                                                                Block {
+                                                                    stmts: [
+                                                                        Expr(
+                                                                            Loop(
+                                                                                Block {
+                                                                                    stmts: [
+                                                                                        Expr(
+                                                                                            IfLet {
+                                                                                                pattern: "Ok(msg)",
+                                                                                                value: MethodCall(
+                                                                                                    Ident(
+                                                                                                        "info_capteur_gauche_rx",
+                                                                                                    ),
+                                                                                                    "try_recv",
+                                                                                                    [],
+                                                                                                ),
+                                                                                                then_branch: Block {
+                                                                                                    stmts: [
+                                                                                                        Expr(
+                                                                                                            IfLet {
+                                                                                                                pattern: "Some(tx)",
+                                                                                                                value: Reference(
+                                                                                                                    Ident(
+                                                                                                                        "info_capteur_gaucheSend",
                                                                                                                     ),
                                                                                                                     true,
                                                                                                                     false,
@@ -4295,7 +4295,7 @@ RustModule {
                             "Option",
                             [
                                 Generic(
-                                    "Sender",
+                                    "BcSender",
                                     [
                                         Named(
                                             "bool",
@@ -4546,7 +4546,7 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
+                                            ifmut: true,
                                             name: "ordre_rx",
                                             ty: None,
                                             init: Some(

@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-04 21:01:10
+// 生成时间: 2025-12-08 16:53:27
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
 use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
 use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
@@ -34,8 +35,8 @@ pub struct speed_voterProcess {
     pub laser_sensor: Option<Receiver<u16>>,// Port: laser_sensor In
     pub speed: Option<BcSender<u16>>,// Port: speed Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub wheel_sensorSend: Option<Sender<u16>>,// 内部端口: wheel_sensor In
-    pub laser_sensorSend: Option<Sender<u16>>,// 内部端口: laser_sensor In
+    pub wheel_sensorSend: Option<BcSender<u16>>,// 内部端口: wheel_sensor In
+    pub laser_sensorSend: Option<BcSender<u16>>,// 内部端口: laser_sensor In
     pub speedRece: Option<Receiver<u16>>,// 内部端口: speed Out
     #[allow(dead_code)]
     pub speed_thr: speed_voter_thrThread,// 子组件线程（speed_thr : thread speed_voter_thr）
@@ -48,9 +49,11 @@ impl Process for speed_voterProcess {
         let mut wheel_sensorSend = None;
         let mut laser_sensorSend = None;
         let mut speedRece = None;
+        let channel = crossbeam_channel::unbounded();
         wheel_sensorSend = Some(channel.0);
         // build connection: 
             speed_thr.wheel_sensor = Some(channel.1);
+        let channel = crossbeam_channel::unbounded();
         laser_sensorSend = Some(channel.0);
         // build connection: 
             speed_thr.laser_sensor = Some(channel.1);
@@ -67,20 +70,7 @@ impl Process for speed_voterProcess {
         thread::Builder::new()
             .name("speed_thr".to_string())
             .spawn(|| { speed_thr.run() }).unwrap();
-        let wheel_sensor_rx = wheel_sensor.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_wheel_sensor".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = wheel_sensor_rx.try_recv() {
-                    if let Some(tx) = &wheel_sensorSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let laser_sensor_rx = laser_sensor.unwrap();
+        let mut laser_sensor_rx = laser_sensor.unwrap();
         thread::Builder::new()
             .name("data_forwarder_laser_sensor".to_string())
             .spawn(move || {
@@ -93,13 +83,26 @@ impl Process for speed_voterProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let speedRece_rx = speedRece.unwrap();
+        let mut speedRece_rx = speedRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_speedRece".to_string())
             .spawn(move || {
             loop {
                 if let Ok(msg) = speedRece_rx.try_recv() {
                     if let Some(tx) = &speed {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut wheel_sensor_rx = wheel_sensor.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_wheel_sensor".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = wheel_sensor_rx.try_recv() {
+                    if let Some(tx) = &wheel_sensorSend {
                         let _ = tx.send(msg);
                     };
                 };
@@ -127,11 +130,11 @@ impl Thread for speed_voter_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             laser_sensor: None, 
+            speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             period: 8, 
             wheel_sensor: None, 
             mipsbudget: 8.0, 
-            speed: None, 
-            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -156,8 +159,8 @@ impl Thread for speed_voter_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let wheel_sensor = self.wheel_sensor.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
-            let laser_sensor = self.laser_sensor.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let wheel_sensor = self.wheel_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let laser_sensor = self.laser_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {

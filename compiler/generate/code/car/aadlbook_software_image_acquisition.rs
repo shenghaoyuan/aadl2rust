@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-04 21:01:10
+// 生成时间: 2025-12-08 16:53:27
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -10,6 +10,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use crate::common_traits::*;
 use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
 use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
@@ -33,7 +34,7 @@ pub struct image_acquisitionProcess {
     pub picture: Option<Receiver<[[i32; 4]; 4]>>,// Port: picture In
     pub obstacle_detected: Option<Sender<bool>>,// Port: obstacle_detected Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub pictureSend: Option<Sender<[[i32; 4]; 4]>>,// 内部端口: picture In
+    pub pictureSend: Option<BcSender<[[i32; 4]; 4]>>,// 内部端口: picture In
     pub obstacle_detectedRece: Option<Receiver<bool>>,// 内部端口: obstacle_detected Out
     #[allow(dead_code)]
     pub acq_thr: image_acquisition_thrThread,// 子组件线程（acq_thr : thread image_acquisition_thr）
@@ -45,6 +46,7 @@ impl Process for image_acquisitionProcess {
         let mut acq_thr: image_acquisition_thrThread = image_acquisition_thrThread::new(cpu_id);
         let mut pictureSend = None;
         let mut obstacle_detectedRece = None;
+        let channel = crossbeam_channel::unbounded();
         pictureSend = Some(channel.0);
         // build connection: 
             acq_thr.picture = Some(channel.1);
@@ -61,26 +63,26 @@ impl Process for image_acquisitionProcess {
         thread::Builder::new()
             .name("acq_thr".to_string())
             .spawn(|| { acq_thr.run() }).unwrap();
-        let picture_rx = picture.unwrap();
-        thread::Builder::new()
-            .name("data_forwarder_picture".to_string())
-            .spawn(move || {
-            loop {
-                if let Ok(msg) = picture_rx.try_recv() {
-                    if let Some(tx) = &pictureSend {
-                        let _ = tx.send(msg);
-                    };
-                };
-                std::thread::sleep(std::time::Duration::from_millis(1));
-            };
-        }).unwrap();
-        let obstacle_detectedRece_rx = obstacle_detectedRece.unwrap();
+        let mut obstacle_detectedRece_rx = obstacle_detectedRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_obstacle_detectedRece".to_string())
             .spawn(move || {
             loop {
                 if let Ok(msg) = obstacle_detectedRece_rx.try_recv() {
                     if let Some(tx) = &obstacle_detected {
+                        let _ = tx.send(msg);
+                    };
+                };
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            };
+        }).unwrap();
+        let mut picture_rx = picture.unwrap();
+        thread::Builder::new()
+            .name("data_forwarder_picture".to_string())
+            .spawn(move || {
+            loop {
+                if let Ok(msg) = picture_rx.try_recv() {
+                    if let Some(tx) = &pictureSend {
                         let _ = tx.send(msg);
                     };
                 };
@@ -106,11 +108,11 @@ impl Thread for image_acquisition_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 25.0, 
             obstacle_detected: None, 
-            picture: None, 
             dispatch_protocol: "Periodic".to_string(), 
             period: 50, 
+            mipsbudget: 25.0, 
+            picture: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -132,7 +134,7 @@ impl Thread for image_acquisition_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let picture = self.picture.as_ref().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let picture = self.picture.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {

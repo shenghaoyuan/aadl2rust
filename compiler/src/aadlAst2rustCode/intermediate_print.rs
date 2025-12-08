@@ -36,6 +36,7 @@ impl RustCodeGenerator {
         self.writeln("use std::collections::HashMap;");
         self.writeln("use crate::common_traits::*;");
         self.writeln("use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};");
+        self.writeln("use libc::{self, syscall, SYS_gettid};");
         self.writeln("use rand::{Rng};");
         self.writeln("use libc::{");
         self.writeln("    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,");
