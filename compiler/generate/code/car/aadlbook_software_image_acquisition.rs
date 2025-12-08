@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 16:53:27
+// 生成时间: 2025-12-08 23:05:11
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -108,11 +108,11 @@ impl Thread for image_acquisition_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            picture: None, 
+            mipsbudget: 25.0, 
+            period: 50, 
             obstacle_detected: None, 
             dispatch_protocol: "Periodic".to_string(), 
-            period: 50, 
-            mipsbudget: 25.0, 
-            picture: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }

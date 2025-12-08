@@ -738,7 +738,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            priority: 2, \n            recover_entrypoint_source_text: \"recover\".to_string(), \n            deadline: 2000, \n            data_source: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            dispatch_offset: 500, \n            period: 2000, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            priority: 2, \n            dispatch_offset: 500, \n            deadline: 2000, \n            period: 2000, \n            data_source: None, \n            recover_entrypoint_source_text: \"recover\".to_string(), \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1278,7 +1278,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            data_sink: None, \n            priority: 1, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            deadline: 10, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            data_sink: None, \n            deadline: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            period: 10, \n            priority: 1, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],

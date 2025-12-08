@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 18:09:28
+// 生成时间: 2025-12-08 23:03:49
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -139,10 +139,10 @@ impl Thread for gnc_threadThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
         return Self {
-            gnc_pos: gnc_pos, 
-            period: 1000, 
             deadline: 1000, 
             priority: 50, 
+            period: 1000, 
+            gnc_pos: gnc_pos, 
             dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
@@ -212,11 +212,11 @@ impl Thread for tmtc_threadThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
         return Self {
+            dispatch_protocol: "Periodic".to_string(), 
             tmtc_pos: tmtc_pos, 
             priority: 20, 
-            deadline: 100, 
-            dispatch_protocol: "Periodic".to_string(), 
             period: 100, 
+            deadline: 100, 
             cpu_id: cpu_id, // CPU ID
         };
     }

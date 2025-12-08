@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 16:53:27
+// 生成时间: 2025-12-08 23:05:12
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -129,12 +129,12 @@ impl Thread for speed_voter_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            laser_sensor: None, 
-            speed: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            period: 8, 
-            wheel_sensor: None, 
             mipsbudget: 8.0, 
+            dispatch_protocol: "Periodic".to_string(), 
+            wheel_sensor: None, 
+            speed: None, 
+            laser_sensor: None, 
+            period: 8, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -159,8 +159,8 @@ impl Thread for speed_voter_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let wheel_sensor = self.wheel_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             let laser_sensor = self.laser_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let wheel_sensor = self.wheel_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {

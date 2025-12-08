@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 18:11:03
+// 生成时间: 2025-12-08 23:04:36
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -77,9 +77,9 @@ impl Thread for controleThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             info_capteur: None, 
             comm_servo: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -153,11 +153,11 @@ impl Thread for controleThread {
                             state = State::s_inline;
                             // complete,需要停
                         },
-                        State::s1 => {
+                        State::s2 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
-                        State::s2 => {
+                        State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
@@ -238,9 +238,9 @@ impl Thread for servomoteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Sporadic".to_string(), 
-            ordre: None, 
             period: 10, 
+            ordre: None, 
+            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

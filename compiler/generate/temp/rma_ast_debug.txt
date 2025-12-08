@@ -241,7 +241,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            period: 1000, \n            priority: 1, \n            deadline: 1000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            deadline: 1000, \n            priority: 1, \n            period: 1000, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -716,7 +716,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            priority: 2, \n            deadline: 500, \n            period: 500, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 500, \n            dispatch_protocol: \"Periodic\".to_string(), \n            deadline: 500, \n            priority: 2, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],

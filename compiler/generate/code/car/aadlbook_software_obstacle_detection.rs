@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 16:53:27
+// 生成时间: 2025-12-08 23:05:12
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -130,11 +130,11 @@ impl Thread for obstacle_detection_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             camera: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            mipsbudget: 10.0, 
-            obstacle_detected: None, 
             radar: None, 
+            obstacle_detected: None, 
             period: 100, 
+            mipsbudget: 10.0, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -189,11 +189,11 @@ impl Thread for obstacle_detection_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 => {
+                        State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
-                        State::s1 => {
+                        State::s0 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },

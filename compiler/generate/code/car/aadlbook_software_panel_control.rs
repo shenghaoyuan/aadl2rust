@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 16:53:27
+// 生成时间: 2025-12-08 23:05:12
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -190,11 +190,11 @@ impl Thread for panel_control_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             increase_speed: None, 
-            decrease_speed: None, 
+            tire_pressure_out: None, 
             current_speed: None, 
             desired_speed: None, 
             tire_pressure_in: None, 
-            tire_pressure_out: None, 
+            decrease_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -220,8 +220,8 @@ impl Thread for panel_control_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let tire_pressure_in = self.tire_pressure_in.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let tire_pressure_in = self.tire_pressure_in.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {

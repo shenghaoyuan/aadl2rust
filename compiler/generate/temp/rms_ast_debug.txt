@@ -231,14 +231,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            deadline: 1000, \n            period: 1000, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            deadline: 1000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 1000, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -529,12 +529,12 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // p_spg()",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// P_Spg",
+                                                                            "// p_spg",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -605,7 +605,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(1000) ms",
@@ -614,7 +614,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -714,14 +718,14 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            deadline: 500, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 500, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            deadline: 500, \n            period: 500, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// 创建组件并初始化AADL属性",
                             ],
@@ -1012,12 +1016,12 @@ RustModule {
                                                                 stmts: [
                                                                     Expr(
                                                                         Ident(
-                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // P_Spg()",
+                                                                            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // p_spg()",
                                                                         ),
                                                                     ),
                                                                     Expr(
                                                                         Ident(
-                                                                            "// P_Spg",
+                                                                            "// p_spg",
                                                                         ),
                                                                     ),
                                                                     Expr(
@@ -1088,7 +1092,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Thread execution entry point",
                                 "// Period: Some(500) ms",
@@ -1097,7 +1101,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Thread",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -1277,7 +1285,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new process instance",
                             ],
@@ -1366,7 +1374,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Starts all threads in the process",
                             ],
@@ -1374,7 +1382,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "Process",
+                    ),
+                ),
             },
         ),
         Struct(
@@ -1458,7 +1470,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Creates a new system instance",
                             ],
@@ -1488,7 +1500,7 @@ RustModule {
                                 expr: None,
                             },
                             asyncness: false,
-                            vis: Public,
+                            vis: None,
                             docs: [
                                 "// Runs the system, starts all processes",
                             ],
@@ -1496,7 +1508,11 @@ RustModule {
                         },
                     ),
                 ],
-                trait_impl: None,
+                trait_impl: Some(
+                    Named(
+                        "System",
+                    ),
+                ),
             },
         ),
         LazyStatic(

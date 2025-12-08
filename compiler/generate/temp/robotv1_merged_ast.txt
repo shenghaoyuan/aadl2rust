@@ -579,7 +579,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            period: 110, \n            dispatch_protocol: \"Periodic\".to_string(), \n            evenement: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 110, \n            evenement: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1055,7 +1055,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            comm_servo: None, \n            period: 110, \n            info_capteur: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            comm_servo: None, \n            period: 110, \n            info_capteur: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],

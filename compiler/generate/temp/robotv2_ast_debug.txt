@@ -315,7 +315,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            info_capteur: None, \n            comm_servo: None, \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            info_capteur: None, \n            comm_servo: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 110, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1039,7 +1039,7 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s1",
+                                                                                                    pattern: "State::s2",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
@@ -1056,7 +1056,7 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s2",
+                                                                                                    pattern: "State::s1",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
@@ -1836,7 +1836,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            ordre: None, \n            period: 10, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 10, \n            ordre: None, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],

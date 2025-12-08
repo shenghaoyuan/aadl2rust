@@ -1,13 +1,17 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-10-10 19:30:57
+// 生成时间: 2025-12-08 22:37:53
 
 #![allow(unused_imports)]
-use std::sync::{mpsc, Arc};
-use std::sync::Mutex;
+use crossbeam_channel::{Receiver, Sender};
+use std::sync::{Arc,Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use crate::common_traits::*;
+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};
+use libc::{self, syscall, SYS_gettid};
+use rand::{Rng};
 use libc::{
     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
@@ -61,12 +65,12 @@ pub struct taskThread {
     pub deadline: u64,// AADL属性(impl): Deadline
 }
 
-impl taskThread {
+impl Thread for taskThread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             deadline: 1000, 
+            dispatch_protocol: "Periodic".to_string(), 
             period: 1000, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -74,7 +78,7 @@ impl taskThread {
     
     // Thread execution entry point
     // Period: Some(1000) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let prio = period_to_priority(self.period as f64);
             let mut param: sched_param = sched_param { sched_priority: prio };
@@ -91,8 +95,8 @@ impl taskThread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // P_Spg();
-                // P_Spg;
+                           // p_spg();
+                // p_spg;
                 hello_spg_1::execute();
             };
             let elapsed = start.elapsed();
@@ -111,20 +115,20 @@ pub struct task2Thread {
     pub deadline: u64,// AADL属性(impl): Deadline
 }
 
-impl task2Thread {
+impl Thread for task2Thread {
     // 创建组件并初始化AADL属性
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         return Self {
             deadline: 500, 
-            dispatch_protocol: "Periodic".to_string(), 
             period: 500, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
     // Period: Some(500) ms
-    pub fn run(mut self) -> () {
+    fn run(mut self) -> () {
         unsafe {
             let prio = period_to_priority(self.period as f64);
             let mut param: sched_param = sched_param { sched_priority: prio };
@@ -141,8 +145,8 @@ impl task2Thread {
             let start = Instant::now();
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
-                           // P_Spg();
-                // P_Spg;
+                           // p_spg();
+                // p_spg;
                 hello_spg_2::execute();
             };
             let elapsed = start.elapsed();
@@ -162,16 +166,16 @@ pub struct node_aProcess {
     pub task2: task2Thread,// 子组件线程（Task2 : thread Task2）
 }
 
-impl node_aProcess {
+impl Process for node_aProcess {
     // Creates a new process instance
-    pub fn new(cpu_id: isize) -> Self {
+    fn new(cpu_id: isize) -> Self {
         let mut task1: taskThread = taskThread::new(cpu_id);
         let mut task2: task2Thread = task2Thread::new(cpu_id);
         return Self { task1, task2, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    pub fn start(self: Self) -> () {
+    fn start(self: Self) -> () {
         let Self { task1, task2, cpu_id, .. } = self;
         thread::Builder::new()
             .name("task1".to_string())
@@ -190,15 +194,15 @@ pub struct rmssysSystem {
     pub node_a: node_aProcess,// 子组件进程（node_a : process node_a）
 }
 
-impl rmssysSystem {
+impl System for rmssysSystem {
     // Creates a new system instance
-    pub fn new() -> Self {
+    fn new() -> Self {
         let mut node_a: node_aProcess = node_aProcess::new(0);
         return Self { node_a }  //显式return;
     }
     
     // Runs the system, starts all processes
-    pub fn run(self: Self) -> () {
+    fn run(self: Self) -> () {
         self.node_a.start();
     }
     
@@ -222,13 +226,3 @@ pub fn period_to_priority(period_ms: f64) -> i32 {
     return raw.max(1.0).min(99.0) as i32;
 }
 
-
-// ---------------- thread_field_types debug info ----------------
-// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))
-// 根据周期计算优先级，周期越短优先级越高
-// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)
-pub fn period_to_priority(period_ms: f64) -> i32 {
-    let k: f64 = 10.0;
-    let raw: f64 = 99.0 - k * period_ms.log10().floor();
-    return raw.max(1.0).min(99.0) as i32;
-}

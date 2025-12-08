@@ -1,5 +1,5 @@
 // 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 18:08:32
+// 生成时间: 2025-12-08 23:02:55
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -134,12 +134,12 @@ impl Thread for pThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             priority: 2, 
-            recover_entrypoint_source_text: "recover".to_string(), 
-            deadline: 2000, 
-            data_source: None, 
-            dispatch_protocol: "Periodic".to_string(), 
             dispatch_offset: 500, 
+            deadline: 2000, 
             period: 2000, 
+            data_source: None, 
+            recover_entrypoint_source_text: "recover".to_string(), 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -193,10 +193,10 @@ impl Thread for qThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             data_sink: None, 
-            priority: 1, 
+            deadline: 10, 
             dispatch_protocol: "Sporadic".to_string(), 
             period: 10, 
-            deadline: 10, 
+            priority: 1, 
             cpu_id: cpu_id, // CPU ID
         };
     }
