@@ -254,7 +254,6 @@ fn create_device_run_method(temp_converter: &AadlConverter, comp: &ComponentType
                 .unwrap_or(Type::Named("error_type".to_string())),
             PortType::Event => Type::Named("()".to_string()),
         };
-        println!("data_type: {:?}", data_type);
 
         // 生成随机数据值（根据类型）
         let random_value = match &data_type {

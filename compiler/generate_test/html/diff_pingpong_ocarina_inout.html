@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Diff for pingpong_ocarina_inout</title>
+<style>
+body {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+pre {
+  white-space: pre-wrap;
+}
+.line-add    { background-color: #003800; color: #c8ffc8; }
+.line-remove { background-color: #3f0001; color: #ffcccc; }
+.line-header { color: #4fc1ff; font-weight: bold; }
+</style>
+</head>
+<body>
+<h2>Diff for pingpong_ocarina_inout</h2>
+<pre>
+<span class="line-remove">--- original</span>
+<span class="line-add">+++ modified</span>
+<span class="line-header">@@ -1,13 +1,17 @@</span>
+<span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
+<span class="line-remove">-// 生成时间: 2025-10-11 16:31:42</span>
+<span class="line-add">+// Auto-generated from AADL package: ping_local</span>
+<span class="line-add">+// 生成时间: 2025-12-10 21:18:22</span>
+
+ #![allow(unused_imports)]
+<span class="line-remove">-use std::sync::{mpsc, Arc};</span>
+<span class="line-remove">-use std::sync::Mutex;</span>
+<span class="line-add">+use crossbeam_channel::{Receiver, Sender};</span>
+<span class="line-add">+use std::sync::{Arc,Mutex};</span>
+ use std::thread;
+ use std::time::{Duration, Instant};
+ use lazy_static::lazy_static;
+ use std::collections::HashMap;
+<span class="line-add">+use crate::common_traits::*;</span>
+<span class="line-add">+use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};</span>
+<span class="line-add">+use libc::{self, syscall, SYS_gettid};</span>
+<span class="line-add">+use rand::{Rng};</span>
+ use libc::{
+     pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,
+     cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
+<span class="line-header">@@ -34,12 +38,12 @@</span>
+     pub ping_me: qThread,// 子组件线程（Ping_Me : thread Q）
+ }
+
+<span class="line-remove">-impl aProcess {</span>
+<span class="line-add">+impl Process for aProcess {</span>
+     // Creates a new process instance
+<span class="line-remove">-    pub fn new(cpu_id: isize) -&gt; Self {</span>
+<span class="line-add">+    fn new(cpu_id: isize) -&gt; Self {</span>
+         let mut pinger: pThread = pThread::new(cpu_id);
+         let mut ping_me: qThread = qThread::new(cpu_id);
+<span class="line-remove">-        let channel = mpsc::channel();</span>
+<span class="line-add">+        let channel = crossbeam_channel::unbounded();</span>
+         // build connection: 
+             pinger.data_source = Some(channel.0);
+         // build connection: 
+<span class="line-header">@@ -48,7 +52,7 @@</span>
+     }
+     
+     // Starts all threads in the process
+<span class="line-remove">-    pub fn start(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn start(self: Self) -&gt; () {</span>
+         let Self { pinger, ping_me, cpu_id, .. } = self;
+         thread::Builder::new()
+             .name(&quot;pinger&quot;.to_string())
+<span class="line-header">@@ -67,15 +71,15 @@</span>
+     pub node_a: aProcess,// 子组件进程（Node_A : process A）
+ }
+
+<span class="line-remove">-impl pingSystem {</span>
+<span class="line-add">+impl System for pingSystem {</span>
+     // Creates a new system instance
+<span class="line-remove">-    pub fn new() -&gt; Self {</span>
+<span class="line-add">+    fn new() -&gt; Self {</span>
+         let mut node_a: aProcess = aProcess::new(0);
+         return Self { node_a }  //显式return;
+     }
+     
+     // Runs the system, starts all processes
+<span class="line-remove">-    pub fn run(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn run(self: Self) -&gt; () {</span>
+         self.node_a.start();
+     }
+     
+<span class="line-header">@@ -115,7 +119,7 @@</span>
+ // AADL Thread: p
+ #[derive(Debug)]
+ pub struct pThread {
+<span class="line-remove">-    pub data_source: Option&lt;mpsc::Sender&lt;custom_int&gt;&gt;,// Port: Data_Source InOut</span>
+<span class="line-add">+    pub data_source: Option&lt;Sender&lt;custom_int&gt;&gt;,// Port: Data_Source InOut</span>
+     pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
+     pub cpu_id: isize,// 结构体新增 CPU ID
+     pub recover_entrypoint_source_text: String,// AADL属性(impl): Recover_Entrypoint_Source_Text
+<span class="line-header">@@ -125,17 +129,17 @@</span>
+     pub dispatch_offset: u64,// AADL属性(impl): Dispatch_Offset
+ }
+
+<span class="line-remove">-impl pThread {</span>
+<span class="line-add">+impl Thread for pThread {</span>
+     // 创建组件并初始化AADL属性
+<span class="line-remove">-    pub fn new(cpu_id: isize) -&gt; Self {</span>
+<span class="line-add">+    fn new(cpu_id: isize) -&gt; Self {</span>
+         return Self {
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            deadline: 2000, </span>
+             period: 2000, 
+<span class="line-add">+            priority: 2, </span>
+<span class="line-add">+            dispatch_offset: 500, </span>
+             recover_entrypoint_source_text: &quot;recover&quot;.to_string(), 
+<span class="line-remove">-            deadline: 2000, </span>
+<span class="line-remove">-            dispatch_offset: 500, </span>
+             data_source: None, 
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-remove">-            priority: 2, </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -142,7 +146,7 @@</span>
+     
+     // Thread execution entry point
+     // Period: Some(2000) ms
+<span class="line-remove">-    pub fn run(mut self) -&gt; () {</span>
+<span class="line-add">+    fn run(mut self) -&gt; () {</span>
+         unsafe {
+             let mut param: sched_param = sched_param { sched_priority: 2 };
+             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&amp;self.cpu_id).unwrap_or(&amp;SCHED_FIFO), &amp;mut param);
+<span class="line-header">@@ -158,8 +162,8 @@</span>
+             let start = Instant::now();
+             {
+                 // --- 调用序列（等价 AADL 的 Wrapper）---
+<span class="line-remove">-                           // P_Spg();</span>
+<span class="line-remove">-                // P_Spg;</span>
+<span class="line-add">+                           // p_spg();</span>
+<span class="line-add">+                // p_spg;</span>
+                 if let Some(sender) = &amp;self.data_source {
+                     let mut val = 0;
+                     do_ping_spg::send(&amp;mut val);
+<span class="line-header">@@ -176,7 +180,7 @@</span>
+ // AADL Thread: q
+ #[derive(Debug)]
+ pub struct qThread {
+<span class="line-remove">-    pub data_sink: Option&lt;mpsc::Receiver&lt;custom_int&gt;&gt;,// Port: Data_Sink In</span>
+<span class="line-add">+    pub data_sink: Option&lt;Receiver&lt;custom_int&gt;&gt;,// Port: Data_Sink In</span>
+     pub cpu_id: isize,// 结构体新增 CPU ID
+     pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
+     pub period: u64,// AADL属性(impl): Period
+<span class="line-header">@@ -184,15 +188,15 @@</span>
+     pub priority: u64,// AADL属性(impl): Priority
+ }
+
+<span class="line-remove">-impl qThread {</span>
+<span class="line-add">+impl Thread for qThread {</span>
+     // 创建组件并初始化AADL属性
+<span class="line-remove">-    pub fn new(cpu_id: isize) -&gt; Self {</span>
+<span class="line-add">+    fn new(cpu_id: isize) -&gt; Self {</span>
+         return Self {
+<span class="line-remove">-            data_sink: None, </span>
+             deadline: 10, 
+             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
+<span class="line-add">+            period: 10, </span>
+             priority: 1, 
+<span class="line-remove">-            period: 10, </span>
+<span class="line-add">+            data_sink: None, </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -199,7 +203,7 @@</span>
+     
+     // Thread execution entry point
+     // Period: Some(10) ms
+<span class="line-remove">-    pub fn run(mut self) -&gt; () {</span>
+<span class="line-add">+    fn run(mut self) -&gt; () {</span>
+         unsafe {
+             let mut param: sched_param = sched_param { sched_priority: 1 };
+             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&amp;self.cpu_id).unwrap_or(&amp;SCHED_FIFO), &amp;mut param);
+<span class="line-header">@@ -212,30 +216,36 @@</span>
+         };
+         let min_interarrival: std::time::Duration = Duration::from_millis(10);
+         let mut last_dispatch: std::time::Instant = Instant::now();
+<span class="line-add">+        let mut events = Vec::new();</span>
+         loop {
+<span class="line-remove">-            if let Some(receiver) = &amp;self.data_sink {</span>
+<span class="line-remove">-                match receiver.recv() {</span>
+<span class="line-remove">-                    Ok(val) =&gt; {</span>
+<span class="line-remove">-                        // 收到消息 → 调用处理函数</span>
+<span class="line-remove">-                        let now = Instant::now();</span>
+<span class="line-remove">-                        let elapsed = now.duration_since(last_dispatch);</span>
+<span class="line-remove">-                        if elapsed &lt; min_interarrival {</span>
+<span class="line-remove">-                            std::thread::sleep(min_interarrival - elapsed);</span>
+<span class="line-remove">-                        };</span>
+<span class="line-remove">-                        {</span>
+<span class="line-remove">-                            // --- 调用序列（等价 AADL 的 Wrapper）---</span>
+<span class="line-remove">-                           // Q_Spg();</span>
+<span class="line-remove">-                            // Q_Spg;</span>
+<span class="line-remove">-                            ping_spg::receive(val);</span>
+<span class="line-remove">-                        };</span>
+<span class="line-remove">-                        last_dispatch = Instant::now();</span>
+<span class="line-remove">-                    },</span>
+<span class="line-remove">-                    Err(_) =&gt; {</span>
+<span class="line-remove">-                        eprintln!(&quot;qThread: channel closed&quot;);</span>
+<span class="line-remove">-                        return;</span>
+<span class="line-remove">-                    },</span>
+<span class="line-add">+            if events.is_empty() {</span>
+<span class="line-add">+                if let Some(rx) = &amp;self.data_sink {</span>
+<span class="line-add">+                    if let Ok(val) = rx.try_recv() {</span>
+<span class="line-add">+                        let ts = Instant::now();</span>
+<span class="line-add">+                        events.push(((val, 0, ts)));</span>
+<span class="line-add">+                    };</span>
+                 };
+             };
+<span class="line-add">+            if let Some((idx, (val, _urgency, _ts))) = events.iter().enumerate().max_by(|a, b| match a.1.1.cmp(&amp;b.1.1) {</span>
+<span class="line-add">+                        std::cmp::Ordering::Equal =&gt; b.1.2.cmp(&amp;a.1.2),</span>
+<span class="line-add">+                        other =&gt; other,</span>
+<span class="line-add">+                    }) {</span>
+<span class="line-add">+                let (val, _, _) = events.remove(idx);</span>
+<span class="line-add">+                let now = Instant::now();</span>
+<span class="line-add">+                let elapsed = now.duration_since(last_dispatch);</span>
+<span class="line-add">+                if elapsed &lt; min_interarrival {</span>
+<span class="line-add">+                    std::thread::sleep(min_interarrival - elapsed);</span>
+<span class="line-add">+                };</span>
+<span class="line-add">+                {</span>
+<span class="line-add">+                    // --- 调用序列（等价 AADL 的 Wrapper）---</span>
+<span class="line-add">+                           // q_spg();</span>
+<span class="line-add">+                    // q_spg;</span>
+<span class="line-add">+                    ping_spg::receive(val);</span>
+<span class="line-add">+                };</span>
+<span class="line-add">+                last_dispatch = Instant::now();</span>
+<span class="line-add">+            } else {</span>
+<span class="line-add">+                std::thread::sleep(Duration::from_millis(1));</span>
+<span class="line-add">+            };</span>
+         };
+     }
+     
+<span class="line-header">@@ -245,8 +255,20 @@</span>
+ lazy_static! {
+     static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
+         let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
+<span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+         map.insert(0, SCHED_FIFO);
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
+         return map;
+     };
+ }
+
+<span class="line-add">+// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))</span>
+<span class="line-add">+// 根据周期计算优先级，周期越短优先级越高</span>
+<span class="line-add">+// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)</span>
+<span class="line-add">+pub fn period_to_priority(period_ms: f64) -&gt; i32 {</span>
+<span class="line-add">+    let k: f64 = 10.0;</span>
+<span class="line-add">+    let raw: f64 = 99.0 - k * period_ms.log10().floor();</span>
+<span class="line-add">+    return raw.max(1.0).min(99.0) as i32;</span>
+<span class="line-add">+}</span>
+<span class="line-add">+</span>
+
+</pre>
+</body>
+</html>

@@ -212,10 +212,7 @@ pub fn collect_thread_connections(
                         if impl_.category == ComponentCategory::Process {
                             if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
                                 for sub in subcomponents {
-                                    println!(
-                                        "!!!!!!!!!!!!!!!!!!!!sub.identifier: {:?}, comp: {:?}",
-                                        sub.identifier, comp
-                                    );
+                                    
                                     if sub.identifier.eq(&comp.clone()) {
                                         if let SubcomponentClassifier::ClassifierReference(
                                             classifier,

@@ -109,7 +109,6 @@ fn determine_complex_data_type(
                             StringTerm::Literal(str_val),
                         )) = &bp.value
                         {
-                            println!("str_val: {:?}", str_val);
                             match str_val.to_lowercase().as_str() {
                                 "array" => {
                                     return determine_array_type(type_mappings, props);

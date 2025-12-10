@@ -39,7 +39,7 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
                         }
                     }
                     let removed = items.remove(j);
-                    if let Item::Struct(removed_struct) = removed {
+                    if let Item::Struct(_removed_struct) = removed {
                         //println!("-----------------------------成功移除重复结构体--------------------------: {}", removed_struct.name);
                         //println!("----------------------------------------");
                     }
@@ -51,7 +51,7 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
         i += 1;
     }
 
-    println!("结构体合并完成，共保留 {} 个项", items.len());
+    //println!("结构体合并完成，共保留 {} 个项", items.len());
     
     RustModule {
         name: module.name,
@@ -65,7 +65,7 @@ pub fn merge_item_defs(module: RustModule) -> RustModule {
 /// 合并两个同名的StructDef
 fn merge_single_struct(target: &mut StructDef, source: &StructDef) {
     // 合并fields（按name去重）
-    let original_field_count = target.fields.len();
+    let _original_field_count = target.fields.len();
     for src_field in source.fields.iter().cloned() {
         if !target.fields.iter().any(|f| f.name == src_field.name) {
             target.fields.push(src_field);
@@ -77,7 +77,7 @@ fn merge_single_struct(target: &mut StructDef, source: &StructDef) {
     //     target.fields.len());
 
     // 合并properties（按name去重）
-    let original_prop_count = target.properties.len();
+    let _original_prop_count = target.properties.len();
     for src_prop in source.properties.iter().cloned() {
         if !target.properties.iter().any(|p| p.name == src_prop.name) {
             target.properties.push(src_prop);

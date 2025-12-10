@@ -21,7 +21,8 @@ impl RustCodeGenerator {
         self.buffer.clear();
 
         // 文件头
-        self.writeln("// 自动生成的 Rust 代码 - 来自 AADL 模型");
+        self.writeln(&format!("// Auto-generated from AADL package: {}", module.name));
+        //self.writeln("// 自动生成的 Rust 代码 - 来自 AADL 模型");
         self.writeln(&format!(
             "// 生成时间: {}",
             Local::now().format("%Y-%m-%d %H:%M:%S")
@@ -210,6 +211,7 @@ impl RustCodeGenerator {
 
     // 生成属性初始化impl块(似乎默认process没有属性，实际按标准是可以有的，TODO)
     // 2025.10.10 将这部分功能移动到converter.rs中，此处废弃
+    #[allow(unused)]
     fn generate_properties_impl(&mut self, s: &StructDef) {
         if s.properties.is_empty() {
             return;
@@ -277,6 +279,7 @@ impl RustCodeGenerator {
 
     // 根据属性值推断Rust类型
     // 2025.10.10 将这部分功能移动到converter.rs中，此处废弃
+    #[allow(unused)]
     fn type_for_property(&self, value: &StruPropertyValue) -> String {
         match value {
             StruPropertyValue::Boolean(_) => "bool".to_string(),

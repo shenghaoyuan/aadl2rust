@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Diff for Robot(v1)</title>
+<style>
+body {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+pre {
+  white-space: pre-wrap;
+}
+.line-add    { background-color: #003800; color: #c8ffc8; }
+.line-remove { background-color: #3f0001; color: #ffcccc; }
+.line-header { color: #4fc1ff; font-weight: bold; }
+</style>
+</head>
+<body>
+<h2>Diff for Robot(v1)</h2>
+<pre>
+<span class="line-remove">--- original</span>
+<span class="line-add">+++ modified</span>
+<span class="line-header">@@ -1,5 +1,5 @@</span>
+<span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
+<span class="line-remove">-// 生成时间: 2025-12-08 23:04:08</span>
+<span class="line-add">+// Auto-generated from AADL package: robot_ba</span>
+<span class="line-add">+// 生成时间: 2025-12-10 21:18:19</span>
+
+ #![allow(unused_imports)]
+ use crossbeam_channel::{Receiver, Sender};
+<span class="line-header">@@ -119,9 +119,9 @@</span>
+     // 创建组件并初始化AADL属性
+     fn new(cpu_id: isize) -&gt; Self {
+         return Self {
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+             period: 110, 
+             evenement: None, 
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -164,10 +164,10 @@</span>
+     // 创建组件并初始化AADL属性
+     fn new(cpu_id: isize) -&gt; Self {
+         return Self {
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            info_capteur: None, </span>
+<span class="line-add">+            period: 110, </span>
+             comm_servo: None, 
+<span class="line-remove">-            period: 110, </span>
+<span class="line-remove">-            info_capteur: None, </span>
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -227,8 +227,8 @@</span>
+     fn new(cpu_id: isize) -&gt; Self {
+         return Self {
+             period: 10, 
+<span class="line-remove">-            ordre: None, </span>
+             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
+<span class="line-add">+            ordre: None, </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -503,11 +503,11 @@</span>
+ impl System for robotSystem {
+     // Creates a new system instance
+     fn new() -&gt; Self {
+<span class="line-remove">-        let mut proc_capteur_droit: p_capteurProcess = p_capteurProcess::new(0);</span>
+<span class="line-remove">-        let mut proc_capteur_gauche: p_capteurProcess = p_capteurProcess::new(0);</span>
+<span class="line-remove">-        let mut proc_controle: p_controleProcess = p_controleProcess::new(0);</span>
+<span class="line-remove">-        let mut proc_servomoteur_droit: p_servomoteurProcess = p_servomoteurProcess::new(0);</span>
+<span class="line-remove">-        let mut proc_servomoteur_gauche: p_servomoteurProcess = p_servomoteurProcess::new(0);</span>
+<span class="line-add">+        let mut proc_capteur_droit: p_capteurProcess = p_capteurProcess::new(3);</span>
+<span class="line-add">+        let mut proc_capteur_gauche: p_capteurProcess = p_capteurProcess::new(3);</span>
+<span class="line-add">+        let mut proc_controle: p_controleProcess = p_controleProcess::new(3);</span>
+<span class="line-add">+        let mut proc_servomoteur_droit: p_servomoteurProcess = p_servomoteurProcess::new(3);</span>
+<span class="line-add">+        let mut proc_servomoteur_gauche: p_servomoteurProcess = p_servomoteurProcess::new(3);</span>
+         let channel = crossbeam_channel::unbounded();
+         // build connection: 
+             proc_capteur_droit.evenement = Some(channel.0);
+<span class="line-header">@@ -546,7 +546,10 @@</span>
+ lazy_static! {
+     static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
+         let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
+<span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+         map.insert(0, SCHED_FIFO);
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
+         return map;
+     };
+ }
+
+</pre>
+</body>
+</html>

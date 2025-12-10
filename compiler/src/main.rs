@@ -11,7 +11,7 @@ use aadlAst2rustCode::merge_utils::*;
 use aadlight_parser::AADLParser;
 use pest::Parser;
 use pest::error::ErrorVariant;
-use printmessage::*;
+use crate::printmessage::*;
 use std::fs;
 use std::io::{self, Write};
 
@@ -194,7 +194,7 @@ fn process_test_case(test_case: &TestCase) {
 
             println!("\n==================================== 生成Rust代码 ===================================");
             let mut converter = AadlConverter::default();
-            for (index, package) in ast.iter().enumerate() {
+            for (_index, package) in ast.iter().enumerate() {
                 generate_rust_code_for_test_case(package, test_case,ast.len(),&mut converter);
             }
             
@@ -267,29 +267,3 @@ pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase
     // println!("Build.rs已生成: {}", build_rs_path);
 }
 
-// 保留原来的函数作为备用
-pub fn generate_rust_code2(aadl_pkg: &Package) -> () {
-    // 第一级转换：语义转换
-    let mut converter = AadlConverter::default();
-
-    let rust_module = converter.convert_package(&aadl_pkg);
-    println!(
-        "\n==================================== rust_module ==================================="
-    );
-    //println!("{:#?}",rust_module);
-    fs::write("rustast0.txt", format!("{:#?}", rust_module)).unwrap();
-    let merge_rust_module = merge_item_defs(rust_module);
-    //let merge_rust_module=rust_module.clone();
-    fs::write("rustast.txt", format!("{:#?}", merge_rust_module)).unwrap();
-
-    let mut code_generator = RustCodeGenerator::new();
-    let rust_code = code_generator.generate_module_code(&merge_rust_module);
-    //println!("{}", rust_code);
-
-    // 生成 build.rs
-    //let build_rs_content = generate_build_rs(&merge_rust_module);
-    //fs::write("build.rs", build_rs_content).expect("Failed to write build.rs");
-
-    // 同时保存主Rust代码
-    fs::write("generate/generate_pingpong.rs", rust_code).expect("Failed to write main.rs");
-}

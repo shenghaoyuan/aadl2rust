@@ -311,7 +311,7 @@ impl AADLTransformer {
                 }
                 aadlight_parser::Rule::extends => {
                     //TODO: 处理extends
-                    println!("extends: {:?}", inner.as_str());
+                    //println!("extends: {:?}", inner.as_str());
                 }
                 _ => {}
             }

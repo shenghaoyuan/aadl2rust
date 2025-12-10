@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Diff for PingPong (Ocarina)</title>
+<style>
+body {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+pre {
+  white-space: pre-wrap;
+}
+.line-add    { background-color: #003800; color: #c8ffc8; }
+.line-remove { background-color: #3f0001; color: #ffcccc; }
+.line-header { color: #4fc1ff; font-weight: bold; }
+</style>
+</head>
+<body>
+<h2>Diff for PingPong (Ocarina)</h2>
+<pre>
+<span class="line-remove">--- original</span>
+<span class="line-add">+++ modified</span>
+<span class="line-header">@@ -1,5 +1,5 @@</span>
+<span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
+<span class="line-remove">-// 生成时间: 2025-12-08 23:02:55</span>
+<span class="line-add">+// Auto-generated from AADL package: ping_local</span>
+<span class="line-add">+// 生成时间: 2025-12-10 21:18:18</span>
+
+ #![allow(unused_imports)]
+ use crossbeam_channel::{Receiver, Sender};
+<span class="line-header">@@ -133,13 +133,13 @@</span>
+     // 创建组件并初始化AADL属性
+     fn new(cpu_id: isize) -&gt; Self {
+         return Self {
+<span class="line-add">+            dispatch_offset: 500, </span>
+             priority: 2, 
+<span class="line-remove">-            dispatch_offset: 500, </span>
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+             deadline: 2000, 
+<span class="line-remove">-            period: 2000, </span>
+             data_source: None, 
+             recover_entrypoint_source_text: &quot;recover&quot;.to_string(), 
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            period: 2000, </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -192,8 +192,8 @@</span>
+     // 创建组件并初始化AADL属性
+     fn new(cpu_id: isize) -&gt; Self {
+         return Self {
+<span class="line-remove">-            data_sink: None, </span>
+             deadline: 10, 
+<span class="line-add">+            data_sink: None, </span>
+             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
+             period: 10, 
+             priority: 1, 
+
+</pre>
+</body>
+</html>
