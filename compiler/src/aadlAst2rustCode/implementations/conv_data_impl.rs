@@ -68,7 +68,7 @@ pub fn convert_data_implementation(
                     impl_.name.type_identifier,
                     data_subcomponents.len()
                 );
-                eprintln!("请检查AADL模型，确保每个共享数据组件实现中只有一个数据子组件");
+                eprintln!("请检查AADL模型,确保每个共享数据组件实现中只有一个数据子组件");
             }
         } else if data_comp_type.contains_key(&impl_.name.type_identifier) {
             //说明是复杂数据类型
@@ -81,6 +81,12 @@ pub fn convert_data_implementation(
                 )));
             } else if data_type_name == "union" {
                 items.push(Item::Union(determine_union_impl(
+                    type_mappings,
+                    impl_,
+                    subcomponents,
+                )));
+            } else if data_type_name == "taggedunion" {
+                items.push(Item::Enum(determine_taggedunion_impl(
                     type_mappings,
                     impl_,
                     subcomponents,
@@ -158,7 +164,7 @@ fn determine_struct_impl(
     }
 }
 
-/// 处理联合体类型,使用枚举类型来表示，不使用union类型,避免unsafe
+/// 处理联合体类型,unsafe
 fn determine_union_impl(
     type_mappings: &HashMap<String, Type>,
     impl_: &ComponentImplementation,
@@ -220,6 +226,81 @@ fn determine_union_impl(
         generics: vec![],
         derives: vec!["Debug".to_string(), "Clone".to_string()],
         docs: vec![format!("// AADL Union: {}", impl_.name.type_identifier)],
+        vis: Visibility::Public,
+    }
+}
+
+/// 处理带标签的联合体类型，从实现中的子组件生成带类型的枚举
+fn determine_taggedunion_impl(
+    type_mappings: &HashMap<String, Type>,
+    impl_: &ComponentImplementation,
+    subcomponents: &[Subcomponent],
+) -> EnumDef {
+    let mut variants = Vec::new();
+
+    // 从子组件中解析字段类型和字段名
+    for sub in subcomponents {
+        // 获取字段名（子组件标识符）
+        let field_name = sub.identifier.clone();
+
+        // 获取字段类型
+        let field_type = match &sub.classifier {
+            SubcomponentClassifier::ClassifierReference(
+                UniqueComponentClassifierReference::Implementation(impl_ref),
+            ) => {
+                // 从分类器引用中提取类型名
+                let type_name = impl_ref.implementation_name.type_identifier.clone();
+
+                // 映射到 Rust 类型
+                type_mappings
+                    .get(&type_name.to_lowercase())
+                    .cloned()
+                    .unwrap_or_else(|| Type::Named(type_name))
+            }
+            SubcomponentClassifier::ClassifierReference(
+                UniqueComponentClassifierReference::Type(type_ref),
+            ) => {
+                // 从类型引用中提取类型名
+                let type_name = type_ref.implementation_name.type_identifier.clone();
+
+                // 映射到 Rust 类型
+                type_mappings
+                    .get(&type_name.to_lowercase())
+                    .cloned()
+                    .unwrap_or_else(|| Type::Named(type_name))
+            }
+            SubcomponentClassifier::Prototype(prototype_name) => {
+                // 处理原型引用
+                Type::Named(prototype_name.clone())
+            }
+        };
+
+        // 将字段名首字母大写，例如 "f1" -> "F1"
+        let variant_name = if field_name.is_empty() {
+            field_name.clone()
+        } else {
+            let mut chars = field_name.chars();
+            match chars.next() {
+                None => field_name.clone(),
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+            }
+        };
+
+        // 创建枚举变体（带数据类型）
+        variants.push(Variant {
+            name: variant_name,
+            data: Some(vec![field_type]), // 带标签的联合体变体包含数据类型
+            docs: vec![format!("// 标记联合体字段: {}", sub.identifier)],
+        });
+    }
+
+    // 创建枚举定义
+    EnumDef {
+        name: impl_.name.type_identifier.clone(),
+        variants,
+        generics: vec![],
+        derives: vec!["Debug".to_string(), "Clone".to_string()],
+        docs: vec![format!("// AADL Tagged Union: {}", impl_.name.type_identifier)],
         vis: Visibility::Public,
     }
 }

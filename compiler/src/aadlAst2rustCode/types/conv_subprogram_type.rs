@@ -272,6 +272,7 @@ fn generate_c_function_wrapper(
             items: module_items,
             attrs: Default::default(),
             vis: Visibility::Public,
+            withs: Vec::new(),
         };
         items.push(Item::Mod(Box::new(module)));
     }

@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: base_types_example_types
-// 生成时间: 2025-12-10 21:18:20
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -51,8 +51,8 @@ pub struct A_Struct2 {
 // AADL Union: A_Union1
 #[derive(Debug, Clone)]
 pub union A_Union1 {
-    pub f1: f32,
-    pub f2: char,
+    pub f1: i32,
+    pub c2: char,
 }
 
 // AADL Union: A_Union2
@@ -60,6 +60,22 @@ pub union A_Union1 {
 pub union A_Union2 {
     pub f1: f32,// 联合体字段: f1
     pub c2: char,// 联合体字段: c2
+}
+
+// AADL Tagged Union: A_Tagged_Union
+#[derive(Debug, Clone)]
+pub enum A_Tagged_Union {
+    F1(f32),
+    F2(char),
+}
+
+// AADL Tagged Union: A_Tagged_Union2
+#[derive(Debug, Clone)]
+pub enum A_Tagged_Union2 {
+    // 标记联合体字段: f1
+    F1(f32),
+    // 标记联合体字段: c2
+    C2(char),
 }
 
 // AADL Enum: An_Enum
@@ -76,10 +92,10 @@ pub type C_Type = the_type;
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

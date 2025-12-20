@@ -6,7 +6,7 @@
 
 package RMSAadl
 public
-  with Processors;
+  --with Processors;
 
   -----------------
   -- Subprograms --

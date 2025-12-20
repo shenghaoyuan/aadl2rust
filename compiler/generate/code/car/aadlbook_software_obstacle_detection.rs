@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:05:12
+// Auto-generated from AADL package: aadlbook_software_obstacle_detection
+// 生成时间: 2025-12-20 18:11:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,8 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
+use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -38,38 +40,37 @@ pub struct obstacle_detectionProcess {
     pub cameraSend: Option<BcSender<bool>>,// 内部端口: camera In
     pub radarSend: Option<BcSender<bool>>,// 内部端口: radar In
     pub obstacle_positionRece: Option<Receiver<bool>>,// 内部端口: obstacle_position Out
-    #[allow(dead_code)]
     pub obst_thr: obstacle_detection_thrThread,// 子组件线程（obst_thr : thread obstacle_detection_thr）
 }
 
 impl Process for obstacle_detectionProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut obst_thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
+        let obst_thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
         let mut cameraSend = None;
         let mut radarSend = None;
         let mut obstacle_positionRece = None;
-        let channel = crossbeam_channel::unbounded();
-        cameraSend = Some(channel.0);
+        let c0 = crossbeam_channel::unbounded();
+        cameraSend = Some(c0.0);
         // build connection: 
-            obst_thr.camera = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        radarSend = Some(channel.0);
+            obst_thr.camera = Some(c0.1);
+        let c1 = crossbeam_channel::unbounded();
+        radarSend = Some(c1.0);
         // build connection: 
-            obst_thr.radar = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            obst_thr.radar = Some(c1.1);
+        let c2 = crossbeam_channel::unbounded();
         // build connection: 
-            obst_thr.obstacle_detected = Some(channel.0);
-        obstacle_positionRece = Some(channel.1);
+            obst_thr.obstacle_detected = Some(c2.0);
+        obstacle_positionRece = Some(c2.1);
         return Self { camera: None, cameraSend, radar: None, radarSend, obstacle_position: None, obstacle_positionRece, obst_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { camera, cameraSend, radar, radarSend, obstacle_position, obstacle_positionRece, obst_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("obst_thr".to_string())
-            .spawn(|| { obst_thr.run() }).unwrap();
+            .spawn(move || { obst_thr.run() }).unwrap();
         let mut camera_rx = camera.unwrap();
         thread::Builder::new()
             .name("data_forwarder_camera".to_string())
@@ -129,12 +130,12 @@ impl Thread for obstacle_detection_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            camera: None, 
-            radar: None, 
-            obstacle_detected: None, 
-            period: 100, 
             mipsbudget: 10.0, 
+            obstacle_detected: None, 
+            radar: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            camera: None, 
+            period: 100, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -146,6 +147,7 @@ impl Thread for obstacle_detection_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -206,14 +208,5 @@ impl Thread for obstacle_detection_thrThread {
         };
     }
     
-}
-
-// CPU ID到调度策略的映射
-lazy_static! {
-    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
-        let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(0, SCHED_FIFO);
-        return map;
-    };
 }
 

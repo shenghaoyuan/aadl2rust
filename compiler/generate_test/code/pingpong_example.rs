@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-10 21:18:22
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -32,34 +32,32 @@ fn set_thread_affinity(cpu: isize) {
 #[derive(Debug)]
 pub struct pingpong_procProcess {
     pub cpu_id: isize,// 进程 CPU ID
-    #[allow(dead_code)]
-    pub pinger: ping_thrThread,// 子组件线程（Pinger : thread ping_thr）
-    #[allow(dead_code)]
-    pub ping_me: pong_thrThread,// 子组件线程（Ping_Me : thread pong_thr）
+    pub ping_thr: ping_thrThread,// 子组件线程（ping_thr : thread ping_thr）
+    pub pong_thr: pong_thrThread,// 子组件线程（pong_thr : thread pong_thr）
 }
 
 impl Process for pingpong_procProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut pinger: ping_thrThread = ping_thrThread::new(cpu_id);
-        let mut ping_me: pong_thrThread = pong_thrThread::new(cpu_id);
-        let channel = crossbeam_channel::unbounded();
+        let ping_thr: ping_thrThread = ping_thrThread::new(cpu_id);
+        let pong_thr: pong_thrThread = pong_thrThread::new(cpu_id);
+        let cnx = crossbeam_channel::unbounded();
         // build connection: 
-            pinger.data_s = Some(channel.0);
+            ping_thr.data_s = Some(cnx.0);
         // build connection: 
-            ping_me.data_r = Some(channel.1);
-        return Self { pinger, ping_me, cpu_id }  //显式return;
+            pong_thr.data_r = Some(cnx.1);
+        return Self { ping_thr, pong_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
-        let Self { pinger, ping_me, cpu_id, .. } = self;
+    fn run(self: Self) -> () {
+        let Self { ping_thr, pong_thr, cpu_id, .. } = self;
         thread::Builder::new()
-            .name("pinger".to_string())
-            .spawn(|| { pinger.run() }).unwrap();
+            .name("ping_thr".to_string())
+            .spawn(move || { ping_thr.run() }).unwrap();
         thread::Builder::new()
-            .name("ping_me".to_string())
-            .spawn(|| { ping_me.run() }).unwrap();
+            .name("pong_thr".to_string())
+            .spawn(move || { pong_thr.run() }).unwrap();
     }
     
 }
@@ -67,20 +65,19 @@ impl Process for pingpong_procProcess {
 // AADL System: PingPongSystem
 #[derive(Debug)]
 pub struct pingpongsystemSystem {
-    #[allow(dead_code)]
-    pub proc: pingpong_procProcess,// 子组件进程（proc : process pingpong_proc）
+    pub pingpong_proc: pingpong_procProcess,// 子组件进程（pingpong_proc : process pingpong_proc）
 }
 
 impl System for pingpongsystemSystem {
     // Creates a new system instance
     fn new() -> Self {
-        let mut proc: pingpong_procProcess = pingpong_procProcess::new(0);
-        return Self { proc }  //显式return;
+        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(-1);
+        return Self { pingpong_proc }  //显式return;
     }
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        self.proc.start();
+        self.pingpong_proc.run();
     }
     
 }
@@ -128,10 +125,10 @@ impl Thread for ping_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 2, 
-            data_s: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            priority: 2, 
             period: 2000, 
+            data_s: None, 
             deadline: 2000, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -151,8 +148,12 @@ impl Thread for ping_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // p_spg();
@@ -163,8 +164,7 @@ impl Thread for ping_thrThread {
                     sender.send(val).unwrap();
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -185,10 +185,10 @@ impl Thread for pong_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            priority: 1, 
             data_r: None, 
             period: 10, 
             deadline: 10, 
-            priority: 1, 
             dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
@@ -248,10 +248,10 @@ impl Thread for pong_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

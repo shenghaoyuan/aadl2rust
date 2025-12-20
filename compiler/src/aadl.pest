@@ -183,8 +183,8 @@ enum_value = @{
     "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
     "native"  | "Struct" | 
     "Boolean" | "Signed" |  "Float" | "Simple" | "Double" | "Character" | "String" | 
-    "Struct" | "Union" | "Enum" | "Fixed" | "Array" |
-    "struct" | "union" | "enum" | "fixed" | "array" |
+    "Struct" | "Union" | "Enum" | "Fixed" | "Array" | "TaggedUnion" |
+    "struct" | "union" | "enum" | "fixed" | "array" | "taggedunion" |
     "unsigned_8" | "unsigned_16" | "unsigned_32" | "unsigned_64" | "unsigned" |
     "integer_8" | "integer_16" | "integer_32" | "integer_64" | "integer" |
     "natural" | "float" | "float_32" | "float_64" | "character" | "string"|

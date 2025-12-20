@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-10 21:18:22
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -32,39 +32,37 @@ fn set_thread_affinity(cpu: isize) {
 #[derive(Debug)]
 pub struct aProcess {
     pub cpu_id: isize,// 进程 CPU ID
-    #[allow(dead_code)]
     pub pinger: pThread,// 子组件线程（Pinger : thread P）
-    #[allow(dead_code)]
     pub ping_me: qThread,// 子组件线程（Ping_Me : thread Q）
 }
 
 impl Process for aProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut pinger: pThread = pThread::new(cpu_id);
-        let mut ping_me: qThread = qThread::new(cpu_id);
-        let channel = crossbeam_channel::unbounded();
+        let pinger: pThread = pThread::new(cpu_id);
+        let ping_me: qThread = qThread::new(cpu_id);
+        let cnx1 = crossbeam_channel::unbounded();
         // build connection: 
-            pinger.data_source_1 = Some(channel.0);
+            pinger.data_source_1 = Some(cnx1.0);
         // build connection: 
-            ping_me.data_sink_1 = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            ping_me.data_sink_1 = Some(cnx1.1);
+        let cnx2 = crossbeam_channel::unbounded();
         // build connection: 
-            pinger.data_source_2 = Some(channel.0);
+            pinger.data_source_2 = Some(cnx2.0);
         // build connection: 
-            ping_me.data_sink_2 = Some(channel.1);
+            ping_me.data_sink_2 = Some(cnx2.1);
         return Self { pinger, ping_me, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { pinger, ping_me, cpu_id, .. } = self;
         thread::Builder::new()
             .name("pinger".to_string())
-            .spawn(|| { pinger.run() }).unwrap();
+            .spawn(move || { pinger.run() }).unwrap();
         thread::Builder::new()
             .name("ping_me".to_string())
-            .spawn(|| { ping_me.run() }).unwrap();
+            .spawn(move || { ping_me.run() }).unwrap();
     }
     
 }
@@ -72,7 +70,6 @@ impl Process for aProcess {
 // AADL System: PING
 #[derive(Debug)]
 pub struct pingSystem {
-    #[allow(dead_code)]
     pub node_a: aProcess,// 子组件进程（Node_A : process A）
 }
 
@@ -85,7 +82,7 @@ impl System for pingSystem {
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        self.node_a.start();
+        self.node_a.run();
     }
     
 }
@@ -139,14 +136,14 @@ impl Thread for pThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 2, 
-            dispatch_protocol: "Periodic".to_string(), 
+            data_source_2: None, 
             period: 2000, 
             dispatch_offset: 500, 
-            data_source_2: None, 
-            recover_entrypoint_source_text: "recover".to_string(), 
             data_source_1: None, 
             deadline: 2000, 
+            priority: 2, 
+            dispatch_protocol: "Periodic".to_string(), 
+            recover_entrypoint_source_text: "recover".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -165,8 +162,12 @@ impl Thread for pThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // p_spg() -> p_spg2();
@@ -183,8 +184,7 @@ impl Thread for pThread {
                     sender.send(val).unwrap();
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -207,11 +207,11 @@ impl Thread for qThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             data_sink_2: None, 
-            deadline: 10, 
-            data_sink_1: None, 
-            period: 10, 
             dispatch_protocol: "Sporadic".to_string(), 
+            data_sink_1: None, 
             priority: 1, 
+            period: 10, 
+            deadline: 10, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -276,10 +276,10 @@ impl Thread for qThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

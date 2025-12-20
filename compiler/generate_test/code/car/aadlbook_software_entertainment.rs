@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: aadlbook_software_entertainment
-// 生成时间: 2025-12-10 21:18:20
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -40,43 +40,42 @@ pub struct entertainmentProcess {
     pub contactsSend: Option<BcSender<i8>>,// 内部端口: contacts In
     pub infosRece: Option<Receiver<i8>>,// 内部端口: infos Out
     pub music_outRece: Option<Receiver<bool>>,// 内部端口: music_out Out
-    #[allow(dead_code)]
     pub enter_thr: entertainment_thrThread,// 子组件线程（enter_thr : thread entertainment_thr）
 }
 
 impl Process for entertainmentProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut enter_thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
+        let enter_thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
         let mut music_inSend = None;
         let mut contactsSend = None;
         let mut infosRece = None;
         let mut music_outRece = None;
-        let channel = crossbeam_channel::unbounded();
-        music_inSend = Some(channel.0);
+        let c0 = crossbeam_channel::unbounded();
+        music_inSend = Some(c0.0);
         // build connection: 
-            enter_thr.music_in = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        contactsSend = Some(channel.0);
+            enter_thr.music_in = Some(c0.1);
+        let c1 = crossbeam_channel::unbounded();
+        contactsSend = Some(c1.0);
         // build connection: 
-            enter_thr.contacts = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            enter_thr.contacts = Some(c1.1);
+        let c2 = crossbeam_channel::unbounded();
         // build connection: 
-            enter_thr.infos = Some(channel.0);
-        infosRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            enter_thr.infos = Some(c2.0);
+        infosRece = Some(c2.1);
+        let c3 = crossbeam_channel::unbounded();
         // build connection: 
-            enter_thr.music_out = Some(channel.0);
-        music_outRece = Some(channel.1);
+            enter_thr.music_out = Some(c3.0);
+        music_outRece = Some(c3.1);
         return Self { music_in: None, music_inSend, contacts: None, contactsSend, infos: None, infosRece, music_out: None, music_outRece, enter_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { music_in, music_inSend, contacts, contactsSend, infos, infosRece, music_out, music_outRece, enter_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("enter_thr".to_string())
-            .spawn(|| { enter_thr.run() }).unwrap();
+            .spawn(move || { enter_thr.run() }).unwrap();
         let mut contacts_rx = contacts.unwrap();
         thread::Builder::new()
             .name("data_forwarder_contacts".to_string())
@@ -151,10 +150,10 @@ impl Thread for entertainment_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             music_in: None, 
+            infos: None, 
             period: 5, 
             mipsbudget: 5.0, 
             contacts: None, 
-            infos: None, 
             music_out: None, 
             dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
@@ -168,6 +167,7 @@ impl Thread for entertainment_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         let mut infos_value: Base_Types::Integer_8 = 0;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
@@ -209,10 +209,10 @@ impl Thread for entertainment_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

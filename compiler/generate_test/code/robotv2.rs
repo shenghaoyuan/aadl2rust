@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: robot_ba
-// 生成时间: 2025-12-10 21:18:19
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -77,10 +77,10 @@ impl Thread for controleThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            comm_servo: None, 
-            period: 110, 
-            dispatch_protocol: "Periodic".to_string(), 
             info_capteur: None, 
+            comm_servo: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            period: 110, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -100,6 +100,7 @@ impl Thread for controleThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(110);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -176,9 +177,9 @@ impl Thread for capteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
             evenement: None, 
             period: 110, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -198,6 +199,7 @@ impl Thread for capteurThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(110);
+        let mut next_release = Instant::now() + period;
         let mut count1: i32 = 0;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
@@ -239,8 +241,8 @@ impl Thread for servomoteurThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             dispatch_protocol: "Sporadic".to_string(), 
-            ordre: None, 
             period: 10, 
+            ordre: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -302,7 +304,6 @@ pub struct p_capteurProcess {
     pub evenement: Option<Sender<bool>>,// Port: evenement Out
     pub cpu_id: isize,// 进程 CPU ID
     pub evenementRece: Option<Receiver<bool>>,// 内部端口: evenement Out
-    #[allow(dead_code)]
     pub th_c: capteurThread,// 子组件线程（th_c : thread capteur）
 }
 
@@ -318,9 +319,7 @@ pub struct p_controleProcess {
     pub comm_servo_droitRece: Option<Receiver<bool>>,// 内部端口: comm_servo_droit Out
     pub info_capteur_gaucheSend: Option<BcSender<bool>>,// 内部端口: info_capteur_gauche In
     pub comm_servo_gaucheRece: Option<Receiver<bool>>,// 内部端口: comm_servo_gauche Out
-    #[allow(dead_code)]
     pub th_ctrl_droit: controleThread,// 子组件线程（th_ctrl_droit : thread controle）
-    #[allow(dead_code)]
     pub th_ctrl_gauche: controleThread,// 子组件线程（th_ctrl_gauche : thread controle）
 }
 
@@ -330,28 +329,27 @@ pub struct p_servomoteurProcess {
     pub ordre: Option<Receiver<bool>>,// Port: ordre In
     pub cpu_id: isize,// 进程 CPU ID
     pub ordreSend: Option<BcSender<bool>>,// 内部端口: ordre In
-    #[allow(dead_code)]
     pub th_servomoteur: servomoteurThread,// 子组件线程（th_servomoteur : thread servomoteur）
 }
 
 impl Process for p_capteurProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut th_c: capteurThread = capteurThread::new(cpu_id);
+        let th_c: capteurThread = capteurThread::new(cpu_id);
         let mut evenementRece = None;
-        let channel = crossbeam_channel::unbounded();
+        let conn1 = crossbeam_channel::unbounded();
         // build connection: 
-            th_c.evenement = Some(channel.0);
-        evenementRece = Some(channel.1);
+            th_c.evenement = Some(conn1.0);
+        evenementRece = Some(conn1.1);
         return Self { evenement: None, evenementRece, th_c, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { evenement, evenementRece, th_c, cpu_id, .. } = self;
         thread::Builder::new()
             .name("th_c".to_string())
-            .spawn(|| { th_c.run() }).unwrap();
+            .spawn(move || { th_c.run() }).unwrap();
         let mut evenementRece_rx = evenementRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_evenementRece".to_string())
@@ -372,40 +370,40 @@ impl Process for p_capteurProcess {
 impl Process for p_controleProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut th_ctrl_droit: controleThread = controleThread::new(cpu_id);
-        let mut th_ctrl_gauche: controleThread = controleThread::new(cpu_id);
+        let th_ctrl_droit: controleThread = controleThread::new(cpu_id);
+        let th_ctrl_gauche: controleThread = controleThread::new(cpu_id);
         let mut info_capteur_droitSend = None;
         let mut comm_servo_droitRece = None;
         let mut info_capteur_gaucheSend = None;
         let mut comm_servo_gaucheRece = None;
-        let channel = crossbeam_channel::unbounded();
-        info_capteur_droitSend = Some(channel.0);
+        let conn1 = crossbeam_channel::unbounded();
+        info_capteur_droitSend = Some(conn1.0);
         // build connection: 
-            th_ctrl_droit.info_capteur = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            th_ctrl_droit.info_capteur = Some(conn1.1);
+        let conn2 = crossbeam_channel::unbounded();
         // build connection: 
-            th_ctrl_droit.comm_servo = Some(channel.0);
-        comm_servo_droitRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        info_capteur_gaucheSend = Some(channel.0);
+            th_ctrl_droit.comm_servo = Some(conn2.0);
+        comm_servo_droitRece = Some(conn2.1);
+        let conn3 = crossbeam_channel::unbounded();
+        info_capteur_gaucheSend = Some(conn3.0);
         // build connection: 
-            th_ctrl_gauche.info_capteur = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            th_ctrl_gauche.info_capteur = Some(conn3.1);
+        let conn4 = crossbeam_channel::unbounded();
         // build connection: 
-            th_ctrl_gauche.comm_servo = Some(channel.0);
-        comm_servo_gaucheRece = Some(channel.1);
+            th_ctrl_gauche.comm_servo = Some(conn4.0);
+        comm_servo_gaucheRece = Some(conn4.1);
         return Self { info_capteur_droit: None, info_capteur_droitSend, comm_servo_droit: None, comm_servo_droitRece, info_capteur_gauche: None, info_capteur_gaucheSend, comm_servo_gauche: None, comm_servo_gaucheRece, th_ctrl_droit, th_ctrl_gauche, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { info_capteur_droit, info_capteur_droitSend, comm_servo_droit, comm_servo_droitRece, info_capteur_gauche, info_capteur_gaucheSend, comm_servo_gauche, comm_servo_gaucheRece, th_ctrl_droit, th_ctrl_gauche, cpu_id, .. } = self;
         thread::Builder::new()
             .name("th_ctrl_droit".to_string())
-            .spawn(|| { th_ctrl_droit.run() }).unwrap();
+            .spawn(move || { th_ctrl_droit.run() }).unwrap();
         thread::Builder::new()
             .name("th_ctrl_gauche".to_string())
-            .spawn(|| { th_ctrl_gauche.run() }).unwrap();
+            .spawn(move || { th_ctrl_gauche.run() }).unwrap();
         let mut comm_servo_droitRece_rx = comm_servo_droitRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_comm_servo_droitRece".to_string())
@@ -465,21 +463,21 @@ impl Process for p_controleProcess {
 impl Process for p_servomoteurProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut th_servomoteur: servomoteurThread = servomoteurThread::new(cpu_id);
+        let th_servomoteur: servomoteurThread = servomoteurThread::new(cpu_id);
         let mut ordreSend = None;
-        let channel = crossbeam_channel::unbounded();
-        ordreSend = Some(channel.0);
+        let conn1 = crossbeam_channel::unbounded();
+        ordreSend = Some(conn1.0);
         // build connection: 
-            th_servomoteur.ordre = Some(channel.1);
+            th_servomoteur.ordre = Some(conn1.1);
         return Self { ordre: None, ordreSend, th_servomoteur, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { ordre, ordreSend, th_servomoteur, cpu_id, .. } = self;
         thread::Builder::new()
             .name("th_servomoteur".to_string())
-            .spawn(|| { th_servomoteur.run() }).unwrap();
+            .spawn(move || { th_servomoteur.run() }).unwrap();
         let mut ordre_rx = ordre.unwrap();
         thread::Builder::new()
             .name("data_forwarder_ordre".to_string())
@@ -500,15 +498,10 @@ impl Process for p_servomoteurProcess {
 // AADL System: robot
 #[derive(Debug)]
 pub struct robotSystem {
-    #[allow(dead_code)]
     pub proc_capteur_droit: p_capteurProcess,// 子组件进程（proc_capteur_droit : process p_capteur）
-    #[allow(dead_code)]
     pub proc_capteur_gauche: p_capteurProcess,// 子组件进程（proc_capteur_gauche : process p_capteur）
-    #[allow(dead_code)]
     pub proc_controle: p_controleProcess,// 子组件进程（proc_controle : process p_controle）
-    #[allow(dead_code)]
     pub proc_servomoteur_droit: p_servomoteurProcess,// 子组件进程（proc_servomoteur_droit : process p_servomoteur）
-    #[allow(dead_code)]
     pub proc_servomoteur_gauche: p_servomoteurProcess,// 子组件进程（proc_servomoteur_gauche : process p_servomoteur）
 }
 
@@ -520,36 +513,36 @@ impl System for robotSystem {
         let mut proc_controle: p_controleProcess = p_controleProcess::new(3);
         let mut proc_servomoteur_droit: p_servomoteurProcess = p_servomoteurProcess::new(3);
         let mut proc_servomoteur_gauche: p_servomoteurProcess = p_servomoteurProcess::new(3);
-        let channel = crossbeam_channel::unbounded();
+        let conn1 = crossbeam_channel::unbounded();
         // build connection: 
-            proc_capteur_droit.evenement = Some(channel.0);
+            proc_capteur_droit.evenement = Some(conn1.0);
         // build connection: 
-            proc_controle.info_capteur_droit = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            proc_controle.info_capteur_droit = Some(conn1.1);
+        let conn2 = crossbeam_channel::unbounded();
         // build connection: 
-            proc_capteur_gauche.evenement = Some(channel.0);
+            proc_capteur_gauche.evenement = Some(conn2.0);
         // build connection: 
-            proc_controle.info_capteur_gauche = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            proc_controle.info_capteur_gauche = Some(conn2.1);
+        let conn3 = crossbeam_channel::unbounded();
         // build connection: 
-            proc_controle.comm_servo_droit = Some(channel.0);
+            proc_controle.comm_servo_droit = Some(conn3.0);
         // build connection: 
-            proc_servomoteur_droit.ordre = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            proc_servomoteur_droit.ordre = Some(conn3.1);
+        let conn4 = crossbeam_channel::unbounded();
         // build connection: 
-            proc_controle.comm_servo_gauche = Some(channel.0);
+            proc_controle.comm_servo_gauche = Some(conn4.0);
         // build connection: 
-            proc_servomoteur_gauche.ordre = Some(channel.1);
+            proc_servomoteur_gauche.ordre = Some(conn4.1);
         return Self { proc_capteur_droit, proc_capteur_gauche, proc_controle, proc_servomoteur_droit, proc_servomoteur_gauche }  //显式return;
     }
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        self.proc_capteur_droit.start();
-        self.proc_capteur_gauche.start();
-        self.proc_controle.start();
-        self.proc_servomoteur_droit.start();
-        self.proc_servomoteur_gauche.start();
+        self.proc_capteur_droit.run();
+        self.proc_capteur_gauche.run();
+        self.proc_controle.run();
+        self.proc_servomoteur_droit.run();
+        self.proc_servomoteur_gauche.run();
     }
     
 }
@@ -558,10 +551,10 @@ impl System for robotSystem {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

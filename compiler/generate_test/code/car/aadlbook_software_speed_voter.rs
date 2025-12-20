@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: aadlbook_software_speed_voter
-// 生成时间: 2025-12-10 21:18:21
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -38,38 +38,37 @@ pub struct speed_voterProcess {
     pub wheel_sensorSend: Option<BcSender<u16>>,// 内部端口: wheel_sensor In
     pub laser_sensorSend: Option<BcSender<u16>>,// 内部端口: laser_sensor In
     pub speedRece: Option<Receiver<u16>>,// 内部端口: speed Out
-    #[allow(dead_code)]
     pub speed_thr: speed_voter_thrThread,// 子组件线程（speed_thr : thread speed_voter_thr）
 }
 
 impl Process for speed_voterProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut speed_thr: speed_voter_thrThread = speed_voter_thrThread::new(cpu_id);
+        let speed_thr: speed_voter_thrThread = speed_voter_thrThread::new(cpu_id);
         let mut wheel_sensorSend = None;
         let mut laser_sensorSend = None;
         let mut speedRece = None;
-        let channel = crossbeam_channel::unbounded();
-        wheel_sensorSend = Some(channel.0);
+        let c0 = crossbeam_channel::unbounded();
+        wheel_sensorSend = Some(c0.0);
         // build connection: 
-            speed_thr.wheel_sensor = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        laser_sensorSend = Some(channel.0);
+            speed_thr.wheel_sensor = Some(c0.1);
+        let c1 = crossbeam_channel::unbounded();
+        laser_sensorSend = Some(c1.0);
         // build connection: 
-            speed_thr.laser_sensor = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            speed_thr.laser_sensor = Some(c1.1);
+        let c2 = crossbeam_channel::unbounded();
         // build connection: 
-            speed_thr.speed = Some(channel.0);
-        speedRece = Some(channel.1);
+            speed_thr.speed = Some(c2.0);
+        speedRece = Some(c2.1);
         return Self { wheel_sensor: None, wheel_sensorSend, laser_sensor: None, laser_sensorSend, speed: None, speedRece, speed_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { wheel_sensor, wheel_sensorSend, laser_sensor, laser_sensorSend, speed, speedRece, speed_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("speed_thr".to_string())
-            .spawn(|| { speed_thr.run() }).unwrap();
+            .spawn(move || { speed_thr.run() }).unwrap();
         let mut laser_sensor_rx = laser_sensor.unwrap();
         thread::Builder::new()
             .name("data_forwarder_laser_sensor".to_string())
@@ -130,11 +129,11 @@ impl Thread for speed_voter_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             wheel_sensor: None, 
-            laser_sensor: None, 
             speed: None, 
-            dispatch_protocol: "Periodic".to_string(), 
             period: 8, 
             mipsbudget: 8.0, 
+            laser_sensor: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -146,6 +145,7 @@ impl Thread for speed_voter_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         let mut speed_value: u16 = 0;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
@@ -159,8 +159,8 @@ impl Thread for speed_voter_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let laser_sensor = self.laser_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             let wheel_sensor = self.wheel_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let laser_sensor = self.laser_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -178,11 +178,11 @@ impl Thread for speed_voter_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s1 => {
+                        State::s0 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
-                        State::s0 => {
+                        State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
@@ -201,10 +201,10 @@ impl Thread for speed_voter_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

@@ -598,7 +598,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            deadline: 1000, \n            priority: 50, \n            period: 1000, \n            gnc_pos: gnc_pos, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            deadline: 1000, \n            priority: 50, \n            gnc_pos: gnc_pos, \n            period: 1000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -845,6 +845,24 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "next_release",
+                                            ty: None,
+                                            init: Some(
+                                                BinaryOp(
+                                                    Ident(
+                                                        "Instant::now()",
+                                                    ),
+                                                    "+",
+                                                    Ident(
+                                                        "period",
+                                                    ),
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -852,7 +870,7 @@ RustModule {
                                                     Let(
                                                         LetStmt {
                                                             ifmut: false,
-                                                            name: "start",
+                                                            name: "now",
                                                             ty: None,
                                                             init: Some(
                                                                 Call(
@@ -866,6 +884,43 @@ RustModule {
                                                                     [],
                                                                 ),
                                                             ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "now",
+                                                                ),
+                                                                "<",
+                                                                Ident(
+                                                                    "next_release",
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        MethodCall(
+                                                                            Path(
+                                                                                [
+                                                                                    "std",
+                                                                                    "thread",
+                                                                                    "sleep",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            "",
+                                                                            [
+                                                                                Ident(
+                                                                                    "next_release - now",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
                                                         },
                                                     ),
                                                     Expr(
@@ -1063,46 +1118,15 @@ RustModule {
                                                             },
                                                         ),
                                                     ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "elapsed",
-                                                            ty: None,
-                                                            init: Some(
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "start",
-                                                                    ),
-                                                                    "elapsed",
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
                                                     Expr(
-                                                        MethodCall(
-                                                            Path(
-                                                                [
-                                                                    "std",
-                                                                    "thread",
-                                                                    "sleep",
-                                                                ],
-                                                                Namespace,
+                                                        BinaryOp(
+                                                            Ident(
+                                                                "next_release",
                                                             ),
-                                                            "",
-                                                            [
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "period",
-                                                                    ),
-                                                                    "saturating_sub",
-                                                                    [
-                                                                        Ident(
-                                                                            "elapsed",
-                                                                        ),
-                                                                    ],
-                                                                ),
-                                                            ],
+                                                            "+=",
+                                                            Ident(
+                                                                "period",
+                                                            ),
                                                         ),
                                                     ),
                                                 ],
@@ -1253,7 +1277,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Periodic\".to_string(), \n            tmtc_pos: tmtc_pos, \n            priority: 20, \n            period: 100, \n            deadline: 100, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            deadline: 100, \n            priority: 20, \n            period: 100, \n            dispatch_protocol: \"Periodic\".to_string(), \n            tmtc_pos: tmtc_pos, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1500,6 +1524,24 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "next_release",
+                                            ty: None,
+                                            init: Some(
+                                                BinaryOp(
+                                                    Ident(
+                                                        "Instant::now()",
+                                                    ),
+                                                    "+",
+                                                    Ident(
+                                                        "period",
+                                                    ),
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -1507,7 +1549,7 @@ RustModule {
                                                     Let(
                                                         LetStmt {
                                                             ifmut: false,
-                                                            name: "start",
+                                                            name: "now",
                                                             ty: None,
                                                             init: Some(
                                                                 Call(
@@ -1521,6 +1563,43 @@ RustModule {
                                                                     [],
                                                                 ),
                                                             ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "now",
+                                                                ),
+                                                                "<",
+                                                                Ident(
+                                                                    "next_release",
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        MethodCall(
+                                                                            Path(
+                                                                                [
+                                                                                    "std",
+                                                                                    "thread",
+                                                                                    "sleep",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            "",
+                                                                            [
+                                                                                Ident(
+                                                                                    "next_release - now",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
                                                         },
                                                     ),
                                                     Expr(
@@ -1653,46 +1732,15 @@ RustModule {
                                                             },
                                                         ),
                                                     ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "elapsed",
-                                                            ty: None,
-                                                            init: Some(
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "start",
-                                                                    ),
-                                                                    "elapsed",
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
                                                     Expr(
-                                                        MethodCall(
-                                                            Path(
-                                                                [
-                                                                    "std",
-                                                                    "thread",
-                                                                    "sleep",
-                                                                ],
-                                                                Namespace,
+                                                        BinaryOp(
+                                                            Ident(
+                                                                "next_release",
                                                             ),
-                                                            "",
-                                                            [
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "period",
-                                                                    ),
-                                                                    "saturating_sub",
-                                                                    [
-                                                                        Ident(
-                                                                            "elapsed",
-                                                                        ),
-                                                                    ],
-                                                                ),
-                                                            ],
+                                                            "+=",
+                                                            Ident(
+                                                                "period",
+                                                            ),
                                                         ),
                                                     ),
                                                 ],
@@ -1856,7 +1904,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut pos_data",
+                                            name: "pos_data",
                                             ty: Some(
                                                 Named(
                                                     "POSShared",
@@ -1896,7 +1944,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut gnc_th",
+                                            name: "gnc_th",
                                             ty: Some(
                                                 Named(
                                                     "gnc_threadThread",
@@ -1916,11 +1964,23 @@ RustModule {
                                                             "cpu_id",
                                                         ),
                                                         MethodCall(
-                                                            Ident(
-                                                                "pos_data",
+                                                            Path(
+                                                                [
+                                                                    "Arc",
+                                                                    "clone",
+                                                                ],
+                                                                Namespace,
                                                             ),
-                                                            "clone",
-                                                            [],
+                                                            "",
+                                                            [
+                                                                Reference(
+                                                                    Ident(
+                                                                        "pos_data",
+                                                                    ),
+                                                                    true,
+                                                                    false,
+                                                                ),
+                                                            ],
                                                         ),
                                                     ],
                                                 ),
@@ -1930,7 +1990,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut tmtc_th",
+                                            name: "tmtc_th",
                                             ty: Some(
                                                 Named(
                                                     "tmtc_threadThread",
@@ -1950,11 +2010,23 @@ RustModule {
                                                             "cpu_id",
                                                         ),
                                                         MethodCall(
-                                                            Ident(
-                                                                "pos_data",
+                                                            Path(
+                                                                [
+                                                                    "Arc",
+                                                                    "clone",
+                                                                ],
+                                                                Namespace,
                                                             ),
-                                                            "clone",
-                                                            [],
+                                                            "",
+                                                            [
+                                                                Reference(
+                                                                    Ident(
+                                                                        "pos_data",
+                                                                    ),
+                                                                    true,
+                                                                    false,
+                                                                ),
+                                                            ],
                                                         ),
                                                     ],
                                                 ),
@@ -2021,7 +2093,7 @@ RustModule {
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -2047,7 +2119,7 @@ RustModule {
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),

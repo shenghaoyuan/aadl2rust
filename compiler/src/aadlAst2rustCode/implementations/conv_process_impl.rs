@@ -282,10 +282,11 @@ fn get_process_fields(
                 name: sub.identifier.to_lowercase(),
                 ty: field_ty,
                 docs: vec![doc],
-                attrs: vec![Attribute {
-                    name: "allow".to_string(),
-                    args: vec![AttributeArg::Ident("dead_code".to_string())],
-                }],
+                // attrs: vec![Attribute {
+                //     name: "allow".to_string(),
+                //     args: vec![AttributeArg::Ident("dead_code".to_string())],
+                // }],
+                attrs: Vec::new(),
             });
         }
     }
@@ -316,7 +317,7 @@ fn create_process_impl_block(
 
     // 添加start方法
     items.push(ImplItem::Method(FunctionDef {
-        name: "start".to_string(),
+        name: "run".to_string(),
         params: vec![Param {
             name: "self".to_string(),
             ty: Type::Named("Self".to_string()),
@@ -362,10 +363,20 @@ fn create_process_new_body(
                         let data_var = data_name.to_lowercase();
                         let entry = thread_extra_args.entry(thread_key).or_default();
                         // 传递克隆：pos_data.clone()
+                        // entry.push(Expr::MethodCall(
+                        //     Box::new(Expr::Ident(data_var)),
+                        //     "clone".to_string(),
+                        //     Vec::new(),
+                        // ));
+
+                        //修改：显式传递,Arc::clone(&pos_data),即Arc::clone(&data_var)
                         entry.push(Expr::MethodCall(
-                            Box::new(Expr::Ident(data_var)),
-                            "clone".to_string(),
-                            Vec::new(),
+                            Box::new(Expr::Path(
+                                vec!["Arc".to_string(), "clone".to_string()],
+                                PathType::Namespace,
+                            )),
+                            "".to_string(),
+                            vec![Expr::Reference(Box::new(Expr::Ident(data_var)), true, false)],
                         ));
                     }
                     // 其他方向暂不处理
@@ -413,7 +424,7 @@ fn create_process_new_body(
                     );
                     data_inits.push(Statement::Let(LetStmt {
                         ifmut: false,
-                        name: format!("mut {}", var_name),
+                        name: format!("{}", var_name),
                         ty: Some(Type::Named(shared_ty.clone())),
                         init: Some(init_expr),
                     }));
@@ -426,7 +437,7 @@ fn create_process_new_body(
                     }
                     thread_inits.push(Statement::Let(LetStmt {
                         ifmut: false,
-                        name: format!("mut {}", var_name),
+                        name: format!("{}", var_name),
                         ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
                         init: Some(Expr::Call(
                             Box::new(Expr::Path(
@@ -645,7 +656,7 @@ fn create_process_start_body(
             BuilderMethod::Named(format!("\"{}\".to_string()", thread_name)),
             BuilderMethod::Spawn {
                 closure: Box::new(closure),
-                move_kw: false,
+                move_kw: true,
             },
         ];
 

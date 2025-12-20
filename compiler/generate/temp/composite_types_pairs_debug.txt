@@ -2,17 +2,17 @@
     Pair {
         rule: file,
         span: Span {
-            str: "package Base_Types::Example_Types\r\npublic\r\n\twith Data_Model, Base_Types;\r\n\r\n--一维数组\r\ndata One_Dimension_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => 42;\r\nend One_Dimension_Array;\r\n\r\n--二维数组\r\ndata Two_Dimensions_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => (74, 75);\r\nend Two_Dimensions_Array;\r\n\r\n--结构体\r\ndata A_Struct1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Struct1;\r\n\r\ndata A_Struct2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\nend A_Struct2;\r\n\r\ndata implementation A_Struct2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Struct2.impl;\r\n\r\n--联合体\r\ndata A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Union1;\r\n\r\ndata A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;\r\n\r\ndata implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;\r\n\r\n--枚举\r\ndata An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;\r\n\r\n--定点数\r\n-- data A_Fixed_Point\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Fixed;\r\n-- \t\tData_Model::Data_Digits => 18;\r\n-- \t\tData_Model::Data_Scale => 8;\r\n-- end A_Fixed_Point;\r\n\r\n--C语言类型\r\ndata C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;\r\nend Base_Types::Example_Types;",
+            str: "package Base_Types::Example_Types\r\npublic\r\n\twith Data_Model, Base_Types;\r\n\r\n--一维数组\r\ndata One_Dimension_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => 42;\r\nend One_Dimension_Array;\r\n\r\n--二维数组\r\ndata Two_Dimensions_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => (74, 75);\r\nend Two_Dimensions_Array;\r\n\r\n--结构体\r\ndata A_Struct1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Struct1;\r\n\r\ndata A_Struct2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\nend A_Struct2;\r\n\r\ndata implementation A_Struct2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Struct2.impl;\r\n\r\n--联合体\r\ndata A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Union1;\r\n--标记联合体\r\n-- data CJ_taggedUnion\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Struct;\r\n-- \t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n-- \t\t\tclassifier (A_Union1));\r\n-- \t\tData_Model::Element_Names => (\"type\", \"unionData\");\r\n-- end CJ_taggedUnion;\r\n-- struct {\r\n--   type : Integer;      -- 判别字段\r\n--   unionData : union { float f1; char f2; }\r\n-- }\r\n\r\ndata A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;\r\n\r\ndata implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;\r\n\r\ndata A_Tagged_Union\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Tagged_Union;\r\n\r\ndata A_Tagged_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\nend A_Tagged_Union2;\r\n\r\ndata implementation A_Tagged_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Tagged_Union2.impl;\r\n\r\n--枚举\r\ndata An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;\r\n\r\n--定点数\r\n-- data A_Fixed_Point\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Fixed;\r\n-- \t\tData_Model::Data_Digits => 18;\r\n-- \t\tData_Model::Data_Scale => 8;\r\n-- end A_Fixed_Point;\r\n\r\n--C语言类型\r\ndata C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;\r\nend Base_Types::Example_Types;",
             start: 0,
-            end: 2062,
+            end: 2979,
         },
         inner: [
             Pair {
                 rule: package_declaration,
                 span: Span {
-                    str: "package Base_Types::Example_Types\r\npublic\r\n\twith Data_Model, Base_Types;\r\n\r\n--一维数组\r\ndata One_Dimension_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => 42;\r\nend One_Dimension_Array;\r\n\r\n--二维数组\r\ndata Two_Dimensions_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => (74, 75);\r\nend Two_Dimensions_Array;\r\n\r\n--结构体\r\ndata A_Struct1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Struct1;\r\n\r\ndata A_Struct2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\nend A_Struct2;\r\n\r\ndata implementation A_Struct2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Struct2.impl;\r\n\r\n--联合体\r\ndata A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Union1;\r\n\r\ndata A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;\r\n\r\ndata implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;\r\n\r\n--枚举\r\ndata An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;\r\n\r\n--定点数\r\n-- data A_Fixed_Point\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Fixed;\r\n-- \t\tData_Model::Data_Digits => 18;\r\n-- \t\tData_Model::Data_Scale => 8;\r\n-- end A_Fixed_Point;\r\n\r\n--C语言类型\r\ndata C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;\r\nend Base_Types::Example_Types;",
+                    str: "package Base_Types::Example_Types\r\npublic\r\n\twith Data_Model, Base_Types;\r\n\r\n--一维数组\r\ndata One_Dimension_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => 42;\r\nend One_Dimension_Array;\r\n\r\n--二维数组\r\ndata Two_Dimensions_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => (74, 75);\r\nend Two_Dimensions_Array;\r\n\r\n--结构体\r\ndata A_Struct1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Struct1;\r\n\r\ndata A_Struct2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\nend A_Struct2;\r\n\r\ndata implementation A_Struct2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Struct2.impl;\r\n\r\n--联合体\r\ndata A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Union1;\r\n--标记联合体\r\n-- data CJ_taggedUnion\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Struct;\r\n-- \t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n-- \t\t\tclassifier (A_Union1));\r\n-- \t\tData_Model::Element_Names => (\"type\", \"unionData\");\r\n-- end CJ_taggedUnion;\r\n-- struct {\r\n--   type : Integer;      -- 判别字段\r\n--   unionData : union { float f1; char f2; }\r\n-- }\r\n\r\ndata A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;\r\n\r\ndata implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;\r\n\r\ndata A_Tagged_Union\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Tagged_Union;\r\n\r\ndata A_Tagged_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\nend A_Tagged_Union2;\r\n\r\ndata implementation A_Tagged_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Tagged_Union2.impl;\r\n\r\n--枚举\r\ndata An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;\r\n\r\n--定点数\r\n-- data A_Fixed_Point\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Fixed;\r\n-- \t\tData_Model::Data_Digits => 18;\r\n-- \t\tData_Model::Data_Scale => 8;\r\n-- end A_Fixed_Point;\r\n\r\n--C语言类型\r\ndata C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;\r\nend Base_Types::Example_Types;",
                     start: 0,
-                    end: 2062,
+                    end: 2979,
                 },
                 inner: [
                     Pair {
@@ -94,9 +94,9 @@
                     Pair {
                         rule: package_sections,
                         span: Span {
-                            str: "data One_Dimension_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => 42;\r\nend One_Dimension_Array;\r\n\r\n--二维数组\r\ndata Two_Dimensions_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => (74, 75);\r\nend Two_Dimensions_Array;\r\n\r\n--结构体\r\ndata A_Struct1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Struct1;\r\n\r\ndata A_Struct2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\nend A_Struct2;\r\n\r\ndata implementation A_Struct2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Struct2.impl;\r\n\r\n--联合体\r\ndata A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Union1;\r\n\r\ndata A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;\r\n\r\ndata implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;\r\n\r\n--枚举\r\ndata An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;\r\n\r\n--定点数\r\n-- data A_Fixed_Point\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Fixed;\r\n-- \t\tData_Model::Data_Digits => 18;\r\n-- \t\tData_Model::Data_Scale => 8;\r\n-- end A_Fixed_Point;\r\n\r\n--C语言类型\r\ndata C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;",
+                            str: "data One_Dimension_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => 42;\r\nend One_Dimension_Array;\r\n\r\n--二维数组\r\ndata Two_Dimensions_Array\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Array;\r\n\t\tData_Model::Base_Type => classifier (Base_Types::Integer);\r\n\t\tData_Model::Dimension => (74, 75);\r\nend Two_Dimensions_Array;\r\n\r\n--结构体\r\ndata A_Struct1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Struct1;\r\n\r\ndata A_Struct2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Struct;\r\nend A_Struct2;\r\n\r\ndata implementation A_Struct2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Struct2.impl;\r\n\r\n--联合体\r\ndata A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Union1;\r\n--标记联合体\r\n-- data CJ_taggedUnion\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Struct;\r\n-- \t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n-- \t\t\tclassifier (A_Union1));\r\n-- \t\tData_Model::Element_Names => (\"type\", \"unionData\");\r\n-- end CJ_taggedUnion;\r\n-- struct {\r\n--   type : Integer;      -- 判别字段\r\n--   unionData : union { float f1; char f2; }\r\n-- }\r\n\r\ndata A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;\r\n\r\ndata implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;\r\n\r\ndata A_Tagged_Union\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Tagged_Union;\r\n\r\ndata A_Tagged_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\nend A_Tagged_Union2;\r\n\r\ndata implementation A_Tagged_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Tagged_Union2.impl;\r\n\r\n--枚举\r\ndata An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;\r\n\r\n--定点数\r\n-- data A_Fixed_Point\r\n-- \tproperties\r\n-- \t\tData_Model::Data_Representation => Fixed;\r\n-- \t\tData_Model::Data_Digits => 18;\r\n-- \t\tData_Model::Data_Scale => 8;\r\n-- end A_Fixed_Point;\r\n\r\n--C语言类型\r\ndata C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;",
                             start: 92,
-                            end: 2030,
+                            end: 2947,
                         },
                         inner: [
                             Pair {
@@ -1298,17 +1298,17 @@
                             Pair {
                                 rule: declaration,
                                 span: Span {
-                                    str: "data A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Union1;",
+                                    str: "data A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Union1;",
                                     start: 1029,
-                                    end: 1263,
+                                    end: 1265,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
-                                            str: "data A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Union1;",
+                                            str: "data A_Union1\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");\r\nend A_Union1;",
                                             start: 1029,
-                                            end: 1263,
+                                            end: 1265,
                                         },
                                         inner: [
                                             Pair {
@@ -1332,9 +1332,9 @@
                                             Pair {
                                                 rule: properties,
                                                 span: Span {
-                                                    str: "properties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");",
+                                                    str: "properties\r\n\t\tData_Model::Data_Representation => Union;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"c2\");",
                                                     start: 1045,
-                                                    end: 1248,
+                                                    end: 1250,
                                                 },
                                                 inner: [
                                                     Pair {
@@ -1406,9 +1406,9 @@
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
-                                                            str: "Data_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));",
+                                                            str: "Data_Model::Base_Type => (classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character));",
                                                             start: 1104,
-                                                            end: 1202,
+                                                            end: 1204,
                                                         },
                                                         inner: [
                                                             Pair {
@@ -1441,41 +1441,41 @@
                                                             Pair {
                                                                 rule: property_value,
                                                                 span: Span {
-                                                                    str: "(classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character))",
+                                                                    str: "(classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character))",
                                                                     start: 1129,
-                                                                    end: 1201,
+                                                                    end: 1203,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: list_value,
                                                                         span: Span {
-                                                                            str: "(classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character))",
+                                                                            str: "(classifier (Base_Types::Integer),\r\n\t\t\tclassifier (Base_Types::Character))",
                                                                             start: 1129,
-                                                                            end: 1201,
+                                                                            end: 1203,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: property_value,
                                                                                 span: Span {
-                                                                                    str: "classifier (Base_Types::Float)",
+                                                                                    str: "classifier (Base_Types::Integer)",
                                                                                     start: 1130,
-                                                                                    end: 1160,
+                                                                                    end: 1162,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: component_classifier_value,
                                                                                         span: Span {
-                                                                                            str: "classifier (Base_Types::Float)",
+                                                                                            str: "classifier (Base_Types::Integer)",
                                                                                             start: 1130,
-                                                                                            end: 1160,
+                                                                                            end: 1162,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: qualified_identifier,
                                                                                                 span: Span {
-                                                                                                    str: "Base_Types::Float",
+                                                                                                    str: "Base_Types::Integer",
                                                                                                     start: 1142,
-                                                                                                    end: 1159,
+                                                                                                    end: 1161,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -1487,24 +1487,24 @@
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "classifier (Base_Types::Character)",
-                                                                                    start: 1166,
-                                                                                    end: 1200,
+                                                                                    start: 1168,
+                                                                                    end: 1202,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: component_classifier_value,
                                                                                         span: Span {
                                                                                             str: "classifier (Base_Types::Character)",
-                                                                                            start: 1166,
-                                                                                            end: 1200,
+                                                                                            start: 1168,
+                                                                                            end: 1202,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: qualified_identifier,
                                                                                                 span: Span {
                                                                                                     str: "Base_Types::Character",
-                                                                                                    start: 1178,
-                                                                                                    end: 1199,
+                                                                                                    start: 1180,
+                                                                                                    end: 1201,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -1521,17 +1521,17 @@
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
-                                                            str: "Data_Model::Element_Names => (\"f1\", \"f2\");",
-                                                            start: 1206,
-                                                            end: 1248,
+                                                            str: "Data_Model::Element_Names => (\"f1\", \"c2\");",
+                                                            start: 1208,
+                                                            end: 1250,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Model",
-                                                                    start: 1206,
-                                                                    end: 1216,
+                                                                    start: 1208,
+                                                                    end: 1218,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1539,8 +1539,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Element_Names",
-                                                                    start: 1218,
-                                                                    end: 1231,
+                                                                    start: 1220,
+                                                                    end: 1233,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1548,49 +1548,49 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1232,
-                                                                    end: 1234,
+                                                                    start: 1234,
+                                                                    end: 1236,
                                                                 },
                                                                 inner: [],
                                                             },
                                                             Pair {
                                                                 rule: property_value,
                                                                 span: Span {
-                                                                    str: "(\"f1\", \"f2\")",
-                                                                    start: 1235,
-                                                                    end: 1247,
+                                                                    str: "(\"f1\", \"c2\")",
+                                                                    start: 1237,
+                                                                    end: 1249,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: list_value,
                                                                         span: Span {
-                                                                            str: "(\"f1\", \"f2\")",
-                                                                            start: 1235,
-                                                                            end: 1247,
+                                                                            str: "(\"f1\", \"c2\")",
+                                                                            start: 1237,
+                                                                            end: 1249,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "\"f1\"",
-                                                                                    start: 1236,
-                                                                                    end: 1240,
+                                                                                    start: 1238,
+                                                                                    end: 1242,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
                                                                                             str: "\"f1\"",
-                                                                                            start: 1236,
-                                                                                            end: 1240,
+                                                                                            start: 1238,
+                                                                                            end: 1242,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
                                                                                                     str: "\"f1\"",
-                                                                                                    start: 1236,
-                                                                                                    end: 1240,
+                                                                                                    start: 1238,
+                                                                                                    end: 1242,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -1601,25 +1601,25 @@
                                                                             Pair {
                                                                                 rule: property_value,
                                                                                 span: Span {
-                                                                                    str: "\"f2\"",
-                                                                                    start: 1242,
-                                                                                    end: 1246,
+                                                                                    str: "\"c2\"",
+                                                                                    start: 1244,
+                                                                                    end: 1248,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
-                                                                                            str: "\"f2\"",
-                                                                                            start: 1242,
-                                                                                            end: 1246,
+                                                                                            str: "\"c2\"",
+                                                                                            start: 1244,
+                                                                                            end: 1248,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
-                                                                                                    str: "\"f2\"",
-                                                                                                    start: 1242,
-                                                                                                    end: 1246,
+                                                                                                    str: "\"c2\"",
+                                                                                                    start: 1244,
+                                                                                                    end: 1248,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -1639,8 +1639,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "A_Union1",
-                                                    start: 1254,
-                                                    end: 1262,
+                                                    start: 1256,
+                                                    end: 1264,
                                                 },
                                                 inner: [],
                                             },
@@ -1652,24 +1652,24 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "data A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;",
-                                    start: 1267,
-                                    end: 1353,
+                                    start: 1665,
+                                    end: 1751,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
                                             str: "data A_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Union;\r\nend A_Union2;",
-                                            start: 1267,
-                                            end: 1353,
+                                            start: 1665,
+                                            end: 1751,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "data",
-                                                    start: 1267,
-                                                    end: 1271,
+                                                    start: 1665,
+                                                    end: 1669,
                                                 },
                                                 inner: [],
                                             },
@@ -1677,8 +1677,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "A_Union2",
-                                                    start: 1272,
-                                                    end: 1280,
+                                                    start: 1670,
+                                                    end: 1678,
                                                 },
                                                 inner: [],
                                             },
@@ -1686,24 +1686,24 @@
                                                 rule: properties,
                                                 span: Span {
                                                     str: "properties\r\n\t\tData_Model::Data_Representation => Union;\r\n",
-                                                    start: 1283,
-                                                    end: 1340,
+                                                    start: 1681,
+                                                    end: 1738,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Data_Model::Data_Representation => Union;",
-                                                            start: 1297,
-                                                            end: 1338,
+                                                            start: 1695,
+                                                            end: 1736,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Model",
-                                                                    start: 1297,
-                                                                    end: 1307,
+                                                                    start: 1695,
+                                                                    end: 1705,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1711,8 +1711,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Representation",
-                                                                    start: 1309,
-                                                                    end: 1328,
+                                                                    start: 1707,
+                                                                    end: 1726,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1720,8 +1720,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1329,
-                                                                    end: 1331,
+                                                                    start: 1727,
+                                                                    end: 1729,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1729,24 +1729,24 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "Union",
-                                                                    start: 1332,
-                                                                    end: 1337,
+                                                                    start: 1730,
+                                                                    end: 1735,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: literal_value,
                                                                         span: Span {
                                                                             str: "Union",
-                                                                            start: 1332,
-                                                                            end: 1337,
+                                                                            start: 1730,
+                                                                            end: 1735,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: enum_value,
                                                                                 span: Span {
                                                                                     str: "Union",
-                                                                                    start: 1332,
-                                                                                    end: 1337,
+                                                                                    start: 1730,
+                                                                                    end: 1735,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -1762,8 +1762,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "A_Union2",
-                                                    start: 1344,
-                                                    end: 1352,
+                                                    start: 1742,
+                                                    end: 1750,
                                                 },
                                                 inner: [],
                                             },
@@ -1775,24 +1775,24 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "data implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;",
-                                    start: 1357,
-                                    end: 1492,
+                                    start: 1755,
+                                    end: 1890,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_implementation,
                                         span: Span {
                                             str: "data implementation A_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Union2.impl;",
-                                            start: 1357,
-                                            end: 1492,
+                                            start: 1755,
+                                            end: 1890,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "data",
-                                                    start: 1357,
-                                                    end: 1361,
+                                                    start: 1755,
+                                                    end: 1759,
                                                 },
                                                 inner: [],
                                             },
@@ -1800,8 +1800,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "A_Union2.impl",
-                                                    start: 1377,
-                                                    end: 1390,
+                                                    start: 1775,
+                                                    end: 1788,
                                                 },
                                                 inner: [],
                                             },
@@ -1809,24 +1809,24 @@
                                                 rule: subcomponents,
                                                 span: Span {
                                                     str: "subcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;",
-                                                    start: 1393,
-                                                    end: 1472,
+                                                    start: 1791,
+                                                    end: 1870,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: subcomponent,
                                                         span: Span {
                                                             str: "f1: data Base_Types::Float;",
-                                                            start: 1410,
-                                                            end: 1437,
+                                                            start: 1808,
+                                                            end: 1835,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "f1",
-                                                                    start: 1410,
-                                                                    end: 1412,
+                                                                    start: 1808,
+                                                                    end: 1810,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1834,8 +1834,8 @@
                                                                 rule: component_category,
                                                                 span: Span {
                                                                     str: "data",
-                                                                    start: 1414,
-                                                                    end: 1418,
+                                                                    start: 1812,
+                                                                    end: 1816,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1843,8 +1843,8 @@
                                                                 rule: qualified_identifier,
                                                                 span: Span {
                                                                     str: "Base_Types::Float",
-                                                                    start: 1419,
-                                                                    end: 1436,
+                                                                    start: 1817,
+                                                                    end: 1834,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1854,16 +1854,16 @@
                                                         rule: subcomponent,
                                                         span: Span {
                                                             str: "c2: data Base_Types::Character;",
-                                                            start: 1441,
-                                                            end: 1472,
+                                                            start: 1839,
+                                                            end: 1870,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "c2",
-                                                                    start: 1441,
-                                                                    end: 1443,
+                                                                    start: 1839,
+                                                                    end: 1841,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1871,8 +1871,8 @@
                                                                 rule: component_category,
                                                                 span: Span {
                                                                     str: "data",
-                                                                    start: 1445,
-                                                                    end: 1449,
+                                                                    start: 1843,
+                                                                    end: 1847,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1880,8 +1880,8 @@
                                                                 rule: qualified_identifier,
                                                                 span: Span {
                                                                     str: "Base_Types::Character",
-                                                                    start: 1450,
-                                                                    end: 1471,
+                                                                    start: 1848,
+                                                                    end: 1869,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1893,8 +1893,615 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "A_Union2.impl",
-                                                    start: 1478,
-                                                    end: 1491,
+                                                    start: 1876,
+                                                    end: 1889,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "data A_Tagged_Union\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Tagged_Union;",
+                                    start: 1894,
+                                    end: 2146,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "data A_Tagged_Union\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");\r\nend A_Tagged_Union;",
+                                            start: 1894,
+                                            end: 2146,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "data",
+                                                    start: 1894,
+                                                    end: 1898,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "A_Tagged_Union",
+                                                    start: 1899,
+                                                    end: 1913,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n\t\tData_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));\r\n\t\tData_Model::Element_Names => (\"f1\", \"f2\");",
+                                                    start: 1916,
+                                                    end: 2125,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Data_Model::Data_Representation => TaggedUnion;",
+                                                            start: 1930,
+                                                            end: 1977,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Data_Model",
+                                                                    start: 1930,
+                                                                    end: 1940,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Data_Representation",
+                                                                    start: 1942,
+                                                                    end: 1961,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 1962,
+                                                                    end: 1964,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "TaggedUnion",
+                                                                    start: 1965,
+                                                                    end: 1976,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "TaggedUnion",
+                                                                            start: 1965,
+                                                                            end: 1976,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: enum_value,
+                                                                                span: Span {
+                                                                                    str: "TaggedUnion",
+                                                                                    start: 1965,
+                                                                                    end: 1976,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Data_Model::Base_Type => (classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character));",
+                                                            start: 1981,
+                                                            end: 2079,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Data_Model",
+                                                                    start: 1981,
+                                                                    end: 1991,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Base_Type",
+                                                                    start: 1993,
+                                                                    end: 2002,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 2003,
+                                                                    end: 2005,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character))",
+                                                                    start: 2006,
+                                                                    end: 2078,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: list_value,
+                                                                        span: Span {
+                                                                            str: "(classifier (Base_Types::Float),\r\n\t\t\tclassifier (Base_Types::Character))",
+                                                                            start: 2006,
+                                                                            end: 2078,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: property_value,
+                                                                                span: Span {
+                                                                                    str: "classifier (Base_Types::Float)",
+                                                                                    start: 2007,
+                                                                                    end: 2037,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: component_classifier_value,
+                                                                                        span: Span {
+                                                                                            str: "classifier (Base_Types::Float)",
+                                                                                            start: 2007,
+                                                                                            end: 2037,
+                                                                                        },
+                                                                                        inner: [
+                                                                                            Pair {
+                                                                                                rule: qualified_identifier,
+                                                                                                span: Span {
+                                                                                                    str: "Base_Types::Float",
+                                                                                                    start: 2019,
+                                                                                                    end: 2036,
+                                                                                                },
+                                                                                                inner: [],
+                                                                                            },
+                                                                                        ],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: property_value,
+                                                                                span: Span {
+                                                                                    str: "classifier (Base_Types::Character)",
+                                                                                    start: 2043,
+                                                                                    end: 2077,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: component_classifier_value,
+                                                                                        span: Span {
+                                                                                            str: "classifier (Base_Types::Character)",
+                                                                                            start: 2043,
+                                                                                            end: 2077,
+                                                                                        },
+                                                                                        inner: [
+                                                                                            Pair {
+                                                                                                rule: qualified_identifier,
+                                                                                                span: Span {
+                                                                                                    str: "Base_Types::Character",
+                                                                                                    start: 2055,
+                                                                                                    end: 2076,
+                                                                                                },
+                                                                                                inner: [],
+                                                                                            },
+                                                                                        ],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Data_Model::Element_Names => (\"f1\", \"f2\");",
+                                                            start: 2083,
+                                                            end: 2125,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Data_Model",
+                                                                    start: 2083,
+                                                                    end: 2093,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Element_Names",
+                                                                    start: 2095,
+                                                                    end: 2108,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 2109,
+                                                                    end: 2111,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "(\"f1\", \"f2\")",
+                                                                    start: 2112,
+                                                                    end: 2124,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: list_value,
+                                                                        span: Span {
+                                                                            str: "(\"f1\", \"f2\")",
+                                                                            start: 2112,
+                                                                            end: 2124,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: property_value,
+                                                                                span: Span {
+                                                                                    str: "\"f1\"",
+                                                                                    start: 2113,
+                                                                                    end: 2117,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: literal_value,
+                                                                                        span: Span {
+                                                                                            str: "\"f1\"",
+                                                                                            start: 2113,
+                                                                                            end: 2117,
+                                                                                        },
+                                                                                        inner: [
+                                                                                            Pair {
+                                                                                                rule: string_literal,
+                                                                                                span: Span {
+                                                                                                    str: "\"f1\"",
+                                                                                                    start: 2113,
+                                                                                                    end: 2117,
+                                                                                                },
+                                                                                                inner: [],
+                                                                                            },
+                                                                                        ],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                            Pair {
+                                                                                rule: property_value,
+                                                                                span: Span {
+                                                                                    str: "\"f2\"",
+                                                                                    start: 2119,
+                                                                                    end: 2123,
+                                                                                },
+                                                                                inner: [
+                                                                                    Pair {
+                                                                                        rule: literal_value,
+                                                                                        span: Span {
+                                                                                            str: "\"f2\"",
+                                                                                            start: 2119,
+                                                                                            end: 2123,
+                                                                                        },
+                                                                                        inner: [
+                                                                                            Pair {
+                                                                                                rule: string_literal,
+                                                                                                span: Span {
+                                                                                                    str: "\"f2\"",
+                                                                                                    start: 2119,
+                                                                                                    end: 2123,
+                                                                                                },
+                                                                                                inner: [],
+                                                                                            },
+                                                                                        ],
+                                                                                    },
+                                                                                ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "A_Tagged_Union",
+                                                    start: 2131,
+                                                    end: 2145,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "data A_Tagged_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\nend A_Tagged_Union2;",
+                                    start: 2150,
+                                    end: 2256,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_type,
+                                        span: Span {
+                                            str: "data A_Tagged_Union2\r\n\tproperties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\nend A_Tagged_Union2;",
+                                            start: 2150,
+                                            end: 2256,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "data",
+                                                    start: 2150,
+                                                    end: 2154,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "A_Tagged_Union2",
+                                                    start: 2155,
+                                                    end: 2170,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: properties,
+                                                span: Span {
+                                                    str: "properties\r\n\t\tData_Model::Data_Representation => TaggedUnion;\r\n",
+                                                    start: 2173,
+                                                    end: 2236,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: property_association,
+                                                        span: Span {
+                                                            str: "Data_Model::Data_Representation => TaggedUnion;",
+                                                            start: 2187,
+                                                            end: 2234,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Data_Model",
+                                                                    start: 2187,
+                                                                    end: 2197,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "Data_Representation",
+                                                                    start: 2199,
+                                                                    end: 2218,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_operator,
+                                                                span: Span {
+                                                                    str: "=>",
+                                                                    start: 2219,
+                                                                    end: 2221,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: property_value,
+                                                                span: Span {
+                                                                    str: "TaggedUnion",
+                                                                    start: 2222,
+                                                                    end: 2233,
+                                                                },
+                                                                inner: [
+                                                                    Pair {
+                                                                        rule: literal_value,
+                                                                        span: Span {
+                                                                            str: "TaggedUnion",
+                                                                            start: 2222,
+                                                                            end: 2233,
+                                                                        },
+                                                                        inner: [
+                                                                            Pair {
+                                                                                rule: enum_value,
+                                                                                span: Span {
+                                                                                    str: "TaggedUnion",
+                                                                                    start: 2222,
+                                                                                    end: 2233,
+                                                                                },
+                                                                                inner: [],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "A_Tagged_Union2",
+                                                    start: 2240,
+                                                    end: 2255,
+                                                },
+                                                inner: [],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                            Pair {
+                                rule: declaration,
+                                span: Span {
+                                    str: "data implementation A_Tagged_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Tagged_Union2.impl;",
+                                    start: 2260,
+                                    end: 2409,
+                                },
+                                inner: [
+                                    Pair {
+                                        rule: component_implementation,
+                                        span: Span {
+                                            str: "data implementation A_Tagged_Union2.impl\r\n\tsubcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;\r\nend A_Tagged_Union2.impl;",
+                                            start: 2260,
+                                            end: 2409,
+                                        },
+                                        inner: [
+                                            Pair {
+                                                rule: component_category,
+                                                span: Span {
+                                                    str: "data",
+                                                    start: 2260,
+                                                    end: 2264,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "A_Tagged_Union2.impl",
+                                                    start: 2280,
+                                                    end: 2300,
+                                                },
+                                                inner: [],
+                                            },
+                                            Pair {
+                                                rule: subcomponents,
+                                                span: Span {
+                                                    str: "subcomponents\r\n\t\tf1: data Base_Types::Float;\r\n\t\tc2: data Base_Types::Character;",
+                                                    start: 2303,
+                                                    end: 2382,
+                                                },
+                                                inner: [
+                                                    Pair {
+                                                        rule: subcomponent,
+                                                        span: Span {
+                                                            str: "f1: data Base_Types::Float;",
+                                                            start: 2320,
+                                                            end: 2347,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "f1",
+                                                                    start: 2320,
+                                                                    end: 2322,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: component_category,
+                                                                span: Span {
+                                                                    str: "data",
+                                                                    start: 2324,
+                                                                    end: 2328,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: qualified_identifier,
+                                                                span: Span {
+                                                                    str: "Base_Types::Float",
+                                                                    start: 2329,
+                                                                    end: 2346,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                    Pair {
+                                                        rule: subcomponent,
+                                                        span: Span {
+                                                            str: "c2: data Base_Types::Character;",
+                                                            start: 2351,
+                                                            end: 2382,
+                                                        },
+                                                        inner: [
+                                                            Pair {
+                                                                rule: identifier,
+                                                                span: Span {
+                                                                    str: "c2",
+                                                                    start: 2351,
+                                                                    end: 2353,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: component_category,
+                                                                span: Span {
+                                                                    str: "data",
+                                                                    start: 2355,
+                                                                    end: 2359,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                            Pair {
+                                                                rule: qualified_identifier,
+                                                                span: Span {
+                                                                    str: "Base_Types::Character",
+                                                                    start: 2360,
+                                                                    end: 2381,
+                                                                },
+                                                                inner: [],
+                                                            },
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            Pair {
+                                                rule: identifier,
+                                                span: Span {
+                                                    str: "A_Tagged_Union2.impl",
+                                                    start: 2388,
+                                                    end: 2408,
                                                 },
                                                 inner: [],
                                             },
@@ -1906,24 +2513,24 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "data An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;",
-                                    start: 1506,
-                                    end: 1682,
+                                    start: 2423,
+                                    end: 2599,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
                                             str: "data An_Enum\r\n\tproperties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");\r\nend An_Enum;",
-                                            start: 1506,
-                                            end: 1682,
+                                            start: 2423,
+                                            end: 2599,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "data",
-                                                    start: 1506,
-                                                    end: 1510,
+                                                    start: 2423,
+                                                    end: 2427,
                                                 },
                                                 inner: [],
                                             },
@@ -1931,8 +2538,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "An_Enum",
-                                                    start: 1511,
-                                                    end: 1518,
+                                                    start: 2428,
+                                                    end: 2435,
                                                 },
                                                 inner: [],
                                             },
@@ -1940,24 +2547,24 @@
                                                 rule: properties,
                                                 span: Span {
                                                     str: "properties\r\n\t\tData_Model::Data_Representation => Enum;\r\n\t\tData_Model::Enumerators => (\"foo\", \"bar\");\r\n\t\tData_Model::Representation => (\"00\", \"11\");",
-                                                    start: 1521,
-                                                    end: 1668,
+                                                    start: 2438,
+                                                    end: 2585,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Data_Model::Data_Representation => Enum;",
-                                                            start: 1535,
-                                                            end: 1575,
+                                                            start: 2452,
+                                                            end: 2492,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Model",
-                                                                    start: 1535,
-                                                                    end: 1545,
+                                                                    start: 2452,
+                                                                    end: 2462,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1965,8 +2572,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Representation",
-                                                                    start: 1547,
-                                                                    end: 1566,
+                                                                    start: 2464,
+                                                                    end: 2483,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1974,8 +2581,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1567,
-                                                                    end: 1569,
+                                                                    start: 2484,
+                                                                    end: 2486,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -1983,24 +2590,24 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "Enum",
-                                                                    start: 1570,
-                                                                    end: 1574,
+                                                                    start: 2487,
+                                                                    end: 2491,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: literal_value,
                                                                         span: Span {
                                                                             str: "Enum",
-                                                                            start: 1570,
-                                                                            end: 1574,
+                                                                            start: 2487,
+                                                                            end: 2491,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: enum_value,
                                                                                 span: Span {
                                                                                     str: "Enum",
-                                                                                    start: 1570,
-                                                                                    end: 1574,
+                                                                                    start: 2487,
+                                                                                    end: 2491,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -2014,16 +2621,16 @@
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Data_Model::Enumerators => (\"foo\", \"bar\");",
-                                                            start: 1579,
-                                                            end: 1621,
+                                                            start: 2496,
+                                                            end: 2538,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Model",
-                                                                    start: 1579,
-                                                                    end: 1589,
+                                                                    start: 2496,
+                                                                    end: 2506,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2031,8 +2638,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Enumerators",
-                                                                    start: 1591,
-                                                                    end: 1602,
+                                                                    start: 2508,
+                                                                    end: 2519,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2040,8 +2647,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1603,
-                                                                    end: 1605,
+                                                                    start: 2520,
+                                                                    end: 2522,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2049,40 +2656,40 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "(\"foo\", \"bar\")",
-                                                                    start: 1606,
-                                                                    end: 1620,
+                                                                    start: 2523,
+                                                                    end: 2537,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: list_value,
                                                                         span: Span {
                                                                             str: "(\"foo\", \"bar\")",
-                                                                            start: 1606,
-                                                                            end: 1620,
+                                                                            start: 2523,
+                                                                            end: 2537,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "\"foo\"",
-                                                                                    start: 1607,
-                                                                                    end: 1612,
+                                                                                    start: 2524,
+                                                                                    end: 2529,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
                                                                                             str: "\"foo\"",
-                                                                                            start: 1607,
-                                                                                            end: 1612,
+                                                                                            start: 2524,
+                                                                                            end: 2529,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
                                                                                                     str: "\"foo\"",
-                                                                                                    start: 1607,
-                                                                                                    end: 1612,
+                                                                                                    start: 2524,
+                                                                                                    end: 2529,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -2094,24 +2701,24 @@
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "\"bar\"",
-                                                                                    start: 1614,
-                                                                                    end: 1619,
+                                                                                    start: 2531,
+                                                                                    end: 2536,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
                                                                                             str: "\"bar\"",
-                                                                                            start: 1614,
-                                                                                            end: 1619,
+                                                                                            start: 2531,
+                                                                                            end: 2536,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
                                                                                                     str: "\"bar\"",
-                                                                                                    start: 1614,
-                                                                                                    end: 1619,
+                                                                                                    start: 2531,
+                                                                                                    end: 2536,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -2129,16 +2736,16 @@
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Data_Model::Representation => (\"00\", \"11\");",
-                                                            start: 1625,
-                                                            end: 1668,
+                                                            start: 2542,
+                                                            end: 2585,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Data_Model",
-                                                                    start: 1625,
-                                                                    end: 1635,
+                                                                    start: 2542,
+                                                                    end: 2552,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2146,8 +2753,8 @@
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Representation",
-                                                                    start: 1637,
-                                                                    end: 1651,
+                                                                    start: 2554,
+                                                                    end: 2568,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2155,8 +2762,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1652,
-                                                                    end: 1654,
+                                                                    start: 2569,
+                                                                    end: 2571,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2164,40 +2771,40 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "(\"00\", \"11\")",
-                                                                    start: 1655,
-                                                                    end: 1667,
+                                                                    start: 2572,
+                                                                    end: 2584,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: list_value,
                                                                         span: Span {
                                                                             str: "(\"00\", \"11\")",
-                                                                            start: 1655,
-                                                                            end: 1667,
+                                                                            start: 2572,
+                                                                            end: 2584,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "\"00\"",
-                                                                                    start: 1656,
-                                                                                    end: 1660,
+                                                                                    start: 2573,
+                                                                                    end: 2577,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
                                                                                             str: "\"00\"",
-                                                                                            start: 1656,
-                                                                                            end: 1660,
+                                                                                            start: 2573,
+                                                                                            end: 2577,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
                                                                                                     str: "\"00\"",
-                                                                                                    start: 1656,
-                                                                                                    end: 1660,
+                                                                                                    start: 2573,
+                                                                                                    end: 2577,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -2209,24 +2816,24 @@
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "\"11\"",
-                                                                                    start: 1662,
-                                                                                    end: 1666,
+                                                                                    start: 2579,
+                                                                                    end: 2583,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
                                                                                             str: "\"11\"",
-                                                                                            start: 1662,
-                                                                                            end: 1666,
+                                                                                            start: 2579,
+                                                                                            end: 2583,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
                                                                                                     str: "\"11\"",
-                                                                                                    start: 1662,
-                                                                                                    end: 1666,
+                                                                                                    start: 2579,
+                                                                                                    end: 2583,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -2246,8 +2853,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "An_Enum",
-                                                    start: 1674,
-                                                    end: 1681,
+                                                    start: 2591,
+                                                    end: 2598,
                                                 },
                                                 inner: [],
                                             },
@@ -2259,24 +2866,24 @@
                                 rule: declaration,
                                 span: Span {
                                     str: "data C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;",
-                                    start: 1900,
-                                    end: 2030,
+                                    start: 2817,
+                                    end: 2947,
                                 },
                                 inner: [
                                     Pair {
                                         rule: component_type,
                                         span: Span {
                                             str: "data C_Type\r\n\tproperties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";\r\nend C_Type;",
-                                            start: 1900,
-                                            end: 2030,
+                                            start: 2817,
+                                            end: 2947,
                                         },
                                         inner: [
                                             Pair {
                                                 rule: component_category,
                                                 span: Span {
                                                     str: "data",
-                                                    start: 1900,
-                                                    end: 1904,
+                                                    start: 2817,
+                                                    end: 2821,
                                                 },
                                                 inner: [],
                                             },
@@ -2284,8 +2891,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "C_Type",
-                                                    start: 1905,
-                                                    end: 1911,
+                                                    start: 2822,
+                                                    end: 2828,
                                                 },
                                                 inner: [],
                                             },
@@ -2293,24 +2900,24 @@
                                                 rule: properties,
                                                 span: Span {
                                                     str: "properties\r\n\t\tSource_Language => (C);\r\n\t\tSource_Text => (\"types.h\");\r\n\t\tType_Source_Name => \"the_type\";",
-                                                    start: 1914,
-                                                    end: 2017,
+                                                    start: 2831,
+                                                    end: 2934,
                                                 },
                                                 inner: [
                                                     Pair {
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Source_Language => (C);",
-                                                            start: 1928,
-                                                            end: 1951,
+                                                            start: 2845,
+                                                            end: 2868,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Source_Language",
-                                                                    start: 1928,
-                                                                    end: 1943,
+                                                                    start: 2845,
+                                                                    end: 2860,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2318,8 +2925,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1944,
-                                                                    end: 1946,
+                                                                    start: 2861,
+                                                                    end: 2863,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2327,24 +2934,24 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "(C)",
-                                                                    start: 1947,
-                                                                    end: 1950,
+                                                                    start: 2864,
+                                                                    end: 2867,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: literal_value,
                                                                         span: Span {
                                                                             str: "(C)",
-                                                                            start: 1947,
-                                                                            end: 1950,
+                                                                            start: 2864,
+                                                                            end: 2867,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: string_literal,
                                                                                 span: Span {
                                                                                     str: "(C)",
-                                                                                    start: 1947,
-                                                                                    end: 1950,
+                                                                                    start: 2864,
+                                                                                    end: 2867,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -2358,16 +2965,16 @@
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Source_Text => (\"types.h\");",
-                                                            start: 1955,
-                                                            end: 1982,
+                                                            start: 2872,
+                                                            end: 2899,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Source_Text",
-                                                                    start: 1955,
-                                                                    end: 1966,
+                                                                    start: 2872,
+                                                                    end: 2883,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2375,8 +2982,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 1967,
-                                                                    end: 1969,
+                                                                    start: 2884,
+                                                                    end: 2886,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2384,40 +2991,40 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "(\"types.h\")",
-                                                                    start: 1970,
-                                                                    end: 1981,
+                                                                    start: 2887,
+                                                                    end: 2898,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: list_value,
                                                                         span: Span {
                                                                             str: "(\"types.h\")",
-                                                                            start: 1970,
-                                                                            end: 1981,
+                                                                            start: 2887,
+                                                                            end: 2898,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: property_value,
                                                                                 span: Span {
                                                                                     str: "\"types.h\"",
-                                                                                    start: 1971,
-                                                                                    end: 1980,
+                                                                                    start: 2888,
+                                                                                    end: 2897,
                                                                                 },
                                                                                 inner: [
                                                                                     Pair {
                                                                                         rule: literal_value,
                                                                                         span: Span {
                                                                                             str: "\"types.h\"",
-                                                                                            start: 1971,
-                                                                                            end: 1980,
+                                                                                            start: 2888,
+                                                                                            end: 2897,
                                                                                         },
                                                                                         inner: [
                                                                                             Pair {
                                                                                                 rule: string_literal,
                                                                                                 span: Span {
                                                                                                     str: "\"types.h\"",
-                                                                                                    start: 1971,
-                                                                                                    end: 1980,
+                                                                                                    start: 2888,
+                                                                                                    end: 2897,
                                                                                                 },
                                                                                                 inner: [],
                                                                                             },
@@ -2435,16 +3042,16 @@
                                                         rule: property_association,
                                                         span: Span {
                                                             str: "Type_Source_Name => \"the_type\";",
-                                                            start: 1986,
-                                                            end: 2017,
+                                                            start: 2903,
+                                                            end: 2934,
                                                         },
                                                         inner: [
                                                             Pair {
                                                                 rule: identifier,
                                                                 span: Span {
                                                                     str: "Type_Source_Name",
-                                                                    start: 1986,
-                                                                    end: 2002,
+                                                                    start: 2903,
+                                                                    end: 2919,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2452,8 +3059,8 @@
                                                                 rule: property_operator,
                                                                 span: Span {
                                                                     str: "=>",
-                                                                    start: 2003,
-                                                                    end: 2005,
+                                                                    start: 2920,
+                                                                    end: 2922,
                                                                 },
                                                                 inner: [],
                                                             },
@@ -2461,24 +3068,24 @@
                                                                 rule: property_value,
                                                                 span: Span {
                                                                     str: "\"the_type\"",
-                                                                    start: 2006,
-                                                                    end: 2016,
+                                                                    start: 2923,
+                                                                    end: 2933,
                                                                 },
                                                                 inner: [
                                                                     Pair {
                                                                         rule: literal_value,
                                                                         span: Span {
                                                                             str: "\"the_type\"",
-                                                                            start: 2006,
-                                                                            end: 2016,
+                                                                            start: 2923,
+                                                                            end: 2933,
                                                                         },
                                                                         inner: [
                                                                             Pair {
                                                                                 rule: string_literal,
                                                                                 span: Span {
                                                                                     str: "\"the_type\"",
-                                                                                    start: 2006,
-                                                                                    end: 2016,
+                                                                                    start: 2923,
+                                                                                    end: 2933,
                                                                                 },
                                                                                 inner: [],
                                                                             },
@@ -2494,8 +3101,8 @@
                                                 rule: identifier,
                                                 span: Span {
                                                     str: "C_Type",
-                                                    start: 2023,
-                                                    end: 2029,
+                                                    start: 2940,
+                                                    end: 2946,
                                                 },
                                                 inner: [],
                                             },
@@ -2509,16 +3116,16 @@
                         rule: package_name,
                         span: Span {
                             str: "Base_Types::Example_Types",
-                            start: 2036,
-                            end: 2061,
+                            start: 2953,
+                            end: 2978,
                         },
                         inner: [
                             Pair {
                                 rule: qualified_identifier,
                                 span: Span {
                                     str: "Base_Types::Example_Types",
-                                    start: 2036,
-                                    end: 2061,
+                                    start: 2953,
+                                    end: 2978,
                                 },
                                 inner: [],
                             },
@@ -2530,8 +3137,8 @@
                 rule: EOI,
                 span: Span {
                     str: "",
-                    start: 2062,
-                    end: 2062,
+                    start: 2979,
+                    end: 2979,
                 },
                 inner: [],
             },

@@ -118,7 +118,7 @@ RustModule {
                     Field {
                         name: "f1",
                         ty: Named(
-                            "f32",
+                            "i32",
                         ),
                         docs: [
                             "",
@@ -126,7 +126,7 @@ RustModule {
                         attrs: [],
                     },
                     Field {
-                        name: "f2",
+                        name: "c2",
                         ty: Named(
                             "char",
                         ),
@@ -187,6 +187,86 @@ RustModule {
         ),
         Enum(
             EnumDef {
+                name: "A_Tagged_Union",
+                variants: [
+                    Variant {
+                        name: "F1",
+                        data: Some(
+                            [
+                                Named(
+                                    "f32",
+                                ),
+                            ],
+                        ),
+                        docs: [],
+                    },
+                    Variant {
+                        name: "F2",
+                        data: Some(
+                            [
+                                Named(
+                                    "char",
+                                ),
+                            ],
+                        ),
+                        docs: [],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                    "Clone",
+                ],
+                docs: [
+                    "// AADL Tagged Union: A_Tagged_Union",
+                ],
+                vis: Public,
+            },
+        ),
+        Enum(
+            EnumDef {
+                name: "A_Tagged_Union2",
+                variants: [
+                    Variant {
+                        name: "F1",
+                        data: Some(
+                            [
+                                Named(
+                                    "f32",
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 标记联合体字段: f1",
+                        ],
+                    },
+                    Variant {
+                        name: "C2",
+                        data: Some(
+                            [
+                                Named(
+                                    "char",
+                                ),
+                            ],
+                        ),
+                        docs: [
+                            "// 标记联合体字段: c2",
+                        ],
+                    },
+                ],
+                generics: [],
+                derives: [
+                    "Debug",
+                    "Clone",
+                ],
+                docs: [
+                    "// AADL Tagged Union: A_Tagged_Union2",
+                ],
+                vis: Public,
+            },
+        ),
+        Enum(
+            EnumDef {
                 name: "An_Enum",
                 variants: [
                     Variant {
@@ -226,4 +306,5 @@ RustModule {
     ],
     attrs: [],
     vis: Public,
+    withs: [],
 }

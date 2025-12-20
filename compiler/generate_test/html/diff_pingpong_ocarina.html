@@ -23,40 +23,82 @@ pre {
 <span class="line-remove">--- original</span>
 <span class="line-add">+++ modified</span>
 <span class="line-header">@@ -1,5 +1,5 @@</span>
-<span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
-<span class="line-remove">-// 生成时间: 2025-12-08 23:02:55</span>
-<span class="line-add">+// Auto-generated from AADL package: ping_local</span>
-<span class="line-add">+// 生成时间: 2025-12-10 21:18:18</span>
+ // Auto-generated from AADL package: ping_local
+<span class="line-remove">-// 生成时间: 2025-12-17 20:15:54</span>
+<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
-<span class="line-header">@@ -133,13 +133,13 @@</span>
+<span class="line-header">@@ -32,9 +32,7 @@</span>
+ #[derive(Debug)]
+ pub struct aProcess {
+     pub cpu_id: isize,// 进程 CPU ID
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub pinger: pThread,// 子组件线程（Pinger : thread P）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub ping_me: qThread,// 子组件线程（Ping_Me : thread Q）
+ }
+
+<span class="line-header">@@ -41,18 +39,18 @@</span>
+ impl Process for aProcess {
+     // Creates a new process instance
+     fn new(cpu_id: isize) -&gt; Self {
+<span class="line-remove">-        let mut pinger: pThread = pThread::new(cpu_id);</span>
+<span class="line-remove">-        let mut ping_me: qThread = qThread::new(cpu_id);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+        let pinger: pThread = pThread::new(cpu_id);</span>
+<span class="line-add">+        let ping_me: qThread = qThread::new(cpu_id);</span>
+<span class="line-add">+        let cnx = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            pinger.data_source = Some(channel.0);</span>
+<span class="line-add">+            pinger.data_source = Some(cnx.0);</span>
+         // build connection: 
+<span class="line-remove">-            ping_me.data_sink = Some(channel.1);</span>
+<span class="line-add">+            ping_me.data_sink = Some(cnx.1);</span>
+         return Self { pinger, ping_me, cpu_id }  //显式return;
+     }
+     
+     // Starts all threads in the process
+<span class="line-remove">-    fn start(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn run(self: Self) -&gt; () {</span>
+         let Self { pinger, ping_me, cpu_id, .. } = self;
+         thread::Builder::new()
+             .name(&quot;pinger&quot;.to_string())
+<span class="line-header">@@ -67,7 +65,6 @@</span>
+ // AADL System: PING
+ #[derive(Debug)]
+ pub struct pingSystem {
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub node_a: aProcess,// 子组件进程（Node_A : process A）
+ }
+
+<span class="line-header">@@ -80,7 +77,7 @@</span>
+     
+     // Runs the system, starts all processes
+     fn run(self: Self) -&gt; () {
+<span class="line-remove">-        self.node_a.start();</span>
+<span class="line-add">+        self.node_a.run();</span>
+     }
+     
+ }
+<span class="line-header">@@ -133,13 +130,13 @@</span>
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-add">+            dispatch_offset: 500, </span>
-             priority: 2, 
-<span class="line-remove">-            dispatch_offset: 500, </span>
-<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-             deadline: 2000, 
-<span class="line-remove">-            period: 2000, </span>
-             data_source: None, 
-             recover_entrypoint_source_text: &quot;recover&quot;.to_string(), 
-<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            deadline: 2000, </span>
 <span class="line-add">+            period: 2000, </span>
+             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
+             dispatch_offset: 500, 
+<span class="line-add">+            data_source: None, </span>
+<span class="line-add">+            priority: 2, </span>
+             recover_entrypoint_source_text: &quot;recover&quot;.to_string(), 
+<span class="line-remove">-            period: 2000, </span>
+<span class="line-remove">-            deadline: 2000, </span>
+<span class="line-remove">-            priority: 2, </span>
+<span class="line-remove">-            data_source: None, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
-<span class="line-header">@@ -192,8 +192,8 @@</span>
-     // 创建组件并初始化AADL属性
-     fn new(cpu_id: isize) -&gt; Self {
-         return Self {
-<span class="line-remove">-            data_sink: None, </span>
-             deadline: 10, 
-<span class="line-add">+            data_sink: None, </span>
-             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
-             period: 10, 
-             priority: 1, 
 
 </pre>
 </body>

@@ -475,6 +475,20 @@ fn create_periodic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
         )),
     }));
 
+    //添加let mut next_release = Instant::now() + period;
+    stmts.push(Statement::Let(LetStmt {
+        ifmut: true,
+        name: "next_release".to_string(),
+        ty: None,
+        init: Some(Expr::BinaryOp(
+            Box::new(Expr::Ident("Instant::now()".to_string())),
+            "+".to_string(),
+            Box::new(Expr::Ident("period".to_string())),
+        )),
+    }));
+    
+    
+
     let mut annex_converter = AnnexConverter::default();
     // 检查是否有Behavior Annex
     if let Some(annex_stmts) = annex_converter.generate_annex_code(impl_) {
@@ -490,7 +504,7 @@ fn create_periodic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
                 // 记录循环开始时间
                 Statement::Let(LetStmt {
                     ifmut: false,
-                    name: "start".to_string(),
+                    name: "now".to_string(),
                     ty: None,
                     init: Some(Expr::Call(
                         Box::new(Expr::Path(
@@ -500,34 +514,66 @@ fn create_periodic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
                         Vec::new(),
                     )),
                 }),
+                //添加上if now < next_release {
+                //     std::thread::sleep(next_release - now);
+                // }的逻辑
+                Statement::Expr(Expr::If {
+                    condition: Box::new(Expr::BinaryOp(
+                        Box::new(Expr::Ident("now".to_string())),
+                        "<".to_string(),
+                        Box::new(Expr::Ident("next_release".to_string())),
+                    )),
+                    then_branch: Block {
+                        stmts: vec![
+                            Statement::Expr(Expr::MethodCall(
+                                Box::new(Expr::Path(
+                                    vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                                    PathType::Namespace,
+                                )),
+                                "".to_string(),
+                                vec![Expr::Ident("next_release - now".to_string())],
+                            )),
+                        ],
+                        expr: None,
+                    },
+                    else_branch: None,
+                }),
+                
                 // 执行子程序调用处理块
                 Statement::Expr(Expr::Block(Block {
                     stmts: port_handling_stmts.clone(),
                     expr: None,
                 })),
-                // 计算执行时间
-                Statement::Let(LetStmt {
-                    ifmut: false,
-                    name: "elapsed".to_string(),
-                    ty: None,
-                    init: Some(Expr::MethodCall(
-                        Box::new(Expr::Ident("start".to_string())),
-                        "elapsed".to_string(),
-                        Vec::new(),
-                    )),
-                }),
-                // 睡眠剩余时间，确保周期性执行
-                Statement::Expr(Expr::MethodCall(
-                    Box::new(Expr::Path(
-                        vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                        PathType::Namespace,
-                    )),
-                    "".to_string(),
-                    vec![Expr::MethodCall(
-                        Box::new(Expr::Ident("period".to_string())),
-                        "saturating_sub".to_string(),
-                        vec![Expr::Ident("elapsed".to_string())],
-                    )],
+                // // 计算执行时间
+                // Statement::Let(LetStmt {
+                //     ifmut: false,
+                //     name: "elapsed".to_string(),
+                //     ty: None,
+                //     init: Some(Expr::MethodCall(
+                //         Box::new(Expr::Ident("start".to_string())),
+                //         "elapsed".to_string(),
+                //         Vec::new(),
+                //     )),
+                // }),
+                // // 睡眠剩余时间，确保周期性执行
+                // Statement::Expr(Expr::MethodCall(
+                //     Box::new(Expr::Path(
+                //         vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+                //         PathType::Namespace,
+                //     )),
+                //     "".to_string(),
+                //     vec![Expr::MethodCall(
+                //         Box::new(Expr::Ident("period".to_string())),
+                //         "saturating_sub".to_string(),
+                //         vec![Expr::Ident("elapsed".to_string())],
+                //     )],
+                // )),
+                // 5. 推进到下一个周期（注意：不是 based on actual）
+                //next_release += period;
+                Statement::Expr(Expr::BinaryOp(
+                    Box::new(Expr::Ident("next_release".to_string())),
+                    "+=".to_string(),
+                    Box::new(Expr::Ident("period".to_string())),
                 )),
             ],
             expr: None,

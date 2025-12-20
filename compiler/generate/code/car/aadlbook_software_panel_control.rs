@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:05:12
+// Auto-generated from AADL package: aadlbook_software_panel_control
+// 生成时间: 2025-12-20 18:11:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,7 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -44,53 +45,52 @@ pub struct panel_controlProcess {
     pub desired_speedRece: Option<Receiver<u16>>,// 内部端口: desired_speed Out
     pub tire_pressure_inSend: Option<BcSender<i8>>,// 内部端口: tire_pressure_in In
     pub tire_pressure_outRece: Option<Receiver<i8>>,// 内部端口: tire_pressure_out Out
-    #[allow(dead_code)]
     pub panel_thr: panel_control_thrThread,// 子组件线程（panel_thr : thread panel_control_thr）
 }
 
 impl Process for panel_controlProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut panel_thr: panel_control_thrThread = panel_control_thrThread::new(cpu_id);
+        let panel_thr: panel_control_thrThread = panel_control_thrThread::new(cpu_id);
         let mut increase_speedSend = None;
         let mut decrease_speedSend = None;
         let mut current_speedSend = None;
         let mut desired_speedRece = None;
         let mut tire_pressure_inSend = None;
         let mut tire_pressure_outRece = None;
-        let channel = crossbeam_channel::unbounded();
-        increase_speedSend = Some(channel.0);
+        let c0 = crossbeam_channel::unbounded();
+        increase_speedSend = Some(c0.0);
         // build connection: 
-            panel_thr.increase_speed = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        decrease_speedSend = Some(channel.0);
+            panel_thr.increase_speed = Some(c0.1);
+        let c1 = crossbeam_channel::unbounded();
+        decrease_speedSend = Some(c1.0);
         // build connection: 
-            panel_thr.decrease_speed = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        current_speedSend = Some(channel.0);
+            panel_thr.decrease_speed = Some(c1.1);
+        let c2 = crossbeam_channel::unbounded();
+        current_speedSend = Some(c2.0);
         // build connection: 
-            panel_thr.current_speed = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
-        tire_pressure_inSend = Some(channel.0);
+            panel_thr.current_speed = Some(c2.1);
+        let c3 = crossbeam_channel::unbounded();
+        tire_pressure_inSend = Some(c3.0);
         // build connection: 
-            panel_thr.tire_pressure_in = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            panel_thr.tire_pressure_in = Some(c3.1);
+        let c4 = crossbeam_channel::unbounded();
         // build connection: 
-            panel_thr.tire_pressure_out = Some(channel.0);
-        tire_pressure_outRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            panel_thr.tire_pressure_out = Some(c4.0);
+        tire_pressure_outRece = Some(c4.1);
+        let c5 = crossbeam_channel::unbounded();
         // build connection: 
-            panel_thr.desired_speed = Some(channel.0);
-        desired_speedRece = Some(channel.1);
+            panel_thr.desired_speed = Some(c5.0);
+        desired_speedRece = Some(c5.1);
         return Self { increase_speed: None, increase_speedSend, decrease_speed: None, decrease_speedSend, current_speed: None, current_speedSend, desired_speed: None, desired_speedRece, tire_pressure_in: None, tire_pressure_inSend, tire_pressure_out: None, tire_pressure_outRece, panel_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { increase_speed, increase_speedSend, decrease_speed, decrease_speedSend, current_speed, current_speedSend, desired_speed, desired_speedRece, tire_pressure_in, tire_pressure_inSend, tire_pressure_out, tire_pressure_outRece, panel_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("panel_thr".to_string())
-            .spawn(|| { panel_thr.run() }).unwrap();
+            .spawn(move || { panel_thr.run() }).unwrap();
         let mut current_speed_rx = current_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_current_speed".to_string())
@@ -189,12 +189,12 @@ impl Thread for panel_control_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            increase_speed: None, 
-            tire_pressure_out: None, 
             current_speed: None, 
+            tire_pressure_out: None, 
             desired_speed: None, 
-            tire_pressure_in: None, 
+            increase_speed: None, 
             decrease_speed: None, 
+            tire_pressure_in: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -206,6 +206,7 @@ impl Thread for panel_control_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -244,11 +245,11 @@ impl Thread for panel_control_thrThread {
                             state = State::s0;
                             // complete，停
                         },
-                        State::s0 => {
+                        State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
-                        State::s1 => {
+                        State::s0 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
@@ -261,14 +262,5 @@ impl Thread for panel_control_thrThread {
         };
     }
     
-}
-
-// CPU ID到调度策略的映射
-lazy_static! {
-    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
-        let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(0, SCHED_FIFO);
-        return map;
-    };
 }
 

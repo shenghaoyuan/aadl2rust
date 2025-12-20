@@ -117,9 +117,9 @@ pub mod ping_spg {
 #[derive(Debug)]
 pub struct pThread {
     pub data_source: Option<Sender<custom_int>>,// Port: Data_Source Out
-    pub dispatch_protocol: String,// AADL属性: Dispatch_Protocol
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub recover_entrypoint_source_text: String,// AADL属性(impl): Recover_Entrypoint_Source_Text
+    pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
     pub period: u64,// AADL属性(impl): Period
     pub deadline: u64,// AADL属性(impl): Deadline
     pub priority: u64,// AADL属性(impl): Priority
@@ -130,13 +130,13 @@ impl Thread for pThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            deadline: 2000, 
-            period: 2000, 
-            dispatch_protocol: "Periodic".to_string(), 
-            dispatch_offset: 500, 
-            data_source: None, 
-            priority: 2, 
             recover_entrypoint_source_text: "recover".to_string(), 
+            priority: 2, 
+            dispatch_offset: 500, 
+            period: 2000, 
+            deadline: 2000, 
+            dispatch_protocol: "Periodic".to_string(), 
+            data_source: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -184,38 +184,35 @@ pub struct qThread {
     pub cpu_id: isize,// 结构体新增 CPU ID
     pub dispatch_protocol: String,// AADL属性(impl): Dispatch_Protocol
     pub period: u64,// AADL属性(impl): Period
-    pub deadline: u64,// AADL属性(impl): deadline
-    pub priority: u64,// AADL属性(impl): Priority
 }
 
 impl Thread for qThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            deadline: 10, 
-            priority: 1, 
-            dispatch_protocol: "Sporadic".to_string(), 
-            period: 10, 
+            dispatch_protocol: "Timed".to_string(), 
             data_sink: None, 
+            period: 1000, 
             cpu_id: cpu_id, // CPU ID
         };
     }
     
     // Thread execution entry point
-    // Period: Some(10) ms
+    // Period: Some(1000) ms
     fn run(mut self) -> () {
         unsafe {
-            let mut param: sched_param = sched_param { sched_priority: 1 };
+            let prio = period_to_priority(self.period as f64);
+            let mut param: sched_param = sched_param { sched_priority: prio };
             let ret = pthread_setschedparam(pthread_self(), *CPU_ID_TO_SCHED_POLICY.get(&self.cpu_id).unwrap_or(&SCHED_FIFO), &mut param);
             if ret != 0 {
-                eprintln!("qThread: Failed to set thread priority: {}", ret);
+                eprintln!("qThread: Failed to set thread priority from period: {}", ret);
             };
         };
         if self.cpu_id > -1 {
             set_thread_affinity(self.cpu_id);
         };
-        let min_interarrival: std::time::Duration = Duration::from_millis(10);
-        let mut last_dispatch: std::time::Instant = Instant::now();
+        let period: std::time::Duration = Duration::from_millis(1000);
+        let mut start_time: std::time::Instant = Instant::now();
         let mut events = Vec::new();
         loop {
             if events.is_empty() {
@@ -231,20 +228,19 @@ impl Thread for qThread {
                         other => other,
                     }) {
                 let (val, _, _) = events.remove(idx);
-                let now = Instant::now();
-                let elapsed = now.duration_since(last_dispatch);
-                if elapsed < min_interarrival {
-                    std::thread::sleep(min_interarrival - elapsed);
-                };
                 {
                     // --- 调用序列（等价 AADL 的 Wrapper）---
                            // q_spg();
                     // q_spg;
                     ping_spg::receive(val);
                 };
-                last_dispatch = Instant::now();
             } else {
-                std::thread::sleep(Duration::from_millis(1));
+                let now = Instant::now();
+                let elapsed = now.duration_since(start_time);
+                if elapsed > period {
+                    eprintln!("qThread: timeout dispatch → Recover_Entrypoint");
+                    // recover_entrypoint();;
+                };
             };
         };
     }
@@ -255,8 +251,20 @@ impl Thread for qThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(2, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
+}
+
+// prio(P)=max(1,min(99,99−⌊k⋅log10(P)⌋))
+// 根据周期计算优先级，周期越短优先级越高
+// 用于 RMS (Rate Monotonic Scheduling) 和 DMS (Deadline Monotonic Scheduling)
+pub fn period_to_priority(period_ms: f64) -> i32 {
+    let k: f64 = 10.0;
+    let raw: f64 = 99.0 - k * period_ms.log10().floor();
+    return raw.max(1.0).min(99.0) as i32;
 }
 

@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:05:12
+// Auto-generated from AADL package: aadlbook_software_speed_controller
+// 生成时间: 2025-12-20 18:11:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,8 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
+use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -44,20 +46,17 @@ pub struct speed_controllerProcess {
     pub brake_cmdRece: Option<Receiver<i8>>,// 内部端口: brake_cmd Out
     pub speed_cmdRece: Option<Receiver<i8>>,// 内部端口: speed_cmd Out
     pub warningRece: Option<Receiver<bool>>,// 内部端口: warning Out
-    #[allow(dead_code)]
     pub accel_thr: speed_controller_accel_thrThread,// 子组件线程（accel_thr : thread speed_controller_accel_thr）
-    #[allow(dead_code)]
     pub brake_thr: speed_controller_brake_thrThread,// 子组件线程（brake_thr : thread speed_controller_brake_thr）
-    #[allow(dead_code)]
     pub warning_thr: speed_controller_warning_thrThread,// 子组件线程（warning_thr : thread speed_controller_warning_thr）
 }
 
 impl Process for speed_controllerProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut accel_thr: speed_controller_accel_thrThread = speed_controller_accel_thrThread::new(cpu_id);
-        let mut brake_thr: speed_controller_brake_thrThread = speed_controller_brake_thrThread::new(cpu_id);
-        let mut warning_thr: speed_controller_warning_thrThread = speed_controller_warning_thrThread::new(cpu_id);
+        let accel_thr: speed_controller_accel_thrThread = speed_controller_accel_thrThread::new(cpu_id);
+        let brake_thr: speed_controller_brake_thrThread = speed_controller_brake_thrThread::new(cpu_id);
+        let warning_thr: speed_controller_warning_thrThread = speed_controller_warning_thrThread::new(cpu_id);
         let mut obstacle_positionSend = None;
         let mut current_speedSend = None;
         let mut desired_speedSend = None;
@@ -88,33 +87,33 @@ impl Process for speed_controllerProcess {
             brake_thr.desired_speed = Some(channel.0.subscribe());
         // build connection: 
             warning_thr.desired_speed = Some(channel.0.subscribe());
-        let channel = crossbeam_channel::unbounded();
+        let c03 = crossbeam_channel::unbounded();
         // build connection: 
-            accel_thr.speed_cmd = Some(channel.0);
-        speed_cmdRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            accel_thr.speed_cmd = Some(c03.0);
+        speed_cmdRece = Some(c03.1);
+        let c13 = crossbeam_channel::unbounded();
         // build connection: 
-            brake_thr.brake_cmd = Some(channel.0);
-        brake_cmdRece = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            brake_thr.brake_cmd = Some(c13.0);
+        brake_cmdRece = Some(c13.1);
+        let c23 = crossbeam_channel::unbounded();
         // build connection: 
-            warning_thr.warning = Some(channel.0);
-        warningRece = Some(channel.1);
+            warning_thr.warning = Some(c23.0);
+        warningRece = Some(c23.1);
         return Self { obstacle_position: None, obstacle_positionSend, current_speed: None, current_speedSend, desired_speed: None, desired_speedSend, brake_cmd: None, brake_cmdRece, speed_cmd: None, speed_cmdRece, warning: None, warningRece, accel_thr, brake_thr, warning_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { obstacle_position, obstacle_positionSend, current_speed, current_speedSend, desired_speed, desired_speedSend, brake_cmd, brake_cmdRece, speed_cmd, speed_cmdRece, warning, warningRece, accel_thr, brake_thr, warning_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("accel_thr".to_string())
-            .spawn(|| { accel_thr.run() }).unwrap();
+            .spawn(move || { accel_thr.run() }).unwrap();
         thread::Builder::new()
             .name("brake_thr".to_string())
-            .spawn(|| { brake_thr.run() }).unwrap();
+            .spawn(move || { brake_thr.run() }).unwrap();
         thread::Builder::new()
             .name("warning_thr".to_string())
-            .spawn(|| { warning_thr.run() }).unwrap();
+            .spawn(move || { warning_thr.run() }).unwrap();
         let mut brake_cmdRece_rx = brake_cmdRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_brake_cmdRece".to_string())
@@ -240,13 +239,13 @@ impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            current_speed: None, 
-            desired_speed: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            period: 5, 
-            mipsbudget: 5.0, 
-            speed_cmd: None, 
             obstacle_position: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            current_speed: None, 
+            speed_cmd: None, 
+            mipsbudget: 5.0, 
+            period: 5, 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -258,6 +257,7 @@ impl Thread for speed_controller_accel_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -299,13 +299,13 @@ impl Thread for speed_controller_brake_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            desired_speed: None, 
-            period: 5, 
-            mipsbudget: 5.0, 
-            current_speed: None, 
             obstacle_position: None, 
-            brake_cmd: None, 
+            current_speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            period: 5, 
+            desired_speed: None, 
+            mipsbudget: 5.0, 
+            brake_cmd: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -317,6 +317,7 @@ impl Thread for speed_controller_brake_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -358,13 +359,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 5.0, 
-            current_speed: None, 
-            warning: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            period: 5, 
             desired_speed: None, 
+            mipsbudget: 5.0, 
+            warning: None, 
             obstacle_position: None, 
+            current_speed: None, 
+            period: 5, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -376,6 +377,7 @@ impl Thread for speed_controller_warning_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -411,14 +413,5 @@ impl Thread for speed_controller_warning_thrThread {
         };
     }
     
-}
-
-// CPU ID到调度策略的映射
-lazy_static! {
-    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
-        let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(0, SCHED_FIFO);
-        return map;
-    };
 }
 

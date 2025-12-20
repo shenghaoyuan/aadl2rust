@@ -65,6 +65,26 @@ pub fn convert_data_component(
                 // 如果没有属性，返回空的枚举
                 return vec![Item::Enum(determine_enum_type(comp, &[]))];
             }
+        } else if unit_type.to_lowercase() == "taggedunion" {
+            // 从组件属性中提取属性列表
+            if let PropertyClause::Properties(props) = &comp.properties {
+                let taggedunion_def = determine_taggedunion_type(type_mappings, comp, props, data_comp_type);
+
+                // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
+                if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
+                    type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
+                }
+                
+                if taggedunion_def.variants.is_empty() {
+                    //说明是通过impl中子组件来获取字段的，而不是在此时type中
+                    return Vec::new();
+                } else {
+                    return vec![Item::Enum(taggedunion_def)];
+                }
+            } else {
+                // 如果没有属性，返回空的标记联合体
+                return vec![Item::Enum(determine_taggedunion_type(type_mappings, comp, &[], data_comp_type))];
+            }
         }
     }
     // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
@@ -121,6 +141,9 @@ fn determine_complex_data_type(
                                 }
                                 "enum" => {
                                     return Type::Named("enum".to_string());
+                                }
+                                "taggedunion" => {
+                                    return Type::Named("taggedunion".to_string());
                                 }
                                 _ => {
                                     // 使用 type_mappings 查找对应的类型，如果没有找到则使用原值
@@ -308,7 +331,7 @@ fn determine_struct_type(
     }
 }
 
-/// 处理联合体类型,使用枚举类型来表示，不使用union类型,避免unsafe
+/// 处理联合体类型,unsafe联合体
 fn determine_union_type(
     type_mappings: &HashMap<String, Type>,
     comp: &ComponentType,
@@ -451,6 +474,114 @@ fn determine_enum_type(comp: &ComponentType, props: &[Property]) -> EnumDef {
         generics: vec![],
         derives: vec!["Debug".to_string(), "Clone".to_string()],
         docs: vec![format!("// AADL Enum: {}", comp.identifier)],
+        vis: Visibility::Public,
+    }
+}
+
+/// 处理带标签的联合体类型，生成带类型的枚举
+fn determine_taggedunion_type(
+    type_mappings: &HashMap<String, Type>,
+    comp: &ComponentType,
+    props: &[Property],
+    data_comp_type: &mut HashMap<String, String>,
+) -> EnumDef {
+    // 解析字段名和字段类型
+    let mut field_names = Vec::new();
+    let mut field_types = Vec::new();
+
+    for prop in props {
+        if let Property::BasicProperty(bp) = prop {
+            // 解析 Base_Type 属性获取字段类型
+            if let Some(property_set) = &bp.identifier.property_set {
+                if property_set.to_lowercase() == "data_model"
+                    && bp.identifier.name.to_lowercase() == "base_type"
+                {
+                    if let PropertyValue::List(type_list) = &bp.value {
+                        for type_item in type_list {
+                            if let PropertyListElement::Value(
+                                PropertyExpression::ComponentClassifier(ComponentClassifierTerm {
+                                    unique_component_classifier_reference,
+                                }),
+                            ) = type_item
+                            {
+                                // 从分类器引用中提取类型名
+                                let type_name = match unique_component_classifier_reference {
+                                    UniqueComponentClassifierReference::Type(impl_ref) => {
+                                        impl_ref.implementation_name.type_identifier.clone()
+                                    }
+                                    UniqueComponentClassifierReference::Implementation(
+                                        impl_ref,
+                                    ) => impl_ref.implementation_name.type_identifier.clone(),
+                                };
+
+                                // 映射到 Rust 类型
+                                let rust_type = type_mappings
+                                    .get(&type_name.to_string().to_lowercase())
+                                    .cloned()
+                                    .unwrap_or_else(|| Type::Named(type_name));
+
+                                field_types.push(rust_type);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 解析 Element_Names 属性获取字段名
+            if let Some(property_set) = &bp.identifier.property_set {
+                if property_set.to_lowercase() == "data_model"
+                    && bp.identifier.name.to_lowercase() == "element_names"
+                {
+                    if let PropertyValue::List(name_list) = &bp.value {
+                        for name_item in name_list {
+                            if let PropertyListElement::Value(PropertyExpression::String(
+                                StringTerm::Literal(name),
+                            )) = name_item
+                            {
+                                field_names.push(name.clone());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 判断是否获取到字段信息，理论上二者同时有或同时无
+    if field_names.is_empty() || field_types.is_empty() {
+        //说明没有获取到字段信息，需要根据组件实现impl来获取属性信息
+        //存储信息到全局数据结构中
+        data_comp_type.insert(comp.identifier.clone(), "taggedunion".to_string());
+    }
+
+    // 创建枚举变体（带数据类型）
+    let mut variants = Vec::new();
+    for (name, ty) in field_names.iter().zip(field_types.iter()) {
+        // 将字段名首字母大写，例如 "f1" -> "F1"
+        let variant_name = if name.is_empty() {
+            name.clone()
+        } else {
+            let mut chars = name.chars();
+            match chars.next() {
+                None => name.clone(),
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+            }
+        };
+
+        variants.push(Variant {
+            name: variant_name,
+            data: Some(vec![ty.clone()]), // 带标签的联合体变体包含数据类型
+            docs: vec![],
+        });
+    }
+
+    // 创建枚举定义
+    EnumDef {
+        name: comp.identifier.clone(),
+        variants,
+        generics: vec![],
+        derives: vec!["Debug".to_string(), "Clone".to_string()],
+        docs: vec![format!("// AADL Tagged Union: {}", comp.identifier)],
         vis: Visibility::Public,
     }
 }

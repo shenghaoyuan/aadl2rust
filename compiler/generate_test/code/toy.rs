@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: toy_example_nowrapper
-// 生成时间: 2025-12-10 21:18:19
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -139,11 +139,11 @@ impl Thread for gnc_threadThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
         return Self {
-            gnc_pos: gnc_pos, 
             priority: 50, 
-            deadline: 1000, 
-            dispatch_protocol: "Periodic".to_string(), 
             period: 1000, 
+            dispatch_protocol: "Periodic".to_string(), 
+            gnc_pos: gnc_pos, 
+            deadline: 1000, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -162,8 +162,12 @@ impl Thread for gnc_threadThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(1000);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // welcome() -> update_pos() -> gnc_work() -> read_pos() -> bye();
@@ -190,8 +194,7 @@ impl Thread for gnc_threadThread {
                 // bye;
                 gnc_identity::execute();
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -212,11 +215,11 @@ impl Thread for tmtc_threadThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
         return Self {
-            tmtc_pos: tmtc_pos, 
             dispatch_protocol: "Periodic".to_string(), 
-            priority: 20, 
             deadline: 100, 
             period: 100, 
+            priority: 20, 
+            tmtc_pos: tmtc_pos, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -235,8 +238,12 @@ impl Thread for tmtc_threadThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(100);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // welcome() -> tmtc_work() -> update() -> bye();
@@ -255,8 +262,7 @@ impl Thread for tmtc_threadThread {
                 // bye;
                 tmtc_identity::execute();
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -266,32 +272,29 @@ impl Thread for tmtc_threadThread {
 #[derive(Debug)]
 pub struct toy_example_procProcess {
     pub cpu_id: isize,// 进程 CPU ID
-    #[allow(dead_code)]
     pub gnc_th: gnc_threadThread,// 子组件线程（GNC_Th : thread GNC_Thread）
-    #[allow(dead_code)]
     pub tmtc_th: tmtc_threadThread,// 子组件线程（TMTC_Th : thread TMTC_Thread）
-    #[allow(dead_code)]
     pub pos_data: POSShared,// 共享数据（POS_Data : data POS）
 }
 
 impl Process for toy_example_procProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut pos_data: POSShared = Arc::new(Mutex::new(0));
-        let mut gnc_th: gnc_threadThread = gnc_threadThread::new(cpu_id, pos_data.clone());
-        let mut tmtc_th: tmtc_threadThread = tmtc_threadThread::new(cpu_id, pos_data.clone());
+        let pos_data: POSShared = Arc::new(Mutex::new(0));
+        let gnc_th: gnc_threadThread = gnc_threadThread::new(cpu_id, Arc::clone(&pos_data));
+        let tmtc_th: tmtc_threadThread = tmtc_threadThread::new(cpu_id, Arc::clone(&pos_data));
         return Self { gnc_th, tmtc_th, pos_data, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { gnc_th, tmtc_th, pos_data, cpu_id, .. } = self;
         thread::Builder::new()
             .name("gnc_th".to_string())
-            .spawn(|| { gnc_th.run() }).unwrap();
+            .spawn(move || { gnc_th.run() }).unwrap();
         thread::Builder::new()
             .name("tmtc_th".to_string())
-            .spawn(|| { tmtc_th.run() }).unwrap();
+            .spawn(move || { tmtc_th.run() }).unwrap();
     }
     
 }
@@ -299,7 +302,6 @@ impl Process for toy_example_procProcess {
 // AADL System: toy_example
 #[derive(Debug)]
 pub struct toy_exampleSystem {
-    #[allow(dead_code)]
     pub gnc_tmtc_pos: toy_example_procProcess,// 子组件进程（GNC_TMTC_POS : process Toy_Example_Proc）
 }
 
@@ -312,7 +314,7 @@ impl System for toy_exampleSystem {
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        self.gnc_tmtc_pos.start();
+        self.gnc_tmtc_pos.run();
     }
     
 }
@@ -321,9 +323,9 @@ impl System for toy_exampleSystem {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(0, SCHED_FIFO);
         map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
+        map.insert(0, SCHED_FIFO);
         return map;
     };
 }

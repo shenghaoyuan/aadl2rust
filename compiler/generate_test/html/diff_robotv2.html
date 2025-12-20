@@ -26,24 +26,19 @@ pre {
 <span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
 <span class="line-remove">-// 生成时间: 2025-12-08 23:04:36</span>
 <span class="line-add">+// Auto-generated from AADL package: robot_ba</span>
-<span class="line-add">+// 生成时间: 2025-12-10 21:18:19</span>
+<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
-<span class="line-header">@@ -77,10 +77,10 @@</span>
-     // 创建组件并初始化AADL属性
-     fn new(cpu_id: isize) -&gt; Self {
-         return Self {
-<span class="line-remove">-            info_capteur: None, </span>
-             comm_servo: None, 
-<span class="line-add">+            period: 110, </span>
-             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
-<span class="line-remove">-            period: 110, </span>
-<span class="line-add">+            info_capteur: None, </span>
-             cpu_id: cpu_id, // CPU ID
+<span class="line-header">@@ -100,6 +100,7 @@</span>
+             set_thread_affinity(self.cpu_id);
          };
-     }
-<span class="line-header">@@ -153,11 +153,11 @@</span>
+         let period: std::time::Duration = Duration::from_millis(110);
+<span class="line-add">+        let mut next_release = Instant::now() + period;</span>
+         // Behavior Annex state machine states
+         #[derive(Debug, Clone)]
+         enum State {
+<span class="line-header">@@ -153,11 +154,11 @@</span>
                              state = State::s_inline;
                              // complete,需要停
                          },
@@ -57,29 +52,192 @@ pre {
                              // 理论上不会执行到这里，但编译器需要这个分支
                              break;
                          },
-<span class="line-header">@@ -176,8 +176,8 @@</span>
-     // 创建组件并初始化AADL属性
+<span class="line-header">@@ -177,8 +178,8 @@</span>
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
              evenement: None, 
-<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-             period: 110, 
-             cpu_id: cpu_id, // CPU ID
-         };
-<span class="line-header">@@ -238,9 +238,9 @@</span>
-     // 创建组件并初始化AADL属性
-     fn new(cpu_id: isize) -&gt; Self {
-         return Self {
-<span class="line-remove">-            period: 10, </span>
-<span class="line-remove">-            ordre: None, </span>
-             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
-<span class="line-add">+            ordre: None, </span>
-<span class="line-add">+            period: 10, </span>
+<span class="line-add">+            period: 110, </span>
+             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
+<span class="line-remove">-            period: 110, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
-<span class="line-header">@@ -515,11 +515,11 @@</span>
+<span class="line-header">@@ -198,6 +199,7 @@</span>
+             set_thread_affinity(self.cpu_id);
+         };
+         let period: std::time::Duration = Duration::from_millis(110);
+<span class="line-add">+        let mut next_release = Instant::now() + period;</span>
+         let mut count1: i32 = 0;
+         // Behavior Annex state machine states
+         #[derive(Debug, Clone)]
+<span class="line-header">@@ -238,9 +240,9 @@</span>
+     // 创建组件并初始化AADL属性
+     fn new(cpu_id: isize) -&gt; Self {
+         return Self {
+<span class="line-add">+            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
+             period: 10, 
+             ordre: None, 
+<span class="line-remove">-            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
+             cpu_id: cpu_id, // CPU ID
+         };
+     }
+<span class="line-header">@@ -302,7 +304,6 @@</span>
+     pub evenement: Option&lt;Sender&lt;bool&gt;&gt;,// Port: evenement Out
+     pub cpu_id: isize,// 进程 CPU ID
+     pub evenementRece: Option&lt;Receiver&lt;bool&gt;&gt;,// 内部端口: evenement Out
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub th_c: capteurThread,// 子组件线程（th_c : thread capteur）
+ }
+
+<span class="line-header">@@ -318,9 +319,7 @@</span>
+     pub comm_servo_droitRece: Option&lt;Receiver&lt;bool&gt;&gt;,// 内部端口: comm_servo_droit Out
+     pub info_capteur_gaucheSend: Option&lt;BcSender&lt;bool&gt;&gt;,// 内部端口: info_capteur_gauche In
+     pub comm_servo_gaucheRece: Option&lt;Receiver&lt;bool&gt;&gt;,// 内部端口: comm_servo_gauche Out
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub th_ctrl_droit: controleThread,// 子组件线程（th_ctrl_droit : thread controle）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub th_ctrl_gauche: controleThread,// 子组件线程（th_ctrl_gauche : thread controle）
+ }
+
+<span class="line-header">@@ -330,7 +329,6 @@</span>
+     pub ordre: Option&lt;Receiver&lt;bool&gt;&gt;,// Port: ordre In
+     pub cpu_id: isize,// 进程 CPU ID
+     pub ordreSend: Option&lt;BcSender&lt;bool&gt;&gt;,// 内部端口: ordre In
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub th_servomoteur: servomoteurThread,// 子组件线程（th_servomoteur : thread servomoteur）
+ }
+
+<span class="line-header">@@ -337,21 +335,21 @@</span>
+ impl Process for p_capteurProcess {
+     // Creates a new process instance
+     fn new(cpu_id: isize) -&gt; Self {
+<span class="line-remove">-        let mut th_c: capteurThread = capteurThread::new(cpu_id);</span>
+<span class="line-add">+        let th_c: capteurThread = capteurThread::new(cpu_id);</span>
+         let mut evenementRece = None;
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+        let conn1 = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            th_c.evenement = Some(channel.0);</span>
+<span class="line-remove">-        evenementRece = Some(channel.1);</span>
+<span class="line-add">+            th_c.evenement = Some(conn1.0);</span>
+<span class="line-add">+        evenementRece = Some(conn1.1);</span>
+         return Self { evenement: None, evenementRece, th_c, cpu_id }  //显式return;
+     }
+     
+     // Starts all threads in the process
+<span class="line-remove">-    fn start(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn run(self: Self) -&gt; () {</span>
+         let Self { evenement, evenementRece, th_c, cpu_id, .. } = self;
+         thread::Builder::new()
+             .name(&quot;th_c&quot;.to_string())
+<span class="line-remove">-            .spawn(|| { th_c.run() }).unwrap();</span>
+<span class="line-add">+            .spawn(move || { th_c.run() }).unwrap();</span>
+         let mut evenementRece_rx = evenementRece.unwrap();
+         thread::Builder::new()
+             .name(&quot;data_forwarder_evenementRece&quot;.to_string())
+<span class="line-header">@@ -372,40 +370,40 @@</span>
+ impl Process for p_controleProcess {
+     // Creates a new process instance
+     fn new(cpu_id: isize) -&gt; Self {
+<span class="line-remove">-        let mut th_ctrl_droit: controleThread = controleThread::new(cpu_id);</span>
+<span class="line-remove">-        let mut th_ctrl_gauche: controleThread = controleThread::new(cpu_id);</span>
+<span class="line-add">+        let th_ctrl_droit: controleThread = controleThread::new(cpu_id);</span>
+<span class="line-add">+        let th_ctrl_gauche: controleThread = controleThread::new(cpu_id);</span>
+         let mut info_capteur_droitSend = None;
+         let mut comm_servo_droitRece = None;
+         let mut info_capteur_gaucheSend = None;
+         let mut comm_servo_gaucheRece = None;
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-remove">-        info_capteur_droitSend = Some(channel.0);</span>
+<span class="line-add">+        let conn1 = crossbeam_channel::unbounded();</span>
+<span class="line-add">+        info_capteur_droitSend = Some(conn1.0);</span>
+         // build connection: 
+<span class="line-remove">-            th_ctrl_droit.info_capteur = Some(channel.1);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+            th_ctrl_droit.info_capteur = Some(conn1.1);</span>
+<span class="line-add">+        let conn2 = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            th_ctrl_droit.comm_servo = Some(channel.0);</span>
+<span class="line-remove">-        comm_servo_droitRece = Some(channel.1);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-remove">-        info_capteur_gaucheSend = Some(channel.0);</span>
+<span class="line-add">+            th_ctrl_droit.comm_servo = Some(conn2.0);</span>
+<span class="line-add">+        comm_servo_droitRece = Some(conn2.1);</span>
+<span class="line-add">+        let conn3 = crossbeam_channel::unbounded();</span>
+<span class="line-add">+        info_capteur_gaucheSend = Some(conn3.0);</span>
+         // build connection: 
+<span class="line-remove">-            th_ctrl_gauche.info_capteur = Some(channel.1);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+            th_ctrl_gauche.info_capteur = Some(conn3.1);</span>
+<span class="line-add">+        let conn4 = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            th_ctrl_gauche.comm_servo = Some(channel.0);</span>
+<span class="line-remove">-        comm_servo_gaucheRece = Some(channel.1);</span>
+<span class="line-add">+            th_ctrl_gauche.comm_servo = Some(conn4.0);</span>
+<span class="line-add">+        comm_servo_gaucheRece = Some(conn4.1);</span>
+         return Self { info_capteur_droit: None, info_capteur_droitSend, comm_servo_droit: None, comm_servo_droitRece, info_capteur_gauche: None, info_capteur_gaucheSend, comm_servo_gauche: None, comm_servo_gaucheRece, th_ctrl_droit, th_ctrl_gauche, cpu_id }  //显式return;
+     }
+     
+     // Starts all threads in the process
+<span class="line-remove">-    fn start(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn run(self: Self) -&gt; () {</span>
+         let Self { info_capteur_droit, info_capteur_droitSend, comm_servo_droit, comm_servo_droitRece, info_capteur_gauche, info_capteur_gaucheSend, comm_servo_gauche, comm_servo_gaucheRece, th_ctrl_droit, th_ctrl_gauche, cpu_id, .. } = self;
+         thread::Builder::new()
+             .name(&quot;th_ctrl_droit&quot;.to_string())
+<span class="line-remove">-            .spawn(|| { th_ctrl_droit.run() }).unwrap();</span>
+<span class="line-add">+            .spawn(move || { th_ctrl_droit.run() }).unwrap();</span>
+         thread::Builder::new()
+             .name(&quot;th_ctrl_gauche&quot;.to_string())
+<span class="line-remove">-            .spawn(|| { th_ctrl_gauche.run() }).unwrap();</span>
+<span class="line-add">+            .spawn(move || { th_ctrl_gauche.run() }).unwrap();</span>
+         let mut comm_servo_droitRece_rx = comm_servo_droitRece.unwrap();
+         thread::Builder::new()
+             .name(&quot;data_forwarder_comm_servo_droitRece&quot;.to_string())
+<span class="line-header">@@ -465,21 +463,21 @@</span>
+ impl Process for p_servomoteurProcess {
+     // Creates a new process instance
+     fn new(cpu_id: isize) -&gt; Self {
+<span class="line-remove">-        let mut th_servomoteur: servomoteurThread = servomoteurThread::new(cpu_id);</span>
+<span class="line-add">+        let th_servomoteur: servomoteurThread = servomoteurThread::new(cpu_id);</span>
+         let mut ordreSend = None;
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-remove">-        ordreSend = Some(channel.0);</span>
+<span class="line-add">+        let conn1 = crossbeam_channel::unbounded();</span>
+<span class="line-add">+        ordreSend = Some(conn1.0);</span>
+         // build connection: 
+<span class="line-remove">-            th_servomoteur.ordre = Some(channel.1);</span>
+<span class="line-add">+            th_servomoteur.ordre = Some(conn1.1);</span>
+         return Self { ordre: None, ordreSend, th_servomoteur, cpu_id }  //显式return;
+     }
+     
+     // Starts all threads in the process
+<span class="line-remove">-    fn start(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn run(self: Self) -&gt; () {</span>
+         let Self { ordre, ordreSend, th_servomoteur, cpu_id, .. } = self;
+         thread::Builder::new()
+             .name(&quot;th_servomoteur&quot;.to_string())
+<span class="line-remove">-            .spawn(|| { th_servomoteur.run() }).unwrap();</span>
+<span class="line-add">+            .spawn(move || { th_servomoteur.run() }).unwrap();</span>
+         let mut ordre_rx = ordre.unwrap();
+         thread::Builder::new()
+             .name(&quot;data_forwarder_ordre&quot;.to_string())
+<span class="line-header">@@ -500,15 +498,10 @@</span>
+ // AADL System: robot
+ #[derive(Debug)]
+ pub struct robotSystem {
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub proc_capteur_droit: p_capteurProcess,// 子组件进程（proc_capteur_droit : process p_capteur）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub proc_capteur_gauche: p_capteurProcess,// 子组件进程（proc_capteur_gauche : process p_capteur）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub proc_controle: p_controleProcess,// 子组件进程（proc_controle : process p_controle）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub proc_servomoteur_droit: p_servomoteurProcess,// 子组件进程（proc_servomoteur_droit : process p_servomoteur）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub proc_servomoteur_gauche: p_servomoteurProcess,// 子组件进程（proc_servomoteur_gauche : process p_servomoteur）
+ }
+
+<span class="line-header">@@ -515,41 +508,41 @@</span>
  impl System for robotSystem {
      // Creates a new system instance
      fn new() -&gt; Self {
@@ -88,22 +246,69 @@ pre {
 <span class="line-remove">-        let mut proc_controle: p_controleProcess = p_controleProcess::new(0);</span>
 <span class="line-remove">-        let mut proc_servomoteur_droit: p_servomoteurProcess = p_servomoteurProcess::new(0);</span>
 <span class="line-remove">-        let mut proc_servomoteur_gauche: p_servomoteurProcess = p_servomoteurProcess::new(0);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
 <span class="line-add">+        let mut proc_capteur_droit: p_capteurProcess = p_capteurProcess::new(3);</span>
 <span class="line-add">+        let mut proc_capteur_gauche: p_capteurProcess = p_capteurProcess::new(3);</span>
 <span class="line-add">+        let mut proc_controle: p_controleProcess = p_controleProcess::new(3);</span>
 <span class="line-add">+        let mut proc_servomoteur_droit: p_servomoteurProcess = p_servomoteurProcess::new(3);</span>
 <span class="line-add">+        let mut proc_servomoteur_gauche: p_servomoteurProcess = p_servomoteurProcess::new(3);</span>
-         let channel = crossbeam_channel::unbounded();
+<span class="line-add">+        let conn1 = crossbeam_channel::unbounded();</span>
          // build connection: 
-             proc_capteur_droit.evenement = Some(channel.0);
-<span class="line-header">@@ -558,7 +558,10 @@</span>
+<span class="line-remove">-            proc_capteur_droit.evenement = Some(channel.0);</span>
+<span class="line-add">+            proc_capteur_droit.evenement = Some(conn1.0);</span>
+         // build connection: 
+<span class="line-remove">-            proc_controle.info_capteur_droit = Some(channel.1);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+            proc_controle.info_capteur_droit = Some(conn1.1);</span>
+<span class="line-add">+        let conn2 = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            proc_capteur_gauche.evenement = Some(channel.0);</span>
+<span class="line-add">+            proc_capteur_gauche.evenement = Some(conn2.0);</span>
+         // build connection: 
+<span class="line-remove">-            proc_controle.info_capteur_gauche = Some(channel.1);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+            proc_controle.info_capteur_gauche = Some(conn2.1);</span>
+<span class="line-add">+        let conn3 = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            proc_controle.comm_servo_droit = Some(channel.0);</span>
+<span class="line-add">+            proc_controle.comm_servo_droit = Some(conn3.0);</span>
+         // build connection: 
+<span class="line-remove">-            proc_servomoteur_droit.ordre = Some(channel.1);</span>
+<span class="line-remove">-        let channel = crossbeam_channel::unbounded();</span>
+<span class="line-add">+            proc_servomoteur_droit.ordre = Some(conn3.1);</span>
+<span class="line-add">+        let conn4 = crossbeam_channel::unbounded();</span>
+         // build connection: 
+<span class="line-remove">-            proc_controle.comm_servo_gauche = Some(channel.0);</span>
+<span class="line-add">+            proc_controle.comm_servo_gauche = Some(conn4.0);</span>
+         // build connection: 
+<span class="line-remove">-            proc_servomoteur_gauche.ordre = Some(channel.1);</span>
+<span class="line-add">+            proc_servomoteur_gauche.ordre = Some(conn4.1);</span>
+         return Self { proc_capteur_droit, proc_capteur_gauche, proc_controle, proc_servomoteur_droit, proc_servomoteur_gauche }  //显式return;
+     }
+     
+     // Runs the system, starts all processes
+     fn run(self: Self) -&gt; () {
+<span class="line-remove">-        self.proc_capteur_droit.start();</span>
+<span class="line-remove">-        self.proc_capteur_gauche.start();</span>
+<span class="line-remove">-        self.proc_controle.start();</span>
+<span class="line-remove">-        self.proc_servomoteur_droit.start();</span>
+<span class="line-remove">-        self.proc_servomoteur_gauche.start();</span>
+<span class="line-add">+        self.proc_capteur_droit.run();</span>
+<span class="line-add">+        self.proc_capteur_gauche.run();</span>
+<span class="line-add">+        self.proc_controle.run();</span>
+<span class="line-add">+        self.proc_servomoteur_droit.run();</span>
+<span class="line-add">+        self.proc_servomoteur_gauche.run();</span>
+     }
+     
+ }
+<span class="line-header">@@ -558,7 +551,10 @@</span>
  lazy_static! {
      static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
          let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
-<span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
          map.insert(0, SCHED_FIFO);
-<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
          return map;
      };
  }

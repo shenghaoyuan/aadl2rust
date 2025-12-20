@@ -8,6 +8,15 @@ pub struct RustModule {
     pub items: Vec<Item>,
     pub attrs: Vec<Attribute>, // #[attributes]
     pub vis: Visibility, //控制结构体的可见性
+    pub withs: Vec<RustWith>, // with声明
+}
+/// with声明
+#[derive(Debug, Clone)]
+pub struct RustWith {
+    /// e.g. crate::aadlbook_devices
+    pub path: Vec<String>,
+    /// 是否 glob 引入（*）
+    pub glob: bool,
 }
 
 /// 模块项定义

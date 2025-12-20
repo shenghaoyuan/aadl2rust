@@ -72,10 +72,11 @@ fn get_system_fields(impl_: &ComponentImplementation) -> Vec<Field> {
                     name: sub.identifier.to_lowercase(),
                     ty: field_ty,
                     docs: vec![doc],
-                    attrs: vec![Attribute {
-                        name: "allow".to_string(),
-                        args: vec![AttributeArg::Ident("dead_code".to_string())],
-                    }],
+                    // attrs: vec![Attribute {
+                    //     name: "allow".to_string(),
+                    //     args: vec![AttributeArg::Ident("dead_code".to_string())],
+                    // }],
+                    attrs: Vec::new(),
                 });
             }
         }
@@ -164,7 +165,7 @@ fn create_system_new_body(
     // 为每个唯一的CPU名称分配一个ID（如果还没有分配的话）
     for (_, cpu_name) in &processor_bindings {
         if !temp_converter.cpu_name_to_id_mapping.contains_key(cpu_name) {
-            let next_id = temp_converter.cpu_name_to_id_mapping.len();
+            let next_id:isize = temp_converter.cpu_name_to_id_mapping.len().try_into().expect("length does not fit into isize");
             temp_converter
                 .cpu_name_to_id_mapping
                 .insert(cpu_name.clone(), next_id);
@@ -172,11 +173,11 @@ fn create_system_new_body(
     }
 
     // 如果没有处理器绑定，默认使用CPU 0
-    if temp_converter.cpu_name_to_id_mapping.is_empty() {
-        temp_converter
-            .cpu_name_to_id_mapping
-            .insert("default".to_string(), 0);
-    }
+    // if temp_converter.cpu_name_to_id_mapping.is_empty() {
+    //     temp_converter
+    //         .cpu_name_to_id_mapping
+    //         .insert("default".to_string(), 0);
+    // }
 
     // 2. 创建子组件实例 - 处理进程和设备子组件
     if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
@@ -198,7 +199,7 @@ fn create_system_new_body(
                         .and_then(|(_, cpu_name)| {
                             temp_converter.cpu_name_to_id_mapping.get(cpu_name).copied()
                         })
-                        .unwrap_or(0); // 默认使用CPU 0
+                        .unwrap_or(-1); // 默认使用CPU -1
 
                     let creation_stmt = format!(
                         "let mut {}: {}Process = {}Process::new({})",
@@ -298,7 +299,7 @@ fn create_system_run_body(impl_: &ComponentImplementation) -> Block {
             let var_name = sub.identifier.to_lowercase();
             match sub.category {
                 ComponentCategory::Process => {
-                    let start_stmt = format!("self.{}.start()", var_name);
+                    let start_stmt = format!("self.{}.run()", var_name);
                     stmts.push(Statement::Expr(Expr::Ident(start_stmt)));
                 }
                 ComponentCategory::Device => {

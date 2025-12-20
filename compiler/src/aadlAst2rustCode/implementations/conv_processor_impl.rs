@@ -22,15 +22,10 @@ pub fn convert_processor_implementation(
                         cpu_scheduling_protocols
                             .insert(cpu_name.clone(), scheduling_protocol.clone());
                         return Vec::new(); // CPU实现不生成代码，只保存信息
-                    }
-                }
-            }
-        }
-    }
+                    }}}}}
 
     // 如果没有找到Scheduling_Protocol属性，使用默认值
     cpu_scheduling_protocols.insert(cpu_name.clone(), "FIFO".to_string());
     println!("CPU实现 {} 未指定调度协议，使用默认值: FIFO", cpu_name);
-
     Vec::new() // CPU实现不生成代码，只保存信息
 }

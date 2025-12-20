@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:05:11
+// Auto-generated from AADL package: aadlbook_software_image_acquisition
+// 生成时间: 2025-12-20 18:11:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,8 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
+use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -36,33 +38,32 @@ pub struct image_acquisitionProcess {
     pub cpu_id: isize,// 进程 CPU ID
     pub pictureSend: Option<BcSender<[[i32; 4]; 4]>>,// 内部端口: picture In
     pub obstacle_detectedRece: Option<Receiver<bool>>,// 内部端口: obstacle_detected Out
-    #[allow(dead_code)]
     pub acq_thr: image_acquisition_thrThread,// 子组件线程（acq_thr : thread image_acquisition_thr）
 }
 
 impl Process for image_acquisitionProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut acq_thr: image_acquisition_thrThread = image_acquisition_thrThread::new(cpu_id);
+        let acq_thr: image_acquisition_thrThread = image_acquisition_thrThread::new(cpu_id);
         let mut pictureSend = None;
         let mut obstacle_detectedRece = None;
-        let channel = crossbeam_channel::unbounded();
-        pictureSend = Some(channel.0);
+        let c0 = crossbeam_channel::unbounded();
+        pictureSend = Some(c0.0);
         // build connection: 
-            acq_thr.picture = Some(channel.1);
-        let channel = crossbeam_channel::unbounded();
+            acq_thr.picture = Some(c0.1);
+        let c1 = crossbeam_channel::unbounded();
         // build connection: 
-            acq_thr.obstacle_detected = Some(channel.0);
-        obstacle_detectedRece = Some(channel.1);
+            acq_thr.obstacle_detected = Some(c1.0);
+        obstacle_detectedRece = Some(c1.1);
         return Self { picture: None, pictureSend, obstacle_detected: None, obstacle_detectedRece, acq_thr, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { picture, pictureSend, obstacle_detected, obstacle_detectedRece, acq_thr, cpu_id, .. } = self;
         thread::Builder::new()
             .name("acq_thr".to_string())
-            .spawn(|| { acq_thr.run() }).unwrap();
+            .spawn(move || { acq_thr.run() }).unwrap();
         let mut obstacle_detectedRece_rx = obstacle_detectedRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_obstacle_detectedRece".to_string())
@@ -108,11 +109,11 @@ impl Thread for image_acquisition_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            picture: None, 
-            mipsbudget: 25.0, 
-            period: 50, 
-            obstacle_detected: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            picture: None, 
+            obstacle_detected: None, 
+            period: 50, 
+            mipsbudget: 25.0, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -124,6 +125,7 @@ impl Thread for image_acquisition_thrThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
         #[derive(Debug, Clone)]
         enum State {
@@ -159,14 +161,5 @@ impl Thread for image_acquisition_thrThread {
         };
     }
     
-}
-
-// CPU ID到调度策略的映射
-lazy_static! {
-    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
-        let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(0, SCHED_FIFO);
-        return map;
-    };
 }
 

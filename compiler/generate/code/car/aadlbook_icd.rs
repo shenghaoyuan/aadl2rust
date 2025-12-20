@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:05:11
+// Auto-generated from AADL package: aadlbook_icd
+// 生成时间: 2025-12-20 18:11:10
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,8 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::base_types::*;
+use crate::data_model::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -60,13 +62,4 @@ pub type music = bool;
 
 // AADL Data Type: contacts
 pub type contacts = i8;
-
-// CPU ID到调度策略的映射
-lazy_static! {
-    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
-        let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(0, SCHED_FIFO);
-        return map;
-    };
-}
 

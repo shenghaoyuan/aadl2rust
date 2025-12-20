@@ -1134,7 +1134,7 @@ impl AADLTransformer {
 
 
         let mut inner_iter = pair.into_inner();
-        let _identifier = extract_identifier(inner_iter.next().unwrap());
+        let identifier = extract_identifier(inner_iter.next().unwrap());
         //let _colon = inner_iter.next();
         
         let connection_type = inner_iter.next().unwrap();
@@ -1153,6 +1153,7 @@ impl AADLTransformer {
             let destination = Self::transform_port_reference(port_iter.next().unwrap());
 
             Connection::Port(PortConnection {
+                identifier,
                 source,
                 destination,
                 connection_direction: direction,

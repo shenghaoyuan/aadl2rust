@@ -237,7 +237,7 @@ pub fn collect_thread_connections(
 pub fn convert_cpu_schedule_mapping(
     module: &mut RustModule,
     cpu_scheduling_protocols: &HashMap<String, String>,
-    cpu_name_to_id_mapping: &HashMap<String, usize>,
+    cpu_name_to_id_mapping: &HashMap<String, isize>,
 ) {
     // 如果没有CPU映射信息，则不生成代码
     if cpu_name_to_id_mapping.is_empty() {

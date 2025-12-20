@@ -1485,9 +1485,10 @@ pub mod aadl_ast_cj {
         Didirect,
     }
     /* ========== port 口连接定义 ========== */
-    /// 对应标准中的 `port_connection`
+    /// 对应标准中的 `port_connection`,但是将标识符从connection下放到了port connection
     #[derive(Debug, Clone)]
     pub struct PortConnection {
+        pub identifier: String,
         pub source: PortEndpoint,
         pub destination: PortEndpoint,
         pub connection_direction: ConnectionSymbol,

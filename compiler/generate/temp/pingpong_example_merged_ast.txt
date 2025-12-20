@@ -19,42 +19,24 @@ RustModule {
                         attrs: [],
                     },
                     Field {
-                        name: "pinger",
+                        name: "ping_thr",
                         ty: Named(
                             "ping_thrThread",
                         ),
                         docs: [
-                            "// 子组件线程（Pinger : thread ping_thr）",
+                            "// 子组件线程（ping_thr : thread ping_thr）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
-                        name: "ping_me",
+                        name: "pong_thr",
                         ty: Named(
                             "pong_thrThread",
                         ),
                         docs: [
-                            "// 子组件线程（Ping_Me : thread pong_thr）",
+                            "// 子组件线程（pong_thr : thread pong_thr）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                 ],
                 properties: [],
@@ -94,7 +76,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut pinger",
+                                            name: "ping_thr",
                                             ty: Some(
                                                 Named(
                                                     "ping_thrThread",
@@ -121,7 +103,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut ping_me",
+                                            name: "pong_thr",
                                             ty: Some(
                                                 Named(
                                                     "pong_thrThread",
@@ -148,7 +130,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "cnx",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -167,7 +149,7 @@ RustModule {
                                     Expr(
                                         MethodCall(
                                             Ident(
-                                                "pinger.data_s",
+                                                "ping_thr.data_s",
                                             ),
                                             "send",
                                             [
@@ -180,7 +162,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "cnx.0",
                                                         ),
                                                     ],
                                                 ),
@@ -190,7 +172,7 @@ RustModule {
                                     Expr(
                                         MethodCall(
                                             Ident(
-                                                "ping_me.data_r",
+                                                "pong_thr.data_r",
                                             ),
                                             "receive",
                                             [
@@ -203,7 +185,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "cnx.1",
                                                         ),
                                                     ],
                                                 ),
@@ -212,7 +194,7 @@ RustModule {
                                     ),
                                     Expr(
                                         Ident(
-                                            "return Self { pinger, ping_me, cpu_id }  //显式return",
+                                            "return Self { ping_thr, pong_thr, cpu_id }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -228,7 +210,7 @@ RustModule {
                     ),
                     Method(
                         FunctionDef {
-                            name: "start",
+                            name: "run",
                             params: [
                                 Param {
                                     name: "self",
@@ -243,7 +225,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "Self { pinger, ping_me, cpu_id, .. }",
+                                            name: "Self { ping_thr, pong_thr, cpu_id, .. }",
                                             ty: None,
                                             init: Some(
                                                 Ident(
@@ -257,20 +239,20 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"pinger\".to_string()",
+                                                        "\"ping_thr\".to_string()",
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
                                                                 Ident(
-                                                                    "pinger",
+                                                                    "ping_thr",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -283,20 +265,20 @@ RustModule {
                                             BuilderChain(
                                                 [
                                                     Named(
-                                                        "\"ping_me\".to_string()",
+                                                        "\"pong_thr\".to_string()",
                                                     ),
                                                     Spawn {
                                                         closure: Closure(
                                                             [],
                                                             MethodCall(
                                                                 Ident(
-                                                                    "ping_me",
+                                                                    "pong_thr",
                                                                 ),
                                                                 "run",
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -328,23 +310,14 @@ RustModule {
                 name: "pingpongsystemSystem",
                 fields: [
                     Field {
-                        name: "proc",
+                        name: "pingpong_proc",
                         ty: Named(
                             "pingpong_procProcess",
                         ),
                         docs: [
-                            "// 子组件进程（proc : process pingpong_proc）",
+                            "// 子组件进程（pingpong_proc : process pingpong_proc）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                 ],
                 properties: [],
@@ -376,12 +349,12 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "let mut proc: pingpong_procProcess = pingpong_procProcess::new(0)",
+                                            "let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(-1)",
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "return Self { proc }  //显式return",
+                                            "return Self { pingpong_proc }  //显式return",
                                         ),
                                     ),
                                 ],
@@ -411,7 +384,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "self.proc.start()",
+                                            "self.pingpong_proc.run()",
                                         ),
                                     ),
                                 ],
@@ -704,7 +677,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            priority: 2, \n            deadline: 2000, \n            period: 2000, \n            dispatch_protocol: \"Periodic\".to_string(), \n            data_s: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            priority: 2, \n            data_s: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 2000, \n            deadline: 2000, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -951,6 +924,24 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "next_release",
+                                            ty: None,
+                                            init: Some(
+                                                BinaryOp(
+                                                    Ident(
+                                                        "Instant::now()",
+                                                    ),
+                                                    "+",
+                                                    Ident(
+                                                        "period",
+                                                    ),
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Expr(
                                         Loop(
                                             Block {
@@ -958,7 +949,7 @@ RustModule {
                                                     Let(
                                                         LetStmt {
                                                             ifmut: false,
-                                                            name: "start",
+                                                            name: "now",
                                                             ty: None,
                                                             init: Some(
                                                                 Call(
@@ -972,6 +963,43 @@ RustModule {
                                                                     [],
                                                                 ),
                                                             ),
+                                                        },
+                                                    ),
+                                                    Expr(
+                                                        If {
+                                                            condition: BinaryOp(
+                                                                Ident(
+                                                                    "now",
+                                                                ),
+                                                                "<",
+                                                                Ident(
+                                                                    "next_release",
+                                                                ),
+                                                            ),
+                                                            then_branch: Block {
+                                                                stmts: [
+                                                                    Expr(
+                                                                        MethodCall(
+                                                                            Path(
+                                                                                [
+                                                                                    "std",
+                                                                                    "thread",
+                                                                                    "sleep",
+                                                                                ],
+                                                                                Namespace,
+                                                                            ),
+                                                                            "",
+                                                                            [
+                                                                                Ident(
+                                                                                    "next_release - now",
+                                                                                ),
+                                                                            ],
+                                                                        ),
+                                                                    ),
+                                                                ],
+                                                                expr: None,
+                                                            },
+                                                            else_branch: None,
                                                         },
                                                     ),
                                                     Expr(
@@ -1066,46 +1094,15 @@ RustModule {
                                                             },
                                                         ),
                                                     ),
-                                                    Let(
-                                                        LetStmt {
-                                                            ifmut: false,
-                                                            name: "elapsed",
-                                                            ty: None,
-                                                            init: Some(
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "start",
-                                                                    ),
-                                                                    "elapsed",
-                                                                    [],
-                                                                ),
-                                                            ),
-                                                        },
-                                                    ),
                                                     Expr(
-                                                        MethodCall(
-                                                            Path(
-                                                                [
-                                                                    "std",
-                                                                    "thread",
-                                                                    "sleep",
-                                                                ],
-                                                                Namespace,
+                                                        BinaryOp(
+                                                            Ident(
+                                                                "next_release",
                                                             ),
-                                                            "",
-                                                            [
-                                                                MethodCall(
-                                                                    Ident(
-                                                                        "period",
-                                                                    ),
-                                                                    "saturating_sub",
-                                                                    [
-                                                                        Ident(
-                                                                            "elapsed",
-                                                                        ),
-                                                                    ],
-                                                                ),
-                                                            ],
+                                                            "+=",
+                                                            Ident(
+                                                                "period",
+                                                            ),
                                                         ),
                                                     ),
                                                 ],
@@ -1244,7 +1241,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            deadline: 10, \n            period: 10, \n            priority: 1, \n            data_r: None, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            period: 10, \n            data_r: None, \n            deadline: 10, \n            priority: 1, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1891,88 +1888,6 @@ RustModule {
                         "Thread",
                     ),
                 ),
-            },
-        ),
-        LazyStatic(
-            LazyStaticDef {
-                name: "CPU_ID_TO_SCHED_POLICY",
-                ty: Generic(
-                    "HashMap",
-                    [
-                        Named(
-                            "isize",
-                        ),
-                        Named(
-                            "i32",
-                        ),
-                    ],
-                ),
-                init: Block {
-                    stmts: [
-                        Let(
-                            LetStmt {
-                                ifmut: true,
-                                name: "map",
-                                ty: Some(
-                                    Generic(
-                                        "HashMap",
-                                        [
-                                            Named(
-                                                "isize",
-                                            ),
-                                            Named(
-                                                "i32",
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                                init: Some(
-                                    Call(
-                                        Path(
-                                            [
-                                                "HashMap",
-                                                "new",
-                                            ],
-                                            Namespace,
-                                        ),
-                                        [],
-                                    ),
-                                ),
-                            },
-                        ),
-                        Expr(
-                            MethodCall(
-                                Ident(
-                                    "map",
-                                ),
-                                "insert",
-                                [
-                                    Literal(
-                                        Int(
-                                            0,
-                                        ),
-                                    ),
-                                    Path(
-                                        [
-                                            "SCHED_FIFO",
-                                        ],
-                                        Namespace,
-                                    ),
-                                ],
-                            ),
-                        ),
-                        Expr(
-                            Ident(
-                                "return map",
-                            ),
-                        ),
-                    ],
-                    expr: None,
-                },
-                vis: Public,
-                docs: [
-                    "// CPU ID到调度策略的映射",
-                ],
             },
         ),
     ],

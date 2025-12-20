@@ -8,16 +8,16 @@ public
   -- Processor --
   ---------------
 
-  processor CPU
-  -- properties
-  --   Deployment_Properties::Execution_Platform => native;
-  end CPU;
+  -- processor CPU
+  -- -- properties
+  -- --   Deployment_Properties::Execution_Platform => native;
+  -- end CPU;
 
-  processor implementation CPU.Impl
-  properties
-    Scheduling_Protocol => (Posix_1003_Highest_Priority_First_Protocol);
-    Priority_Range => 0 .. 99;
-  end CPU.Impl;
+  -- processor implementation CPU.Impl
+  -- properties
+  --   Scheduling_Protocol => (Posix_1003_Highest_Priority_First_Protocol);
+  --   Priority_Range => 0 .. 99;
+  -- end CPU.Impl;
 
   ---------------
   -- Processes --
@@ -28,10 +28,10 @@ public
 
   process implementation pingpong_proc.Impl
   subcomponents
-    Pinger        : thread ping_thr.Impl;
-    Ping_Me       : thread pong_thr.Impl;
+    ping_thr        : thread ping_thr.Impl;
+    pong_thr       : thread pong_thr.Impl;
   connections
-    cnx : port Pinger.data_s -> Ping_Me.data_r;
+    cnx : port ping_thr.data_s -> pong_thr.data_r;
   end pingpong_proc.Impl;
 
   ------------
@@ -43,11 +43,11 @@ public
 
   system implementation PingPongSystem.Impl
   subcomponents
-    proc : process pingpong_proc.Impl;
-    CPU : processor CPU.Impl;
+    pingpong_proc : process pingpong_proc.Impl;
+    --CPU : processor CPU.Impl;
 
-  properties
-     Actual_processor_binding => reference (CPU) applies to proc;
+  --properties
+     --Actual_processor_binding => reference (CPU) applies to pingpong_proc;
   end PingPongSystem.Impl;
 
 

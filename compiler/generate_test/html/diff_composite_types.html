@@ -23,14 +23,13 @@ pre {
 <span class="line-remove">--- original</span>
 <span class="line-add">+++ modified</span>
 <span class="line-header">@@ -1,5 +1,5 @@</span>
-<span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
-<span class="line-remove">-// 生成时间: 2025-12-08 19:56:13</span>
-<span class="line-add">+// Auto-generated from AADL package: base_types_example_types</span>
-<span class="line-add">+// 生成时间: 2025-12-10 21:18:20</span>
+ // Auto-generated from AADL package: base_types_example_types
+<span class="line-remove">-// 生成时间: 2025-12-20 17:25:37</span>
+<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
-<span class="line-header">@@ -72,3 +72,24 @@</span>
+<span class="line-header">@@ -88,3 +88,24 @@</span>
  // AADL Data Type: C_Type
  pub type C_Type = the_type;
 
@@ -38,10 +37,10 @@ pre {
 <span class="line-add">+lazy_static! {</span>
 <span class="line-add">+    static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {</span>
 <span class="line-add">+        let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();</span>
-<span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(0, SCHED_FIFO);</span>
-<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
 <span class="line-add">+        return map;</span>
 <span class="line-add">+    };</span>
 <span class="line-add">+}</span>

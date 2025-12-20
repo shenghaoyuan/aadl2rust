@@ -42,10 +42,22 @@ end A_Struct2.impl;
 data A_Union1
 	properties
 		Data_Model::Data_Representation => Union;
-		Data_Model::Base_Type => (classifier (Base_Types::Float),
+		Data_Model::Base_Type => (classifier (Base_Types::Integer),
 			classifier (Base_Types::Character));
-		Data_Model::Element_Names => ("f1", "f2");
+		Data_Model::Element_Names => ("f1", "c2");
 end A_Union1;
+--标记联合体
+-- data CJ_taggedUnion
+-- 	properties
+-- 		Data_Model::Data_Representation => Struct;
+-- 		Data_Model::Base_Type => (classifier (Base_Types::Integer),
+-- 			classifier (A_Union1));
+-- 		Data_Model::Element_Names => ("type", "unionData");
+-- end CJ_taggedUnion;
+-- struct {
+--   type : Integer;      -- 判别字段
+--   unionData : union { float f1; char f2; }
+-- }
 
 data A_Union2
 	properties
@@ -57,6 +69,25 @@ data implementation A_Union2.impl
 		f1: data Base_Types::Float;
 		c2: data Base_Types::Character;
 end A_Union2.impl;
+
+data A_Tagged_Union
+	properties
+		Data_Model::Data_Representation => TaggedUnion;
+		Data_Model::Base_Type => (classifier (Base_Types::Float),
+			classifier (Base_Types::Character));
+		Data_Model::Element_Names => ("f1", "f2");
+end A_Tagged_Union;
+
+data A_Tagged_Union2
+	properties
+		Data_Model::Data_Representation => TaggedUnion;
+end A_Tagged_Union2;
+
+data implementation A_Tagged_Union2.impl
+	subcomponents
+		f1: data Base_Types::Float;
+		c2: data Base_Types::Character;
+end A_Tagged_Union2.impl;
 
 --枚举
 data An_Enum

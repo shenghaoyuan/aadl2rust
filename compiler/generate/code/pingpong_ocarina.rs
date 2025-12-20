@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:02:55
+// Auto-generated from AADL package: ping_local
+// 生成时间: 2025-12-20 17:35:45
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -32,34 +32,32 @@ fn set_thread_affinity(cpu: isize) {
 #[derive(Debug)]
 pub struct aProcess {
     pub cpu_id: isize,// 进程 CPU ID
-    #[allow(dead_code)]
     pub pinger: pThread,// 子组件线程（Pinger : thread P）
-    #[allow(dead_code)]
     pub ping_me: qThread,// 子组件线程（Ping_Me : thread Q）
 }
 
 impl Process for aProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut pinger: pThread = pThread::new(cpu_id);
-        let mut ping_me: qThread = qThread::new(cpu_id);
-        let channel = crossbeam_channel::unbounded();
+        let pinger: pThread = pThread::new(cpu_id);
+        let ping_me: qThread = qThread::new(cpu_id);
+        let cnx = crossbeam_channel::unbounded();
         // build connection: 
-            pinger.data_source = Some(channel.0);
+            pinger.data_source = Some(cnx.0);
         // build connection: 
-            ping_me.data_sink = Some(channel.1);
+            ping_me.data_sink = Some(cnx.1);
         return Self { pinger, ping_me, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { pinger, ping_me, cpu_id, .. } = self;
         thread::Builder::new()
             .name("pinger".to_string())
-            .spawn(|| { pinger.run() }).unwrap();
+            .spawn(move || { pinger.run() }).unwrap();
         thread::Builder::new()
             .name("ping_me".to_string())
-            .spawn(|| { ping_me.run() }).unwrap();
+            .spawn(move || { ping_me.run() }).unwrap();
     }
     
 }
@@ -67,7 +65,6 @@ impl Process for aProcess {
 // AADL System: PING
 #[derive(Debug)]
 pub struct pingSystem {
-    #[allow(dead_code)]
     pub node_a: aProcess,// 子组件进程（Node_A : process A）
 }
 
@@ -80,7 +77,7 @@ impl System for pingSystem {
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        self.node_a.start();
+        self.node_a.run();
     }
     
 }
@@ -135,11 +132,11 @@ impl Thread for pThread {
         return Self {
             priority: 2, 
             dispatch_offset: 500, 
-            deadline: 2000, 
             period: 2000, 
-            data_source: None, 
-            recover_entrypoint_source_text: "recover".to_string(), 
             dispatch_protocol: "Periodic".to_string(), 
+            data_source: None, 
+            deadline: 2000, 
+            recover_entrypoint_source_text: "recover".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -158,8 +155,12 @@ impl Thread for pThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(2000);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // p_spg();
@@ -170,8 +171,7 @@ impl Thread for pThread {
                     sender.send(val).unwrap();
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -192,11 +192,11 @@ impl Thread for qThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            data_sink: None, 
+            priority: 1, 
             deadline: 10, 
+            data_sink: None, 
             dispatch_protocol: "Sporadic".to_string(), 
             period: 10, 
-            priority: 1, 
             cpu_id: cpu_id, // CPU ID
         };
     }

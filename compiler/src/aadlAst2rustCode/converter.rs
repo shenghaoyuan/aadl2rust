@@ -15,7 +15,7 @@ pub struct AadlConverter {
     pub component_types: HashMap<String, ComponentType>, // 存储组件类型信息，（为了有些情况下，需要在组件实现中，根据组件类型来获取端口信息）
     pub annex_converter: AnnexConverter, // Behavior Annex 转换器
     cpu_scheduling_protocols: HashMap<String, String>, // 存储CPU实现的调度协议信息
-    pub cpu_name_to_id_mapping: HashMap<String, usize>, // 存储CPU名称到ID的映射关系
+    pub cpu_name_to_id_mapping: HashMap<String, isize>, // 存储CPU名称到ID的映射关系
     data_comp_type: HashMap<String, String>, // 存储数据组件类型信息，key是数据组件名称，value是数据组件类型。是为了处理数据组件类型为结构体、联合体时，需要根据组件实现impl来获取属性信息
     
     pub thread_field_values: HashMap<String, HashMap<String, StruPropertyValue>>,// 存储线程类型字段对应的属性值，key为线程结构体名(如 fooThread)，value为字段名到属性值的映射
@@ -118,6 +118,7 @@ impl AadlConverter {
             items: Default::default(),
             attrs: Default::default(),
             vis: Visibility::Public,
+            withs: self.convert_withs(pkg),
         };
 
         // 处理公共声明
@@ -142,7 +143,29 @@ impl AadlConverter {
         module
     }
 
-    
+    fn convert_withs(&self, pkg: &Package) -> Vec<RustWith> {
+        let mut withs = Vec::new();
+        for ele in pkg.visibility_decls.iter() {
+            match ele {
+                VisibilityDeclaration::Import { packages, property_sets } => {
+                    println!("!!!!!!!!!!!!!!!!!!!!!packages: {:?}", packages);
+                    //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
+                    for pkg_name in packages.iter() {
+                        // 关键点：不使用 to_string()
+                        let segments = pkg_name.0.clone();
+        
+                        withs.push(RustWith {
+                            path: segments,
+                            glob: true,
+                        });
+                    }
+                }
+                _ => {}
+            }
+        }
+        println!("!!!!!!!!!!!!!!!!!!!!!withs: {:?}", withs);
+        withs
+    }
     // 根据实现获取组件类型
     pub fn get_component_type(&self, impl_: &ComponentImplementation) -> Option<&ComponentType> {
         self.component_types.get(&impl_.name.type_identifier)
@@ -559,7 +582,7 @@ impl AadlConverter {
             //非广播的channel使用crossbeam_channel::unbounded。
             stmts.push(Statement::Let(LetStmt {
                 ifmut: false,
-                name: "channel".to_string(),
+                name: conn.identifier.clone(),
                 ty: None, //这里的通道类型由编译器自动推导
                 init: Some(Expr::Call(
                     Box::new(Expr::Path(
@@ -595,7 +618,8 @@ impl AadlConverter {
                     //需要根据标志位if_broadcast判断是否是广播端口，它的语法是channel.0.clone()
                     vec![Expr::Call(
                         Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                        vec![if is_broadcast { Expr::MethodCall(Box::new(Expr::Ident("channel.0.clone".to_string())), "".to_string(), Vec::new()) } else{ Expr::Ident("channel.0".to_string()) }],
+                        vec![if is_broadcast { Expr::MethodCall(Box::new(Expr::Ident("channel.0.clone".to_string())), "".to_string(), Vec::new()) } 
+                            else{ Expr::Ident(format!("{}.0", conn.identifier.clone())) }],
                     )],
                 )));
 
@@ -613,7 +637,7 @@ impl AadlConverter {
                         
                         vec![Expr::Call(
                             Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                            vec![Expr::Ident("channel.1".to_string())],
+                            vec![Expr::Ident(format!("{}.1", conn.identifier.clone()))],
                         )],
                     )));
                 }
@@ -650,7 +674,7 @@ impl AadlConverter {
                         "=".to_string(),
                         Box::new(Expr::Call(
                             Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                            vec![Expr::Ident("channel.0".to_string())],
+                            vec![Expr::Ident(format!("{}.0", conn.identifier.clone()))],
                         )),
                     )));
                 }
@@ -661,7 +685,7 @@ impl AadlConverter {
                         "receive".to_string(),
                         vec![Expr::Call(
                             Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                            vec![Expr::Ident("channel.1".to_string())],
+                            vec![Expr::Ident(format!("{}.1", conn.identifier.clone()))],
                         )],
                     )));
                 }
@@ -680,7 +704,7 @@ impl AadlConverter {
                     "send".to_string(),
                     vec![Expr::Call(
                         Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                        vec![Expr::Ident("channel.0".to_string())],
+                        vec![Expr::Ident(format!("{}.0", conn.identifier.clone()))],
                     )],
                 )));
 
@@ -698,7 +722,7 @@ impl AadlConverter {
                     "=".to_string(),
                     Box::new(Expr::Call(
                         Box::new(Expr::Path(vec!["Some".to_string()], PathType::Member)),
-                        vec![Expr::Ident("channel.1".to_string())],
+                        vec![Expr::Ident(format!("{}.1", conn.identifier.clone()))],
                     )),
                 )));
             }

@@ -112,6 +112,12 @@ fn main() {
             name: "pingpong_example".to_string(),
             path:"AADLSource/pingpong_example.aadl".to_string(),
             output_name:"pingpong_example".to_string(),
+        },
+        TestCase{
+            id:15,
+            name: "car_device".to_string(),
+            path:"AADLSource/car_device.aadl".to_string(),
+            output_name:"car_device".to_string(),
         }
     ];
 

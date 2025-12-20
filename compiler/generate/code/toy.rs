@@ -1,5 +1,5 @@
-// 自动生成的 Rust 代码 - 来自 AADL 模型
-// 生成时间: 2025-12-08 23:03:49
+// Auto-generated from AADL package: toy_example_nowrapper
+// 生成时间: 2025-12-17 22:52:30
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -141,8 +141,8 @@ impl Thread for gnc_threadThread {
         return Self {
             deadline: 1000, 
             priority: 50, 
-            period: 1000, 
             gnc_pos: gnc_pos, 
+            period: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
@@ -162,8 +162,12 @@ impl Thread for gnc_threadThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(1000);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // welcome() -> update_pos() -> gnc_work() -> read_pos() -> bye();
@@ -190,8 +194,7 @@ impl Thread for gnc_threadThread {
                 // bye;
                 gnc_identity::execute();
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -212,11 +215,11 @@ impl Thread for tmtc_threadThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
         return Self {
-            dispatch_protocol: "Periodic".to_string(), 
-            tmtc_pos: tmtc_pos, 
+            deadline: 100, 
             priority: 20, 
             period: 100, 
-            deadline: 100, 
+            dispatch_protocol: "Periodic".to_string(), 
+            tmtc_pos: tmtc_pos, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -235,8 +238,12 @@ impl Thread for tmtc_threadThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(100);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // welcome() -> tmtc_work() -> update() -> bye();
@@ -255,8 +262,7 @@ impl Thread for tmtc_threadThread {
                 // bye;
                 tmtc_identity::execute();
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -277,9 +283,9 @@ pub struct toy_example_procProcess {
 impl Process for toy_example_procProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut pos_data: POSShared = Arc::new(Mutex::new(0));
-        let mut gnc_th: gnc_threadThread = gnc_threadThread::new(cpu_id, pos_data.clone());
-        let mut tmtc_th: tmtc_threadThread = tmtc_threadThread::new(cpu_id, pos_data.clone());
+        let pos_data: POSShared = Arc::new(Mutex::new(0));
+        let gnc_th: gnc_threadThread = gnc_threadThread::new(cpu_id, Arc::clone(&pos_data));
+        let tmtc_th: tmtc_threadThread = tmtc_threadThread::new(cpu_id, Arc::clone(&pos_data));
         return Self { gnc_th, tmtc_th, pos_data, cpu_id }  //显式return;
     }
     
@@ -288,10 +294,10 @@ impl Process for toy_example_procProcess {
         let Self { gnc_th, tmtc_th, pos_data, cpu_id, .. } = self;
         thread::Builder::new()
             .name("gnc_th".to_string())
-            .spawn(|| { gnc_th.run() }).unwrap();
+            .spawn(move || { gnc_th.run() }).unwrap();
         thread::Builder::new()
             .name("tmtc_th".to_string())
-            .spawn(|| { tmtc_th.run() }).unwrap();
+            .spawn(move || { tmtc_th.run() }).unwrap();
     }
     
 }

@@ -36,6 +36,7 @@ pub fn print_pair(pair: Pair<aadlight_parser::Rule>, indent: usize) {
 pub fn print_ast(ast: &Vec<Package>) {
     for package in ast {
         println!("Package: {}", package.name.to_string());
+        println!("  Visibility Declarations: {:?}", package.visibility_decls);
 
         if let Some(public_section) = &package.public_section {
             for decl in &public_section.declarations {
@@ -107,8 +108,8 @@ pub fn print_ast(ast: &Vec<Package>) {
                                 match conn {
                                     Connection::Port(port_conn) =>{
                                         println!(
-                                            "    Connection: {:?} -> {:?}",
-                                            port_conn.source, port_conn.destination
+                                            "    Connection: {:?}: {:?} -> {:?}",
+                                            port_conn.identifier,port_conn.source, port_conn.destination
                                         );
                                     }
                                     Connection::Parameter(parameter_conn) => {

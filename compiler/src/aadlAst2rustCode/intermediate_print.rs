@@ -46,6 +46,7 @@ impl RustCodeGenerator {
         self.writeln("include!(concat!(env!(\"OUT_DIR\"), \"/aadl_c_bindings.rs\"));"); //绑定的函数通过 include! 注入到根模块
 
         self.writeln("");
+        self.generate_withs(&module.withs);
 
         // 添加CPU亲和性设置函数
         self.writeln("// ---------------- cpu ----------------");
@@ -87,6 +88,13 @@ impl RustCodeGenerator {
         self.generate_items(&module.items);
 
         self.buffer.clone()
+    }
+
+    // 生成with声明
+    fn generate_withs(&mut self, withs: &[RustWith]) {
+        for with in withs {
+            self.writeln(&format!("use crate::{}{};", with.path.join("_"), if with.glob { "::*" } else { "" }));
+        }
     }
 
     // 生成多个项

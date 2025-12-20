@@ -96,6 +96,12 @@ pub fn all_test_cases() -> Vec<TestCase> {
             path: "AADLSource/pingpong_example.aadl".into(),
             output_name: "pingpong_example".into(),
         },
+        TestCase {
+            id: 15,
+            name: "pingpong_timed_aperiodic".into(),
+            path: "AADLSource/pingpong_timed_aperiodic.aadl".into(),
+            output_name: "pingpong_timed_aperiodic".into(),
+        }
     ]
 }
 

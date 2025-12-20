@@ -4142,89 +4142,23 @@ RustModule {
                 ),
             },
         ),
-        LazyStatic(
-            LazyStaticDef {
-                name: "CPU_ID_TO_SCHED_POLICY",
-                ty: Generic(
-                    "HashMap",
-                    [
-                        Named(
-                            "isize",
-                        ),
-                        Named(
-                            "i32",
-                        ),
-                    ],
-                ),
-                init: Block {
-                    stmts: [
-                        Let(
-                            LetStmt {
-                                ifmut: true,
-                                name: "map",
-                                ty: Some(
-                                    Generic(
-                                        "HashMap",
-                                        [
-                                            Named(
-                                                "isize",
-                                            ),
-                                            Named(
-                                                "i32",
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                                init: Some(
-                                    Call(
-                                        Path(
-                                            [
-                                                "HashMap",
-                                                "new",
-                                            ],
-                                            Namespace,
-                                        ),
-                                        [],
-                                    ),
-                                ),
-                            },
-                        ),
-                        Expr(
-                            MethodCall(
-                                Ident(
-                                    "map",
-                                ),
-                                "insert",
-                                [
-                                    Literal(
-                                        Int(
-                                            0,
-                                        ),
-                                    ),
-                                    Path(
-                                        [
-                                            "SCHED_FIFO",
-                                        ],
-                                        Namespace,
-                                    ),
-                                ],
-                            ),
-                        ),
-                        Expr(
-                            Ident(
-                                "return map",
-                            ),
-                        ),
-                    ],
-                    expr: None,
-                },
-                vis: Public,
-                docs: [
-                    "// CPU ID到调度策略的映射",
-                ],
-            },
-        ),
     ],
     attrs: [],
     vis: Public,
+    withs: [
+        RustWith {
+            path: [
+                "aadlbook",
+                "icd",
+            ],
+            glob: true,
+        },
+        RustWith {
+            path: [
+                "aadlbook",
+                "platform",
+            ],
+            glob: true,
+        },
+    ],
 }

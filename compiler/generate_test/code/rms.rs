@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: rmsaadl
-// 生成时间: 2025-12-10 21:18:19
+// 生成时间: 2025-12-20 17:31:23
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -69,10 +69,10 @@ impl Thread for taskThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 1, 
             period: 1000, 
-            deadline: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
+            priority: 1, 
+            deadline: 1000, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -92,16 +92,19 @@ impl Thread for taskThread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(1000);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // p_spg();
                 // p_spg;
                 hello_spg_1::execute();
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -120,10 +123,10 @@ impl Thread for task2Thread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            deadline: 500, 
-            dispatch_protocol: "Periodic".to_string(), 
-            priority: 2, 
             period: 500, 
+            priority: 2, 
+            dispatch_protocol: "Periodic".to_string(), 
+            deadline: 500, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -143,16 +146,19 @@ impl Thread for task2Thread {
             set_thread_affinity(self.cpu_id);
         };
         let period: std::time::Duration = Duration::from_millis(500);
+        let mut next_release = Instant::now() + period;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- 调用序列（等价 AADL 的 Wrapper）---
                            // p_spg();
                 // p_spg;
                 hello_spg_2::execute();
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -162,29 +168,27 @@ impl Thread for task2Thread {
 #[derive(Debug)]
 pub struct node_aProcess {
     pub cpu_id: isize,// 进程 CPU ID
-    #[allow(dead_code)]
     pub task1: taskThread,// 子组件线程（Task1 : thread Task）
-    #[allow(dead_code)]
     pub task2: task2Thread,// 子组件线程（Task2 : thread Task2）
 }
 
 impl Process for node_aProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let mut task1: taskThread = taskThread::new(cpu_id);
-        let mut task2: task2Thread = task2Thread::new(cpu_id);
+        let task1: taskThread = taskThread::new(cpu_id);
+        let task2: task2Thread = task2Thread::new(cpu_id);
         return Self { task1, task2, cpu_id }  //显式return;
     }
     
     // Starts all threads in the process
-    fn start(self: Self) -> () {
+    fn run(self: Self) -> () {
         let Self { task1, task2, cpu_id, .. } = self;
         thread::Builder::new()
             .name("task1".to_string())
-            .spawn(|| { task1.run() }).unwrap();
+            .spawn(move || { task1.run() }).unwrap();
         thread::Builder::new()
             .name("task2".to_string())
-            .spawn(|| { task2.run() }).unwrap();
+            .spawn(move || { task2.run() }).unwrap();
     }
     
 }
@@ -192,7 +196,6 @@ impl Process for node_aProcess {
 // AADL System: rmssys
 #[derive(Debug)]
 pub struct rmssysSystem {
-    #[allow(dead_code)]
     pub node_a: node_aProcess,// 子组件进程（node_a : process node_a）
 }
 
@@ -205,7 +208,7 @@ impl System for rmssysSystem {
     
     // Runs the system, starts all processes
     fn run(self: Self) -> () {
-        self.node_a.start();
+        self.node_a.run();
     }
     
 }
@@ -214,10 +217,10 @@ impl System for rmssysSystem {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(3, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
-        map.insert(2, SCHED_FIFO);
+        map.insert(3, SCHED_FIFO);
         return map;
     };
 }

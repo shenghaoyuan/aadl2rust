@@ -26,7 +26,7 @@ pre {
 <span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
 <span class="line-remove">-// 生成时间: 2025-12-08 23:03:21</span>
 <span class="line-add">+// Auto-generated from AADL package: rmaaadl</span>
-<span class="line-add">+// 生成时间: 2025-12-10 21:18:18</span>
+<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
@@ -34,36 +34,142 @@ pre {
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-<span class="line-remove">-            deadline: 1000, </span>
-             priority: 1, 
-             period: 1000, 
-<span class="line-add">+            deadline: 1000, </span>
-<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            period: 1000, </span>
+             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
+<span class="line-add">+            priority: 1, </span>
+             deadline: 1000, 
+<span class="line-remove">-            priority: 1, </span>
+<span class="line-remove">-            period: 1000, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
-<span class="line-header">@@ -121,10 +121,10 @@</span>
-     // 创建组件并初始化AADL属性
+<span class="line-header">@@ -92,8 +92,12 @@</span>
+             set_thread_affinity(self.cpu_id);
+         };
+         let period: std::time::Duration = Duration::from_millis(1000);
+<span class="line-add">+        let mut next_release = Instant::now() + period;</span>
+         loop {
+<span class="line-remove">-            let start = Instant::now();</span>
+<span class="line-add">+            let now = Instant::now();</span>
+<span class="line-add">+            if now &lt; next_release {</span>
+<span class="line-add">+                std::thread::sleep(next_release - now);</span>
+<span class="line-add">+            };</span>
+             {
+                 // --- 调用序列（等价 AADL 的 Wrapper）---
+                            // p_spg();
+<span class="line-header">@@ -100,8 +104,7 @@</span>
+                 // p_spg;
+                 hello_spg_1::execute();
+             };
+<span class="line-remove">-            let elapsed = start.elapsed();</span>
+<span class="line-remove">-            std::thread::sleep(period.saturating_sub(elapsed));</span>
+<span class="line-add">+            next_release += period;</span>
+         };
+     }
+     
+<span class="line-header">@@ -122,9 +125,9 @@</span>
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-remove">-            period: 500, </span>
-<span class="line-add">+            deadline: 500, </span>
+             period: 500, 
+<span class="line-add">+            priority: 2, </span>
              dispatch_protocol: &quot;Periodic&quot;.to_string(), 
-<span class="line-remove">-            deadline: 500, </span>
-             priority: 2, 
-<span class="line-add">+            period: 500, </span>
+             deadline: 500, 
+<span class="line-remove">-            priority: 2, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
-<span class="line-header">@@ -215,6 +215,7 @@</span>
+<span class="line-header">@@ -143,8 +146,12 @@</span>
+             set_thread_affinity(self.cpu_id);
+         };
+         let period: std::time::Duration = Duration::from_millis(500);
+<span class="line-add">+        let mut next_release = Instant::now() + period;</span>
+         loop {
+<span class="line-remove">-            let start = Instant::now();</span>
+<span class="line-add">+            let now = Instant::now();</span>
+<span class="line-add">+            if now &lt; next_release {</span>
+<span class="line-add">+                std::thread::sleep(next_release - now);</span>
+<span class="line-add">+            };</span>
+             {
+                 // --- 调用序列（等价 AADL 的 Wrapper）---
+                            // p_spg();
+<span class="line-header">@@ -151,8 +158,7 @@</span>
+                 // p_spg;
+                 hello_spg_2::execute();
+             };
+<span class="line-remove">-            let elapsed = start.elapsed();</span>
+<span class="line-remove">-            std::thread::sleep(period.saturating_sub(elapsed));</span>
+<span class="line-add">+            next_release += period;</span>
+         };
+     }
+     
+<span class="line-header">@@ -162,9 +168,7 @@</span>
+ #[derive(Debug)]
+ pub struct node_aProcess {
+     pub cpu_id: isize,// 进程 CPU ID
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub task1: taskThread,// 子组件线程（Task1 : thread Task）
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub task2: task2Thread,// 子组件线程（Task2 : thread Task2）
+ }
+
+<span class="line-header">@@ -171,20 +175,20 @@</span>
+ impl Process for node_aProcess {
+     // Creates a new process instance
+     fn new(cpu_id: isize) -&gt; Self {
+<span class="line-remove">-        let mut task1: taskThread = taskThread::new(cpu_id);</span>
+<span class="line-remove">-        let mut task2: task2Thread = task2Thread::new(cpu_id);</span>
+<span class="line-add">+        let task1: taskThread = taskThread::new(cpu_id);</span>
+<span class="line-add">+        let task2: task2Thread = task2Thread::new(cpu_id);</span>
+         return Self { task1, task2, cpu_id }  //显式return;
+     }
+     
+     // Starts all threads in the process
+<span class="line-remove">-    fn start(self: Self) -&gt; () {</span>
+<span class="line-add">+    fn run(self: Self) -&gt; () {</span>
+         let Self { task1, task2, cpu_id, .. } = self;
+         thread::Builder::new()
+             .name(&quot;task1&quot;.to_string())
+<span class="line-remove">-            .spawn(|| { task1.run() }).unwrap();</span>
+<span class="line-add">+            .spawn(move || { task1.run() }).unwrap();</span>
+         thread::Builder::new()
+             .name(&quot;task2&quot;.to_string())
+<span class="line-remove">-            .spawn(|| { task2.run() }).unwrap();</span>
+<span class="line-add">+            .spawn(move || { task2.run() }).unwrap();</span>
+     }
+     
+ }
+<span class="line-header">@@ -192,7 +196,6 @@</span>
+ // AADL System: rma
+ #[derive(Debug)]
+ pub struct rmaSystem {
+<span class="line-remove">-    #[allow(dead_code)]</span>
+     pub node_a: node_aProcess,// 子组件进程（node_a : process node_a）
+ }
+
+<span class="line-header">@@ -199,13 +202,13 @@</span>
+ impl System for rmaSystem {
+     // Creates a new system instance
+     fn new() -&gt; Self {
+<span class="line-remove">-        let mut node_a: node_aProcess = node_aProcess::new(0);</span>
+<span class="line-add">+        let mut node_a: node_aProcess = node_aProcess::new(-1);</span>
+         return Self { node_a }  //显式return;
+     }
+     
+     // Runs the system, starts all processes
+     fn run(self: Self) -&gt; () {
+<span class="line-remove">-        self.node_a.start();</span>
+<span class="line-add">+        self.node_a.run();</span>
+     }
+     
+ }
+<span class="line-header">@@ -214,6 +217,7 @@</span>
+ lazy_static! {
      static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
          let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
-         map.insert(0, SCHED_FIFO);
 <span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+         map.insert(0, SCHED_FIFO);
          return map;
      };
- }
 
 </pre>
 </body>
