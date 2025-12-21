@@ -29,15 +29,16 @@ pub fn convert_data_component(
                 } else {
                     return vec![Item::Struct(struct_def)];
                 }
-            } else {
-                // 如果没有属性，返回空的结构体
-                return vec![Item::Struct(determine_struct_type(
-                    type_mappings,
-                    comp,
-                    &[],
-                    data_comp_type,
-                ))];
             }
+            // } else { //这里的else是多余的，当comp.properties为空时，determine_struct_type的返回值就是空
+            //     // 如果没有属性，返回空的结构体
+            //     return vec![Item::Struct(determine_struct_type(
+            //         type_mappings,
+            //         comp,
+            //         &[],
+            //         data_comp_type,
+            //     ))];
+            // }
         } else if unit_type.to_lowercase() == "union" {
             // 从组件属性中提取属性列表
             if let PropertyClause::Properties(props) = &comp.properties {
@@ -48,43 +49,54 @@ pub fn convert_data_component(
                 } else {
                     return vec![Item::Union(union_def)];
                 }
-            } else {
-                // 如果没有属性，返回空的枚举
-                return vec![Item::Union(determine_union_type(
-                    type_mappings,
-                    comp,
-                    &[],
-                    data_comp_type,
-                ))];
             }
+            //这里的else是多余的，当comp.properties为空时，determine_union_type的返回值就是空
+            // else {
+            //     // 如果没有属性，返回空的枚举
+            //     return vec![Item::Union(determine_union_type(
+            //         type_mappings,
+            //         comp,
+            //         &[],
+            //         data_comp_type,
+            //     ))];
+            // }
         } else if unit_type.to_lowercase() == "enum" {
             // 从组件属性中提取属性列表
             if let PropertyClause::Properties(props) = &comp.properties {
                 return vec![Item::Enum(determine_enum_type(comp, props))];
-            } else {
-                // 如果没有属性，返回空的枚举
-                return vec![Item::Enum(determine_enum_type(comp, &[]))];
             }
+            // } else {
+            //     // 如果没有属性，返回空的枚举
+            //     return vec![Item::Enum(determine_enum_type(comp, &[]))];
+            // }
         } else if unit_type.to_lowercase() == "taggedunion" {
             // 从组件属性中提取属性列表
             if let PropertyClause::Properties(props) = &comp.properties {
-                let taggedunion_def = determine_taggedunion_type(type_mappings, comp, props, data_comp_type);
+                let taggedunion_def =
+                    determine_taggedunion_type(type_mappings, comp, props, data_comp_type);
 
                 // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
                 if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
                     type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
                 }
-                
+
                 if taggedunion_def.variants.is_empty() {
                     //说明是通过impl中子组件来获取字段的，而不是在此时type中
                     return Vec::new();
                 } else {
                     return vec![Item::Enum(taggedunion_def)];
                 }
-            } else {
-                // 如果没有属性，返回空的标记联合体
-                return vec![Item::Enum(determine_taggedunion_type(type_mappings, comp, &[], data_comp_type))];
             }
+            //这里的else是多余的，当comp.properties为空时，determine_taggedunion_type的返回值就是空
+            // else {
+            //     // 如果没有属性，返回空的标记联合体
+            //     return vec![Item::Enum(determine_taggedunion_type(
+            //         type_mappings,
+            //         comp,
+            //         &[],
+            //         data_comp_type,
+            //     ))];
+            // }
         }
     }
     // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
@@ -185,14 +197,21 @@ fn determine_array_type(type_mappings: &HashMap<String, Type>, props: &[Property
         //println!("prop: {:?}", prop);
         if let Property::BasicProperty(bp) = prop {
             if bp.identifier.name.to_lowercase() == "base_type" {
-                if let PropertyValue::Single(PropertyExpression::String(StringTerm::Literal(
-                    type_name,
-                ))) = &bp.value
+                if let PropertyValue::Single(PropertyExpression::ComponentClassifier(
+                    ComponentClassifierTerm {
+                        unique_component_classifier_reference:uccr,
+                    },
+                )) = &bp.value
                 {
-                    base_type = type_mappings
-                        .get(&type_name.to_lowercase())
-                        .cloned()
-                        .unwrap_or_else(|| Type::Named(type_name.clone()));
+                    if let UniqueComponentClassifierReference::Type(impl_ref) = uccr {
+                        let type_name = impl_ref.implementation_name.type_identifier.clone();
+                        base_type = type_mappings
+                            .get(&type_name.to_lowercase())
+                            .cloned()
+                            //.unwrap()
+                            .expect("type_mappings must contain the base type");
+                            //.unwrap_or_else(|| Type::Named(type_name.clone()));
+                        }
                 }
             }
 
@@ -262,14 +281,17 @@ fn determine_struct_type(
                             ) = type_item
                             {
                                 // 从分类器引用中提取类型名
+                                // 不会有实现引用
+                                // 使用match,不使用if
                                 let type_name = match unique_component_classifier_reference {
-                                    UniqueComponentClassifierReference::Type(impl_ref) => {
-                                        impl_ref.implementation_name.type_identifier.clone()
-                                    }
-                                    UniqueComponentClassifierReference::Implementation(
-                                        impl_ref,
-                                    ) => impl_ref.implementation_name.type_identifier.clone(),
+                                    UniqueComponentClassifierReference::Type(impl_ref) => impl_ref.implementation_name.type_identifier.clone(),
+                                    UniqueComponentClassifierReference::Implementation(_impl_ref) => "".to_string(),
                                 };
+                                // let type_name = if let UniqueComponentClassifierReference::Type(impl_ref) = unique_component_classifier_reference {
+                                //     impl_ref.implementation_name.type_identifier.clone()
+                                // } else {
+                                //     "".to_string()
+                                // };
 
                                 // 映射到 Rust 类型
                                 let rust_type = type_mappings
@@ -358,14 +380,17 @@ fn determine_union_type(
                             ) = type_item
                             {
                                 // 从分类器引用中提取类型名
+                                // 不会有实现引用
+                                // 使用match,不使用if
                                 let type_name = match unique_component_classifier_reference {
-                                    UniqueComponentClassifierReference::Type(impl_ref) => {
-                                        impl_ref.implementation_name.type_identifier.clone()
-                                    }
-                                    UniqueComponentClassifierReference::Implementation(
-                                        impl_ref,
-                                    ) => impl_ref.implementation_name.type_identifier.clone(),
+                                    UniqueComponentClassifierReference::Type(impl_ref) => impl_ref.implementation_name.type_identifier.clone(),
+                                    UniqueComponentClassifierReference::Implementation(_impl_ref) => "".to_string(),
                                 };
+                                // let type_name = if let UniqueComponentClassifierReference::Type(impl_ref) = unique_component_classifier_reference {
+                                //     impl_ref.implementation_name.type_identifier.clone()
+                                // } else {
+                                //     "".to_string()
+                                // };
 
                                 // 映射到 Rust 类型
                                 let rust_type = type_mappings
@@ -505,14 +530,18 @@ fn determine_taggedunion_type(
                             ) = type_item
                             {
                                 // 从分类器引用中提取类型名
+                                // 不会有实现引用
+                                
+                                // 使用match,不使用if
                                 let type_name = match unique_component_classifier_reference {
-                                    UniqueComponentClassifierReference::Type(impl_ref) => {
-                                        impl_ref.implementation_name.type_identifier.clone()
-                                    }
-                                    UniqueComponentClassifierReference::Implementation(
-                                        impl_ref,
-                                    ) => impl_ref.implementation_name.type_identifier.clone(),
+                                    UniqueComponentClassifierReference::Type(impl_ref) => impl_ref.implementation_name.type_identifier.clone(),
+                                    UniqueComponentClassifierReference::Implementation(_impl_ref) => "".to_string(),
                                 };
+                                //  let type_name = if let UniqueComponentClassifierReference::Type(impl_ref) = unique_component_classifier_reference {
+                                //     impl_ref.implementation_name.type_identifier.clone()
+                                // } else {
+                                //     "".to_string()
+                                // };
 
                                 // 映射到 Rust 类型
                                 let rust_type = type_mappings
@@ -557,15 +586,12 @@ fn determine_taggedunion_type(
     // 创建枚举变体（带数据类型）
     let mut variants = Vec::new();
     for (name, ty) in field_names.iter().zip(field_types.iter()) {
-        // 将字段名首字母大写，例如 "f1" -> "F1"
-        let variant_name = if name.is_empty() {
-            name.clone()
-        } else {
-            let mut chars = name.chars();
-            match chars.next() {
-                None => name.clone(),
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-            }
+        // 将字段名首字母大写，例如 "f1" -> "F1" ,不考虑name为空的情况
+        
+        let mut chars = name.chars();
+        let variant_name = match chars.next() {
+            None => "Default".to_string(),
+            Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
         };
 
         variants.push(Variant {

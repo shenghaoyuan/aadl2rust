@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -71,7 +71,7 @@ pub struct pingpongsystemSystem {
 impl System for pingpongsystemSystem {
     // Creates a new system instance
     fn new() -> Self {
-        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(-1);
+        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(0);
         return Self { pingpong_proc }  //显式return;
     }
     
@@ -125,10 +125,10 @@ impl Thread for ping_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            data_s: None, 
             dispatch_protocol: "Periodic".to_string(), 
             priority: 2, 
             period: 2000, 
-            data_s: None, 
             deadline: 2000, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -185,11 +185,11 @@ impl Thread for pong_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 1, 
-            data_r: None, 
-            period: 10, 
-            deadline: 10, 
             dispatch_protocol: "Sporadic".to_string(), 
+            priority: 1, 
+            deadline: 10, 
+            period: 10, 
+            data_r: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -248,9 +248,9 @@ impl Thread for pong_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
         return map;
     };

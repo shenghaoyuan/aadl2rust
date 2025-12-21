@@ -125,22 +125,23 @@ fn determine_struct_impl(
                     .cloned()
                     .unwrap_or_else(|| Type::Named(type_name))
             }
-            SubcomponentClassifier::ClassifierReference(
-                UniqueComponentClassifierReference::Type(type_ref),
-            ) => {
-                // 从类型引用中提取类型名
-                let type_name = type_ref.implementation_name.type_identifier.clone();
+            _ => Type::Named("UnknownType".to_string()),
+            // SubcomponentClassifier::ClassifierReference(
+            //     UniqueComponentClassifierReference::Type(type_ref),
+            // ) => {
+            //     // 从类型引用中提取类型名
+            //     let type_name = type_ref.implementation_name.type_identifier.clone();
 
-                // 映射到 Rust 类型
-                type_mappings
-                    .get(&type_name.to_lowercase())
-                    .cloned()
-                    .unwrap_or_else(|| Type::Named(type_name))
-            }
-            SubcomponentClassifier::Prototype(prototype_name) => {
-                // 处理原型引用
-                Type::Named(prototype_name.clone())
-            }
+            //     // 映射到 Rust 类型
+            //     type_mappings
+            //         .get(&type_name.to_lowercase())
+            //         .cloned()
+            //         .unwrap_or_else(|| Type::Named(type_name))
+            // }
+            // SubcomponentClassifier::Prototype(prototype_name) => {
+            //     // 处理原型引用
+            //     Type::Named(prototype_name.clone())
+            // }
         };
 
         // 创建字段
@@ -191,22 +192,23 @@ fn determine_union_impl(
                     .cloned()
                     .unwrap_or_else(|| Type::Named(type_name))
             }
-            SubcomponentClassifier::ClassifierReference(
-                UniqueComponentClassifierReference::Type(type_ref),
-            ) => {
-                // 从类型引用中提取类型名
-                let type_name = type_ref.implementation_name.type_identifier.clone();
+            _ => Type::Named("UnknownType".to_string()),
+            // SubcomponentClassifier::ClassifierReference(
+            //     UniqueComponentClassifierReference::Type(type_ref),
+            // ) => {
+            //     // 从类型引用中提取类型名
+            //     let type_name = type_ref.implementation_name.type_identifier.clone();
 
-                // 映射到 Rust 类型
-                type_mappings
-                    .get(&type_name.to_lowercase())
-                    .cloned()
-                    .unwrap_or_else(|| Type::Named(type_name))
-            }
-            SubcomponentClassifier::Prototype(prototype_name) => {
-                // 处理原型引用
-                Type::Named(prototype_name.clone())
-            }
+            //     // 映射到 Rust 类型
+            //     type_mappings
+            //         .get(&type_name.to_lowercase())
+            //         .cloned()
+            //         .unwrap_or_else(|| Type::Named(type_name))
+            // }
+            // SubcomponentClassifier::Prototype(prototype_name) => {
+            //     // 处理原型引用
+            //     Type::Named(prototype_name.clone())
+            // }
         };
 
         // 创建字段
@@ -257,33 +259,30 @@ fn determine_taggedunion_impl(
                     .cloned()
                     .unwrap_or_else(|| Type::Named(type_name))
             }
-            SubcomponentClassifier::ClassifierReference(
-                UniqueComponentClassifierReference::Type(type_ref),
-            ) => {
-                // 从类型引用中提取类型名
-                let type_name = type_ref.implementation_name.type_identifier.clone();
+            _ => Type::Named("UnknownType".to_string()),
+            // SubcomponentClassifier::ClassifierReference(
+            //     UniqueComponentClassifierReference::Type(type_ref),
+            // ) => {
+            //     // 从类型引用中提取类型名
+            //     let type_name = type_ref.implementation_name.type_identifier.clone();
 
-                // 映射到 Rust 类型
-                type_mappings
-                    .get(&type_name.to_lowercase())
-                    .cloned()
-                    .unwrap_or_else(|| Type::Named(type_name))
-            }
-            SubcomponentClassifier::Prototype(prototype_name) => {
-                // 处理原型引用
-                Type::Named(prototype_name.clone())
-            }
+            //     // 映射到 Rust 类型
+            //     type_mappings
+            //         .get(&type_name.to_lowercase())
+            //         .cloned()
+            //         .unwrap_or_else(|| Type::Named(type_name))
+            // }
+            // SubcomponentClassifier::Prototype(prototype_name) => {
+            //     // 处理原型引用
+            //     Type::Named(prototype_name.clone())
+            // }
         };
 
-        // 将字段名首字母大写，例如 "f1" -> "F1"
-        let variant_name = if field_name.is_empty() {
-            field_name.clone()
-        } else {
-            let mut chars = field_name.chars();
-            match chars.next() {
-                None => field_name.clone(),
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-            }
+        // 将字段名首字母大写，例如 "f1" -> "F1" 
+        let mut chars = field_name.chars();
+        let variant_name = match chars.next() {
+            None => "Default".to_string(),
+            Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
         };
 
         // 创建枚举变体（带数据类型）

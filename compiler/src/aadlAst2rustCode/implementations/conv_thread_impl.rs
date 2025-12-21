@@ -598,11 +598,12 @@ fn create_aperiodic_execution_logic(temp_converter: &AadlConverter, impl_: &Comp
     let receive_ports = if !event_ports.is_empty() {
         event_ports
     } else {
-        let subprogram_calls = extract_subprogram_calls(temp_converter, impl_);
-        subprogram_calls.iter()
-            .filter(|(_, _, _, is_send, _)| !is_send)
-            .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
-            .collect()
+        Vec::new()
+        // let subprogram_calls = extract_subprogram_calls(temp_converter, impl_);
+        // subprogram_calls.iter()
+        //     .filter(|(_, _, _, is_send, _)| !is_send)
+        //     .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
+        //     .collect()
     };
 
     // 检查是否有需要端口数据的子程序调用
@@ -747,11 +748,12 @@ fn create_sporadic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
     let receive_ports = if !event_ports.is_empty() {
         event_ports
     } else {
-        let subprogram_calls = extract_subprogram_calls(temp_converter, impl_);
-        subprogram_calls.iter()
-            .filter(|(_, _, _, is_send, _)| !is_send)
-            .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
-            .collect()
+        Vec::new()
+        // let subprogram_calls = extract_subprogram_calls(temp_converter, impl_);
+        // subprogram_calls.iter()
+        //     .filter(|(_, _, _, is_send, _)| !is_send)
+        //     .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
+        //     .collect()
     };
 
     // 检查是否有需要端口数据的子程序调用
@@ -957,11 +959,12 @@ fn create_timed_execution_logic(temp_converter: &AadlConverter, impl_: &Componen
     let receive_ports = if !event_ports.is_empty() {
         event_ports
     } else {
-        let subprogram_calls = extract_subprogram_calls(temp_converter,impl_);
-        subprogram_calls.iter()
-            .filter(|(_, _, _, is_send, _)| !is_send)
-            .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
-            .collect()
+        Vec::new()
+        // let subprogram_calls = extract_subprogram_calls(temp_converter,impl_);
+        // subprogram_calls.iter()
+        //     .filter(|(_, _, _, is_send, _)| !is_send)
+        //     .map(|(_, _, thread_port_name, _, _)| thread_port_name.clone())
+        //     .collect()
     };
 
     // 检查是否有需要端口数据的子程序调用

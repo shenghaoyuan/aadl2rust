@@ -1,0 +1,76 @@
+package Processor_Coverage_Test
+public
+with Base_Types;
+
+---------------
+-- Processor --
+---------------
+
+-- 情形 1：带 Scheduling_Protocol 属性，值写成字符串
+-- 命中 conv_processor_impl.rs 中最内层 if let 分支
+
+processor CPU_With_String_Protocol
+end CPU_With_String_Protocol;
+
+processor implementation CPU_With_String_Protocol.Impl
+properties
+  Scheduling_Protocol => "EDF";
+  Priority_Range      => 0 .. 99;
+end CPU_With_String_Protocol.Impl;
+
+
+-- 情形 2：完全不写 Scheduling_Protocol 属性
+-- 命中 conv_processor_impl.rs 结尾的默认值分支，
+
+processor CPU_No_Protocol
+end CPU_No_Protocol;
+
+processor implementation CPU_No_Protocol.Impl
+properties
+  Priority_Range => 0 .. 99;
+end CPU_No_Protocol.Impl;
+
+--------------
+-- Process  --
+--------------
+
+process Dummy_Proc
+end Dummy_Proc;
+
+process implementation Dummy_Proc.Impl
+end Dummy_Proc.Impl;
+
+-----------
+-- System --
+-----------
+
+-- 系统 1：使用带字符串调度协议的 CPU
+
+system System_With_String_Protocol
+end System_With_String_Protocol;
+
+system implementation System_With_String_Protocol.Impl
+subcomponents
+  Proc : process Dummy_Proc.Impl;
+  CPU  : processor CPU_With_String_Protocol.Impl;
+
+properties
+  Actual_Processor_Binding => reference (CPU) applies to Proc;
+end System_With_String_Protocol.Impl;
+
+
+-- 系统 2：使用没有 Scheduling_Protocol 属性的 CPU
+
+system System_No_Protocol
+end System_No_Protocol;
+
+system implementation System_No_Protocol.Impl
+subcomponents
+  Proc : process Dummy_Proc.Impl;
+  CPU  : processor CPU_No_Protocol.Impl;
+
+properties
+  Actual_Processor_Binding => reference (CPU) applies to Proc;
+end System_No_Protocol.Impl;
+
+end Processor_Coverage_Test;

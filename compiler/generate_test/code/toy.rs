@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: toy_example_nowrapper
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -139,11 +139,11 @@ impl Thread for gnc_threadThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize, gnc_pos: POSShared) -> Self {
         return Self {
-            priority: 50, 
-            period: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
-            gnc_pos: gnc_pos, 
             deadline: 1000, 
+            period: 1000, 
+            gnc_pos: gnc_pos, 
+            priority: 50, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -216,10 +216,10 @@ impl Thread for tmtc_threadThread {
     fn new(cpu_id: isize, tmtc_pos: POSShared) -> Self {
         return Self {
             dispatch_protocol: "Periodic".to_string(), 
-            deadline: 100, 
             period: 100, 
-            priority: 20, 
+            deadline: 100, 
             tmtc_pos: tmtc_pos, 
+            priority: 20, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -323,9 +323,9 @@ impl System for toy_exampleSystem {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         return map;
     };
 }

@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: robot_ba
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -77,10 +77,10 @@ impl Thread for controleThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            info_capteur: None, 
-            comm_servo: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            info_capteur: None, 
             period: 110, 
+            comm_servo: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -177,9 +177,9 @@ impl Thread for capteurThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            evenement: None, 
-            period: 110, 
             dispatch_protocol: "Periodic".to_string(), 
+            period: 110, 
+            evenement: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -241,8 +241,8 @@ impl Thread for servomoteurThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             dispatch_protocol: "Sporadic".to_string(), 
-            period: 10, 
             ordre: None, 
+            period: 10, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -551,9 +551,9 @@ impl System for robotSystem {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
         return map;
     };

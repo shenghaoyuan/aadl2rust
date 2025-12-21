@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: aadlbook_software_obstacle_detection
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,7 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -128,11 +129,11 @@ impl Thread for obstacle_detection_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_detected: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            radar: None, 
-            camera: None, 
             period: 100, 
+            camera: None, 
+            radar: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            obstacle_detected: None, 
             mipsbudget: 10.0, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -158,8 +159,8 @@ impl Thread for obstacle_detection_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let camera = self.camera.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             let radar = self.radar.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let camera = self.camera.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -189,11 +190,11 @@ impl Thread for obstacle_detection_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s1 => {
+                        State::s0 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
-                        State::s0 => {
+                        State::s1 => {
                             // 理论上不会执行到这里，但编译器需要这个分支
                             break;
                         },
@@ -212,9 +213,9 @@ impl Thread for obstacle_detection_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
         return map;
     };

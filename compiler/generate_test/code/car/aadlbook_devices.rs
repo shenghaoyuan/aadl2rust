@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: aadlbook_devices
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,8 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
+use crate::aadlbook_platform::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -478,9 +480,9 @@ impl Device for speakerDevice {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
         return map;
     };

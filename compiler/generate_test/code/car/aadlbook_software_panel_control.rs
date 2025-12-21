@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: aadlbook_software_panel_control
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,7 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -188,12 +189,12 @@ impl Thread for panel_control_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            tire_pressure_in: None, 
-            decrease_speed: None, 
-            tire_pressure_out: None, 
-            increase_speed: None, 
-            current_speed: None, 
             desired_speed: None, 
+            tire_pressure_in: None, 
+            tire_pressure_out: None, 
+            current_speed: None, 
+            increase_speed: None, 
+            decrease_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -220,8 +221,8 @@ impl Thread for panel_control_thrThread {
         let mut state: State = State::s0;
         loop {
             let start = Instant::now();
-            let tire_pressure_in = self.tire_pressure_in.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let tire_pressure_in = self.tire_pressure_in.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -267,9 +268,9 @@ impl Thread for panel_control_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
         return map;
     };

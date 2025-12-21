@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: rmaaadl
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -70,10 +70,10 @@ impl Thread for taskThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            deadline: 1000, 
+            priority: 1, 
             period: 1000, 
             dispatch_protocol: "Periodic".to_string(), 
-            priority: 1, 
-            deadline: 1000, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -124,10 +124,10 @@ impl Thread for task2Thread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            period: 500, 
-            priority: 2, 
             dispatch_protocol: "Periodic".to_string(), 
+            period: 500, 
             deadline: 500, 
+            priority: 2, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -217,8 +217,8 @@ impl System for rmaSystem {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
         return map;
     };
 }

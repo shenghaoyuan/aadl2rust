@@ -98,10 +98,35 @@ pub fn all_test_cases() -> Vec<TestCase> {
         },
         TestCase {
             id: 15,
-            name: "pingpong_timed_aperiodic".into(),
-            path: "AADLSource/pingpong_timed_aperiodic.aadl".into(),
-            output_name: "pingpong_timed_aperiodic".into(),
+            name: "pingpong_timed".into(),
+            path: "AADLSource/pingpong_timed.aadl".into(),
+            output_name: "pingpong_timed".into(),
+        },
+        TestCase {
+            id: 16,
+            name: "pingpong_aperiodic".into(),
+            path: "AADLSource/pingpong_aperiodic.aadl".into(),
+            output_name: "pingpong_aperiodic".into(),
+        },
+        TestCase {
+            id: 17,
+            name: "pingpong_no_scheduling".into(),
+            path: "AADLSource/pingpong_no_scheduling.aadl".into(),
+            output_name: "pingpong_no_scheduling".into(),
+        },
+        TestCase {
+            id: 18,
+            name: "composite_test".into(),
+            path: "AADLSource/composite_test.aadl".into(),
+            output_name: "composite_test".into(),
+        },
+        TestCase {
+            id: 19,
+            name: "toy_test".into(),
+            path: "AADLSource/toy_test.aadl".into(),
+            output_name: "toy_test".into(),
         }
+        
     ]
 }
 

@@ -94,6 +94,7 @@ RustModule {
                 ],
                 attrs: [],
                 vis: Public,
+                withs: [],
             },
         ),
         Struct(
@@ -584,6 +585,24 @@ RustModule {
                                             ),
                                         },
                                     ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
+                                            name: "next_release",
+                                            ty: None,
+                                            init: Some(
+                                                BinaryOp(
+                                                    Ident(
+                                                        "Instant::now()",
+                                                    ),
+                                                    "+",
+                                                    Ident(
+                                                        "period",
+                                                    ),
+                                                ),
+                                            ),
+                                        },
+                                    ),
                                     Item(
                                         Enum(
                                             EnumDef {
@@ -1039,7 +1058,7 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s2",
+                                                                                                    pattern: "State::s1",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
@@ -1056,7 +1075,7 @@ RustModule {
                                                                                                     },
                                                                                                 },
                                                                                                 MatchArm {
-                                                                                                    pattern: "State::s1",
+                                                                                                    pattern: "State::s2",
                                                                                                     guard: None,
                                                                                                     body: Block {
                                                                                                         stmts: [
@@ -1486,6 +1505,24 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: true,
+                                            name: "next_release",
+                                            ty: None,
+                                            init: Some(
+                                                BinaryOp(
+                                                    Ident(
+                                                        "Instant::now()",
+                                                    ),
+                                                    "+",
+                                                    Ident(
+                                                        "period",
+                                                    ),
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    Let(
+                                        LetStmt {
+                                            ifmut: true,
                                             name: "count1",
                                             ty: Some(
                                                 Named(
@@ -1836,7 +1873,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            period: 10, \n            ordre: None, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            dispatch_protocol: \"Sporadic\".to_string(), \n            ordre: None, \n            period: 10, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -2757,16 +2794,7 @@ RustModule {
                         docs: [
                             "// 子组件线程（th_c : thread capteur）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "cpu_id",
@@ -2817,7 +2845,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut th_c",
+                                            name: "th_c",
                                             ty: Some(
                                                 Named(
                                                     "capteurThread",
@@ -2856,7 +2884,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn1",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -2888,7 +2916,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn1.0",
                                                         ),
                                                     ],
                                                 ),
@@ -2910,7 +2938,7 @@ RustModule {
                                                 ),
                                                 [
                                                     Ident(
-                                                        "channel.1",
+                                                        "conn1.1",
                                                     ),
                                                 ],
                                             ),
@@ -2934,7 +2962,7 @@ RustModule {
                     ),
                     Method(
                         FunctionDef {
-                            name: "start",
+                            name: "run",
                             params: [
                                 Param {
                                     name: "self",
@@ -2976,7 +3004,7 @@ RustModule {
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -3316,16 +3344,7 @@ RustModule {
                         docs: [
                             "// 子组件线程（th_ctrl_droit : thread controle）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "th_ctrl_gauche",
@@ -3335,16 +3354,7 @@ RustModule {
                         docs: [
                             "// 子组件线程（th_ctrl_gauche : thread controle）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "cpu_id",
@@ -3395,7 +3405,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut th_ctrl_droit",
+                                            name: "th_ctrl_droit",
                                             ty: Some(
                                                 Named(
                                                     "controleThread",
@@ -3422,7 +3432,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut th_ctrl_gauche",
+                                            name: "th_ctrl_gauche",
                                             ty: Some(
                                                 Named(
                                                     "controleThread",
@@ -3497,7 +3507,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn1",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -3528,7 +3538,7 @@ RustModule {
                                                 ),
                                                 [
                                                     Ident(
-                                                        "channel.0",
+                                                        "conn1.0",
                                                     ),
                                                 ],
                                             ),
@@ -3550,7 +3560,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn1.1",
                                                         ),
                                                     ],
                                                 ),
@@ -3560,7 +3570,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn2",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -3592,7 +3602,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn2.0",
                                                         ),
                                                     ],
                                                 ),
@@ -3614,7 +3624,7 @@ RustModule {
                                                 ),
                                                 [
                                                     Ident(
-                                                        "channel.1",
+                                                        "conn2.1",
                                                     ),
                                                 ],
                                             ),
@@ -3623,7 +3633,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn3",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -3654,7 +3664,7 @@ RustModule {
                                                 ),
                                                 [
                                                     Ident(
-                                                        "channel.0",
+                                                        "conn3.0",
                                                     ),
                                                 ],
                                             ),
@@ -3676,7 +3686,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn3.1",
                                                         ),
                                                     ],
                                                 ),
@@ -3686,7 +3696,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn4",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -3718,7 +3728,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn4.0",
                                                         ),
                                                     ],
                                                 ),
@@ -3740,7 +3750,7 @@ RustModule {
                                                 ),
                                                 [
                                                     Ident(
-                                                        "channel.1",
+                                                        "conn4.1",
                                                     ),
                                                 ],
                                             ),
@@ -3764,7 +3774,7 @@ RustModule {
                     ),
                     Method(
                         FunctionDef {
-                            name: "start",
+                            name: "run",
                             params: [
                                 Param {
                                     name: "self",
@@ -3806,7 +3816,7 @@ RustModule {
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -3832,7 +3842,7 @@ RustModule {
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -4475,16 +4485,7 @@ RustModule {
                         docs: [
                             "// 子组件线程（th_servomoteur : thread servomoteur）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "cpu_id",
@@ -4535,7 +4536,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "mut th_servomoteur",
+                                            name: "th_servomoteur",
                                             ty: Some(
                                                 Named(
                                                     "servomoteurThread",
@@ -4574,7 +4575,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn1",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -4605,7 +4606,7 @@ RustModule {
                                                 ),
                                                 [
                                                     Ident(
-                                                        "channel.0",
+                                                        "conn1.0",
                                                     ),
                                                 ],
                                             ),
@@ -4627,7 +4628,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn1.1",
                                                         ),
                                                     ],
                                                 ),
@@ -4652,7 +4653,7 @@ RustModule {
                     ),
                     Method(
                         FunctionDef {
-                            name: "start",
+                            name: "run",
                             params: [
                                 Param {
                                     name: "self",
@@ -4694,7 +4695,7 @@ RustModule {
                                                                 [],
                                                             ),
                                                         ),
-                                                        move_kw: false,
+                                                        move_kw: true,
                                                     },
                                                 ],
                                             ),
@@ -4889,16 +4890,7 @@ RustModule {
                         docs: [
                             "// 子组件进程（proc_capteur_droit : process p_capteur）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "proc_capteur_gauche",
@@ -4908,16 +4900,7 @@ RustModule {
                         docs: [
                             "// 子组件进程（proc_capteur_gauche : process p_capteur）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "proc_controle",
@@ -4927,16 +4910,7 @@ RustModule {
                         docs: [
                             "// 子组件进程（proc_controle : process p_controle）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "proc_servomoteur_droit",
@@ -4946,16 +4920,7 @@ RustModule {
                         docs: [
                             "// 子组件进程（proc_servomoteur_droit : process p_servomoteur）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                     Field {
                         name: "proc_servomoteur_gauche",
@@ -4965,16 +4930,7 @@ RustModule {
                         docs: [
                             "// 子组件进程（proc_servomoteur_gauche : process p_servomoteur）",
                         ],
-                        attrs: [
-                            Attribute {
-                                name: "allow",
-                                args: [
-                                    Ident(
-                                        "dead_code",
-                                    ),
-                                ],
-                            },
-                        ],
+                        attrs: [],
                     },
                 ],
                 properties: [],
@@ -5033,7 +4989,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn1",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -5065,7 +5021,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn1.0",
                                                         ),
                                                     ],
                                                 ),
@@ -5088,7 +5044,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn1.1",
                                                         ),
                                                     ],
                                                 ),
@@ -5098,7 +5054,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn2",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -5130,7 +5086,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn2.0",
                                                         ),
                                                     ],
                                                 ),
@@ -5153,7 +5109,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn2.1",
                                                         ),
                                                     ],
                                                 ),
@@ -5163,7 +5119,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn3",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -5195,7 +5151,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn3.0",
                                                         ),
                                                     ],
                                                 ),
@@ -5218,7 +5174,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn3.1",
                                                         ),
                                                     ],
                                                 ),
@@ -5228,7 +5184,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "channel",
+                                            name: "conn4",
                                             ty: None,
                                             init: Some(
                                                 Call(
@@ -5260,7 +5216,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.0",
+                                                            "conn4.0",
                                                         ),
                                                     ],
                                                 ),
@@ -5283,7 +5239,7 @@ RustModule {
                                                     ),
                                                     [
                                                         Ident(
-                                                            "channel.1",
+                                                            "conn4.1",
                                                         ),
                                                     ],
                                                 ),
@@ -5322,27 +5278,27 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "self.proc_capteur_droit.start()",
+                                            "self.proc_capteur_droit.run()",
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "self.proc_capteur_gauche.start()",
+                                            "self.proc_capteur_gauche.run()",
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "self.proc_controle.start()",
+                                            "self.proc_controle.run()",
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "self.proc_servomoteur_droit.start()",
+                                            "self.proc_servomoteur_droit.run()",
                                         ),
                                     ),
                                     Expr(
                                         Ident(
-                                            "self.proc_servomoteur_gauche.start()",
+                                            "self.proc_servomoteur_gauche.run()",
                                         ),
                                     ),
                                 ],
@@ -5535,4 +5491,5 @@ RustModule {
     ],
     attrs: [],
     vis: Public,
+    withs: [],
 }

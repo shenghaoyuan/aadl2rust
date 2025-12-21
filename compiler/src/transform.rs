@@ -178,7 +178,10 @@ impl AADLTransformer {
                 for item in items.iter().skip(1) {
                     match item.as_rule() {
                         aadlight_parser::Rule::package_name => {
-                            packages.push(extract_package_name(item.clone()));
+                            //如果这里不包含::，则说明是属性集名，不做处理。这是由于解析阶段的问题导致。
+                            if item.as_str().contains("::") {
+                                packages.push(extract_package_name(item.clone()));
+                            }
                         }
                         aadlight_parser::Rule::property_set_name => {
                             property_sets.push(extract_identifier(item.clone()));

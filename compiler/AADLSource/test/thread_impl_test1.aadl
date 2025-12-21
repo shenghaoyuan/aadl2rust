@@ -1,0 +1,89 @@
+package Thread_Coverage_Test
+
+public
+with Base_Types;
+
+---------------
+-- Processor --
+---------------
+
+processor CPU
+end CPU;
+
+processor implementation CPU.Impl
+properties
+  Scheduling_Protocol => (Posix_1003_Highest_Priority_First_Protocol);
+  Priority_Range      => 0 .. 99;
+end CPU.Impl;
+
+-----------------
+-- Subprograms --
+-----------------
+
+subprogram Handler_Spg
+features
+  D : in parameter Integer;
+end Handler_Spg;
+
+-------------
+-- Threads --
+-------------
+
+thread Worker_Thr
+features
+  P : in data port Integer;
+end Worker_Thr;
+
+thread implementation Worker_Thr.Sporadic_Impl
+calls
+  MyCalls : {
+    H : subprogram Handler_Spg;
+  };
+connections
+  C1 : parameter P -> H.D;
+properties
+  Dispatch_Protocol => Sporadic;
+  Dispatch_Trigger  => (reference (P));
+end Worker_Thr.Sporadic_Impl;
+
+thread implementation Worker_Thr.Aperiodic_Impl
+calls
+  MyCalls : {
+    H : subprogram Handler_Spg;
+  };
+connections
+  C1 : parameter P -> H.D;
+properties
+  Dispatch_Protocol => Aperiodic;
+  Dispatch_Trigger  => (reference (P));
+end Worker_Thr.Aperiodic_Impl;
+
+--------------
+-- Process  --
+--------------
+
+process Test_Proc
+end Test_Proc;
+
+process implementation Test_Proc.Impl
+subcomponents
+  ThS : thread Worker_Thr.Sporadic_Impl;
+  ThA : thread Worker_Thr.Aperiodic_Impl;
+end Test_Proc.Impl;
+
+-----------
+-- System --
+-----------
+
+system Test_System
+end Test_System;
+
+system implementation Test_System.Impl
+subcomponents
+  Proc : process Test_Proc.Impl;
+  CPU  : processor CPU.Impl;
+properties
+  Actual_Processor_Binding => reference (CPU) applies to Proc;
+end Test_System.Impl;
+
+end Thread_Coverage_Test;

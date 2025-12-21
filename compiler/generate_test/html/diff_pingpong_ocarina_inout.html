@@ -26,7 +26,7 @@ pre {
 <span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
 <span class="line-remove">-// 生成时间: 2025-10-11 16:31:42</span>
 <span class="line-add">+// Auto-generated from AADL package: ping_local</span>
-<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
+<span class="line-add">+// 生成时间: 2025-12-21 19:44:32</span>
 
  #![allow(unused_imports)]
 <span class="line-remove">-use std::sync::{mpsc, Arc};</span>
@@ -133,17 +133,17 @@ pre {
 <span class="line-remove">-    pub fn new(cpu_id: isize) -&gt; Self {</span>
 <span class="line-add">+    fn new(cpu_id: isize) -&gt; Self {</span>
          return Self {
-<span class="line-remove">-            period: 2000, </span>
+<span class="line-add">+            priority: 2, </span>
 <span class="line-add">+            data_source: None, </span>
+             period: 2000, 
+<span class="line-remove">-            recover_entrypoint_source_text: &quot;recover&quot;.to_string(), </span>
 <span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-<span class="line-add">+            dispatch_offset: 500, </span>
-             recover_entrypoint_source_text: &quot;recover&quot;.to_string(), 
              deadline: 2000, 
-<span class="line-remove">-            dispatch_offset: 500, </span>
+             dispatch_offset: 500, 
 <span class="line-remove">-            data_source: None, </span>
 <span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-             priority: 2, 
-<span class="line-add">+            period: 2000, </span>
+<span class="line-remove">-            priority: 2, </span>
+<span class="line-add">+            recover_entrypoint_source_text: &quot;recover&quot;.to_string(), </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
@@ -205,14 +205,13 @@ pre {
 <span class="line-remove">-    pub fn new(cpu_id: isize) -&gt; Self {</span>
 <span class="line-add">+    fn new(cpu_id: isize) -&gt; Self {</span>
          return Self {
-<span class="line-remove">-            data_sink: None, </span>
-<span class="line-remove">-            deadline: 10, </span>
-<span class="line-remove">-            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
-             priority: 1, 
-<span class="line-add">+            deadline: 10, </span>
-<span class="line-add">+            data_sink: None, </span>
-             period: 10, 
-<span class="line-add">+            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
+<span class="line-add">+            period: 10, </span>
+             data_sink: None, 
+<span class="line-add">+            priority: 1, </span>
+             deadline: 10, 
+             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
+<span class="line-remove">-            priority: 1, </span>
+<span class="line-remove">-            period: 10, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
@@ -282,13 +281,12 @@ pre {
              };
          };
      }
-<span class="line-header">@@ -245,8 +255,20 @@</span>
- lazy_static! {
+<span class="line-header">@@ -246,7 +256,19 @@</span>
      static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
          let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
-<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
-<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
          map.insert(0, SCHED_FIFO);
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
          return map;
      };

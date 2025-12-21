@@ -26,7 +26,7 @@ pre {
 <span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
 <span class="line-remove">-// 生成时间: 2025-12-08 23:04:08</span>
 <span class="line-add">+// Auto-generated from AADL package: robot_ba</span>
-<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
+<span class="line-add">+// 生成时间: 2025-12-21 19:44:32</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
@@ -34,10 +34,10 @@ pre {
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-remove">-            period: 110, </span>
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+             period: 110, 
              evenement: None, 
-             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
-<span class="line-add">+            period: 110, </span>
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
@@ -69,11 +69,12 @@ pre {
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            period: 110, </span>
+<span class="line-add">+            info_capteur: None, </span>
+             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
              comm_servo: None, 
-             period: 110, 
-             info_capteur: None, 
-<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-remove">-            period: 110, </span>
+<span class="line-remove">-            info_capteur: None, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
@@ -106,9 +107,8 @@ pre {
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
 <span class="line-remove">-            period: 10, </span>
-<span class="line-add">+            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
              ordre: None, 
-<span class="line-remove">-            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
+             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
 <span class="line-add">+            period: 10, </span>
              cpu_id: cpu_id, // CPU ID
          };
@@ -333,13 +333,12 @@ pre {
      }
      
  }
-<span class="line-header">@@ -546,7 +543,10 @@</span>
- lazy_static! {
+<span class="line-header">@@ -547,6 +544,9 @@</span>
      static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
          let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
-<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
-<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
          map.insert(0, SCHED_FIFO);
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
          return map;
      };

@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: aadlbook_software_speed_controller
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,7 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::aadlbook_icd::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -237,12 +238,12 @@ impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            current_speed: None, 
-            period: 5, 
-            mipsbudget: 5.0, 
             obstacle_position: None, 
-            speed_cmd: None, 
+            current_speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            speed_cmd: None, 
+            mipsbudget: 5.0, 
+            period: 5, 
             desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -297,13 +298,13 @@ impl Thread for speed_controller_brake_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 5.0, 
-            dispatch_protocol: "Periodic".to_string(), 
-            obstacle_position: None, 
-            brake_cmd: None, 
-            desired_speed: None, 
-            period: 5, 
             current_speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            period: 5, 
+            mipsbudget: 5.0, 
+            brake_cmd: None, 
+            obstacle_position: None, 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -357,13 +358,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            desired_speed: None, 
-            period: 5, 
-            obstacle_position: None, 
-            warning: None, 
-            current_speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
+            warning: None, 
+            period: 5, 
             mipsbudget: 5.0, 
+            obstacle_position: None, 
+            current_speed: None, 
+            desired_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -417,9 +418,9 @@ impl Thread for speed_controller_warning_thrThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
         return map;
     };

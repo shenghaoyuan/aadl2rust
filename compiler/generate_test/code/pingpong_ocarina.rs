@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 19:44:32
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -130,13 +130,13 @@ impl Thread for pThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            dispatch_offset: 500, 
+            dispatch_protocol: "Periodic".to_string(), 
+            recover_entrypoint_source_text: "recover".to_string(), 
+            priority: 2, 
+            data_source: None, 
             deadline: 2000, 
             period: 2000, 
-            dispatch_protocol: "Periodic".to_string(), 
-            dispatch_offset: 500, 
-            data_source: None, 
-            priority: 2, 
-            recover_entrypoint_source_text: "recover".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -192,11 +192,11 @@ impl Thread for qThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
+            period: 10, 
             deadline: 10, 
             priority: 1, 
-            dispatch_protocol: "Sporadic".to_string(), 
-            period: 10, 
             data_sink: None, 
+            dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }

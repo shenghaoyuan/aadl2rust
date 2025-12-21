@@ -1,6 +1,7 @@
 package Base_Types::Example_Types
 public
-	with Data_Model, Base_Types;
+	with Data_Model;
+	with Base_Types;
 
 --一维数组
 data One_Dimension_Array

@@ -26,7 +26,7 @@ pre {
 <span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
 <span class="line-remove">-// 生成时间: 2025-10-14 21:06:54</span>
 <span class="line-add">+// Auto-generated from AADL package: ping_local</span>
-<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
+<span class="line-add">+// 生成时间: 2025-12-21 19:44:32</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
@@ -135,22 +135,26 @@ pre {
      }
      
  }
-<span class="line-header">@@ -156,12 +136,12 @@</span>
+<span class="line-header">@@ -156,14 +136,14 @@</span>
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-add">+            data_source_2: None, </span>
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-add">+            recover_entrypoint_source_text: &quot;recover&quot;.to_string(), </span>
+<span class="line-add">+            priority: 2, </span>
+<span class="line-add">+            deadline: 2000, </span>
              period: 2000, 
 <span class="line-remove">-            data_source_2: None, </span>
              dispatch_offset: 500, 
 <span class="line-remove">-            priority: 2, </span>
-<span class="line-add">+            data_source_1: None, </span>
-             deadline: 2000, 
-<span class="line-remove">-            data_source_1: None, </span>
-<span class="line-add">+            priority: 2, </span>
-             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
-             recover_entrypoint_source_text: &quot;recover&quot;.to_string(), 
+<span class="line-remove">-            deadline: 2000, </span>
+<span class="line-add">+            data_source_2: None, </span>
+             data_source_1: None, 
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
+<span class="line-remove">-            recover_entrypoint_source_text: &quot;recover&quot;.to_string(), </span>
              cpu_id: cpu_id, // CPU ID
+         };
+     }
 <span class="line-header">@@ -182,8 +162,12 @@</span>
              set_thread_affinity(self.cpu_id);
          };
@@ -175,28 +179,29 @@ pre {
          };
      }
      
-<span class="line-header">@@ -224,11 +207,11 @@</span>
+<span class="line-header">@@ -223,12 +206,12 @@</span>
+     // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-             data_sink_2: None, 
+<span class="line-remove">-            data_sink_2: None, </span>
 <span class="line-remove">-            priority: 1, </span>
-<span class="line-remove">-            data_sink_1: None, </span>
-             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
-<span class="line-remove">-            deadline: 10, </span>
-<span class="line-add">+            data_sink_1: None, </span>
+<span class="line-add">+            period: 10, </span>
+<span class="line-add">+            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
+             data_sink_1: None, 
+<span class="line-remove">-            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
+             deadline: 10, 
+<span class="line-remove">-            period: 10, </span>
 <span class="line-add">+            priority: 1, </span>
-             period: 10, 
-<span class="line-add">+            deadline: 10, </span>
+<span class="line-add">+            data_sink_2: None, </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
-<span class="line-header">@@ -293,8 +276,20 @@</span>
- lazy_static! {
+<span class="line-header">@@ -294,7 +277,19 @@</span>
      static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
          let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
-<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
-<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
          map.insert(0, SCHED_FIFO);
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
          return map;
      };

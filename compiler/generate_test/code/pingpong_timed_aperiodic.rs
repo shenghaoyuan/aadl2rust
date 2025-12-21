@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-20 17:31:23
+// 生成时间: 2025-12-21 13:28:54
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +18,7 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
+use crate::Deployment::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -130,13 +131,13 @@ impl Thread for pThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            recover_entrypoint_source_text: "recover".to_string(), 
-            priority: 2, 
-            dispatch_offset: 500, 
             period: 2000, 
-            deadline: 2000, 
+            dispatch_offset: 500, 
+            recover_entrypoint_source_text: "recover".to_string(), 
             dispatch_protocol: "Periodic".to_string(), 
             data_source: None, 
+            deadline: 2000, 
+            priority: 2, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -190,9 +191,9 @@ impl Thread for qThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            dispatch_protocol: "Timed".to_string(), 
-            data_sink: None, 
             period: 1000, 
+            data_sink: None, 
+            dispatch_protocol: "Timed".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -251,10 +252,10 @@ impl Thread for qThread {
 lazy_static! {
     static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
         let mut map: HashMap<isize, i32> = HashMap::new();
-        map.insert(2, SCHED_FIFO);
-        map.insert(1, SCHED_FIFO);
         map.insert(0, SCHED_FIFO);
         map.insert(3, SCHED_FIFO);
+        map.insert(1, SCHED_FIFO);
+        map.insert(2, SCHED_FIFO);
         return map;
     };
 }

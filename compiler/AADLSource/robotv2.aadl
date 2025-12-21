@@ -80,7 +80,7 @@ public
     Compute_Execution_Time => 0 ms .. 1 ms;
   annex Behavior_specification {**
     variables
-      count1 : Base_Types::Integer := 0;
+      count1 : Base_Types::Integer;
     states
       s0 : initial complete final state;
     transitions

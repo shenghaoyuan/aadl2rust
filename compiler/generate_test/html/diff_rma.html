@@ -26,7 +26,7 @@ pre {
 <span class="line-remove">-// 自动生成的 Rust 代码 - 来自 AADL 模型</span>
 <span class="line-remove">-// 生成时间: 2025-12-08 23:03:21</span>
 <span class="line-add">+// Auto-generated from AADL package: rmaaadl</span>
-<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
+<span class="line-add">+// 生成时间: 2025-12-21 19:44:32</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
@@ -34,12 +34,11 @@ pre {
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-add">+            period: 1000, </span>
-             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
-<span class="line-add">+            priority: 1, </span>
+<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
              deadline: 1000, 
-<span class="line-remove">-            priority: 1, </span>
-<span class="line-remove">-            period: 1000, </span>
+             priority: 1, 
+             period: 1000, 
+<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
              cpu_id: cpu_id, // CPU ID
          };
      }
@@ -67,17 +66,16 @@ pre {
          };
      }
      
-<span class="line-header">@@ -122,9 +125,9 @@</span>
+<span class="line-header">@@ -121,8 +124,8 @@</span>
+     // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-             period: 500, 
-<span class="line-add">+            priority: 2, </span>
+<span class="line-remove">-            period: 500, </span>
              dispatch_protocol: &quot;Periodic&quot;.to_string(), 
+<span class="line-add">+            period: 500, </span>
              deadline: 500, 
-<span class="line-remove">-            priority: 2, </span>
+             priority: 2, 
              cpu_id: cpu_id, // CPU ID
-         };
-     }
 <span class="line-header">@@ -143,8 +146,12 @@</span>
              set_thread_affinity(self.cpu_id);
          };
@@ -162,14 +160,14 @@ pre {
      }
      
  }
-<span class="line-header">@@ -214,6 +217,7 @@</span>
- lazy_static! {
+<span class="line-header">@@ -215,6 +218,7 @@</span>
      static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {
          let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();
-<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
          map.insert(0, SCHED_FIFO);
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
          return map;
      };
+ }
 
 </pre>
 </body>

@@ -159,18 +159,7 @@ impl AnnexConverter {
                 )),
             }));
         } else {
-            // 如果没有找到初始状态，使用第一个状态,这种情况不会出现
-            if let Some(first_state) = states.first().and_then(|s| s.identifiers.first()) {
-                stmts.push(Statement::Let(LetStmt {
-                    ifmut: true,
-                    name: "state".to_string(),
-                    ty: Some(Type::Named("State".to_string())),
-                    init: Some(Expr::Path(
-                        vec!["State".to_string(), first_state.clone()],
-                        PathType::Member,
-                    )),
-                }));
-            }
+            eprintln!("generate_initial_state: no initial state found");
         }
 
         stmts
@@ -288,18 +277,21 @@ impl AnnexConverter {
                                 }
                             }
                         }
-                        DispatchTriggerCondition::SubprogramAccess(_) => {
-                            // 子程序访问不涉及端口接收
+                        _ => { // 其他类型不涉及端口接收 
+                            eprintln!("extract_ports_from_condition: other type not involve port receive");
                         }
-                        DispatchTriggerCondition::Stop => {
-                            // stop 不涉及端口接收
-                        }
-                        DispatchTriggerCondition::CompletionTimeout => {
-                            // 完成超时不涉及端口接收
-                        }
-                        DispatchTriggerCondition::DispatchTimeout => {
-                            // 分发超时不涉及端口接收
-                        }
+                        // DispatchTriggerCondition::SubprogramAccess(_) => {
+                        //     // 子程序访问不涉及端口接收
+                        // }
+                        // DispatchTriggerCondition::Stop => {
+                        //     // stop 不涉及端口接收
+                        // }
+                        // DispatchTriggerCondition::CompletionTimeout => {
+                        //     // 完成超时不涉及端口接收
+                        // }
+                        // DispatchTriggerCondition::DispatchTimeout => {
+                        //     // 分发超时不涉及端口接收
+                        // }
                     }
                 }
             }

@@ -14,39 +14,7 @@ pub fn convert_subprogram_component(
     if let Some(c_func_name) = extract_c_function_name(comp) {
         return generate_c_function_wrapper(temp_converter, comp, &c_func_name, package);
     }
-
-    if let FeatureClause::Items(features) = &comp.features {
-        for feature in features {
-            if let Feature::Port(port) = feature {
-                items.push(Item::Function(FunctionDef {
-                    name: format!("handle_{}", port.identifier),
-                    params: vec![Param {
-                        name: "port".to_string(),
-                        ty: temp_converter.convert_port_type(&port, comp.identifier.clone()),
-                    }],
-                    return_type: Type::Unit,
-                    body: Block {
-                        stmts: vec![Statement::Expr(Expr::Ident(format!(
-                            "// Handle port: {}",
-                            port.identifier
-                        )))],
-                        expr: None,
-                    },
-                    asyncness: matches!(
-                        port.port_type,
-                        PortType::Event | PortType::EventData { .. }
-                    ),
-                    vis: Visibility::Public,
-                    docs: vec![
-                        format!("// Port handler for {}", port.identifier),
-                        format!("// Direction: {:?}", port.direction),
-                    ],
-                    attrs: Vec::new(),
-                }));
-            }
-        }
-    }
-
+    
     items
 }
 

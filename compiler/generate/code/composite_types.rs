@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: base_types_example_types
-// 生成时间: 2025-12-20 17:36:50
+// 生成时间: 2025-12-21 17:27:52
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};

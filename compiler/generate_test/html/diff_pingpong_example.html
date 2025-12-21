@@ -25,36 +25,45 @@ pre {
 <span class="line-header">@@ -1,5 +1,5 @@</span>
  // Auto-generated from AADL package: ping_local
 <span class="line-remove">-// 生成时间: 2025-12-20 15:14:48</span>
-<span class="line-add">+// 生成时间: 2025-12-20 17:31:23</span>
+<span class="line-add">+// 生成时间: 2025-12-21 19:44:32</span>
 
  #![allow(unused_imports)]
  use crossbeam_channel::{Receiver, Sender};
-<span class="line-header">@@ -125,10 +125,10 @@</span>
+<span class="line-header">@@ -71,7 +71,7 @@</span>
+ impl System for pingpongsystemSystem {
+     // Creates a new system instance
+     fn new() -&gt; Self {
+<span class="line-remove">-        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(-1);</span>
+<span class="line-add">+        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(0);</span>
+         return Self { pingpong_proc }  //显式return;
+     }
+     
+<span class="line-header">@@ -125,9 +125,9 @@</span>
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
-<span class="line-add">+            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-             priority: 2, 
-<span class="line-add">+            period: 2000, </span>
+<span class="line-remove">-            priority: 2, </span>
              data_s: None, 
-<span class="line-remove">-            dispatch_protocol: &quot;Periodic&quot;.to_string(), </span>
-<span class="line-remove">-            period: 2000, </span>
+             dispatch_protocol: &quot;Periodic&quot;.to_string(), 
+<span class="line-add">+            priority: 2, </span>
+             period: 2000, 
              deadline: 2000, 
              cpu_id: cpu_id, // CPU ID
-         };
-<span class="line-header">@@ -185,10 +185,10 @@</span>
+<span class="line-header">@@ -185,11 +185,11 @@</span>
      // 创建组件并初始化AADL属性
      fn new(cpu_id: isize) -&gt; Self {
          return Self {
+<span class="line-add">+            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
 <span class="line-add">+            priority: 1, </span>
-<span class="line-add">+            data_r: None, </span>
+<span class="line-add">+            deadline: 10, </span>
              period: 10, 
-<span class="line-remove">-            data_r: None, </span>
-             deadline: 10, 
+             data_r: None, 
+<span class="line-remove">-            deadline: 10, </span>
 <span class="line-remove">-            priority: 1, </span>
-             dispatch_protocol: &quot;Sporadic&quot;.to_string(), 
+<span class="line-remove">-            dispatch_protocol: &quot;Sporadic&quot;.to_string(), </span>
              cpu_id: cpu_id, // CPU ID
          };
+     }
 <span class="line-header">@@ -244,3 +244,24 @@</span>
      
  }
@@ -63,9 +72,9 @@ pre {
 <span class="line-add">+lazy_static! {</span>
 <span class="line-add">+    static ref CPU_ID_TO_SCHED_POLICY: HashMap&lt;isize, i32&gt; = {</span>
 <span class="line-add">+        let mut map: HashMap&lt;isize, i32&gt; = HashMap::new();</span>
-<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
-<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(0, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(1, SCHED_FIFO);</span>
+<span class="line-add">+        map.insert(2, SCHED_FIFO);</span>
 <span class="line-add">+        map.insert(3, SCHED_FIFO);</span>
 <span class="line-add">+        return map;</span>
 <span class="line-add">+    };</span>
