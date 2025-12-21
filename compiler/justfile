@@ -1,0 +1,14 @@
+# 使用 PowerShell 作为 just 的 shell（Windows 必须）
+set shell := ["powershell.exe", "-NoProfile", "-Command"]
+
+cov:
+    cargo +nightly llvm-cov --branch --ignore-filename-regex "collector\.rs|generate_build\.rs|intermediate_print\.rs|merge_utils\.rs|tool\.rs|ast\.rs|main\.rs|printmessage\.rs|test_mod\.rs|transform\.rs|transform_annex\.rs"
+
+build:
+    cargo build
+
+test:
+    cargo test
+
+clean:
+    cargo clean
