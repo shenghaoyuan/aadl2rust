@@ -9,7 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "## Environment we have tested on",
   "devDependencies": {
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0"
@@ -18,5 +18,16 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shenghaoyuan/aadl2rust.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shenghaoyuan/aadl2rust/issues"
+  },
+  "homepage": "https://github.com/shenghaoyuan/aadl2rust#readme"
 }

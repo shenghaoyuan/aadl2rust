@@ -1,4 +1,19 @@
 # aadl2rust
+
+## Environment
+we have tested on 
+
+```shell
+# 
+# - rustc 1.89.0-nightly (e703dff8f 2025-06-11)
+# - cargo-llvm-cov v0.6.10
+# or
+# - rustc 1.91.0 (f8297e351 2025-10-28)
+# - cargo-llvm-cov v0.6.21
+
+# run `rustup component add llvm-tools-preview --toolchain nightly-x86_64-unknown-linux-gnu` to install the `llvm-tools-preview`
+```
+
 ## compiler
 
 **aadl.pest**解析aadl源文件（/AADLSource/*.aadl案例）。
@@ -20,3 +35,12 @@
 ## test
 
 各案例生成的代码在Linux下可运行的完整项目。
+
+### test coverage
+```shell
+cd compiler
+make cov
+
+# see readme from compiler/generate_test 
+# check `/aadl2rust/compiler/target/llvm-cov/html/index.html` for the whole coverage report
+```
