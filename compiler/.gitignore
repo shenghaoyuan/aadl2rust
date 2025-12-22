@@ -1,3 +1,1 @@
-/target
-package.json
-/compiler/generate_test
+/generate_test/code

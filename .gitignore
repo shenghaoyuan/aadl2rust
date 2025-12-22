@@ -2,6 +2,9 @@
 /target/
 **/target/
 
+package.json
+package-lock.json
+
 # 忽略 Cargo 的调试文件
 Cargo.lock
 
