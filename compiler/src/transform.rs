@@ -73,14 +73,14 @@ pub fn extract_package_name(pair: Pair<aadlight_parser::Rule>) -> PackageName {
 
 // 主转换结构体
 pub struct AADLTransformer {
-    port_manager: PortManager,
+    _port_manager: PortManager,
 }
 
 #[warn(unused_mut)]
 impl AADLTransformer {
     pub fn new() -> Self {
         Self {
-            port_manager: PortManager::new(),
+            _port_manager: PortManager::new(),
         }
     }
     

@@ -1,4 +1,4 @@
-mod aadlAst2rustCode;
+mod aadl_ast2rust_code;
 pub mod aadlight_parser;
 mod ast;
 pub mod printmessage;
@@ -6,8 +6,8 @@ pub mod transform;
 pub mod transform_annex;
 //mod output_ocarina;
 
-use aadlAst2rustCode::intermediate_print::*;
-use aadlAst2rustCode::merge_utils::*;
+use aadl_ast2rust_code::intermediate_print::*;
+use aadl_ast2rust_code::merge_utils::*;
 use aadlight_parser::AADLParser;
 use pest::Parser;
 use pest::error::ErrorVariant;
@@ -16,7 +16,7 @@ use std::fs;
 use std::io::{self, Write};
 
 
-use crate::{aadlAst2rustCode::converter::AadlConverter, ast::aadl_ast_cj::Package};
+use crate::{aadl_ast2rust_code::converter::AadlConverter, ast::aadl_ast_cj::Package};
 
 // 定义测试用例结构
 pub struct TestCase {

@@ -1,4 +1,4 @@
-use crate::aadlAst2rustCode::intermediate_ast::*;
+use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
 

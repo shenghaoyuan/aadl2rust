@@ -1,6 +1,6 @@
-use crate::aadlAst2rustCode::intermediate_ast::*;
-use crate::aadlAst2rustCode::converter::AadlConverter;
-use crate::aadlAst2rustCode::converter_annex::AnnexConverter;
+use crate::aadl_ast2rust_code::intermediate_ast::*;
+use crate::aadl_ast2rust_code::converter::AadlConverter;
+use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
 
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;

@@ -68,7 +68,7 @@ pub fn print_ast(ast: &Vec<Package>) {
                                             }
                                         }
                                     }
-                                    _ => {}
+                                    // _ => {}
                                 }
                             }
                         }

@@ -45,7 +45,7 @@ impl AnnexConverter {
     }
 
     /// 生成状态机代码
-    fn generate_state_machine_code(&mut self, impl_: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Option<Vec<Statement>> {
+    fn generate_state_machine_code(&mut self, _: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Option<Vec<Statement>> {
         let mut stmts = Vec::new();
 
         // 1. 定义局部变量
@@ -418,7 +418,7 @@ impl AnnexConverter {
         // 处理转换条件
         if let Some(condition) = &transition.behavior_condition {
             match condition {
-                BehaviorCondition::Dispatch(dispatch_cond) => {
+                BehaviorCondition::Dispatch(_) => {
                     // 处理 "on dispatch" 条件
                     stmts.push(Statement::Comment(format!("on dispatch → {}", transition.destination_state)));
                     stmts.push(Statement::Expr(Expr::Assign(
@@ -1077,7 +1077,7 @@ impl AnnexConverter {
                     Vec::new(),
                 )
             }
-            ValueVariable::PortFresh(port_name) => {
+            ValueVariable::PortFresh(_) => {
                 // 端口新鲜度，暂时返回 true
                 Expr::Literal(Literal::Bool(true))
             }
@@ -1105,11 +1105,11 @@ impl AnnexConverter {
                 }
             }
             ValueConstant::String(s) => Expr::Literal(Literal::Str(s.clone())),
-            ValueConstant::PropertyConstant(prop) => {
+            ValueConstant::PropertyConstant(_) => {
                 // 属性常量，暂时返回默认值
                 Expr::Literal(Literal::Int(0))
             }
-            ValueConstant::PropertyValue(prop) => {
+            ValueConstant::PropertyValue(_) => {
                 // 属性值，暂时返回默认值
                 Expr::Literal(Literal::Int(0))
             }
@@ -1165,7 +1165,7 @@ impl AnnexConverter {
                     PathType::Member,
                 )
             }
-            BasicExpression::Timeout(expr) => {
+            BasicExpression::Timeout(_) => {
                 // 超时表达式，暂时返回默认值
                 Expr::Literal(Literal::Int(0))
             }
@@ -1195,22 +1195,22 @@ impl AnnexConverter {
                     PathType::Member,
                 )
             }
-            BasicExpression::DataClassifierSubprogram { classifier, subprogram, parameters } => {
+            BasicExpression::DataClassifierSubprogram { classifier:_, subprogram:_, parameters:_ } => {
                 // 子程序调用，暂时返回默认值
                 Expr::Literal(Literal::Int(0))
             }
-            BasicExpression::DataClassifierSubprogramWithTimeout { classifier, subprogram, timeout } => {
+            BasicExpression::DataClassifierSubprogramWithTimeout { classifier:_, subprogram:_, timeout:_ } => {
                 // 带超时的子程序调用，暂时返回默认值
                 Expr::Literal(Literal::Int(0))
             }
-            BasicExpression::DataClassifierSubprogramWithParameter { classifier, subprogram, parameter, expression } => {
+            BasicExpression::DataClassifierSubprogramWithParameter { classifier:_, subprogram:_, parameter:_, expression:_ } => {
                 // 带参数的子程序调用，暂时返回默认值
                 Expr::Literal(Literal::Int(0))
             }
             BasicExpression::Parenthesized(expr) => {
                 Expr::Parenthesized(Box::new(self.convert_basic_expression(expr)))
             }
-            BasicExpression::Quantified { quantifier, identifier, range, expression } => {
+            BasicExpression::Quantified { quantifier:_, identifier:_, range:_, expression:_ } => {
                 // 量词表达式，暂时返回默认值
                 Expr::Literal(Literal::Bool(false))
             }

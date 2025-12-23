@@ -1,4 +1,4 @@
-pub mod aadlAst2rustCode;
+pub mod aadl_ast2rust_code;
 pub mod aadlight_parser;
 pub mod ast;
 pub mod printmessage;

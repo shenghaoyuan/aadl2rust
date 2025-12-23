@@ -1,5 +1,5 @@
-use crate::aadlAst2rustCode::converter::AadlConverter;
-use crate::aadlAst2rustCode::intermediate_ast::*;
+use crate::aadl_ast2rust_code::converter::AadlConverter;
+use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::ast::aadl_ast_cj::*;
 

@@ -1,12 +1,12 @@
 // aadlAST2rustAST
-use crate::aadlAst2rustCode::intermediate_ast::*;
-use crate::aadlAst2rustCode::converter_annex::AnnexConverter;
+use crate::aadl_ast2rust_code::intermediate_ast::*;
+use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
 
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
-use crate::aadlAst2rustCode::collector;
-use crate::aadlAst2rustCode::types::*;
-use crate::aadlAst2rustCode::implementations::*;
+use crate::aadl_ast2rust_code::collector;
+use crate::aadl_ast2rust_code::types::*;
+use crate::aadl_ast2rust_code::implementations::*;
 
 // AADL到Rust中间表示的转换器
 pub struct AadlConverter {
@@ -147,7 +147,7 @@ impl AadlConverter {
         let mut withs = Vec::new();
         for ele in pkg.visibility_decls.iter() {
             match ele {
-                VisibilityDeclaration::Import { packages, property_sets } => {
+                VisibilityDeclaration::Import { packages, property_sets: _ } => {
                     println!("!!!!!!!!!!!!!!!!!!!!!packages: {:?}", packages);
                     //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
                     for pkg_name in packages.iter() {

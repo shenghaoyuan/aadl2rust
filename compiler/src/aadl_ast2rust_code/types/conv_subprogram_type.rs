@@ -1,6 +1,6 @@
-use crate::aadlAst2rustCode::intermediate_ast::*;
+use crate::aadl_ast2rust_code::intermediate_ast::*;
 
-use crate::aadlAst2rustCode::converter::AadlConverter;
+use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::ast::aadl_ast_cj::*;
 
 pub fn convert_subprogram_component(
@@ -8,7 +8,7 @@ pub fn convert_subprogram_component(
     comp: &ComponentType,
     package: &Package,
 ) -> Vec<Item> {
-    let mut items = Vec::new();
+    let items = Vec::new();
 
     // 检查是否是C语言绑定的子程序
     if let Some(c_func_name) = extract_c_function_name(comp) {

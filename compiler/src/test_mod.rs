@@ -1,6 +1,6 @@
-use crate::aadlAst2rustCode::converter::AadlConverter;
-use crate::aadlAst2rustCode::intermediate_print::RustCodeGenerator;
-use crate::aadlAst2rustCode::merge_utils::merge_item_defs;
+use crate::aadl_ast2rust_code::converter::AadlConverter;
+use crate::aadl_ast2rust_code::intermediate_print::RustCodeGenerator;
+use crate::aadl_ast2rust_code::merge_utils::merge_item_defs;
 use crate::aadlight_parser::{AADLParser, Rule};
 use crate::ast::aadl_ast_cj::Package;
 use crate::transform::AADLTransformer;

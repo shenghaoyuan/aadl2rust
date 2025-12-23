@@ -707,7 +707,7 @@ pub fn transform_annexes_clause(pair: Pair<aadlight_parser::Rule>) -> Vec<AnnexS
 
 /// 转换行为时间
 /// 处理 behavior_time 规则
-pub fn transform_behavior_time(pair: Pair<aadlight_parser::Rule>) -> BehaviorTime {
+pub fn transform_behavior_time(_pair: Pair<aadlight_parser::Rule>) -> BehaviorTime {
     // 暂时返回默认值，后续可以根据需要完善
     BehaviorTime {
         value: IntegerValue::Constant("0".to_string()),
@@ -717,7 +717,7 @@ pub fn transform_behavior_time(pair: Pair<aadlight_parser::Rule>) -> BehaviorTim
 
 /// 转换 if 语句
 /// 处理 if_statement 规则
-pub fn transform_if_statement(pair: Pair<aadlight_parser::Rule>) -> IfStatement {
+pub fn transform_if_statement(_pair: Pair<aadlight_parser::Rule>) -> IfStatement {
     // 暂时返回默认值，后续可以根据需要完善
     IfStatement {
         condition: BehaviorExpression { disjunctions: vec![] },
@@ -729,7 +729,7 @@ pub fn transform_if_statement(pair: Pair<aadlight_parser::Rule>) -> IfStatement 
 
 /// 转换 for 语句
 /// 处理 for_statement 规则
-pub fn transform_for_statement(pair: Pair<aadlight_parser::Rule>) -> ForStatement {
+pub fn transform_for_statement(_pair: Pair<aadlight_parser::Rule>) -> ForStatement {
     // 暂时返回默认值，后续可以根据需要完善
     ForStatement {
         element_identifier: "".to_string(),
@@ -744,7 +744,7 @@ pub fn transform_for_statement(pair: Pair<aadlight_parser::Rule>) -> ForStatemen
 
 /// 转换 forall 语句
 /// 处理 forall_statement 规则
-pub fn transform_forall_statement(pair: Pair<aadlight_parser::Rule>) -> ForallStatement {
+pub fn transform_forall_statement(_pair: Pair<aadlight_parser::Rule>) -> ForallStatement {
     // 暂时返回默认值，后续可以根据需要完善
     ForallStatement {
         element_identifier: "".to_string(),
@@ -759,7 +759,7 @@ pub fn transform_forall_statement(pair: Pair<aadlight_parser::Rule>) -> ForallSt
 
 /// 转换 while 语句
 /// 处理 while_statement 规则
-pub fn transform_while_statement(pair: Pair<aadlight_parser::Rule>) -> WhileStatement {
+pub fn transform_while_statement(_pair: Pair<aadlight_parser::Rule>) -> WhileStatement {
     // 暂时返回默认值，后续可以根据需要完善
     WhileStatement {
         condition: BehaviorExpression { disjunctions: vec![] },
@@ -769,7 +769,7 @@ pub fn transform_while_statement(pair: Pair<aadlight_parser::Rule>) -> WhileStat
 
 /// 转换 do-until 语句
 /// 处理 do_until_statement 规则
-pub fn transform_do_until_statement(pair: Pair<aadlight_parser::Rule>) -> DoUntilStatement {
+pub fn transform_do_until_statement(_pair: Pair<aadlight_parser::Rule>) -> DoUntilStatement {
     // 暂时返回默认值，后续可以根据需要完善
     DoUntilStatement {
         actions: Box::new(BehaviorActions::Sequence(BehaviorActionSequence { actions: vec![] })),
