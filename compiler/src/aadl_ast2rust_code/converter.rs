@@ -29,7 +29,7 @@ pub struct AadlConverter {
     system_subcomponent_identify_to_type: HashMap<String, String>,
 
 
-    //HashMap存储process内和thread之间的多连接关系，key为process上的端口名，value为接收线程上的(组件和端口)列表
+    //HashMap存储process内和thread之间的多连接关系，key为process上的(端口名,process名称），value为接收线程上的(组件和端口)列表
     pub thread_broadcast_receive: HashMap<(String, String), Vec<(String, String)>>,
     //HashMap存储process内subcomponent(thread)的identify和真实实现类型的映射关系
     process_subcomponent_identify_to_type: HashMap<String, String>,
@@ -148,7 +148,7 @@ impl AadlConverter {
         for ele in pkg.visibility_decls.iter() {
             match ele {
                 VisibilityDeclaration::Import { packages, property_sets: _ } => {
-                    println!("!!!!!!!!!!!!!!!!!!!!!packages: {:?}", packages);
+                    //println!("packages: {:?}", packages);
                     //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
                     for pkg_name in packages.iter() {
                         // 关键点：不使用 to_string()
@@ -163,7 +163,7 @@ impl AadlConverter {
                 _ => {}
             }
         }
-        println!("!!!!!!!!!!!!!!!!!!!!!withs: {:?}", withs);
+        //println!("withs: {:?}", withs);
         withs
     }
     // 根据实现获取组件类型

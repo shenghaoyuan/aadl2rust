@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_platform
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -18,7 +21,6 @@ use libc::{
 };
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
-use crate::SEI::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {

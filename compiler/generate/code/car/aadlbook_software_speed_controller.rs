@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_software_speed_controller
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -19,7 +22,6 @@ use libc::{
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
 use crate::aadlbook_icd::*;
-use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -46,17 +48,17 @@ pub struct speed_controllerProcess {
     pub brake_cmdRece: Option<Receiver<i8>>,// 内部端口: brake_cmd Out
     pub speed_cmdRece: Option<Receiver<i8>>,// 内部端口: speed_cmd Out
     pub warningRece: Option<Receiver<bool>>,// 内部端口: warning Out
-    pub accel_thr: speed_controller_accel_thrThread,// 子组件线程（accel_thr : thread speed_controller_accel_thr）
-    pub brake_thr: speed_controller_brake_thrThread,// 子组件线程（brake_thr : thread speed_controller_brake_thr）
-    pub warning_thr: speed_controller_warning_thrThread,// 子组件线程（warning_thr : thread speed_controller_warning_thr）
+    pub accel_thr: speed_controller_accel_thrThread,// 子组件线程(accel_thr : thread speed_controller_accel_thr)
+    pub brake_thr: speed_controller_brake_thrThread,// 子组件线程(brake_thr : thread speed_controller_brake_thr)
+    pub warning_thr: speed_controller_warning_thrThread,// 子组件线程(warning_thr : thread speed_controller_warning_thr)
 }
 
 impl Process for speed_controllerProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let accel_thr: speed_controller_accel_thrThread = speed_controller_accel_thrThread::new(cpu_id);
-        let brake_thr: speed_controller_brake_thrThread = speed_controller_brake_thrThread::new(cpu_id);
-        let warning_thr: speed_controller_warning_thrThread = speed_controller_warning_thrThread::new(cpu_id);
+        let mut accel_thr: speed_controller_accel_thrThread = speed_controller_accel_thrThread::new(cpu_id);
+        let mut brake_thr: speed_controller_brake_thrThread = speed_controller_brake_thrThread::new(cpu_id);
+        let mut warning_thr: speed_controller_warning_thrThread = speed_controller_warning_thrThread::new(cpu_id);
         let mut obstacle_positionSend = None;
         let mut current_speedSend = None;
         let mut desired_speedSend = None;
@@ -104,7 +106,7 @@ impl Process for speed_controllerProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { obstacle_position, obstacle_positionSend, current_speed, current_speedSend, desired_speed, desired_speedSend, brake_cmd, brake_cmdRece, speed_cmd, speed_cmdRece, warning, warningRece, accel_thr, brake_thr, warning_thr, cpu_id, .. } = self;
+        let Self { obstacle_position, obstacle_positionSend, current_speed, current_speedSend, desired_speed, desired_speedSend, brake_cmd, brake_cmdRece, speed_cmd, speed_cmdRece, warning, warningRece, accel_thr, brake_thr, warning_thr, .. } = self;
         thread::Builder::new()
             .name("accel_thr".to_string())
             .spawn(move || { accel_thr.run() }).unwrap();
@@ -114,7 +116,7 @@ impl Process for speed_controllerProcess {
         thread::Builder::new()
             .name("warning_thr".to_string())
             .spawn(move || { warning_thr.run() }).unwrap();
-        let mut brake_cmdRece_rx = brake_cmdRece.unwrap();
+        let brake_cmdRece_rx = brake_cmdRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_brake_cmdRece".to_string())
             .spawn(move || {
@@ -127,7 +129,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut current_speed_rx = current_speed.unwrap();
+        let current_speed_rx = current_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_current_speed".to_string())
             .spawn(move || {
@@ -140,7 +142,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut desired_speed_rx = desired_speed.unwrap();
+        let desired_speed_rx = desired_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_desired_speed".to_string())
             .spawn(move || {
@@ -153,7 +155,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut obstacle_position_rx = obstacle_position.unwrap();
+        let obstacle_position_rx = obstacle_position.unwrap();
         thread::Builder::new()
             .name("data_forwarder_obstacle_position".to_string())
             .spawn(move || {
@@ -166,7 +168,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut speed_cmdRece_rx = speed_cmdRece.unwrap();
+        let speed_cmdRece_rx = speed_cmdRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_speed_cmdRece".to_string())
             .spawn(move || {
@@ -179,7 +181,7 @@ impl Process for speed_controllerProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut warningRece_rx = warningRece.unwrap();
+        let warningRece_rx = warningRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_warningRece".to_string())
             .spawn(move || {
@@ -239,13 +241,13 @@ impl Thread for speed_controller_accel_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            obstacle_position: None, 
             dispatch_protocol: "Periodic".to_string(), 
-            current_speed: None, 
-            speed_cmd: None, 
             mipsbudget: 5.0, 
-            period: 5, 
             desired_speed: None, 
+            period: 5, 
+            obstacle_position: None, 
+            speed_cmd: None, 
+            current_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -259,7 +261,6 @@ impl Thread for speed_controller_accel_thrThread {
         let period: std::time::Duration = Duration::from_millis(2000);
         let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -267,9 +268,12 @@ impl Thread for speed_controller_accel_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -280,16 +284,14 @@ impl Thread for speed_controller_accel_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -300,12 +302,12 @@ impl Thread for speed_controller_brake_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             obstacle_position: None, 
-            current_speed: None, 
-            dispatch_protocol: "Periodic".to_string(), 
-            period: 5, 
-            desired_speed: None, 
-            mipsbudget: 5.0, 
             brake_cmd: None, 
+            desired_speed: None, 
+            dispatch_protocol: "Periodic".to_string(), 
+            current_speed: None, 
+            period: 5, 
+            mipsbudget: 5.0, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -319,7 +321,6 @@ impl Thread for speed_controller_brake_thrThread {
         let period: std::time::Duration = Duration::from_millis(2000);
         let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -327,9 +328,12 @@ impl Thread for speed_controller_brake_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let obstacle_position = self.obstacle_position.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let obstacle_position = self.obstacle_position.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -340,16 +344,14 @@ impl Thread for speed_controller_brake_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     
@@ -359,13 +361,13 @@ impl Thread for speed_controller_warning_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            desired_speed: None, 
-            mipsbudget: 5.0, 
-            warning: None, 
-            obstacle_position: None, 
-            current_speed: None, 
-            period: 5, 
             dispatch_protocol: "Periodic".to_string(), 
+            obstacle_position: None, 
+            mipsbudget: 5.0, 
+            desired_speed: None, 
+            period: 5, 
+            warning: None, 
+            current_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -379,7 +381,6 @@ impl Thread for speed_controller_warning_thrThread {
         let period: std::time::Duration = Duration::from_millis(2000);
         let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -387,9 +388,12 @@ impl Thread for speed_controller_warning_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let obstacle_position = self.obstacle_position.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let obstacle_position = self.obstacle_position.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -400,16 +404,14 @@ impl Thread for speed_controller_warning_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     

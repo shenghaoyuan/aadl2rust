@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_software_image_acquisition
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -19,7 +22,6 @@ use libc::{
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
 use crate::aadlbook_icd::*;
-use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -36,15 +38,15 @@ pub struct image_acquisitionProcess {
     pub picture: Option<Receiver<[[i32; 4]; 4]>>,// Port: picture In
     pub obstacle_detected: Option<Sender<bool>>,// Port: obstacle_detected Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub pictureSend: Option<BcSender<[[i32; 4]; 4]>>,// 内部端口: picture In
+    pub pictureSend: Option<Sender<[[i32; 4]; 4]>>,// 内部端口: picture In
     pub obstacle_detectedRece: Option<Receiver<bool>>,// 内部端口: obstacle_detected Out
-    pub acq_thr: image_acquisition_thrThread,// 子组件线程（acq_thr : thread image_acquisition_thr）
+    pub acq_thr: image_acquisition_thrThread,// 子组件线程(acq_thr : thread image_acquisition_thr)
 }
 
 impl Process for image_acquisitionProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let acq_thr: image_acquisition_thrThread = image_acquisition_thrThread::new(cpu_id);
+        let mut acq_thr: image_acquisition_thrThread = image_acquisition_thrThread::new(cpu_id);
         let mut pictureSend = None;
         let mut obstacle_detectedRece = None;
         let c0 = crossbeam_channel::unbounded();
@@ -60,11 +62,11 @@ impl Process for image_acquisitionProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { picture, pictureSend, obstacle_detected, obstacle_detectedRece, acq_thr, cpu_id, .. } = self;
+        let Self { picture, pictureSend, obstacle_detected, obstacle_detectedRece, acq_thr, .. } = self;
         thread::Builder::new()
             .name("acq_thr".to_string())
             .spawn(move || { acq_thr.run() }).unwrap();
-        let mut obstacle_detectedRece_rx = obstacle_detectedRece.unwrap();
+        let obstacle_detectedRece_rx = obstacle_detectedRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_obstacle_detectedRece".to_string())
             .spawn(move || {
@@ -77,7 +79,7 @@ impl Process for image_acquisitionProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut picture_rx = picture.unwrap();
+        let picture_rx = picture.unwrap();
         thread::Builder::new()
             .name("data_forwarder_picture".to_string())
             .spawn(move || {
@@ -111,8 +113,8 @@ impl Thread for image_acquisition_thrThread {
         return Self {
             dispatch_protocol: "Periodic".to_string(), 
             picture: None, 
-            obstacle_detected: None, 
             period: 50, 
+            obstacle_detected: None, 
             mipsbudget: 25.0, 
             cpu_id: cpu_id, // CPU ID
         };
@@ -127,7 +129,6 @@ impl Thread for image_acquisition_thrThread {
         let period: std::time::Duration = Duration::from_millis(2000);
         let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -135,9 +136,12 @@ impl Thread for image_acquisition_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let picture = self.picture.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let picture = self.picture.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -148,16 +152,14 @@ impl Thread for image_acquisition_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     

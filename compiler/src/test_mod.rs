@@ -138,7 +138,7 @@ pub fn run_all_test_cases() {
     let mut converter = AadlConverter::default();
 
     for tc in all_test_cases() {
-        let full_path = format!("{}/{}", base, tc.path);
+        let full_path = format!("{}\\{}", base, tc.path);
         let result = run_single_test_case(&tc, &full_path, &mut converter);
 
         match result {
@@ -151,9 +151,9 @@ pub fn run_all_test_cases() {
 // 确保输出目录存在
 fn ensure_dirs() {
     let base = env!("CARGO_MANIFEST_DIR");
-    fs::create_dir_all(format!("{}/{}", base, BASELINE_ROOT)).ok();
-    fs::create_dir_all(format!("{}/{}", base, TEST_OUTPUT_ROOT)).ok();
-    fs::create_dir_all(format!("{}/generate_test", base)).ok(); // 存 HTML diff
+    fs::create_dir_all(format!("{}\\{}", base, BASELINE_ROOT)).ok();
+    fs::create_dir_all(format!("{}\\{}", base, TEST_OUTPUT_ROOT)).ok();
+    fs::create_dir_all(format!("{}\\generate_test", base)).ok(); // 存 HTML diff
 }
 
 // 单个测试用例：AADL → AST → Rust 生成
@@ -197,11 +197,11 @@ fn generate_rust_code_for_test_case(
 
     // 2. 测试输出路径：generate_test/code/...
     let test_output_path = if number_of_packages == 1 {
-        format!("{}/{}/{}.rs", base, TEST_OUTPUT_ROOT, test_case.output_name)
+        format!("{}\\{}\\{}.rs", base, TEST_OUTPUT_ROOT, test_case.output_name)
     } else {
-        let dir = format!("{}/{}/{}", base, TEST_OUTPUT_ROOT, test_case.output_name);
+        let dir = format!("{}\\{}\\{}", base, TEST_OUTPUT_ROOT, test_case.output_name);
         fs::create_dir_all(&dir).ok();
-        format!("{}/{}.rs", dir, package_name)
+        format!("{}\\{}.rs", dir, package_name)
     };
 
     fs::write(&test_output_path, &rust_code)
@@ -209,10 +209,10 @@ fn generate_rust_code_for_test_case(
 
     // 3. baseline 路径：generate/code/...
     let baseline_path = if number_of_packages == 1 {
-        format!("{}/{}/{}.rs", base, BASELINE_ROOT, test_case.output_name)
+        format!("{}\\{}\\{}.rs", base, BASELINE_ROOT, test_case.output_name)
     } else {
         format!(
-            "{}/{}/{}/{}.rs",
+            "{}\\{}\\{}\\{}.rs",
             base, BASELINE_ROOT, test_case.output_name, package_name
         )
     };
@@ -263,7 +263,7 @@ pre {{
 
             // 4.3 HTML 报告路径
             let html_path = format!(
-                "{}/generate_test/html/diff_{}.html",
+                "{}\\generate_test\\html\\diff_{}.html",
                 base, test_case.output_name
             );
 

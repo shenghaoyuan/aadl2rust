@@ -488,97 +488,98 @@ fn create_periodic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
     }));
     
     
-
+    // 处理BA
     let mut annex_converter = AnnexConverter::default();
     // 检查是否有Behavior Annex
-    if let Some(annex_stmts) = annex_converter.generate_annex_code(impl_) {
-        // 如果有Behavior Annex，使用它
-        stmts.extend(annex_stmts);
-    } else {
-        // 否则使用原来的子程序调用处理代码
-        let port_handling_stmts = create_subprogram_call_logic(temp_converter, impl_);
+    let mut if_has_ba = false;
+    
+    if annex_converter.find_behavior_annex(impl_).is_some(){
+        if_has_ba = true;
+        stmts.extend(annex_converter.generate_ba_variables_states(impl_, annex_converter.find_behavior_annex(impl_).unwrap()));
+    } 
 
-        // 生成周期性执行的主循环
-        stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
-            stmts: vec![
-                // 记录循环开始时间
-                Statement::Let(LetStmt {
-                    ifmut: false,
-                    name: "now".to_string(),
-                    ty: None,
-                    init: Some(Expr::Call(
-                        Box::new(Expr::Path(
-                            vec!["Instant".to_string(), "now".to_string()],
-                            PathType::Namespace,
-                        )),
-                        Vec::new(),
-                    )),
-                }),
-                //添加上if now < next_release {
-                //     std::thread::sleep(next_release - now);
-                // }的逻辑
-                Statement::Expr(Expr::If {
-                    condition: Box::new(Expr::BinaryOp(
-                        Box::new(Expr::Ident("now".to_string())),
-                        "<".to_string(),
-                        Box::new(Expr::Ident("next_release".to_string())),
-                    )),
-                    then_branch: Block {
-                        stmts: vec![
-                            Statement::Expr(Expr::MethodCall(
-                                Box::new(Expr::Path(
-                                    vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                                    PathType::Namespace,
-                                )),
-                                "".to_string(),
-                                vec![Expr::Ident("next_release - now".to_string())],
-                            )),
-                        ],
-                        expr: None,
-                    },
-                    else_branch: None,
-                }),
-                
-                // 执行子程序调用处理块
-                Statement::Expr(Expr::Block(Block {
-                    stmts: port_handling_stmts.clone(),
-                    expr: None,
-                })),
-                // // 计算执行时间
-                // Statement::Let(LetStmt {
-                //     ifmut: false,
-                //     name: "elapsed".to_string(),
-                //     ty: None,
-                //     init: Some(Expr::MethodCall(
-                //         Box::new(Expr::Ident("start".to_string())),
-                //         "elapsed".to_string(),
-                //         Vec::new(),
-                //     )),
-                // }),
-                // // 睡眠剩余时间，确保周期性执行
-                // Statement::Expr(Expr::MethodCall(
-                //     Box::new(Expr::Path(
-                //         vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                //         PathType::Namespace,
-                //     )),
-                //     "".to_string(),
-                //     vec![Expr::MethodCall(
-                //         Box::new(Expr::Ident("period".to_string())),
-                //         "saturating_sub".to_string(),
-                //         vec![Expr::Ident("elapsed".to_string())],
-                //     )],
-                // )),
-                // 5. 推进到下一个周期（注意：不是 based on actual）
-                //next_release += period;
-                Statement::Expr(Expr::BinaryOp(
-                    Box::new(Expr::Ident("next_release".to_string())),
-                    "+=".to_string(),
-                    Box::new(Expr::Ident("period".to_string())),
+    let mut ba_stmts = Vec::new();
+    if if_has_ba {
+        if let Some(transitions) = annex_converter.find_behavior_annex(impl_).unwrap().transitions.clone() {
+            ba_stmts.extend(annex_converter.generate_state_machine_loop(&transitions));
+        }
+    };
+
+    // 子程序调用处理代码
+    let subprogram_handling_stmts = create_subprogram_call_logic(temp_converter, impl_);
+
+
+    // 构造 loop 内部的语句列表,调度控制+子程序调用+BA执行
+    let mut loop_stmts: Vec<Statement> = Vec::new();
+
+    // 1. let now = Instant::now();
+    loop_stmts.push(Statement::Let(LetStmt {
+        ifmut: false,
+        name: "now".to_string(),
+        ty: None,
+        init: Some(Expr::Call(
+            Box::new(Expr::Path(
+                vec!["Instant".to_string(), "now".to_string()],
+                PathType::Namespace,
+            )),
+            Vec::new(),
+        )),
+    }));
+
+    // 2. if now < next_release { std::thread::sleep(next_release - now); }
+    loop_stmts.push(Statement::Expr(Expr::If {
+        condition: Box::new(Expr::BinaryOp(
+            Box::new(Expr::Ident("now".to_string())),
+            "<".to_string(),
+            Box::new(Expr::Ident("next_release".to_string())),
+        )),
+        then_branch: Block {
+            stmts: vec![Statement::Expr(Expr::MethodCall(
+                Box::new(Expr::Path(
+                    vec![
+                        "std".to_string(),
+                        "thread".to_string(),
+                        "sleep".to_string(),
+                    ],
+                    PathType::Namespace,
                 )),
-            ],
+                "".to_string(),
+                vec![Expr::Ident("next_release - now".to_string())],
+            ))],
             expr: None,
-        }))));
+        },
+        else_branch: None,
+    }));
+
+    // 3. 端口处理块
+    if !subprogram_handling_stmts.is_empty() {
+        loop_stmts.push(Statement::Expr(Expr::Block(Block {
+            stmts: subprogram_handling_stmts,
+            expr: None,
+        })));
     }
+
+    // 4. 如果存在 Behavior Annex，则插入 BA 执行块
+    if !ba_stmts.is_empty() {
+        loop_stmts.push(Statement::Expr(Expr::Block(Block {
+            stmts: ba_stmts,
+            expr: None,
+        })));
+    }
+
+    // 5. next_release += period;
+    loop_stmts.push(Statement::Expr(Expr::BinaryOp(
+        Box::new(Expr::Ident("next_release".to_string())),
+        "+=".to_string(),
+        Box::new(Expr::Ident("period".to_string())),
+    )));
+
+    // 6. 构造 loop 表达式并压入外层 stmts
+    stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
+        stmts: loop_stmts,
+        expr: None,
+    }))));
+
 
     stmts
 }
@@ -1591,14 +1592,15 @@ fn get_subprogram_port_type(temp_converter: &AadlConverter, subprogram_name: &st
                                                 Statement::Expr(Expr::MethodCall(
                                                     Box::new(Expr::Ident("events".to_string())),
                                                     "push".to_string(),
-                                                    vec![Expr::Parenthesized(Box::new(Expr::Call(
+                                                    vec![Expr::Call(
                                                         Box::new(Expr::Ident("".to_string())), // 空标识符表示元组构造
                                                         vec![
                                                             Expr::Ident("val".to_string()),
                                                             Expr::Literal(Literal::Int(*urgency as i64)),
                                                             Expr::Ident("Instant::now()".to_string()),
                                                         ],
-                                                    )))],
+                                                    )],
+                                                    
                                                 )),
                                             ],
                                             expr: None,
@@ -1636,31 +1638,18 @@ fn get_subprogram_port_type(temp_converter: &AadlConverter, subprogram_name: &st
                                         )),
                                         then_branch: Block {
                                             stmts: vec![
-                                                // let ts = Instant::now();
-                                                Statement::Let(LetStmt {
-                                                    ifmut: false,
-                                                    name: "ts".to_string(),
-                                                    ty: None,
-                                                    init: Some(Expr::Call(
-                                                        Box::new(Expr::Path(
-                                                            vec!["Instant".to_string(), "now".to_string()],
-                                                            PathType::Namespace,
-                                                        )),
-                                                        Vec::new(),
-                                                    )),
-                                                }),
-                                                // events.push((val, 0, ts))
                                                 Statement::Expr(Expr::MethodCall(
                                                     Box::new(Expr::Ident("events".to_string())),
                                                     "push".to_string(),
-                                                    vec![Expr::Parenthesized(Box::new(Expr::Call(
+                                                    vec![Expr::Call(
                                                         Box::new(Expr::Ident("".to_string())), // 空标识符表示元组构造
                                                         vec![
                                                             Expr::Ident("val".to_string()),
-                                                            Expr::Literal(Literal::Int(0)), // 默认优先级为0
-                                                            Expr::Ident("ts".to_string()),
+                                                            Expr::Literal(Literal::Int(0)),
+                                                            Expr::Ident("Instant::now()".to_string()),
                                                         ],
-                                                    )))],
+                                                    )],
+                                                    
                                                 )),
                                             ],
                                             expr: None,

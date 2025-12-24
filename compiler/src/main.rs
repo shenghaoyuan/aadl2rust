@@ -124,7 +124,13 @@ fn main() {
             name: "composite_test".to_string(),
             path:"AADLSource/composite_test.aadl".to_string(),
             output_name:"composite_test".to_string(),
-        }   
+        },
+        TestCase{
+            id:17,
+            name: "drone".to_string(),
+            path:"AADLSource/drone.aadl".to_string(),
+            output_name:"drone".to_string(),
+        }
     ];
 
     // 显示可用的测试用例

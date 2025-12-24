@@ -36,40 +36,42 @@ public
     evenement    : out event data port Alpha_Type;  
   end capteur;
 
-  thread controle
-  features
-    info_capteur : in event data port Alpha_Type;
-    comm_servo   : out event data port Alpha_Type;
-  end controle;
+
 
   thread servomoteur
   features
     ordre        : in event data port Alpha_Type;
   end servomoteur;
 
-  --implementations
+  thread controle
+  features
+    info_capteur : in event data port Alpha_Type;
+    comm_servo   : out event data port Alpha_Type;
+  end controle;
+
   thread implementation controle.i
   properties
     Dispatch_Protocol => Periodic;
     Period            => 110 ms;
-    Compute_Execution_Time => 0 ms .. 1 ms;
   annex Behavior_specification {**
+    variables
+      comm_false : Base_Types::Boolean := false;
+      comm_true  : Base_Types::Boolean := true;
     states
         s_inline : initial complete final state;
         s1, s2 : state;
         s_outline : complete state;
-
     transitions
         s_inline -[on dispatch]-> s1;
         s1 -[info_capteur]-> s_inline;
         s1 -[not info_capteur]-> s_outline {
-          comm_servo := false
+          comm_servo := comm_false
         };
 
         s_outline -[on dispatch]-> s2;
         s2 -[not info_capteur]-> s_outline;
         s2 -[info_capteur]-> s_inline {
-          comm_servo := true
+          comm_servo := comm_true
         };
   **};
   end controle.i;

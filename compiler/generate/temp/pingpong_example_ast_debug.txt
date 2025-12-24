@@ -102,7 +102,7 @@ RustModule {
                                 stmts: [
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
+                                            ifmut: true,
                                             name: "ping_thr",
                                             ty: Some(
                                                 Named(
@@ -129,7 +129,7 @@ RustModule {
                                     ),
                                     Let(
                                         LetStmt {
-                                            ifmut: false,
+                                            ifmut: true,
                                             name: "pong_thr",
                                             ty: Some(
                                                 Named(
@@ -252,7 +252,7 @@ RustModule {
                                     Let(
                                         LetStmt {
                                             ifmut: false,
-                                            name: "Self { ping_thr, pong_thr, cpu_id, .. }",
+                                            name: "Self { ping_thr, pong_thr, .. }",
                                             ty: None,
                                             init: Some(
                                                 Ident(
@@ -392,7 +392,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(-1)",
+                                            "let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(0)",
                                         ),
                                     ),
                                     Expr(
@@ -527,6 +527,7 @@ RustModule {
                 ],
                 attrs: [],
                 vis: Public,
+                withs: [],
             },
         ),
         Mod(
@@ -607,6 +608,7 @@ RustModule {
                 ],
                 attrs: [],
                 vis: Public,
+                withs: [],
             },
         ),
         Struct(
@@ -736,7 +738,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            priority: 2, \n            data_s: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 2000, \n            deadline: 2000, \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            data_s: None, \n            dispatch_protocol: \"Periodic\".to_string(), \n            period: 2000, \n            deadline: 2000, \n            priority: 2, \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1316,7 +1318,7 @@ RustModule {
                                 stmts: [
                                     Expr(
                                         Ident(
-                                            "return Self {\n            period: 10, \n            data_r: None, \n            deadline: 10, \n            priority: 1, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
+                                            "return Self {\n            deadline: 10, \n            data_r: None, \n            priority: 1, \n            period: 10, \n            dispatch_protocol: \"Sporadic\".to_string(), \n            cpu_id: cpu_id, // CPU ID\n        }",
                                         ),
                                     ),
                                 ],
@@ -1965,7 +1967,90 @@ RustModule {
                 ),
             },
         ),
+        LazyStatic(
+            LazyStaticDef {
+                name: "CPU_ID_TO_SCHED_POLICY",
+                ty: Generic(
+                    "HashMap",
+                    [
+                        Named(
+                            "isize",
+                        ),
+                        Named(
+                            "i32",
+                        ),
+                    ],
+                ),
+                init: Block {
+                    stmts: [
+                        Let(
+                            LetStmt {
+                                ifmut: true,
+                                name: "map",
+                                ty: Some(
+                                    Generic(
+                                        "HashMap",
+                                        [
+                                            Named(
+                                                "isize",
+                                            ),
+                                            Named(
+                                                "i32",
+                                            ),
+                                        ],
+                                    ),
+                                ),
+                                init: Some(
+                                    Call(
+                                        Path(
+                                            [
+                                                "HashMap",
+                                                "new",
+                                            ],
+                                            Namespace,
+                                        ),
+                                        [],
+                                    ),
+                                ),
+                            },
+                        ),
+                        Expr(
+                            MethodCall(
+                                Ident(
+                                    "map",
+                                ),
+                                "insert",
+                                [
+                                    Literal(
+                                        Int(
+                                            0,
+                                        ),
+                                    ),
+                                    Path(
+                                        [
+                                            "SCHED_FIFO",
+                                        ],
+                                        Namespace,
+                                    ),
+                                ],
+                            ),
+                        ),
+                        Expr(
+                            Ident(
+                                "return map",
+                            ),
+                        ),
+                    ],
+                    expr: None,
+                },
+                vis: Public,
+                docs: [
+                    "// CPU ID到调度策略的映射",
+                ],
+            },
+        ),
     ],
     attrs: [],
     vis: Public,
+    withs: [],
 }

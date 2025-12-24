@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_software_entertainment
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -19,7 +22,6 @@ use libc::{
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
 use crate::aadlbook_icd::*;
-use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -38,17 +40,17 @@ pub struct entertainmentProcess {
     pub infos: Option<Sender<i8>>,// Port: infos Out
     pub music_out: Option<Sender<bool>>,// Port: music_out Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub music_inSend: Option<BcSender<bool>>,// 内部端口: music_in In
-    pub contactsSend: Option<BcSender<i8>>,// 内部端口: contacts In
+    pub music_inSend: Option<Sender<bool>>,// 内部端口: music_in In
+    pub contactsSend: Option<Sender<i8>>,// 内部端口: contacts In
     pub infosRece: Option<Receiver<i8>>,// 内部端口: infos Out
     pub music_outRece: Option<Receiver<bool>>,// 内部端口: music_out Out
-    pub enter_thr: entertainment_thrThread,// 子组件线程（enter_thr : thread entertainment_thr）
+    pub enter_thr: entertainment_thrThread,// 子组件线程(enter_thr : thread entertainment_thr)
 }
 
 impl Process for entertainmentProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let enter_thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
+        let mut enter_thr: entertainment_thrThread = entertainment_thrThread::new(cpu_id);
         let mut music_inSend = None;
         let mut contactsSend = None;
         let mut infosRece = None;
@@ -74,11 +76,11 @@ impl Process for entertainmentProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { music_in, music_inSend, contacts, contactsSend, infos, infosRece, music_out, music_outRece, enter_thr, cpu_id, .. } = self;
+        let Self { music_in, music_inSend, contacts, contactsSend, infos, infosRece, music_out, music_outRece, enter_thr, .. } = self;
         thread::Builder::new()
             .name("enter_thr".to_string())
             .spawn(move || { enter_thr.run() }).unwrap();
-        let mut contacts_rx = contacts.unwrap();
+        let contacts_rx = contacts.unwrap();
         thread::Builder::new()
             .name("data_forwarder_contacts".to_string())
             .spawn(move || {
@@ -91,7 +93,7 @@ impl Process for entertainmentProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut infosRece_rx = infosRece.unwrap();
+        let infosRece_rx = infosRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_infosRece".to_string())
             .spawn(move || {
@@ -104,7 +106,7 @@ impl Process for entertainmentProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut music_in_rx = music_in.unwrap();
+        let music_in_rx = music_in.unwrap();
         thread::Builder::new()
             .name("data_forwarder_music_in".to_string())
             .spawn(move || {
@@ -117,7 +119,7 @@ impl Process for entertainmentProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut music_outRece_rx = music_outRece.unwrap();
+        let music_outRece_rx = music_outRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_music_outRece".to_string())
             .spawn(move || {
@@ -151,13 +153,13 @@ impl Thread for entertainment_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 5.0, 
-            dispatch_protocol: "Periodic".to_string(), 
-            music_out: None, 
-            infos: None, 
-            period: 5, 
             contacts: None, 
+            period: 5, 
+            mipsbudget: 5.0, 
+            music_out: None, 
             music_in: None, 
+            infos: None, 
+            dispatch_protocol: "Periodic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -172,7 +174,6 @@ impl Thread for entertainment_thrThread {
         let mut next_release = Instant::now() + period;
         let mut infos_value: Base_Types::Integer_8 = 0;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -180,7 +181,10 @@ impl Thread for entertainment_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
                 // --- BA 宏步执行 ---
                 loop {
@@ -200,8 +204,7 @@ impl Thread for entertainment_thrThread {
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     

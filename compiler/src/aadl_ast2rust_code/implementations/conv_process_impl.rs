@@ -11,7 +11,8 @@ pub fn convert_process_implementation(
 
     // 1. 生成进程结构体
     let mut fields = get_process_fields(temp_converter, impl_); //这里是为了取得进程的子组件；生成内部端口也放在这里。
-                                                                // 添加 CPU ID 字段
+    
+    // 添加 CPU ID 字段
     fields.push(Field {
         name: "cpu_id".to_string(),
         ty: Type::Named("isize".to_string()),
@@ -82,12 +83,18 @@ fn get_process_fields(
                                         if let Type::Generic(channel_name, channel_args) =
                                             &inner_types[0]
                                         {
+
+                                            let mut send_type = "Sender".to_string();
+                                            // 从 Option<Receiver<T>> 转换为 Option<BcSender<T>>
+                                            if temp_converter.thread_broadcast_receive.contains_key(&(port.identifier.clone(),impl_.name.type_identifier.clone())){
+                                                send_type = "BcSender".to_string();
+                                            }
+
                                             if channel_name == "Receiver" {
-                                                // 从 Option<Receiver<T>> 转换为 Option<BcSender<T>>
                                                 Type::Generic(
                                                     "Option".to_string(),
                                                     vec![Type::Generic(
-                                                        "BcSender".to_string(),
+                                                        send_type.clone(),
                                                         channel_args.clone(),
                                                     )],
                                                 )
@@ -104,7 +111,7 @@ fn get_process_fields(
                                             Type::Generic(
                                                 "Option".to_string(),
                                                 vec![Type::Generic(
-                                                    "BcSender".to_string(),
+                                                    "Sender".to_string(),
                                                     vec![inner_types[0].clone()],
                                                 )],
                                             )
@@ -115,7 +122,7 @@ fn get_process_fields(
                                         Type::Generic(
                                             "Option".to_string(),
                                             vec![Type::Generic(
-                                                "BcSender".to_string(),
+                                                "Sender".to_string(),
                                                 vec![temp_converter
                                                     .convert_port_type(&port, "".to_string())],
                                             )],
@@ -269,11 +276,11 @@ fn get_process_fields(
 
             let doc = match sub.category {
                 ComponentCategory::Thread => {
-                    format!("// 子组件线程（{} : thread {}）", sub.identifier, type_name)
+                    format!("// 子组件线程({} : thread {})", sub.identifier, type_name)
                 }
                 ComponentCategory::Data => {
                     // 直接使用原始类型名
-                    format!("// 共享数据（{} : data {}）", sub.identifier, type_name)
+                    format!("// 共享数据({} : data {})", sub.identifier, type_name)
                 }
                 _ => format!("// Subcomponent: {}", sub.identifier),
             };
@@ -436,7 +443,7 @@ fn create_process_new_body(
                         args.extend(extra.clone());
                     }
                     thread_inits.push(Statement::Let(LetStmt {
-                        ifmut: false,
+                        ifmut: true,
                         name: format!("{}", var_name),
                         ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
                         init: Some(Expr::Call(
@@ -628,7 +635,7 @@ fn create_process_start_body(
     }
 
     // 1.3 添加cpu_id字段
-    destructure_fields.push("cpu_id".to_string());
+    // destructure_fields.push("cpu_id".to_string());
 
     // 创建解构语句：let Self { port1, port1Send, th_c, cpu_id, .. } = self;
     let destructure_stmt = Statement::Let(LetStmt {
@@ -676,7 +683,7 @@ fn create_process_start_body(
         // 创建接收端变量：let evenementRece_rx = evenementRece.unwrap();
         let rx_var_name = format!("{}_rx", src_field);
         stmts.push(Statement::Let(LetStmt {
-            ifmut: true,
+            ifmut: false,
             name: rx_var_name.clone(),
             ty: None,
             init: Some(Expr::MethodCall(

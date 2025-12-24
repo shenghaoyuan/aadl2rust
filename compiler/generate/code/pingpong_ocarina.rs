@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-20 17:35:45
+// 生成时间: 2025-12-24 15:14:30
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -39,8 +39,8 @@ pub struct aProcess {
 impl Process for aProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let pinger: pThread = pThread::new(cpu_id);
-        let ping_me: qThread = qThread::new(cpu_id);
+        let mut pinger: pThread = pThread::new(cpu_id);
+        let mut ping_me: qThread = qThread::new(cpu_id);
         let cnx = crossbeam_channel::unbounded();
         // build connection: 
             pinger.data_source = Some(cnx.0);
@@ -51,7 +51,7 @@ impl Process for aProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { pinger, ping_me, cpu_id, .. } = self;
+        let Self { pinger, ping_me, .. } = self;
         thread::Builder::new()
             .name("pinger".to_string())
             .spawn(move || { pinger.run() }).unwrap();
@@ -130,13 +130,13 @@ impl Thread for pThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 2, 
             dispatch_offset: 500, 
-            period: 2000, 
-            dispatch_protocol: "Periodic".to_string(), 
-            data_source: None, 
-            deadline: 2000, 
             recover_entrypoint_source_text: "recover".to_string(), 
+            data_source: None, 
+            period: 2000, 
+            priority: 2, 
+            dispatch_protocol: "Periodic".to_string(), 
+            deadline: 2000, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -193,10 +193,10 @@ impl Thread for qThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             priority: 1, 
-            deadline: 10, 
-            data_sink: None, 
-            dispatch_protocol: "Sporadic".to_string(), 
             period: 10, 
+            deadline: 10, 
+            dispatch_protocol: "Sporadic".to_string(), 
+            data_sink: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }

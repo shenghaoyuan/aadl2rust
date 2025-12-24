@@ -293,8 +293,8 @@ fn create_device_run_method(temp_converter: &AadlConverter, comp: &ComponentType
                             vec![Expr::Literal(Literal::Float(0.9))], // 90%概率为true
                         )
                     }
-                    "error_type" => Expr::Ident("please customize".to_string()),
-                    _ => Expr::Ident("please customize".to_string()), // 默认值
+                    "error_type" => Expr::Ident("// please customize".to_string()),
+                    _ => Expr::Ident("// please customize".to_string()), // 默认值
                 }
             }
             _ => Expr::Literal(Literal::Int(0)),

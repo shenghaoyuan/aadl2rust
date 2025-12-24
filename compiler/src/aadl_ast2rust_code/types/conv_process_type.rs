@@ -11,7 +11,8 @@ pub fn convert_process_component(
 
     // 1. 结构体定义
     let mut fields = temp_converter.convert_type_features(&comp.features, comp.identifier.clone()); //特征列表
-                                                                                                    // 添加 CPU ID 字段
+    
+    // 添加 CPU ID 字段
     fields.push(Field {
         name: "cpu_id".to_string(),
         ty: Type::Named("isize".to_string()),

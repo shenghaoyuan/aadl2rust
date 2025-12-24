@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_software_obstacle_detection
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -19,7 +22,6 @@ use libc::{
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
 use crate::aadlbook_icd::*;
-use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -37,16 +39,16 @@ pub struct obstacle_detectionProcess {
     pub radar: Option<Receiver<bool>>,// Port: radar In
     pub obstacle_position: Option<Sender<bool>>,// Port: obstacle_position Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub cameraSend: Option<BcSender<bool>>,// 内部端口: camera In
-    pub radarSend: Option<BcSender<bool>>,// 内部端口: radar In
+    pub cameraSend: Option<Sender<bool>>,// 内部端口: camera In
+    pub radarSend: Option<Sender<bool>>,// 内部端口: radar In
     pub obstacle_positionRece: Option<Receiver<bool>>,// 内部端口: obstacle_position Out
-    pub obst_thr: obstacle_detection_thrThread,// 子组件线程（obst_thr : thread obstacle_detection_thr）
+    pub obst_thr: obstacle_detection_thrThread,// 子组件线程(obst_thr : thread obstacle_detection_thr)
 }
 
 impl Process for obstacle_detectionProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let obst_thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
+        let mut obst_thr: obstacle_detection_thrThread = obstacle_detection_thrThread::new(cpu_id);
         let mut cameraSend = None;
         let mut radarSend = None;
         let mut obstacle_positionRece = None;
@@ -67,11 +69,11 @@ impl Process for obstacle_detectionProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { camera, cameraSend, radar, radarSend, obstacle_position, obstacle_positionRece, obst_thr, cpu_id, .. } = self;
+        let Self { camera, cameraSend, radar, radarSend, obstacle_position, obstacle_positionRece, obst_thr, .. } = self;
         thread::Builder::new()
             .name("obst_thr".to_string())
             .spawn(move || { obst_thr.run() }).unwrap();
-        let mut camera_rx = camera.unwrap();
+        let camera_rx = camera.unwrap();
         thread::Builder::new()
             .name("data_forwarder_camera".to_string())
             .spawn(move || {
@@ -84,7 +86,7 @@ impl Process for obstacle_detectionProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut obstacle_positionRece_rx = obstacle_positionRece.unwrap();
+        let obstacle_positionRece_rx = obstacle_positionRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_obstacle_positionRece".to_string())
             .spawn(move || {
@@ -97,7 +99,7 @@ impl Process for obstacle_detectionProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut radar_rx = radar.unwrap();
+        let radar_rx = radar.unwrap();
         thread::Builder::new()
             .name("data_forwarder_radar".to_string())
             .spawn(move || {
@@ -130,12 +132,12 @@ impl Thread for obstacle_detection_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 10.0, 
             obstacle_detected: None, 
-            radar: None, 
             dispatch_protocol: "Periodic".to_string(), 
-            camera: None, 
+            mipsbudget: 10.0, 
+            radar: None, 
             period: 100, 
+            camera: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -149,7 +151,6 @@ impl Thread for obstacle_detection_thrThread {
         let period: std::time::Duration = Duration::from_millis(2000);
         let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -159,10 +160,13 @@ impl Thread for obstacle_detection_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let radar = self.radar.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
-            let camera = self.camera.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let camera = self.camera.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+                let radar = self.radar.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -191,20 +195,14 @@ impl Thread for obstacle_detection_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s1 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            break;
-                        },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     

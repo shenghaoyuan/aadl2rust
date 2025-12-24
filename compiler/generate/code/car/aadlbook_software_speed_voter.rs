@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_software_speed_voter
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -19,7 +22,6 @@ use libc::{
 include!(concat!(env!("OUT_DIR"), "/aadl_c_bindings.rs"));
 
 use crate::aadlbook_icd::*;
-use crate::sei::*;
 // ---------------- cpu ----------------
 fn set_thread_affinity(cpu: isize) {
     unsafe {
@@ -37,16 +39,16 @@ pub struct speed_voterProcess {
     pub laser_sensor: Option<Receiver<u16>>,// Port: laser_sensor In
     pub speed: Option<BcSender<u16>>,// Port: speed Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub wheel_sensorSend: Option<BcSender<u16>>,// 内部端口: wheel_sensor In
-    pub laser_sensorSend: Option<BcSender<u16>>,// 内部端口: laser_sensor In
+    pub wheel_sensorSend: Option<Sender<u16>>,// 内部端口: wheel_sensor In
+    pub laser_sensorSend: Option<Sender<u16>>,// 内部端口: laser_sensor In
     pub speedRece: Option<Receiver<u16>>,// 内部端口: speed Out
-    pub speed_thr: speed_voter_thrThread,// 子组件线程（speed_thr : thread speed_voter_thr）
+    pub speed_thr: speed_voter_thrThread,// 子组件线程(speed_thr : thread speed_voter_thr)
 }
 
 impl Process for speed_voterProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let speed_thr: speed_voter_thrThread = speed_voter_thrThread::new(cpu_id);
+        let mut speed_thr: speed_voter_thrThread = speed_voter_thrThread::new(cpu_id);
         let mut wheel_sensorSend = None;
         let mut laser_sensorSend = None;
         let mut speedRece = None;
@@ -67,11 +69,11 @@ impl Process for speed_voterProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { wheel_sensor, wheel_sensorSend, laser_sensor, laser_sensorSend, speed, speedRece, speed_thr, cpu_id, .. } = self;
+        let Self { wheel_sensor, wheel_sensorSend, laser_sensor, laser_sensorSend, speed, speedRece, speed_thr, .. } = self;
         thread::Builder::new()
             .name("speed_thr".to_string())
             .spawn(move || { speed_thr.run() }).unwrap();
-        let mut laser_sensor_rx = laser_sensor.unwrap();
+        let laser_sensor_rx = laser_sensor.unwrap();
         thread::Builder::new()
             .name("data_forwarder_laser_sensor".to_string())
             .spawn(move || {
@@ -84,7 +86,7 @@ impl Process for speed_voterProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut speedRece_rx = speedRece.unwrap();
+        let speedRece_rx = speedRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_speedRece".to_string())
             .spawn(move || {
@@ -97,7 +99,7 @@ impl Process for speed_voterProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut wheel_sensor_rx = wheel_sensor.unwrap();
+        let wheel_sensor_rx = wheel_sensor.unwrap();
         thread::Builder::new()
             .name("data_forwarder_wheel_sensor".to_string())
             .spawn(move || {
@@ -130,12 +132,12 @@ impl Thread for speed_voter_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            mipsbudget: 8.0, 
-            wheel_sensor: None, 
-            speed: None, 
             dispatch_protocol: "Periodic".to_string(), 
             laser_sensor: None, 
+            wheel_sensor: None, 
             period: 8, 
+            speed: None, 
+            mipsbudget: 8.0, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -150,7 +152,6 @@ impl Thread for speed_voter_thrThread {
         let mut next_release = Instant::now() + period;
         let mut speed_value: u16 = 0;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -160,10 +161,13 @@ impl Thread for speed_voter_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let wheel_sensor = self.wheel_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
-            let laser_sensor = self.laser_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let laser_sensor = self.laser_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+                let wheel_sensor = self.wheel_sensor.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -180,20 +184,14 @@ impl Thread for speed_voter_thrThread {
                             state = State::s0;
                             // complete,需要停
                         },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            break;
-                        },
-                        State::s1 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     

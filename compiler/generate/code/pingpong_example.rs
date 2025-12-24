@@ -1,5 +1,5 @@
 // Auto-generated from AADL package: ping_local
-// 生成时间: 2025-12-20 15:14:48
+// 生成时间: 2025-12-24 11:54:18
 
 #![allow(unused_imports)]
 use crossbeam_channel::{Receiver, Sender};
@@ -39,8 +39,8 @@ pub struct pingpong_procProcess {
 impl Process for pingpong_procProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let ping_thr: ping_thrThread = ping_thrThread::new(cpu_id);
-        let pong_thr: pong_thrThread = pong_thrThread::new(cpu_id);
+        let mut ping_thr: ping_thrThread = ping_thrThread::new(cpu_id);
+        let mut pong_thr: pong_thrThread = pong_thrThread::new(cpu_id);
         let cnx = crossbeam_channel::unbounded();
         // build connection: 
             ping_thr.data_s = Some(cnx.0);
@@ -51,7 +51,7 @@ impl Process for pingpong_procProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { ping_thr, pong_thr, cpu_id, .. } = self;
+        let Self { ping_thr, pong_thr, .. } = self;
         thread::Builder::new()
             .name("ping_thr".to_string())
             .spawn(move || { ping_thr.run() }).unwrap();
@@ -71,7 +71,7 @@ pub struct pingpongsystemSystem {
 impl System for pingpongsystemSystem {
     // Creates a new system instance
     fn new() -> Self {
-        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(-1);
+        let mut pingpong_proc: pingpong_procProcess = pingpong_procProcess::new(0);
         return Self { pingpong_proc }  //显式return;
     }
     
@@ -125,11 +125,11 @@ impl Thread for ping_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            priority: 2, 
             data_s: None, 
             dispatch_protocol: "Periodic".to_string(), 
             period: 2000, 
             deadline: 2000, 
+            priority: 2, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -185,10 +185,10 @@ impl Thread for pong_thrThread {
     // 创建组件并初始化AADL属性
     fn new(cpu_id: isize) -> Self {
         return Self {
-            period: 10, 
-            data_r: None, 
             deadline: 10, 
+            data_r: None, 
             priority: 1, 
+            period: 10, 
             dispatch_protocol: "Sporadic".to_string(), 
             cpu_id: cpu_id, // CPU ID
         };
@@ -242,5 +242,14 @@ impl Thread for pong_thrThread {
         };
     }
     
+}
+
+// CPU ID到调度策略的映射
+lazy_static! {
+    static ref CPU_ID_TO_SCHED_POLICY: HashMap<isize, i32> = {
+        let mut map: HashMap<isize, i32> = HashMap::new();
+        map.insert(0, SCHED_FIFO);
+        return map;
+    };
 }
 

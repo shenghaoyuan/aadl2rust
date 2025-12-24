@@ -24,18 +24,18 @@ impl Default for AnnexConverter {
 
 impl AnnexConverter {
     /// 为线程实现生成Behavior Annex代码
-    pub fn generate_annex_code(&mut self, impl_: &ComponentImplementation) -> Option<Vec<Statement>> {
-        // 查找Behavior Annex
-        if let Some(behavior_annex) = self.find_behavior_annex(impl_) {
-            // 生成状态机代码
-            self.generate_state_machine_code(impl_, behavior_annex)
-        } else {
-            None
-        }
-    }
+    // pub fn generate_annex_code(&mut self, impl_: &ComponentImplementation) -> Option<Vec<Statement>> {
+    //     // 查找Behavior Annex
+    //     if let Some(behavior_annex) = self.find_behavior_annex(impl_) {
+    //         // 生成状态机代码
+    //         self.generate_state_machine_code(impl_, behavior_annex)
+    //     } else {
+    //         None
+    //     }
+    // }
 
     /// 查找Behavior Annex
-    fn find_behavior_annex<'a>(&self, impl_: &'a ComponentImplementation) -> Option<&'a BehaviorAnnexContent> {
+    pub fn find_behavior_annex<'a>(&self, impl_: &'a ComponentImplementation) -> Option<&'a BehaviorAnnexContent> {
         for annex in &impl_.annexes {
             if let AnnexContent::BehaviorAnnex(content) = &annex.content {
                 return Some(content);
@@ -44,10 +44,10 @@ impl AnnexConverter {
         None
     }
 
-    /// 生成状态机代码
-    fn generate_state_machine_code(&mut self, _: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Option<Vec<Statement>> {
+    // 封装调用generate_state_variables、generate_state_enum、generate_initial_state
+    pub fn generate_ba_variables_states(&mut self, _: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Vec<Statement> {
         let mut stmts = Vec::new();
-
+        
         // 1. 定义局部变量
         if let Some(state_vars) = &behavior_annex.state_variables {
             stmts.extend(self.generate_state_variables(state_vars));
@@ -63,14 +63,36 @@ impl AnnexConverter {
         if let Some(states) = &behavior_annex.states {
             stmts.extend(self.generate_initial_state(states));
         }
-
-        // 4. 生成状态机循环
-        if let Some(transitions) = &behavior_annex.transitions {
-            stmts.extend(self.generate_state_machine_loop(transitions));
-        }
-
-        Some(stmts)
+        stmts
     }
+
+    /// 生成状态机代码
+    // fn generate_state_machine_code(&mut self, _: &ComponentImplementation, behavior_annex: &BehaviorAnnexContent) -> Option<Vec<Statement>> {
+    //     let mut stmts = Vec::new();
+
+    //     // 1. 定义局部变量
+    //     if let Some(state_vars) = &behavior_annex.state_variables {
+    //         stmts.extend(self.generate_state_variables(state_vars));
+    //     }
+
+    //     // 2. 生成状态枚举并存储状态信息
+    //     if let Some(states) = &behavior_annex.states {
+    //         self.store_state_info(states);
+    //         stmts.extend(self.generate_state_enum(states));
+    //     }
+
+    //     // 3. 设置初始状态
+    //     if let Some(states) = &behavior_annex.states {
+    //         stmts.extend(self.generate_initial_state(states));
+    //     }
+
+    //     // 4. 生成状态机循环
+    //     if let Some(transitions) = &behavior_annex.transitions {
+    //         stmts.extend(self.generate_state_machine_loop(transitions));
+    //     }
+
+    //     Some(stmts)
+    // }
 
     /// 生成状态变量声明
     fn generate_state_variables(&self, state_vars: &[StateVariable]) -> Vec<Statement> {
@@ -119,7 +141,7 @@ impl AnnexConverter {
             name: "State".to_string(), // 使用通用名称
             variants,
             generics: Vec::new(),
-            derives: vec!["Debug".to_string(), "Clone".to_string()],
+            derives: vec![], // vec!["Debug".to_string(), "Clone".to_string()],
             docs: vec!["// Behavior Annex state machine states".to_string()],
             vis: Visibility::Private, // 在函数内部定义
         };
@@ -166,8 +188,8 @@ impl AnnexConverter {
     }
 
     /// 生成状态机循环
-    fn generate_state_machine_loop(&mut self,transitions: &[Transition]) -> Vec<Statement> {
-        let mut stmts = Vec::new();
+    pub fn generate_state_machine_loop(&mut self,transitions: &[Transition]) -> Vec<Statement> {
+        // let mut stmts = Vec::new();
 
         // 生成端口数据接收代码
         let port_receive_stmts = self.generate_port_receive_code(transitions);
@@ -176,64 +198,52 @@ impl AnnexConverter {
         let state_transition_stmts = self.generate_state_transition_logic(transitions);
 
         // 构建完整的循环
-        let mut loop_body = vec![
-            // 记录循环开始时间
-            Statement::Let(LetStmt {
-                ifmut: false,
-                name: "start".to_string(),
-                ty: None,
-                init: Some(Expr::Call(
-                    Box::new(Expr::Path(
-                        vec!["Instant".to_string(), "now".to_string()],
-                        PathType::Namespace,
-                    )),
-                    Vec::new(),
-                )),
-            }),
-        ];
+        let mut loop_body = vec![];
 
         // 直接将端口接收语句添加到循环体中，不包装在Block中
         loop_body.extend(port_receive_stmts);
         
         // 只有当状态转换语句不为空时才添加Block
         if !state_transition_stmts.is_empty() {
-            loop_body.push(Statement::Expr(Expr::Block(Block {
-                stmts: state_transition_stmts,
-                expr: None,
-            })));
+            // loop_body.push(Statement::Expr(Expr::Block(Block {
+            //     stmts: state_transition_stmts,
+            //     expr: None,
+            // })));
+            loop_body.extend(state_transition_stmts);
         }
 
         // 添加计算执行时间并睡眠的语句
-        loop_body.push(Statement::Let(LetStmt {
-            ifmut: false,
-            name: "elapsed".to_string(),
-            ty: None,
-            init: Some(Expr::MethodCall(
-                Box::new(Expr::Ident("start".to_string())),
-                "elapsed".to_string(),
-                Vec::new(),
-            )),
-        }));
+        // loop_body.push(Statement::Let(LetStmt {
+        //     ifmut: false,
+        //     name: "elapsed".to_string(),
+        //     ty: None,
+        //     init: Some(Expr::MethodCall(
+        //         Box::new(Expr::Ident("start".to_string())),
+        //         "elapsed".to_string(),
+        //         Vec::new(),
+        //     )),
+        // }));
         
-        loop_body.push(Statement::Expr(Expr::MethodCall(
-            Box::new(Expr::Path(
-                vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
-                PathType::Namespace,
-            )),
-            "".to_string(),
-            vec![Expr::MethodCall(
-                Box::new(Expr::Ident("period".to_string())),
-                "saturating_sub".to_string(),
-                vec![Expr::Ident("elapsed".to_string())],
-            )],
-        )));
+        // loop_body.push(Statement::Expr(Expr::MethodCall(
+        //     Box::new(Expr::Path(
+        //         vec!["std".to_string(), "thread".to_string(), "sleep".to_string()],
+        //         PathType::Namespace,
+        //     )),
+        //     "".to_string(),
+        //     vec![Expr::MethodCall(
+        //         Box::new(Expr::Ident("period".to_string())),
+        //         "saturating_sub".to_string(),
+        //         vec![Expr::Ident("elapsed".to_string())],
+        //     )],
+        // )));
 
-        stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
-            stmts: loop_body,
-            expr: None,
-        }))));
+        // 不用放在循环里
+        // stmts.push(Statement::Expr(Expr::Loop(Box::new(Block {
+        //     stmts: loop_body,
+        //     expr: None,
+        // }))));
 
-        stmts
+        loop_body
     }
 
     /// 生成端口接收代码
@@ -371,21 +381,37 @@ impl AnnexConverter {
             }
         }
 
-        // 为有条件判断的状态添加默认分支
-        for state_name in &self.states_with_conditions {
+        // 为有条件判断的状态state添加默认分支
+        // eg.State::s1 => break,
+        // 被 _ => break, 替代，这样就不需要针对某个状态单独构造了
+        // for state_name in &self.states_with_conditions {
+        //     let default_arm = MatchArm {
+        //         pattern: format!("State::{}", state_name),
+        //         guard: None,
+        //         body: Block {
+        //             stmts: vec![
+        //                 Statement::Comment(format!("理论上不会执行到这里，但编译器需要这个分支")),
+        //                 Statement::Expr(Expr::Ident("break".to_string())),
+        //             ],
+        //             expr: None,
+        //         },
+        //     };
+        //     match_arms.push(default_arm);
+        // }
+
+        // 添加分支 _ => break,
+        if !&self.states_with_conditions.is_empty() {
             let default_arm = MatchArm {
-                pattern: format!("State::{}", state_name),
+                pattern: "_".to_string(),
                 guard: None,
                 body: Block {
-                    stmts: vec![
-                        Statement::Comment(format!("理论上不会执行到这里，但编译器需要这个分支")),
-                        Statement::Expr(Expr::Ident("break".to_string())),
-                    ],
+                    stmts: vec![Statement::Expr(Expr::Ident("break".to_string()))],
                     expr: None,
                 },
             };
             match_arms.push(default_arm);
         }
+        
 
         // 构建match表达式
         let match_expr = Expr::Match {

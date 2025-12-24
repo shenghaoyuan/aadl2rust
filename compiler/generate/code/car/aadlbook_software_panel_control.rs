@@ -1,7 +1,10 @@
 // Auto-generated from AADL package: aadlbook_software_panel_control
-// 生成时间: 2025-12-20 18:11:10
+// 生成时间: 2025-12-24 18:40:24
 
 #![allow(unused_imports)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(unused_assignments)]
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::{Arc,Mutex};
 use std::thread;
@@ -39,19 +42,19 @@ pub struct panel_controlProcess {
     pub tire_pressure_in: Option<Receiver<i8>>,// Port: tire_pressure_in In
     pub tire_pressure_out: Option<Sender<i8>>,// Port: tire_pressure_out Out
     pub cpu_id: isize,// 进程 CPU ID
-    pub increase_speedSend: Option<BcSender<u16>>,// 内部端口: increase_speed In
-    pub decrease_speedSend: Option<BcSender<u16>>,// 内部端口: decrease_speed In
-    pub current_speedSend: Option<BcSender<u16>>,// 内部端口: current_speed In
+    pub increase_speedSend: Option<Sender<u16>>,// 内部端口: increase_speed In
+    pub decrease_speedSend: Option<Sender<u16>>,// 内部端口: decrease_speed In
+    pub current_speedSend: Option<Sender<u16>>,// 内部端口: current_speed In
     pub desired_speedRece: Option<Receiver<u16>>,// 内部端口: desired_speed Out
-    pub tire_pressure_inSend: Option<BcSender<i8>>,// 内部端口: tire_pressure_in In
+    pub tire_pressure_inSend: Option<Sender<i8>>,// 内部端口: tire_pressure_in In
     pub tire_pressure_outRece: Option<Receiver<i8>>,// 内部端口: tire_pressure_out Out
-    pub panel_thr: panel_control_thrThread,// 子组件线程（panel_thr : thread panel_control_thr）
+    pub panel_thr: panel_control_thrThread,// 子组件线程(panel_thr : thread panel_control_thr)
 }
 
 impl Process for panel_controlProcess {
     // Creates a new process instance
     fn new(cpu_id: isize) -> Self {
-        let panel_thr: panel_control_thrThread = panel_control_thrThread::new(cpu_id);
+        let mut panel_thr: panel_control_thrThread = panel_control_thrThread::new(cpu_id);
         let mut increase_speedSend = None;
         let mut decrease_speedSend = None;
         let mut current_speedSend = None;
@@ -87,11 +90,11 @@ impl Process for panel_controlProcess {
     
     // Starts all threads in the process
     fn run(self: Self) -> () {
-        let Self { increase_speed, increase_speedSend, decrease_speed, decrease_speedSend, current_speed, current_speedSend, desired_speed, desired_speedRece, tire_pressure_in, tire_pressure_inSend, tire_pressure_out, tire_pressure_outRece, panel_thr, cpu_id, .. } = self;
+        let Self { increase_speed, increase_speedSend, decrease_speed, decrease_speedSend, current_speed, current_speedSend, desired_speed, desired_speedRece, tire_pressure_in, tire_pressure_inSend, tire_pressure_out, tire_pressure_outRece, panel_thr, .. } = self;
         thread::Builder::new()
             .name("panel_thr".to_string())
             .spawn(move || { panel_thr.run() }).unwrap();
-        let mut current_speed_rx = current_speed.unwrap();
+        let current_speed_rx = current_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_current_speed".to_string())
             .spawn(move || {
@@ -104,7 +107,7 @@ impl Process for panel_controlProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut decrease_speed_rx = decrease_speed.unwrap();
+        let decrease_speed_rx = decrease_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_decrease_speed".to_string())
             .spawn(move || {
@@ -117,7 +120,7 @@ impl Process for panel_controlProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut desired_speedRece_rx = desired_speedRece.unwrap();
+        let desired_speedRece_rx = desired_speedRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_desired_speedRece".to_string())
             .spawn(move || {
@@ -130,7 +133,7 @@ impl Process for panel_controlProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut increase_speed_rx = increase_speed.unwrap();
+        let increase_speed_rx = increase_speed.unwrap();
         thread::Builder::new()
             .name("data_forwarder_increase_speed".to_string())
             .spawn(move || {
@@ -143,7 +146,7 @@ impl Process for panel_controlProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut tire_pressure_in_rx = tire_pressure_in.unwrap();
+        let tire_pressure_in_rx = tire_pressure_in.unwrap();
         thread::Builder::new()
             .name("data_forwarder_tire_pressure_in".to_string())
             .spawn(move || {
@@ -156,7 +159,7 @@ impl Process for panel_controlProcess {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             };
         }).unwrap();
-        let mut tire_pressure_outRece_rx = tire_pressure_outRece.unwrap();
+        let tire_pressure_outRece_rx = tire_pressure_outRece.unwrap();
         thread::Builder::new()
             .name("data_forwarder_tire_pressure_outRece".to_string())
             .spawn(move || {
@@ -190,11 +193,11 @@ impl Thread for panel_control_thrThread {
     fn new(cpu_id: isize) -> Self {
         return Self {
             current_speed: None, 
-            tire_pressure_out: None, 
             desired_speed: None, 
             increase_speed: None, 
-            decrease_speed: None, 
             tire_pressure_in: None, 
+            tire_pressure_out: None, 
+            decrease_speed: None, 
             cpu_id: cpu_id, // CPU ID
         };
     }
@@ -208,7 +211,6 @@ impl Thread for panel_control_thrThread {
         let period: std::time::Duration = Duration::from_millis(2000);
         let mut next_release = Instant::now() + period;
         // Behavior Annex state machine states
-        #[derive(Debug, Clone)]
         enum State {
             // State: s0
             s0,
@@ -220,10 +222,13 @@ impl Thread for panel_control_thrThread {
         
         let mut state: State = State::s0;
         loop {
-            let start = Instant::now();
-            let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
-            let tire_pressure_in = self.tire_pressure_in.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+            let now = Instant::now();
+            if now < next_release {
+                std::thread::sleep(next_release - now);
+            };
             {
+                let current_speed = self.current_speed.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
+                let tire_pressure_in = self.tire_pressure_in.as_mut().and_then(|rx| { rx.try_recv().ok() }).unwrap_or_else(|| { Default::default() });
                 // --- BA 宏步执行 ---
                 loop {
                     match state {
@@ -245,20 +250,14 @@ impl Thread for panel_control_thrThread {
                             state = State::s0;
                             // complete，停
                         },
-                        State::s1 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
-                            break;
-                        },
-                        State::s0 => {
-                            // 理论上不会执行到这里，但编译器需要这个分支
+                        _ => {
                             break;
                         },
                     };
                     break;
                 };
             };
-            let elapsed = start.elapsed();
-            std::thread::sleep(period.saturating_sub(elapsed));
+            next_release += period;
         };
     }
     

@@ -29,6 +29,9 @@ impl RustCodeGenerator {
         ));
         self.writeln("");
         self.writeln("#![allow(unused_imports)]");
+        self.writeln("#![allow(non_camel_case_types)]");
+        self.writeln("#![allow(non_snake_case)]");
+        self.writeln("#![allow(unused_assignments)]");
         self.writeln("use crossbeam_channel::{Receiver, Sender};");
         self.writeln("use std::sync::{Arc,Mutex};");
         self.writeln("use std::thread;");
