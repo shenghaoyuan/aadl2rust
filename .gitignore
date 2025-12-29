@@ -17,5 +17,8 @@ Cargo.lock
 # Node modules
 node_modules/
 
+compiler/generate_test/
+compiler/generate/
+
 *.zip
 *.7z
