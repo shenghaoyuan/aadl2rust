@@ -4,7 +4,7 @@ mod ast;
 pub mod printmessage;
 pub mod transform;
 pub mod transform_annex;
-//mod output_ocarina;
+pub mod model_statistics;
 
 use aadl_ast2rust_code::intermediate_print::*;
 use aadl_ast2rust_code::merge_utils::*;
@@ -12,6 +12,7 @@ use aadlight_parser::AADLParser;
 use pest::Parser;
 use pest::error::ErrorVariant;
 use crate::printmessage::*;
+use model_statistics::*;
 use std::fs;
 use std::io::{self, Write};
 
@@ -197,9 +198,15 @@ fn process_test_case(test_case: &TestCase) {
             println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count());
             
             // 将解析结果写入文件
-            let pairs_debug_path = format!("generate/temp/{}_pairs_debug.txt", test_case.output_name);
+            let pairs_debug_path = format!("generate/temp/{}_pairs_debug.txt", test_case.output_name.clone());
             fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
             println!("解析结果已保存到: {}", pairs_debug_path);
+
+            // 模型规模统计
+            ModelStatistics::from_pairs(pairs.clone(), test_case.output_name.clone())
+                .unwrap_or_else(|e| {
+                    eprintln!("写入模型统计文件失败: {}", e);
+                });
 
             // 转换到AST
             let ast: Vec<ast::aadl_ast_cj::Package> =
@@ -208,7 +215,7 @@ fn process_test_case(test_case: &TestCase) {
 
             // 打印AST
             println!("\n================================== AST ==================================");
-            print_ast(&ast);
+            // print_ast(&ast);
 
             println!("\n==================================== 生成Rust代码 ===================================");
             let mut converter = AadlConverter::default();

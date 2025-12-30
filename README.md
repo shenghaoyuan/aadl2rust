@@ -28,9 +28,9 @@ we have tested on
 
 **intermediate_print.rs**打印rust代码(存储在/generate/)。
 
-## model_eval
+**model_statistics.rs**使用pest解析的结果，统计AADL模型中各类型组件的数量，每次执行代码生成时被调用。结果在\generate\statistics\目录下。
 
-简单的AADL模型自动评估工具，统计结构规模和行为复杂度。
+
 
 ## test
 
