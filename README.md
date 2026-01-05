@@ -14,6 +14,11 @@ we have tested on
 # run `rustup component add llvm-tools-preview --toolchain nightly-x86_64-unknown-linux-gnu` to install the `llvm-tools-preview`
 ```
 
+Some additional packages are required:
+```shell
+sudo apt install -y jq
+```
+
 ## compiler
 
 **aadl.pest**解析aadl源文件（/AADLSource/*.aadl案例）。
