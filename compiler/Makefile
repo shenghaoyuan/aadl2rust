@@ -36,3 +36,28 @@ cov:
 .PHONY: cov-clean
 cov-clean:
 	$(CARGO) llvm-cov clean
+
+.PHONY: code
+code:
+	@echo "===== Code Line Statistics (cloc, code-only) ====="
+	@echo "[AST declaration]         $$(cloc src/ast.rs src/aadl_ast2rust_code/intermediate_ast.rs --json | jq '.SUM.code')"
+	@echo "[Parsing]                 $$(cloc src/aadl.pest src/transform.rs src/transform_annex.rs --json | jq '.SUM.code')"
+	@echo "[Model-to-IR translation] $$(cloc \
+		src/aadl_ast2rust_code/converter.rs \
+		src/aadl_ast2rust_code/converter_annex.rs \
+		src/aadl_ast2rust_code/implementations \
+		src/aadl_ast2rust_code/types \
+		--json | jq '.SUM.code')"
+	@echo "[Rust code printer]       $$(cloc src/aadl_ast2rust_code/intermediate_print.rs --json | jq '.SUM.code')"
+	@echo "-----------------------------------------------"
+	@echo "[Total]                   $$(( \
+		$$(cloc src/ast.rs --json | jq '.SUM.code') + \
+		$$(cloc src/aadl.pest src/transform.rs src/transform_annex.rs --json | jq '.SUM.code') + \
+		$$(cloc \
+			src/aadl_ast2rust_code/converter.rs \
+			src/aadl_ast2rust_code/converter_annex.rs \
+			src/aadl_ast2rust_code/implementations \
+			src/aadl_ast2rust_code/types \
+			--json | jq '.SUM.code') + \
+		$$(cloc src/aadl_ast2rust_code/intermediate_print.rs --json | jq '.SUM.code') \
+	))"
