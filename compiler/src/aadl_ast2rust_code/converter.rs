@@ -411,6 +411,9 @@ impl AadlConverter {
     }
 
     pub fn classifier_to_type(&self, classifier: &PortDataTypeReference) -> Type {
+        
+        //println!("classifier: {:?}", classifier);
+        //println!("-------------------------------");
         match classifier {
             PortDataTypeReference::Classifier(UniqueComponentClassifierReference::Type(
                 ref type_ref,
@@ -420,10 +423,12 @@ impl AadlConverter {
                     .get(&type_ref.implementation_name.type_identifier.to_lowercase())
                     .cloned()
                     .unwrap_or_else(|| {
+                        //println!("Using named type for: {}", type_ref.implementation_name.type_identifier);
                         Type::Named(type_ref.implementation_name.type_identifier.clone())
                     })
             }
-            _ => Type::Named("()".to_string()),
+            _ => {  println!("Unsupported classifier type: {:?}", classifier);
+                Type::Named("()".to_string())}
         }
     }
 
@@ -807,7 +812,7 @@ impl AadlConverter {
                         // 默认类型处理，可以根据需要调整
                         match port.direction {
                             PortDirection::Out => Type::Named("i32".to_string()),
-                            _ => Type::Named("()".to_string()),
+                            _ => Type::Named("(error)".to_string()),
                         }
                     })
             }

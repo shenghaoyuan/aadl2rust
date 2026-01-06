@@ -19,9 +19,10 @@ pub fn convert_data_component(
                 let struct_def = determine_struct_type(type_mappings, comp, props, data_comp_type);
 
                 // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
-                if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
-                    type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
-                }
+                // !不添加，因为"struct"没有用，需要用别名。
+                // if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
+                //     type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
+                // }
 
                 if struct_def.fields.is_empty() {
                     //说明是通过impl中子组件来获取字段的，而不是在此时type中
@@ -76,9 +77,9 @@ pub fn convert_data_component(
                     determine_taggedunion_type(type_mappings, comp, props, data_comp_type);
 
                 // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
-                if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
-                    type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
-                }
+                // if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
+                //     type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
+                // }
 
                 if taggedunion_def.variants.is_empty() {
                     //说明是通过impl中子组件来获取字段的，而不是在此时type中

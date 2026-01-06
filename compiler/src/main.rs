@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 mod aadl_ast2rust_code;
 pub mod aadlight_parser;
 mod ast;
@@ -14,6 +16,7 @@ use pest::error::ErrorVariant;
 use crate::printmessage::*;
 use model_statistics::*;
 use std::fs;
+use std::path::Path;
 use std::io::{self, Write};
 
 
@@ -131,7 +134,49 @@ fn main() {
             name: "drone".to_string(),
             path:"AADLSource/drone.aadl".to_string(),
             output_name:"drone".to_string(),
-        }
+        },
+        TestCase{
+            id:18,
+            name: "cpp".to_string(),
+            path:"AADLSource/cpp".to_string(),
+            output_name:"cpp".to_string(),
+        },
+        TestCase{
+            id:19,
+            name: "producer-consumer".to_string(),
+            path:"AADLSource/producer-consumer".to_string(),
+            output_name:"producer_consumer".to_string(),
+        },
+        TestCase{
+            id:20,
+            name: "some-types".to_string(),
+            path: "AADLSource/some-types".to_string(),
+            output_name: "some-types".to_string(),
+        },
+        TestCase{
+            id:21,
+            name: "some-types-stdint".to_string(),
+            path: "AADLSource/some-types-stdint".to_string(),
+            output_name: "some-types-stdint".to_string(),
+        },
+        TestCase{
+            id:22,
+            name: "sunseeker".to_string(),
+            path: "AADLSource/sunseeker".to_string(),
+            output_name: "sunseeker".to_string(),
+        },
+        TestCase{
+            id:23,
+            name: "flight-mgmt".to_string(),
+            path: "AADLSource/flight-mgmt".to_string(),
+            output_name: "flight-mgmt".to_string(),
+        },
+        TestCase{
+            id:24,
+            name: "monitor".to_string(),
+            path: "AADLSource/monitor".to_string(),
+            output_name: "monitor".to_string(),
+        },
     ];
 
     // 显示可用的测试用例
@@ -185,7 +230,7 @@ fn main() {
 fn process_test_case(test_case: &TestCase) {
     println!("开始处理: {}", test_case.name);
     
-    let aadl_input = match fs::read_to_string(&test_case.path) {
+    let aadl_input = match read_aadl_inputs(&test_case.path) {
         Ok(content) => content,
         Err(err) => {
             eprintln!("读取文件失败: {}", err);
@@ -247,6 +292,53 @@ fn process_test_case(test_case: &TestCase) {
             eprintln!("解析失败，无法继续处理");
         }
     }
+}
+
+// 读取文件/文件夹
+fn read_aadl_inputs(path: &str) -> Result<String, std::io::Error> {
+    let path = Path::new(path);
+
+    if path.is_file() {
+        // 原有行为：单文件
+        return fs::read_to_string(path);
+    }
+
+    if path.is_dir() {
+        let mut merged = String::new();
+
+        let mut entries: Vec<_> = fs::read_dir(path)?
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .filter(|p| p.extension().map(|e| e == "aadl").unwrap_or(false))
+            .collect();
+
+        // 排序，保证确定性
+        entries.sort();
+
+        for file in entries {
+            let content = fs::read_to_string(&file)?;
+
+            // —— 合并边界处理 ——
+            merged.push_str("\n\n");
+            merged.push_str("-- ================================\n");
+            merged.push_str(&format!(
+                "-- merged from file: {}\n",
+                file.display()
+            ));
+            merged.push_str("-- ================================\n");
+            merged.push_str("\n");
+
+            merged.push_str(&content);
+            merged.push_str("\n");
+        }
+
+        return Ok(merged);
+    }
+
+    Err(std::io::Error::new(
+        std::io::ErrorKind::InvalidInput,
+        "path is neither file nor directory",
+    ))
 }
 
 pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase,number_of_packages: usize,converter: &mut AadlConverter) -> () {

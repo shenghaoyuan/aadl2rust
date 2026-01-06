@@ -75,7 +75,9 @@ fn generate_c_function_wrapper(
                     };
 
                     // 收集需要导入的类型
+                    //println!("port: {:?}", port);
                     if let Type::Named(type_name) = &temp_converter.convert_paramport_type(port) {
+                        //println!("type_name: {}", type_name);
                         if !is_rust_primitive_type(type_name) {
                             types_to_import.insert(type_name.clone());
                         }
@@ -222,7 +224,10 @@ fn generate_c_function_wrapper(
 
         // 构建use语句
         let mut imports = vec![c_func_name.to_string()];
-        imports.extend(types_to_import.into_iter());
+        //println!("types_to_import: {:?}", types_to_import);
+        if !types_to_import.is_empty() {
+            imports.extend(types_to_import.into_iter());
+        }
 
         let use_stmt = Item::Use(UseStatement {
             path: vec!["super".to_string()],

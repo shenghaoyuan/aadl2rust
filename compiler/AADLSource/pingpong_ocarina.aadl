@@ -115,6 +115,7 @@ properties
   Deadline                           => 2000 ms;
   Priority                           => 2;
   Dispatch_Offset                    => 500 Ms;
+  Compute_Entrypoint_Call_Sequence       => P_Spg;
 end P.Impl;
 
 thread Q
