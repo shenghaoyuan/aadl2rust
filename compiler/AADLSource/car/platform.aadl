@@ -1,0 +1,12 @@
+package aadlbook::platform
+
+public
+
+--with SEI;
+
+processor ecu
+-- properties
+-- 	SEI::MIPSCapacity => 50.0 MIPS; 
+end ecu;
+
+end aadlbook::platform;

@@ -1,0 +1,57 @@
+package aadlbook::software::entertainment
+
+public
+
+with aadlbook::icd; 
+--with sei;
+
+--------------------------------
+--  The entertainment system  --
+--------------------------------
+
+process entertainment
+features
+	music_in  : in data port aadlbook::icd::music;
+	contacts  : in data port aadlbook::icd::contacts;
+	infos     : out data port aadlbook::icd::entertainment_infos;
+	music_out : out data port aadlbook::icd::music;
+end entertainment;
+
+
+process implementation entertainment.i
+subcomponents
+   enter_thr : thread entertainment_thr.i;
+connections
+  c0 : port music_in -> enter_thr.music_in;
+  c1 : port contacts -> enter_thr.contacts;
+  c2 : port enter_thr.infos -> infos;
+  c3 : port enter_thr.music_out -> music_out;
+end entertainment.i;
+
+thread entertainment_thr
+features
+	music_in  : in data port aadlbook::icd::music;
+	contacts  : in data port aadlbook::icd::contacts;
+	infos     : out data port aadlbook::icd::entertainment_infos;
+	music_out : out data port aadlbook::icd::music;
+properties
+	Dispatch_Protocol => Periodic;
+	Period            => 5 ms;
+	--sei::mipsbudget   => 5.0 MIPS;
+end entertainment_thr;
+
+thread implementation entertainment_thr.i
+annex Behavior_specification {**
+	variables
+	 infos_value : Base_Types::Integer_8 := 0;
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[on dispatch]-> s0 {
+		infos := 16;
+		music_out!(false)
+	 };
+	**};
+end entertainment_thr.i;
+
+end aadlbook::software::entertainment;

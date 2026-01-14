@@ -3,34 +3,60 @@
 mod aadl_ast2rust_code;
 pub mod aadlight_parser;
 mod ast;
-pub mod printmessage;
+pub mod model_statistics;
+// pub mod printmessage;
 pub mod transform;
 pub mod transform_annex;
-pub mod model_statistics;
+// pub mod build_project_tool;
 
+use compiler::printmessage::*;
 use aadl_ast2rust_code::intermediate_print::*;
 use aadl_ast2rust_code::merge_utils::*;
 use aadlight_parser::AADLParser;
-use pest::Parser;
+use clap::Parser as ClapParser;
+use crate::model_statistics::*;
 use pest::error::ErrorVariant;
-use crate::printmessage::*;
-use model_statistics::*;
+use pest::Parser;
 use std::fs;
-use std::path::Path;
 use std::io::{self, Write};
-
+use std::path::Path;
 
 use crate::{aadl_ast2rust_code::converter::AadlConverter, ast::aadl_ast_cj::Package};
+use compiler::build_project_tool::*;
 
-// 定义测试用例结构
-pub struct TestCase {
-    pub id: u32,
-    pub name: String,
-    pub path: String,
-    pub output_name: String,
+#[derive(ClapParser)]
+struct Args {
+    #[arg(short, long)]
+    input: Option<String>,
 }
 
 fn main() {
+    // ================= CLI 模式：--input <folder> =================
+    let args = Args::parse();
+
+    if let Some(input_name) = args.input.as_deref() {
+        // 用命令行输入的文件夹名，直接构造一个 TestCase
+        let test_case = TestCase {
+            id: 0, // CLI 模式下 id 无意义
+            name: format!("CLI input ({})", input_name),
+            path: format!("AADLSource/{}", input_name),
+            output_name: input_name.to_string(),
+        };
+
+        println!("CLI mode");
+        println!("输入路径: {}", test_case.path);
+        println!("输出名称: {}", test_case.output_name);
+
+        // 确保 generate 目录存在
+        if !fs::metadata("generate").is_ok() {
+            fs::create_dir("generate").expect("无法创建 generate 目录");
+        }
+
+        process_test_case(&test_case);
+        return; // 不进入下面的交互逻辑
+    }
+
+    // ================= 交互式菜单模式 =================
     // 定义可用的测试用例
     let test_cases = vec![
         TestCase {
@@ -95,9 +121,9 @@ fn main() {
         },
         TestCase {
             id: 11,
-            name: "car".to_string(),
-            path: "AADLSource/car.aadl".to_string(),
-            output_name: "car".to_string(),
+            name: "car_all".to_string(),
+            path: "AADLSource/car_all.aadl".to_string(),
+            output_name: "car_all".to_string(),
         },
         TestCase {
             id: 12,
@@ -111,68 +137,68 @@ fn main() {
             path: "AADLSource/pingpong_2trigger.aadl".to_string(),
             output_name: "pingpong_2trigger".to_string(),
         },
-        TestCase{
-            id:14,
+        TestCase {
+            id: 14,
             name: "pingpong_example".to_string(),
-            path:"AADLSource/pingpong_example.aadl".to_string(),
-            output_name:"pingpong_example".to_string(),
+            path: "AADLSource/pingpong_example.aadl".to_string(),
+            output_name: "pingpong_example".to_string(),
         },
-        TestCase{
-            id:15,
+        TestCase {
+            id: 15,
             name: "car_device".to_string(),
-            path:"AADLSource/car_device.aadl".to_string(),
-            output_name:"car_device".to_string(),
+            path: "AADLSource/car_device.aadl".to_string(),
+            output_name: "car_device".to_string(),
         },
-        TestCase{
-            id:16,
+        TestCase {
+            id: 16,
             name: "composite_test".to_string(),
-            path:"AADLSource/composite_test.aadl".to_string(),
-            output_name:"composite_test".to_string(),
+            path: "AADLSource/composite_test.aadl".to_string(),
+            output_name: "composite_test".to_string(),
         },
-        TestCase{
-            id:17,
+        TestCase {
+            id: 17,
             name: "drone".to_string(),
-            path:"AADLSource/drone.aadl".to_string(),
-            output_name:"drone".to_string(),
+            path: "AADLSource/drone.aadl".to_string(),
+            output_name: "drone".to_string(),
         },
-        TestCase{
-            id:18,
+        TestCase {
+            id: 18,
             name: "cpp".to_string(),
-            path:"AADLSource/cpp".to_string(),
-            output_name:"cpp".to_string(),
+            path: "AADLSource/cpp".to_string(),
+            output_name: "cpp".to_string(),
         },
-        TestCase{
-            id:19,
+        TestCase {
+            id: 19,
             name: "producer-consumer".to_string(),
-            path:"AADLSource/producer-consumer".to_string(),
-            output_name:"producer_consumer".to_string(),
+            path: "AADLSource/producer-consumer".to_string(),
+            output_name: "producer_consumer".to_string(),
         },
-        TestCase{
-            id:20,
+        TestCase {
+            id: 20,
             name: "some-types".to_string(),
             path: "AADLSource/some-types".to_string(),
             output_name: "some-types".to_string(),
         },
-        TestCase{
-            id:21,
+        TestCase {
+            id: 21,
             name: "some-types-stdint".to_string(),
             path: "AADLSource/some-types-stdint".to_string(),
             output_name: "some-types-stdint".to_string(),
         },
-        TestCase{
-            id:22,
+        TestCase {
+            id: 22,
             name: "sunseeker".to_string(),
             path: "AADLSource/sunseeker".to_string(),
             output_name: "sunseeker".to_string(),
         },
-        TestCase{
-            id:23,
+        TestCase {
+            id: 23,
             name: "flight-mgmt".to_string(),
             path: "AADLSource/flight-mgmt".to_string(),
             output_name: "flight-mgmt".to_string(),
         },
-        TestCase{
-            id:24,
+        TestCase {
+            id: 24,
             name: "monitor".to_string(),
             path: "AADLSource/monitor".to_string(),
             output_name: "monitor".to_string(),
@@ -192,7 +218,7 @@ fn main() {
     // 读取用户输入
     let mut input = String::new();
     io::stdin().read_line(&mut input).expect("无法读取输入");
-    
+
     let choice: u32 = match input.trim().parse() {
         Ok(num) => num,
         Err(_) => {
@@ -212,12 +238,12 @@ fn main() {
         Some(test_case) => {
             println!("选择: {}", test_case.name);
             println!("文件路径: {}", test_case.path);
-            
+
             // 确保generate目录存在
             if !fs::metadata("generate").is_ok() {
                 fs::create_dir("generate").expect("无法创建generate目录");
             }
-            
+
             // 处理选中的测试用例
             process_test_case(test_case);
         }
@@ -229,7 +255,7 @@ fn main() {
 
 fn process_test_case(test_case: &TestCase) {
     println!("开始处理: {}", test_case.name);
-    
+
     let aadl_input = match read_aadl_inputs(&test_case.path) {
         Ok(content) => content,
         Err(err) => {
@@ -237,13 +263,26 @@ fn process_test_case(test_case: &TestCase) {
             return;
         }
     };
-    
+
     match AADLParser::parse(aadlight_parser::Rule::file, &aadl_input) {
         Ok(pairs) => {
             println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count());
-            
+
+            // 确保generate/temp目录存在
+            if !fs::metadata("generate/temp").is_ok() {
+                fs::create_dir("generate/temp").expect("无法创建generate/temp目录");
+            }
+
+            // 确保generate/project目录存在
+            if !fs::metadata("generate/project").is_ok() {
+                fs::create_dir("generate/project").expect("无法创建generate/project目录");
+            }
+
             // 将解析结果写入文件
-            let pairs_debug_path = format!("generate/temp/{}_pairs_debug.txt", test_case.output_name.clone());
+            let pairs_debug_path = format!(
+                "generate/temp/{}_pairs_debug.txt",
+                test_case.output_name.clone()
+            );
             fs::write(&pairs_debug_path, format!("{:#?}", pairs)).unwrap();
             println!("解析结果已保存到: {}", pairs_debug_path);
 
@@ -259,28 +298,34 @@ fn process_test_case(test_case: &TestCase) {
             println!("=== 转换得到 {} 个package ===", ast.len());
 
             // 打印AST
-            println!("\n================================== AST ==================================");
+            // println!("\n================================== AST ==================================");
             // print_ast(&ast);
 
             println!("\n==================================== 生成Rust代码 ===================================");
             let mut converter = AadlConverter::default();
             for (_index, package) in ast.iter().enumerate() {
-                generate_rust_code_for_test_case(package, test_case,ast.len(),&mut converter);
+                generate_rust_code_for_test_case(package, test_case, ast.len(), &mut converter);
             }
-            
-            println!("✅ 代码生成完成！输出文件保存在 generate/ 目录下");
+
+            // 生成项目所需的 Cargo.toml, build.rs 等文件
+            assemble_rust_project(test_case);
+
+            // println!("✅ 代码生成完成！输出文件保存在 generate/ 目录下");
         }
         Err(e) => {
             eprintln!("解析失败: {}", e);
             // 打印详细的错误信息
             eprintln!("解析错误: {:?}", e);
-            
-                        // 显示错误位置和上下文
+
+            // 显示错误位置和上下文
             eprintln!("错误位置: {:?}", e.location);
-            
-            
+
             // 显示期望的规则
-            if let ErrorVariant::ParsingError { positives, negatives } = e.variant {
+            if let ErrorVariant::ParsingError {
+                positives,
+                negatives,
+            } = e.variant
+            {
                 if !positives.is_empty() {
                     eprintln!("期望匹配的规则: {:?}", positives);
                 }
@@ -288,7 +333,7 @@ fn process_test_case(test_case: &TestCase) {
                     eprintln!("不应该匹配的规则: {:?}", negatives);
                 }
             }
-            
+
             eprintln!("解析失败，无法继续处理");
         }
     }
@@ -321,10 +366,7 @@ fn read_aadl_inputs(path: &str) -> Result<String, std::io::Error> {
             // —— 合并边界处理 ——
             merged.push_str("\n\n");
             merged.push_str("-- ================================\n");
-            merged.push_str(&format!(
-                "-- merged from file: {}\n",
-                file.display()
-            ));
+            merged.push_str(&format!("-- merged from file: {}\n", file.display()));
             merged.push_str("-- ================================\n");
             merged.push_str("\n");
 
@@ -341,20 +383,25 @@ fn read_aadl_inputs(path: &str) -> Result<String, std::io::Error> {
     ))
 }
 
-pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase,number_of_packages: usize,converter: &mut AadlConverter) -> () {
+pub fn generate_rust_code_for_test_case(
+    aadl_pkg: &Package,
+    test_case: &TestCase,
+    _number_of_packages: usize,
+    converter: &mut AadlConverter,
+) -> () {
     // 第一级转换：语义转换
     //let mut converter = AadlConverter::default();
 
     let rust_module = converter.convert_package(&aadl_pkg);
     //println!("\n==================================== rust_module ===================================");
-    
+
     // 保存中间AST到文件
     let ast_debug_path = format!("generate/temp/{}_ast_debug.txt", test_case.output_name);
     fs::write(&ast_debug_path, format!("{:#?}", rust_module)).unwrap();
     //println!("中间AST已保存到: {}", ast_debug_path);
-    
+
     let merge_rust_module = merge_item_defs(rust_module);
-    
+
     let merged_ast_path = format!("generate/temp/{}_merged_ast.txt", test_case.output_name);
     fs::write(&merged_ast_path, format!("{:#?}", merge_rust_module)).unwrap();
     //println!("合并后AST已保存到: {}", merged_ast_path);
@@ -364,23 +411,18 @@ pub fn generate_rust_code_for_test_case(aadl_pkg: &Package, test_case: &TestCase
 
     // 根据包数量决定输出路径
     let package_name = aadl_pkg.name.to_string().replace("::", "_");
-    let output_path = if number_of_packages == 1 {
-        // 如果只有一个包，直接生成文件，文件名是test_case
-        format!("generate/code/{}.rs", test_case.output_name)
-    } else {
-        // 如果有多个包，使用文件夹结构
-        let output_dir = format!("generate/code/{}", test_case.output_name);
-        fs::create_dir_all(&output_dir).expect("Failed to create output directory");
-        format!("{}/{}.rs", output_dir, package_name)
-    };
-    
+    // let output_path = if number_of_packages == 1 {
+    //     // 如果只有一个包，直接生成文件，文件名是test_case
+    //     format!("generate/code/{}.rs", test_case.output_name)
+    // } else {
+    // 使用文件夹结构
+    let output_dir = format!("generate/project/{}/src", test_case.output_name);
+    fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+    let output_path = format!("{}/{}.rs", output_dir, package_name);
+    // };
+
     fs::write(&output_path, rust_code).expect("Failed to write Rust code");
     println!("Rust代码已生成 (包: {}): {}", package_name, output_path);
 
-    // 可选：生成build.rs
-    // let build_rs_content = generate_build_rs(&merge_rust_module);
-    // let build_rs_path = format!("generate/build_{}.rs", test_case.output_name);
-    // fs::write(&build_rs_path, build_rs_content).expect("Failed to write build.rs");
-    // println!("Build.rs已生成: {}", build_rs_path);
 }
 

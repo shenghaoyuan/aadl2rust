@@ -1,0 +1,138 @@
+package PING_Local
+    
+public
+  --with Deployment;
+  with Base_Types;
+
+  ---------------
+  -- Processor --
+  ---------------
+
+  processor CPU
+  -- properties
+  --   Deployment_Properties::Execution_Platform => native;
+  end CPU;
+
+  processor implementation CPU.Impl
+  properties
+    Scheduling_Protocol => (Posix_1003_Highest_Priority_First_Protocol);
+    Priority_Range => 0 .. 99;
+  end CPU.Impl;
+
+  ---------------
+  -- Processes --
+  ---------------
+
+  process pingpong_proc
+  end pingpong_proc;
+
+  process implementation pingpong_proc.Impl
+  subcomponents
+    ping_thr        : thread ping_thr.Impl;
+    pong_thr       : thread pong_thr.Impl;
+  connections
+    cnx : port ping_thr.data_s -> pong_thr.data_r;
+  end pingpong_proc.Impl;
+
+  ------------
+  -- System --
+  ------------
+
+  system PingPongSystem
+  end PingPongSystem;
+
+  system implementation PingPongSystem.Impl
+  subcomponents
+    pingpong_proc : process pingpong_proc.Impl;
+    CPU : processor CPU.Impl;
+
+  properties
+     Actual_processor_binding => reference (CPU) applies to pingpong_proc;
+  end PingPongSystem.Impl;
+
+
+
+--  This AADL model illustrates how to model a simple interaction
+--  between tasks, in a local or distributed environment.
+--
+--  One task pings another, sending a data periodically.
+--
+
+----------
+-- Data --
+----------
+
+-- data Simple_Type
+-- properties
+--   Type_Source_Name => "custom_int"; 
+--   Source_Text => ("ping");
+--   Data_Size => 8 Bytes;
+-- end Simple_Type;
+
+-----------------
+-- Subprograms --
+-----------------
+
+subprogram Ping_Spg
+features
+  Data_Source : out parameter Integer;
+properties
+  source_language => (C);
+  source_name     => "user_do_ping_spg";
+  source_text     => ("ping.c");
+end Ping_Spg;
+
+subprogram Pong_Spg
+features
+  Data_Sink : in parameter Integer;
+properties
+  source_language => (C);
+  source_name     => "user_ping_spg";
+  source_text     => ("ping.c");
+end Pong_Spg;
+
+
+-------------
+-- Threads --
+-------------
+
+thread ping_thr
+features
+  data_s : out event data port Integer;
+end ping_thr;
+
+thread implementation ping_thr.Impl
+calls 
+Mycalls: {
+  P_Spg : subprogram Ping_Spg;
+};
+connections
+  cnx : parameter P_Spg.Data_Source -> data_s;
+properties
+  Dispatch_Protocol                  => Periodic;
+  Period                             => 2000 Ms;
+  Priority                           => 2;
+  Deadline                           => 2000 ms;
+end ping_thr.Impl;
+
+thread pong_thr
+features
+  data_r : in event data port Integer;
+end pong_thr;
+
+thread implementation pong_thr.Impl
+calls 
+Mycalls: {
+  Q_Spg : subprogram Pong_Spg;
+};
+connections
+  cnx : parameter data_r -> Q_Spg.Data_Sink;
+properties
+  Dispatch_Protocol                  => Sporadic;
+  Dispatch_Trigger                   => (reference (data_r));
+  Period                             => 10 Ms;
+  Priority                           => 1;
+  deadline                           => 10 Ms;
+end pong_thr.Impl;
+
+end PING_Local;

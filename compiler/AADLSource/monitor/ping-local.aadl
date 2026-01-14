@@ -6,7 +6,6 @@
 package PING
 public
   with Software;
-  with Deployment;
 
 
 ---------------

@@ -1,0 +1,51 @@
+
+package aadlbook::software::image_acquisition
+
+public
+
+with aadlbook::icd; 
+--with sei;
+
+-------------------------
+--  Image Acquisition  --
+-------------------------
+
+process image_acquisition
+features
+	picture           : in data port aadlbook::icd::picture;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position;
+end image_acquisition;
+
+process implementation image_acquisition.i
+subcomponents
+	acq_thr : thread image_acquisition_thr.i;
+connections
+	c0 : port picture -> acq_thr.picture;
+	c1 : port acq_thr.obstacle_detected -> obstacle_detected;
+end image_acquisition.i;
+
+thread image_acquisition_thr
+features
+	picture           : in data port aadlbook::icd::picture;
+	obstacle_detected : out data port aadlbook::icd::obstacle_position;
+properties
+	--sei::mipsbudget   => 25.0 MIPS;
+	Dispatch_Protocol => Periodic;
+	Period            => 50 ms;
+	compute_execution_time => 10 ms .. 40 ms;
+--	reference_processor => classifier (::platform::ecu);
+	--sei::instructionsperdispatch => 1.24 kipd .. 1.25 mipd;
+end image_acquisition_thr;
+
+thread implementation image_acquisition_thr.i
+annex Behavior_specification {**
+	 states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[picture]-> s0 {
+		obstacle_detected ! (false)
+	 };
+	**};
+end image_acquisition_thr.i;
+
+end aadlbook::software::image_acquisition;

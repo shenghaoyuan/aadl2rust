@@ -15,22 +15,32 @@ public
 
 data Simple_Type
 properties
-  Type_Source_Name => "custom_int"; 
-  Source_Text => ("ping");
-  Source_Data_Size => 8 Bytes;
+  Data_Model::Data_Representation => integer;
 end Simple_Type;
 
 -----------------
 -- Subprograms --
 -----------------
 
+subprogram produce_packet_init_spg
+properties
+  source_language => (C);
+  source_name     => "user_produce_pkts_init";
+  source_text     => ("pinger.c");
+end produce_packet_init_spg;
+
+subprogram produce_packet_spg
+properties
+  source_language => (C);
+  source_name     => "user_produce_pkts";
+  source_text     => ("pinger.c");
+end produce_packet_spg;
+
 subprogram Do_Ping_Spg
-features
-  Data_Source : out parameter Simple_Type;
 properties
   source_language => (C);
   source_name     => "user_do_ping_spg";
-  source_text     => ("ping.c");
+  source_text     => ("pinger.c");
 end Do_Ping_Spg;
 
 subprogram Ping_Spg
@@ -39,13 +49,29 @@ features
 properties
   source_language => (C);
   source_name     => "user_ping_spg";
-  source_text     => ("ping.c");
+  source_text     => ("pingme.c");
 end Ping_Spg;
 
 
 -------------
 -- Threads --
 -------------
+
+thread packet_producer
+end packet_producer;
+
+thread implementation packet_producer.i
+calls 
+Mycalls: {
+  produce : subprogram produce_packet_spg;
+};
+properties
+  Initialize_Entrypoint              => classifier (software::produce_packet_init_spg);
+  Dispatch_Protocol                  => Periodic;
+  Period                             => 500 Ms;
+  Deadline                           => 500 ms;
+  Priority                           => 2;
+end packet_producer.i;
 
 thread P
 features
@@ -57,8 +83,6 @@ calls
 Mycalls: {
   P_Spg : subprogram Do_Ping_Spg;
 };
-connections
-  cn0: parameter P_Spg.Data_Source -> Data_Source;
 properties
   Recover_Entrypoint_Source_Text     => "recover";
   Dispatch_Protocol                  => Periodic;

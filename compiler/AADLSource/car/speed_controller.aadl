@@ -1,0 +1,115 @@
+
+package aadlbook::software::speed_controller
+
+public
+
+with aadlbook::icd; 
+--with sei;
+
+------------------------
+--  Speed Controller  --
+------------------------
+
+process speed_controller
+features
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
+	current_speed     : in data port aadlbook::icd::speed;
+	desired_speed     : in data port aadlbook::icd::speed;
+	brake_cmd         : out data port aadlbook::icd::brake_cmd;
+	speed_cmd         : out data port aadlbook::icd::speed_cmd;
+	warning           : out data port aadlbook::icd::boolean;
+	
+end speed_controller;
+
+process implementation speed_controller.i
+subcomponents
+	accel_thr : thread speed_controller_accel_thr.i;
+	brake_thr : thread speed_controller_brake_thr.i;
+	warning_thr : thread speed_controller_warning_thr.i;
+connections
+	c00 : port obstacle_position    -> accel_thr.obstacle_position;
+	c01 : port current_speed        -> accel_thr.current_speed;
+	c02 : port desired_speed        -> accel_thr.desired_speed;
+	c03 : port accel_thr.speed_cmd  -> speed_cmd;
+
+	c10 : port obstacle_position    -> brake_thr.obstacle_position;
+	c11 : port current_speed        -> brake_thr.current_speed;
+	c12 : port desired_speed        -> brake_thr.desired_speed;
+	c13 : port brake_thr.brake_cmd  -> brake_cmd;
+
+	c20 : port obstacle_position    -> warning_thr.obstacle_position;
+	c21 : port current_speed        -> warning_thr.current_speed;
+	c22 : port desired_speed        -> warning_thr.desired_speed;
+	c23 : port warning_thr.warning  -> warning;
+end speed_controller.i;
+
+thread speed_controller_warning_thr
+features
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
+	current_speed     : in data port aadlbook::icd::speed;
+	desired_speed     : in data port aadlbook::icd::speed;
+	warning         : out data port aadlbook::icd::boolean;
+properties
+	Dispatch_Protocol => Periodic;
+	Period            => 5 ms;
+	--sei::mipsbudget   => 5.0 MIPS;
+end speed_controller_warning_thr;
+
+thread speed_controller_brake_thr
+features
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
+	current_speed     : in data port aadlbook::icd::speed;
+	desired_speed     : in data port aadlbook::icd::speed;
+	brake_cmd         : out data port aadlbook::icd::brake_cmd;
+properties
+	Dispatch_Protocol => Periodic;
+	Period            => 5 ms;
+	--sei::mipsbudget   => 5.0 MIPS;
+end speed_controller_brake_thr;
+
+thread speed_controller_accel_thr
+features
+	obstacle_position : in data port aadlbook::icd::obstacle_position;
+	current_speed     : in data port aadlbook::icd::speed;
+	desired_speed     : in data port aadlbook::icd::speed;
+	speed_cmd         : out data port aadlbook::icd::speed_cmd;
+properties
+	Dispatch_Protocol => Periodic;
+	Period            => 5 ms;
+	--sei::mipsbudget   => 5.0 MIPS;
+end speed_controller_accel_thr;
+
+thread implementation speed_controller_accel_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[60 < current_speed]-> s0 {
+		speed_cmd!(0)
+	 };
+	**};
+end speed_controller_accel_thr.i;
+
+thread implementation speed_controller_brake_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[obstacle_position]-> s0 {
+		brake_cmd!(1)
+	 };
+	**};
+end speed_controller_brake_thr.i;
+
+thread implementation speed_controller_warning_thr.i
+annex Behavior_specification {**
+	states
+	 s0 : initial complete final state;
+	 transitions
+	 s0 -[obstacle_position]-> s0 {
+		warning!(true)
+	 };
+	**};
+end speed_controller_warning_thr.i;
+
+end aadlbook::software::speed_controller;

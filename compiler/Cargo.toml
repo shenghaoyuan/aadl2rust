@@ -31,3 +31,7 @@ pretty_assertions = "1.4.1"
 
 diffy = "0.4.2"
 open = "5.3.3"
+
+clap = { version = "4", features = ["derive"] }
+
+regex = "1.10"

@@ -1,0 +1,61 @@
+
+package aadlbook::software::speed_voter
+
+public
+
+with aadlbook::icd; 
+--with sei;
+
+
+
+-------------------
+--  Speed Voter  --
+-------------------
+
+process speed_voter
+features
+	wheel_sensor : in data port aadlbook::icd::speed;
+	laser_sensor : in data port aadlbook::icd::speed;
+	speed        : out data port aadlbook::icd::speed;
+end speed_voter;
+
+process implementation speed_voter.i
+subcomponents
+	speed_thr : thread speed_voter_thr;
+connections
+	c0 : port wheel_sensor -> speed_thr.wheel_sensor;
+	c1 : port laser_sensor -> speed_thr.laser_sensor;
+	c2 : port speed_thr.speed -> speed;
+end speed_voter.i;
+
+thread speed_voter_thr
+features
+	wheel_sensor : in data port aadlbook::icd::speed;
+	laser_sensor : in data port aadlbook::icd::speed;
+	speed        : out data port aadlbook::icd::speed;
+properties
+	Dispatch_Protocol => Periodic;
+	Period            => 8 ms;
+	--sei::mipsbudget   => 8.0 MIPS;
+end speed_voter_thr;
+
+thread implementation speed_voter_thr.i
+annex Behavior_specification {**
+	variables
+	 speed_value : Base_Types::Unsigned_16 := 0;
+	 states
+	 s0 : initial complete final state;
+	 s1 : state;
+	 transitions
+	 s0 -[0 < wheel_sensor]-> s1 {
+		speed_value := wheel_sensor
+	 };
+	 s1 -[0 < laser_sensor]-> s0 {
+	 speed_value := laser_sensor + speed_value;
+	 speed!(speed_value/2)
+	 };
+	**};
+end speed_voter_thr.i;
+
+
+end aadlbook::software::speed_voter;
