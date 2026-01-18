@@ -49,6 +49,7 @@ pub fn assemble_rust_project(test_case: &TestCase) {
 
     // ---------------- Rust support files ----------------
     generate_common_traits_rs(&project_root);
+    generate_posix_rs(&project_root);
     generate_lib_rs(&project_root);
 
     // ---------------- main.rs ----------------
@@ -252,6 +253,32 @@ pub trait Device {
     fs::write(&path, content).expect("Failed to write common_traits.rs");
 
     println!("common_traits.rs 已生成: {}", path);
+}
+
+/// 生成 src/posix.rs
+fn generate_posix_rs(project_root: &str) {
+    let src_dir = format!("{}/src", project_root);
+    let path = format!("{}/posix.rs", src_dir);
+
+    let content = r#"use libc::{
+    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,
+};
+
+// ---------------- cpu ----------------
+
+pub fn set_thread_affinity(cpu: isize) {
+    unsafe {
+        let mut cpuset: cpu_set_t = std::mem::zeroed();
+        CPU_ZERO(&mut cpuset);
+        CPU_SET(cpu as usize, &mut cpuset);
+        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);
+    }
+}
+"#;
+
+    fs::write(&path, content).expect("Failed to write posix.rs");
+
+    println!("posix.rs 已生成: {}", path);
 }
 
 /// 生成 src/lib.rs

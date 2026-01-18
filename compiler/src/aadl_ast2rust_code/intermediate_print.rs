@@ -39,12 +39,13 @@ impl RustCodeGenerator {
         self.writeln("use lazy_static::lazy_static;");
         self.writeln("use std::collections::HashMap;");
         self.writeln("use crate::common_traits::*;");
+        self.writeln("use crate::posix::*;");
         self.writeln("use tokio::sync::broadcast::{self,Sender as BcSender, Receiver as BcReceiver};");
         self.writeln("use libc::{self, syscall, SYS_gettid};");
         self.writeln("use rand::{Rng};");
         self.writeln("use libc::{");
         self.writeln("    pthread_self, sched_param, pthread_setschedparam, SCHED_FIFO,");
-        self.writeln("    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,");
+        // self.writeln("    cpu_set_t, CPU_SET, CPU_ZERO, sched_setaffinity,");
         self.writeln("};");
         self.writeln("include!(concat!(env!(\"OUT_DIR\"), \"/aadl_c_bindings.rs\"));"); //绑定的函数通过 include! 注入到根模块
 
@@ -52,16 +53,16 @@ impl RustCodeGenerator {
         self.generate_withs(&module.withs);
 
         // 添加CPU亲和性设置函数
-        self.writeln("// ---------------- cpu ----------------");
-        self.writeln("fn set_thread_affinity(cpu: isize) {");
-        self.writeln("    unsafe {");
-        self.writeln("        let mut cpuset: cpu_set_t = std::mem::zeroed();");
-        self.writeln("        CPU_ZERO(&mut cpuset);");
-        self.writeln("        CPU_SET(cpu as usize, &mut cpuset);");
-        self.writeln("        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);");
-        self.writeln("    }");
-        self.writeln("}");
-        self.writeln("");
+        // self.writeln("// ---------------- cpu ----------------");
+        // self.writeln("fn set_thread_affinity(cpu: isize) {");
+        // self.writeln("    unsafe {");
+        // self.writeln("        let mut cpuset: cpu_set_t = std::mem::zeroed();");
+        // self.writeln("        CPU_ZERO(&mut cpuset);");
+        // self.writeln("        CPU_SET(cpu as usize, &mut cpuset);");
+        // self.writeln("        sched_setaffinity(0, std::mem::size_of::<cpu_set_t>(), &cpuset);");
+        // self.writeln("    }");
+        // self.writeln("}");
+        // self.writeln("");
 
         // self.writeln("// ---------------- System ----------------");
         // self.writeln("pub trait System {");
