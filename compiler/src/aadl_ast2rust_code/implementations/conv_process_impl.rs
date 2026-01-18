@@ -9,6 +9,10 @@ pub fn convert_process_implementation(
 ) -> Vec<Item> {
     let mut items = Vec::new();
 
+    // 0. 如果process中有data作为子组件，认为这个data是共享变量，生成_Shared = Arc<Mutex<_>>
+    // generate_shared_data(impl_,&mut items);
+    
+
     // 1. 生成进程结构体
     let mut fields = get_process_fields(temp_converter, impl_); //这里是为了取得进程的子组件；生成内部端口也放在这里。
     
@@ -39,6 +43,54 @@ pub fn convert_process_implementation(
 
     items
 }
+
+// 生成共享变量类型
+/*fn generate_shared_data(impl_: &ComponentImplementation, items:&mut Vec<Item>){
+    if let SubcomponentClause::Items(subcomponents) = &impl_.subcomponents {
+        for sub in subcomponents {
+            if sub.category != ComponentCategory::Data {
+                continue;
+            }
+            let type_name = match &sub.classifier {
+                SubcomponentClassifier::ClassifierReference(
+                    UniqueComponentClassifierReference::Implementation(unirf),
+                ) => {
+                    // 直接使用子组件标识符 + "Thread"
+                    format!("{}", unirf.implementation_name.type_identifier)
+                }
+                _ => "UnsupportedComponent".to_string(),
+            };
+            // 根据类别决定字段类型
+            let shared_type_name = match sub.category {
+                ComponentCategory::Data => {
+                    // 直接使用原始类型名，不进行大小写转换
+                    format!("{}Shared", type_name)
+                }
+                _ => format!("{}Thread", type_name.to_lowercase()),
+            };
+            // 生成 Arc<Mutex<T>> 类型
+            let shared_type = Type::Generic(
+                "Arc".to_string(),
+                vec![Type::Generic(
+                    "Mutex".to_string(),
+                    vec![Type::Named(type_name.clone())],
+                )],
+            );
+
+            let type_alias = TypeAlias {
+                name: shared_type_name,
+                target: shared_type,
+                vis: Visibility::Public,
+                docs: vec![
+                    format!("// Shared data type for {}", impl_.name.type_identifier),
+                    "// Auto-generated from AADL process implementation".to_string(),
+                ],
+            };
+            items.push(Item::TypeAlias(type_alias));
+        }
+    }
+
+}*/
 
 //新增转发端口（内部端口，用于转发数据到子组件）；处理子组件（thread+data）
 fn get_process_fields(
@@ -410,12 +462,12 @@ fn create_process_new_body(
             };
 
             let var_name = sub.identifier.to_lowercase();
-            // 按类别初始化子组件：线程调用 FooThread::new(cpu_id+共享变量克隆)，数据使用 PosShared::default()
+            // 按类别初始化子组件：线程调用 FooThread::new(cpu_id+共享变量克隆)，数据使用 PosShared::new()
             match sub.category {
                 ComponentCategory::Data => {
                     // 直接使用原始类型名，不进行大小写转换
                     let shared_ty = format!("{}Shared", type_name);
-                    // let pos: POS.ImplShared = Arc::new(Mutex::new(0));
+                    // 生成：let pos: POS.ImplShared = Arc::new(Mutex::new(PosShared::new()));
                     let init_expr = Expr::Call(
                         Box::new(Expr::Path(
                             vec!["Arc".to_string(), "new".to_string()],
@@ -426,7 +478,7 @@ fn create_process_new_body(
                                 vec!["Mutex".to_string(), "new".to_string()],
                                 PathType::Namespace,
                             )),
-                            vec![Expr::Literal(Literal::Int(0))],
+                            vec![Expr::Ident(format!("{}::new()", type_name))],
                         )],
                     );
                     data_inits.push(Statement::Let(LetStmt {

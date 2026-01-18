@@ -229,7 +229,7 @@ impl AadlConverter {
             }
             AadlDeclaration::ComponentImplementation(impl_) => {
                 // 转换组件实现声明，生成对应的Rust实现块
-                module.items.extend(self.convert_implementation(impl_));
+                module.items.extend(self.convert_implementation(impl_, package));
             }
             _ => {} // TODO:忽略其他声明类型
         }
@@ -247,12 +247,12 @@ impl AadlConverter {
         }
     }
 
-    fn convert_implementation(&mut self, impl_: &ComponentImplementation) -> Vec<Item> {
+    fn convert_implementation(&mut self, impl_: &ComponentImplementation, package: &Package) -> Vec<Item> {
         match impl_.category {
             ComponentCategory::Process => conv_process_impl::convert_process_implementation(self,impl_),
             ComponentCategory::Thread => conv_thread_impl::convert_thread_implemenation(self,impl_),
             ComponentCategory::System => conv_system_impl::convert_system_implementation(self,impl_),
-            ComponentCategory::Data => conv_data_impl::convert_data_implementation(&self.type_mappings,&self.data_comp_type,impl_),
+            ComponentCategory::Data => conv_data_impl::convert_data_implementation(&self.type_mappings,&self.data_comp_type,impl_,package),
             ComponentCategory::Processor => conv_processor_impl::convert_processor_implementation(&mut self.cpu_scheduling_protocols,impl_),
             _ => Vec::default(), // 默认实现
         }

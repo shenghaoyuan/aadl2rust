@@ -18,19 +18,22 @@ public
     Update : provides subprogram access Update;
     Read   : provides subprogram access Read_POS;
   properties
-    Priority => 50;
+    -- Priority => 50;
+    Data_Model::Data_Representation => Struct;
   end POS;
 
   data implementation POS.Impl
   subcomponents
-    Field : data POS_Internal_Type;
+    field : data POS_Internal_Type;
     spgUpdate : subprogram Update;
     spgRead   : subprogram Read_POS;
   connections
-    Cnx_Pos_1 : subprogram access SpgUpdate -> Update;
+    Cnx_Pos_1 : subprogram access SpgUpdate -> Update;  --POS.Impl 内部的子程序实例 spgUpdate
+                                                        --用来实现 POS 对外提供的 Update 访问点
+                                                        --这是一种实现绑定（binding），不是数据访问。
     Cnx_Pos_2 : subprogram access SpgRead   -> Read;
-  properties
-    Data_Model::Data_Representation => Struct;
+  -- properties
+  --   Data_Model::Data_Representation => Struct;
   end POS.Impl;
 
   -----------------

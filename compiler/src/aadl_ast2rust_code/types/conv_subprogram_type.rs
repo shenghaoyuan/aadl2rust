@@ -127,21 +127,32 @@ fn generate_c_function_wrapper(
                                         let data_component_name =
                                             &impl_ref.implementation_name.type_identifier;
                                         // 查找该数据组件实现中的具体数据类型
-                                        if let Some(data_type) = find_data_type_from_implementation(
+                                        let data_types = find_data_type_from_implementation(
                                             data_component_name,
                                             package,
-                                        ) {
-                                            // 将数据类型添加到导入列表中
-                                            let data_type_for_import = data_type.clone();
-                                            types_to_import.insert(data_type_for_import);
+                                        );
+                                        // 将所有数据类型添加到导入列表中
+                                        for data_type in &data_types {
+                                            types_to_import.insert(data_type.clone());
+                                        }
 
-                                            // 为 requires data access 特征生成 call 函数
+                                        // 生成一个 call 函数，参数包含全部的数据类型
+                                        if !data_types.is_empty() {
+                                            let mut params = Vec::new();
+                                            let mut call_args = Vec::new();
+
+                                            for (idx, data_type) in data_types.iter().enumerate() {
+                                                let param_name = format!("arg{}", idx);
+                                                params.push(Param {
+                                                    name: param_name.clone(),
+                                                    ty: Type::Reference(Box::new(Type::Named(data_type.clone())), true, true), // &mut DataType
+                                                });
+                                                call_args.push(Expr::Ident(param_name));
+                                            }
+
                                             let call_function = FunctionDef {
                                                 name: "call".to_string(),
-                                                params: vec![Param {
-                                                    name: "pos_ref".to_string(),
-                                                    ty: Type::Reference(Box::new(Type::Named(data_type)), true, true), // &mut PosInternalType
-                                                }],
+                                                params,
                                                 return_type: Type::Unit,
                                                 body: Block {
                                                     stmts: vec![Statement::Expr(Expr::Unsafe(Box::new(Block {
@@ -150,7 +161,7 @@ fn generate_c_function_wrapper(
                                                                 vec![c_func_name.to_string()],
                                                                 PathType::Namespace,
                                                             )),
-                                                            vec![Expr::Ident("pos_ref".to_string())], // 直接传递引用，让Rust编译器处理类型转换
+                                                            call_args, // 传递所有参数
                                                         ))],
                                                         expr: None,
                                                     })))],
@@ -159,7 +170,7 @@ fn generate_c_function_wrapper(
                                                 asyncness: false,
                                                 vis: Visibility::Public,
                                                 docs: vec![
-                                                    format!("// Call C function {} with data access reference", c_func_name),
+                                                    format!("// Call C function {} with data access references", c_func_name),
                                                     "// Generated for requires data access feature".to_string(),
                                                     "// Note: Rust compiler will handle the reference to pointer conversion".to_string(),
                                                 ],
@@ -314,7 +325,9 @@ fn is_rust_primitive_type(type_name: &str) -> bool {
 
 /// 从数据组件实现名称中查找具体的数据类型
 /// 例如：从 POS.Impl 中找到 Field : data POS_Internal_Type 中的 POS_Internal_Type
-fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Option<String> {
+fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Vec<String> {
+    let mut data_types = Vec::new();
+
     // 在 Package 中查找组件实现
     if let Some(public_section) = &package.public_section {
         for decl in &public_section.declarations {
@@ -332,7 +345,7 @@ fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Opt
                                     UniqueComponentClassifierReference::Implementation(unirf),
                                 ) = &sub.classifier
                                 {
-                                    return Some(unirf.implementation_name.type_identifier.clone());
+                                    data_types.push(unirf.implementation_name.type_identifier.clone());
                                 }
                             }
                         }
@@ -358,7 +371,7 @@ fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Opt
                                     UniqueComponentClassifierReference::Implementation(unirf),
                                 ) = &sub.classifier
                                 {
-                                    return Some(unirf.implementation_name.type_identifier.clone());
+                                    data_types.push(unirf.implementation_name.type_identifier.clone());
                                 }
                             }
                         }
@@ -368,5 +381,5 @@ fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Opt
         }
     }
 
-    None
+    data_types
 }

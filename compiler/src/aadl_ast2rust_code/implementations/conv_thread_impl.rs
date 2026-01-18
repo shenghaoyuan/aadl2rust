@@ -61,7 +61,8 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
     let mut impl_items = Vec::new();
     
     // 生成 new() 方法
-    let new_method = create_thread_new_method(temp_converter, impl_);
+    let mut flag_need_shared_variable_param = false;
+    let new_method = create_thread_new_method(temp_converter, impl_, &mut flag_need_shared_variable_param);
     impl_items.push(ImplItem::Method(new_method));
     
     // 添加 run 方法
@@ -96,12 +97,25 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
     };
     items.push(Item::Impl(impl_block));
 
+    // 新增impl块，生成不包含在trait中的方法，带共享变量参数的new()方法。
+    if flag_need_shared_variable_param {
+        let items_no_trait = vec![ImplItem::Method(create_thread_new_method(temp_converter, impl_, &mut flag_need_shared_variable_param))];
+        let impl_block_no_trait = ImplBlock {
+            target: Type::Named(format!("{}Thread", impl_.name.type_identifier.to_lowercase())),
+            generics: Vec::new(),
+            items: items_no_trait,
+            trait_impl: None,
+        };
+        items.push(Item::Impl(impl_block_no_trait));
+    }
+    
+
     items
 }
 
 /// 创建线程的 new() 方法
 /// 使用存储的属性值初始化线程结构体字段
-fn create_thread_new_method(temp_converter: &mut AadlConverter, impl_: &ComponentImplementation) -> FunctionDef {
+fn create_thread_new_method(temp_converter: &mut AadlConverter, impl_: &ComponentImplementation, flag_need_shared_variable_param: &mut bool) -> FunctionDef {
     let struct_name = format!("{}Thread", impl_.name.type_identifier.to_lowercase());
     let key = struct_name.clone();
     
@@ -118,18 +132,26 @@ fn create_thread_new_method(temp_converter: &mut AadlConverter, impl_: &Componen
     
     // 为每个字段生成初始化表达式和注释
     for (field_name, prop_value) in &field_values {
-        let init_value = property_value_to_initializer(prop_value);
+        let mut init_value = property_value_to_initializer(prop_value);
         let comment = format!("");
-        
-        // 对以"Shared"结尾的字段类型添加参数
+
+        // 对以"Shared"结尾的字段类型添加参数（已删去），并修改初始化值
         if let Some(field_type) = field_types.get(field_name) {
             match field_type {
                 Type::Named(type_name) => {
                     if type_name.ends_with("Shared") {
-                        params.push(Param {
-                            name: field_name.clone(),
-                            ty: field_type.clone(),
-                        });
+                        if !*flag_need_shared_variable_param {
+                            *flag_need_shared_variable_param = true;
+
+                             // 生成 Arc::new(Mutex::new(TypeName::new())) 格式的初始化值
+                            let base_type_name = type_name.trim_end_matches("Shared");
+                            init_value = format!("Arc::new(Mutex::new({}::new()))", base_type_name);
+                        } else{
+                            params.push(Param {
+                                name: field_name.clone(),
+                                ty: field_type.clone(),
+                            });
+                        }
                     }
                 }
                 _ => {
@@ -1130,7 +1152,7 @@ fn create_subprogram_call_logic_with_data(temp_converter: &AadlConverter, impl_:
     let subprograms_with_ports: std::collections::HashSet<String> = subprogram_calls.iter()
         .map(|(_, spg_name, _, _, _)| spg_name.clone())
         .collect();
-    //println!("subprograms_with_ports: {:?}", subprograms_with_ports);
+    // println!("subprograms_with_ports: {:?}", subprograms_with_ports);
     // 添加调用序列注释
     if !mycalls_sequence.is_empty() {
         let call_sequence = mycalls_sequence.iter()
@@ -1139,7 +1161,7 @@ fn create_subprogram_call_logic_with_data(temp_converter: &AadlConverter, impl_:
             .join(" -> ");
         
         port_handling_stmts.push(Statement::Expr(Expr::Ident(format!(
-            "// --- 调用序列（等价 AADL 的 Wrapper）---\n                           // {}",
+            "// --- 调用序列(等价 AADL 的 Wrapper)---\n                           // {}",
             call_sequence
         ))));
     }
@@ -1305,15 +1327,23 @@ fn create_subprogram_call_logic_with_data(temp_converter: &AadlConverter, impl_:
                             stmts: vec![
                                 Statement::Expr(Expr::Call(
                                     Box::new(Expr::Path(
-                                        vec![subprogram_name.clone(), "call".to_string()],
-                                        PathType::Namespace,
+                                        vec!["guard".to_string(), subprogram_name.clone()],
+                                        PathType::Member,
                                     )),
-                                    vec![Expr::Reference(
-                                        Box::new(Expr::Ident("guard".to_string())),
-                                        true,
-                                        true,
-                                    )],
+                                    vec![],
                                 )),
+                                // 从read_pos::call(&mut guard.field) 改为了-> guard.read_pos();
+                                // Statement::Expr(Expr::Call(
+                                //     Box::new(Expr::Path(
+                                //         vec![subprogram_name.clone(), "call".to_string()],
+                                //         PathType::Namespace,
+                                //     )),
+                                //     vec![Expr::Reference(
+                                //         Box::new(Expr::Ident("guard".to_string())),
+                                //         true,
+                                //         true,
+                                //     )],
+                                // )),
                             ],
                             expr: None,
                         },
@@ -1673,8 +1703,8 @@ fn get_subprogram_port_type(temp_converter: &AadlConverter, subprogram_name: &st
         stmts
     }
 
-        /// 提取data access连接，识别哪些子程序使用共享变量
-    /// 返回：(子程序名, 共享变量名, 共享变量字段名)
+    /// 提取data access连接，识别哪些子程序使用共享变量
+    /// 返回：(子程序名, 共享变量名, 共享变量全小写名)
     fn extract_data_access_calls(impl_: &ComponentImplementation) -> Vec<(String, String, String)> {
         let mut data_access_calls = Vec::new();
         
@@ -1702,7 +1732,7 @@ fn get_subprogram_port_type(temp_converter: &AadlConverter, subprogram_name: &st
                         (AccessEndpoint::ComponentAccess(data_name), AccessEndpoint::SubcomponentAccess { subcomponent: call_identifier, .. }) => {
                             // 从调用标识符中提取子程序名
                             if let Some(subprogram_name) = call_id_to_subprogram.get(&call_identifier.to_lowercase()) {
-                                // 从数据名称中提取共享变量字段名
+                                // 从数据名称中提取共享变量全小写名，TODO:这里shared_var_field不是字段名
                                 let shared_var_field = data_name.to_lowercase();
                                 
                                 // 共享变量名（用于注释）
