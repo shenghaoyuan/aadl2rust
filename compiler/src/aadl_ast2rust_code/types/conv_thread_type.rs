@@ -2,6 +2,7 @@ use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::ast::aadl_ast_cj::*;
+use crate::aadl_ast2rust_code::tool::*;
 use std::collections::HashMap;
 
 pub fn convert_thread_component(
@@ -57,7 +58,7 @@ pub fn convert_thread_component(
         attrs: Vec::new(),
     });
 
-    let struct_name = format!("{}Thread", comp.identifier.to_lowercase());
+    let struct_name = format!("{}Thread", to_upper_camel_case(&comp.identifier));
     // 将字段对应的属性值保存起来（仅保存存在值的属性字段）
     if !value_map.is_empty() {
         temp_converter

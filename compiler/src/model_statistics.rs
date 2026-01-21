@@ -183,7 +183,7 @@ impl ModelStatistics {
 
         fs::create_dir_all(&base_dir)?;
 
-        let safe_pkg_name = sanitize_package_name(package_name);
+        let safe_pkg_name = sanitize_package_name(package_name).to_lowercase();
         let file_path = base_dir.join(format!("{safe_pkg_name}.md"));
         println!("生成模型统计文件: {:?}", file_path);
 

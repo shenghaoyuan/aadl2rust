@@ -4,8 +4,8 @@ package aadlbook::devices
 
 public
 
-with aadlbook::icd;
-with aadlbook::platform;
+with aadlbook::Icd;
+with aadlbook::Platform;
  
 -----------------------------------
 --  Camera and Object Detection  --

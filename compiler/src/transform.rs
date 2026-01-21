@@ -45,7 +45,7 @@ impl PortManager {
 }
 
 // 全局端口管理器
-use std::sync::Mutex;
+use std::{char::ToLowercase, sync::Mutex};
 use once_cell::sync::Lazy;
 
 static GLOBAL_PORT_MANAGER: Lazy<Mutex<PortManager>> = Lazy::new(|| {
@@ -178,10 +178,16 @@ impl AADLTransformer {
                 for item in items.iter().skip(1) {
                     match item.as_rule() {
                         aadlight_parser::Rule::package_name => {
-                            //如果这里不包含::，则说明是属性集名，不做处理。这是由于解析阶段的问题导致。
-                            if item.as_str().contains("::") {
-                                packages.push(extract_package_name(item.clone()));
+                            //如果这里是base_types、data_model...，则说明是属性集名，不做处理。无法区分开，文件名还是属性集名，现在的方法是穷举属性集名。
+                            match item.clone().as_str().to_lowercase().as_str() {
+                                "base_types" | "data_model" => {}
+                                _ =>{
+                                    packages.push(extract_package_name(item.clone()));
+                                }
                             }
+                            // if item.as_str().contains("::") {
+                            //     packages.push(extract_package_name(item.clone()));
+                            // }
                         }
                         aadlight_parser::Rule::property_set_name => {
                             property_sets.push(extract_identifier(item.clone()));

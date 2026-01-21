@@ -2,6 +2,7 @@ use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::ast::aadl_ast_cj::*;
+use crate::aadl_ast2rust_code::tool::*;
 
 pub fn convert_system_implementation(
     temp_converter: &mut AadlConverter,
@@ -13,7 +14,7 @@ pub fn convert_system_implementation(
     let fields = get_system_fields(impl_); // 获取系统的子组件
 
     let struct_def = StructDef {
-        name: format!("{}System", impl_.name.type_identifier.to_lowercase()),
+        name: format!("{}System", to_upper_camel_case(&impl_.name.type_identifier)),
         fields,                 // 系统的子组件
         properties: Vec::new(), // TODO
         generics: Vec::new(),
@@ -54,16 +55,16 @@ fn get_system_fields(impl_: &ComponentImplementation) -> Vec<Field> {
                     _ => unreachable!("Filtered above"),
                 };
 
-                let field_ty = Type::Named(format!("{}{}", type_name.to_lowercase(), type_suffix));
+                let field_ty = Type::Named(format!("{}{}", to_upper_camel_case(&type_name), type_suffix));
                 let doc = match sub.category {
                     ComponentCategory::Process => {
                         format!(
-                            "// 子组件进程（{} : process {}）",
+                            "// 子组件进程({} : process {})",
                             sub.identifier, type_name
                         )
                     }
                     ComponentCategory::Device => {
-                        format!("// 子组件设备（{} : device {}）", sub.identifier, type_name)
+                        format!("// 子组件设备({} : device {})", sub.identifier, type_name)
                     }
                     _ => unreachable!("Filtered above"),
                 };
@@ -121,7 +122,7 @@ fn create_system_impl_block(
     ImplBlock {
         target: Type::Named(format!(
             "{}System",
-            impl_.name.type_identifier.to_lowercase()
+            to_upper_camel_case(&impl_.name.type_identifier)
         )),
         generics: Vec::new(),
         items,
@@ -204,8 +205,8 @@ fn create_system_new_body(
                     let creation_stmt = format!(
                         "let mut {}: {}Process = {}Process::new({})",
                         var_name,
-                        type_name.to_lowercase(),
-                        type_name.to_lowercase(),
+                        to_upper_camel_case(&type_name),
+                        to_upper_camel_case(&type_name),
                         cpu_id
                     );
                     stmts.push(Statement::Expr(Expr::Ident(creation_stmt)));

@@ -152,7 +152,8 @@ impl AadlConverter {
                     //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
                     for pkg_name in packages.iter() {
                         // 关键点：不使用 to_string()
-                        let segments = pkg_name.0.clone();
+                         print!("pkg0:{:?}",pkg_name.0.clone());
+                        let segments = pkg_name.0.iter().map(|s| s.to_ascii_lowercase()).collect();
         
                         withs.push(RustWith {
                             path: segments,
@@ -820,5 +821,7 @@ impl AadlConverter {
             // 其他类型不需要处理，因为此函数仅在参数连接时调用
         }
     }
+
+    
 
 }

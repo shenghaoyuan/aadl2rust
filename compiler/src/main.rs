@@ -52,6 +52,12 @@ fn main() {
             fs::create_dir("generate").expect("无法创建 generate 目录");
         }
 
+        let output_dir = format!("generate/project/{}/src", test_case.output_name);
+        if std::path::Path::new(&output_dir).exists() {
+            println!("清理目录:{}",output_dir);
+            fs::remove_dir_all(&output_dir).unwrap();
+        }
+        
         process_test_case(&test_case);
         return; // 不进入下面的交互逻辑
     }
@@ -410,13 +416,14 @@ pub fn generate_rust_code_for_test_case(
     let rust_code = code_generator.generate_module_code(&merge_rust_module);
 
     // 根据包数量决定输出路径
-    let package_name = aadl_pkg.name.to_string().replace("::", "_");
+    let package_name = aadl_pkg.name.to_string().replace("::", "_").to_lowercase();
     // let output_path = if number_of_packages == 1 {
     //     // 如果只有一个包，直接生成文件，文件名是test_case
     //     format!("generate/code/{}.rs", test_case.output_name)
     // } else {
     // 使用文件夹结构
     let output_dir = format!("generate/project/{}/src", test_case.output_name);
+
     fs::create_dir_all(&output_dir).expect("Failed to create output directory");
     let output_path = format!("{}/{}.rs", output_dir, package_name);
     // };

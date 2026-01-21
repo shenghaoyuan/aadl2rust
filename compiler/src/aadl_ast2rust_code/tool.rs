@@ -34,3 +34,19 @@ use std::collections::{HashMap, HashSet};
     
         vec.clone()
     }
+
+    pub fn to_upper_camel_case(name: &str) -> String {
+        name.split('_')
+            .filter(|s| !s.is_empty())
+            .map(|word| {
+                let mut chars = word.chars();
+                match chars.next() {
+                    Some(first) => {
+                        first.to_ascii_uppercase().to_string() +
+                            &chars.as_str().to_ascii_lowercase()
+                    }
+                    None => String::new(),
+                }
+            })
+            .collect::<String>()
+    }

@@ -2,6 +2,7 @@ use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::ast::aadl_ast_cj::*;
+use crate::aadl_ast2rust_code::tool::*;
 
 pub fn convert_process_implementation(
     temp_converter: &mut AadlConverter,
@@ -25,7 +26,7 @@ pub fn convert_process_implementation(
     });
 
     let struct_def = StructDef {
-        name: format! {"{}Process",impl_.name.type_identifier.to_lowercase()},
+        name: format! {"{}Process",to_upper_camel_case(&impl_.name.type_identifier)},
         fields,                 //这里是为了取得进程的子组件
         properties: Vec::new(), //TODO
         generics: Vec::new(),
@@ -317,13 +318,13 @@ fn get_process_fields(
             let field_ty = match sub.category {
                 ComponentCategory::Thread => {
                     // 保存线程到进程的绑定关系
-                    Type::Named(format!("{}Thread", type_name.to_lowercase()))
+                    Type::Named(format!("{}Thread", to_upper_camel_case(&type_name)))
                 }
                 ComponentCategory::Data => {
                     // 直接使用原始类型名，不进行大小写转换
                     Type::Named(format!("{}Shared", type_name))
                 }
-                _ => Type::Named(format!("{}Thread", type_name.to_lowercase())),
+                _ => Type::Named(format!("{}Thread", to_upper_camel_case(&type_name))),
             };
 
             let doc = match sub.category {
@@ -390,7 +391,7 @@ fn create_process_impl_block(
     }));
 
     ImplBlock {
-        target: Type::Named(format! {"{}Process",impl_.name.type_identifier.to_lowercase()}),
+        target: Type::Named(format! {"{}Process",to_upper_camel_case(&impl_.name.type_identifier)}),
         generics: Vec::new(),
         items,
         trait_impl: Some(Type::Named("Process".to_string())),
@@ -497,11 +498,11 @@ fn create_process_new_body(
                     thread_inits.push(Statement::Let(LetStmt {
                         ifmut: true,
                         name: format!("{}", var_name),
-                        ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
+                        ty: Some(Type::Named(format!("{}Thread", to_upper_camel_case(&type_name)))),
                         init: Some(Expr::Call(
                             Box::new(Expr::Path(
                                 vec![
-                                    format!("{}Thread", type_name.to_lowercase()),
+                                    format!("{}Thread", to_upper_camel_case(&type_name)),
                                     "new".to_string(),
                                 ],
                                 PathType::Namespace,
@@ -515,11 +516,11 @@ fn create_process_new_body(
                     thread_inits.push(Statement::Let(LetStmt {
                         ifmut: false,
                         name: format!("mut {}", var_name),
-                        ty: Some(Type::Named(format!("{}Thread", type_name.to_lowercase()))),
+                        ty: Some(Type::Named(format!("{}Thread", to_upper_camel_case(&type_name)))),
                         init: Some(Expr::Call(
                             Box::new(Expr::Path(
                                 vec![
-                                    format!("{}Thread", type_name.to_lowercase()),
+                                    format!("{}Thread", to_upper_camel_case(&type_name)),
                                     "new".to_string(),
                                 ],
                                 PathType::Namespace,

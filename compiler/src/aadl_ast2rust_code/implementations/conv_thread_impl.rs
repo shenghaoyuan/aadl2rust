@@ -4,6 +4,7 @@ use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
 
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
+use crate::aadl_ast2rust_code::tool::*;
 
 
 pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &ComponentImplementation) -> Vec<Item> {
@@ -11,7 +12,7 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
 
     // 1. 结构体定义
     let mut fields = Vec::new(); // 对于线程实现，没有特征，这里从属性生成字段
-    let struct_name = format!("{}Thread", impl_.name.type_identifier.to_lowercase());
+    let struct_name = format!("{}Thread", to_upper_camel_case(&impl_.name.type_identifier));
     let mut field_values = HashMap::new();
 
     // 将实现上的属性整合为字段，并存储属性值
@@ -47,7 +48,7 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
     //println!("!!!!!!!!!!!!thread_field_values: {:?}", self.thread_field_values);
     
     let struct_def = StructDef {
-        name: format!("{}Thread", impl_.name.type_identifier.to_lowercase()),
+        name: format!("{}Thread", to_upper_camel_case(&impl_.name.type_identifier)),
         fields,
         properties: Vec::new(), // 属性字段已整合进 fields
         generics: Vec::new(),
@@ -89,7 +90,7 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
     let impl_block = ImplBlock {
         target: Type::Named(format!(
             "{}Thread",
-            impl_.name.type_identifier.to_lowercase()
+            to_upper_camel_case(&impl_.name.type_identifier)
         )),
         generics: Vec::new(),
         items: impl_items,
@@ -101,7 +102,7 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
     if flag_need_shared_variable_param {
         let items_no_trait = vec![ImplItem::Method(create_thread_new_method(temp_converter, impl_, &mut flag_need_shared_variable_param))];
         let impl_block_no_trait = ImplBlock {
-            target: Type::Named(format!("{}Thread", impl_.name.type_identifier.to_lowercase())),
+            target: Type::Named(format!("{}Thread", to_upper_camel_case(&impl_.name.type_identifier))),
             generics: Vec::new(),
             items: items_no_trait,
             trait_impl: None,
@@ -116,7 +117,7 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
 /// 创建线程的 new() 方法
 /// 使用存储的属性值初始化线程结构体字段
 fn create_thread_new_method(temp_converter: &mut AadlConverter, impl_: &ComponentImplementation, flag_need_shared_variable_param: &mut bool) -> FunctionDef {
-    let struct_name = format!("{}Thread", impl_.name.type_identifier.to_lowercase());
+    let struct_name = format!("{}Thread", to_upper_camel_case(&impl_.name.type_identifier));
     let key = struct_name.clone();
     
     // 获取存储的属性值
@@ -297,7 +298,7 @@ fn create_thread_run_body(temp_converter: &mut AadlConverter, impl_: &ComponentI
                                     PathType::Namespace,
                                 )),
                                 vec![
-                                    Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority: {{}}", impl_.name.type_identifier.to_lowercase()))),
+                                    Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority: {{}}", to_upper_camel_case(&impl_.name.type_identifier)))),
                                     Expr::Ident("ret".to_string()),
                                 ],
                             )),
@@ -401,7 +402,7 @@ fn create_thread_run_body(temp_converter: &mut AadlConverter, impl_: &ComponentI
                                     PathType::Namespace,
                                 )),
                                 vec![
-                                    Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority from period: {{}}", impl_.name.type_identifier.to_lowercase()))),
+                                    Expr::Literal(Literal::Str(format!("{}Thread: Failed to set thread priority from period: {{}}", to_upper_camel_case(&impl_.name.type_identifier)))),
                                     Expr::Ident("ret".to_string()),
                                 ],
                             )),
@@ -1089,7 +1090,7 @@ fn create_timed_execution_logic(temp_converter: &AadlConverter, impl_: &Componen
                                             vec!["eprintln!".to_string()],
                                             PathType::Namespace,
                                         )),
-                                        vec![Expr::Literal(Literal::Str(format!("{}Thread: timeout dispatch → Recover_Entrypoint", impl_.name.type_identifier.to_lowercase())))],
+                                        vec![Expr::Literal(Literal::Str(format!("{}Thread: timeout dispatch → Recover_Entrypoint", to_upper_camel_case(&impl_.name.type_identifier))))],   
                                     )),
                                     // recover_entrypoint();
                                     Statement::Expr(Expr::Ident("// recover_entrypoint();".to_string())),

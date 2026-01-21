@@ -15,9 +15,10 @@ public
 
   processor implementation CPU.Impl
   properties
-    Scheduling_Protocol => (Posix_1003_Highest_Priority_First_Protocol);
-    Priority_Range => 0 .. 99;
+    Scheduling_Protocol => 
+    (Posix_1003_Highest_Priority_First_Protocol);
   end CPU.Impl;
+
 
   ---------------
   -- Processes --
@@ -38,17 +39,17 @@ public
   -- System --
   ------------
 
-  system PingPongSystem
-  end PingPongSystem;
+  system PingPong_sys
+  end PingPong_sys;
 
-  system implementation PingPongSystem.Impl
+  system implementation PingPong_sys.Impl
   subcomponents
     pingpong_proc : process pingpong_proc.Impl;
     CPU : processor CPU.Impl;
 
   properties
      Actual_processor_binding => reference (CPU) applies to pingpong_proc;
-  end PingPongSystem.Impl;
+  end PingPong_sys.Impl;
 
 
 
@@ -78,8 +79,8 @@ features
   Data_Source : out parameter Integer;
 properties
   source_language => (C);
-  source_name     => "user_do_ping_spg";
-  source_text     => ("ping.c");
+  source_name     => "user_ping_spg";
+  source_text     => ("pingpong.c");
 end Ping_Spg;
 
 subprogram Pong_Spg
@@ -87,8 +88,8 @@ features
   Data_Sink : in parameter Integer;
 properties
   source_language => (C);
-  source_name     => "user_ping_spg";
-  source_text     => ("ping.c");
+  source_name     => "user_pong_spg";
+  source_text     => ("pingpong.c");
 end Pong_Spg;
 
 

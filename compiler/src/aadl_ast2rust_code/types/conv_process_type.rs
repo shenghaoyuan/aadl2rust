@@ -2,6 +2,7 @@ use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::ast::aadl_ast_cj::*;
+use crate::aadl_ast2rust_code::tool::*;
 
 pub fn convert_process_component(
     temp_converter: &AadlConverter,
@@ -21,7 +22,7 @@ pub fn convert_process_component(
     });
 
     let struct_def = StructDef {
-        name: format!("{}Process", comp.identifier.to_lowercase()),
+        name: format!("{}Process", to_upper_camel_case(&comp.identifier)),
         fields,                                                                   //特征列表
         properties: temp_converter.convert_properties(ComponentRef::Type(&comp)), // 属性列表，TODO:这个似乎没有作用，因为目前的例子中进程没有属性
         generics: Vec::new(),
