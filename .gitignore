@@ -19,6 +19,7 @@ node_modules/
 
 compiler/generate_test/
 compiler/generate/
+compiler/clippy.log
 
 *.zip
 *.7z
