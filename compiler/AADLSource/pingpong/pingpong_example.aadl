@@ -48,7 +48,8 @@ public
     CPU : processor CPU.Impl;
 
   properties
-     Actual_processor_binding => reference (CPU) applies to pingpong_proc;
+    Actual_processor_binding => 
+      reference (CPU) applies to pingpong_proc;
   end PingPong_sys.Impl;
 
 
@@ -134,6 +135,7 @@ properties
   Period                             => 10 Ms;
   Priority                           => 1;
   deadline                           => 10 Ms;
+  Urgency => 10 applies to data_r;
 end pong_thr.Impl;
 
 end PING_Local;

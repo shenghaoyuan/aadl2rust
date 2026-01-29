@@ -1,0 +1,132 @@
+-- 系统功能：演示子程序调用机制和数据端口通信的基本模式
+--   - sender线程：周期性线程（周期1秒），通过子程序spg_run_sender产生64位整数数据并输出
+--   - receiver线程：偶发线程，通过数据端口接收数据，并通过子程序spg_run_receiver处理数据
+
+-- 系统特点：
+-- 1. 专注于测试子程序调用机制，线程功能通过独立的子程序实现而非内联代码
+-- 2. 使用数据端口（data port）进行线程间通信，数据在端口上持久存在
+-- 3. 通过明确的子程序调用连接，将AADL端口与子程序参数直接关联
+
+package testsubprogram
+public 
+	with Base_Types;
+	-- with HAMR;
+
+	-- subprogram add_uint32
+	-- 	features
+	-- 		A: in parameter Base_Types::Unsigned_32;
+	-- 		B: in parameter Base_Types::Unsigned_32;
+	-- 		result: out parameter Base_Types::Unsigned_32;
+	-- end add_uint32;
+
+	-- subprogram subtract_uint32
+	-- 	features
+	-- 		A: in parameter Base_Types::Unsigned_32;
+	-- 		B: in parameter Base_Types::Unsigned_32;
+	-- 		result: out parameter Base_Types::Unsigned_32;
+	-- end subtract_uint32;
+
+	-- subprogram group operations_interface
+	-- 	features
+	-- 		add: provides subprogram access add_uint32;
+	-- 		subtract: provides subprogram access subtract_uint32;  
+	-- end operations_interface;
+	subprogram spg_run_sender
+		features
+			result: out parameter Base_Types::Integer_64;
+		properties
+			Source_Language => (C);
+			Source_Text => ("sender.c");
+			Source_Name => "run_sender";
+	end spg_run_sender;
+
+	subprogram spg_run_receiver
+		features
+			input: in parameter Base_Types::Integer_64;
+		properties
+			Source_Language => (C);
+			Source_Text => ("sender.c");
+			Source_Name => "run_receiver";
+	end spg_run_receiver;
+
+	thread sender
+		features
+			-- operations: requires subprogram group access operations_interface;
+			data_out: out data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 1 sec;
+	end sender;
+
+	thread implementation sender.impl
+		-- properties 
+		-- 	Source_Text => ("behavior_code/components/sender/src/sender.c");
+		-- 	Initialize_Entrypoint_Source_Text => "sender_init";
+		-- 	Compute_Entrypoint_Source_Text => "run_sender";
+		calls 
+			Mycalls: {
+				Call_Spg : subprogram spg_run_sender;
+			};
+		connections
+			c1 : parameter Call_Spg.result -> data_out;
+	end sender.impl;
+ 
+	thread receiver
+		features
+			-- operations: provides subprogram group access operations_interface;
+			data_in: in data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			Period => 1 sec;
+	end receiver;
+
+	thread implementation receiver.impl
+		-- properties 
+		-- 	Source_Text => ("behavior_code/components/receiver/src/receiver.c");
+		calls 
+			Mycalls: {
+				Call_Spg : subprogram spg_run_receiver;
+			};
+		connections
+			c2 : parameter data_in -> Call_Spg.input;
+	end receiver.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			source_inst: thread sender.impl;
+			destination_inst: thread receiver.impl;
+			-- subgroup: subprogram group operations_interface;
+			-- sub1: subprogram add_uint32;
+			-- sub2: subprogram subtract_uint32;
+		connections
+			-- source_to_destination :
+			-- 	subprogram group access
+			-- 		source_inst.operations -> destination_inst.operations;
+			conn_1 : port source_inst.data_out -> destination_inst.data_in;
+	end top_process.impl;
+
+	system top
+	end top;
+	
+	system implementation top.impl
+		subcomponents
+			proc : processor proc.impl;
+			testsubprogram: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to testsubprogram;
+		-- 	HAMR::Platform => (seL4_TB);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};			
+	end top.impl;
+
+end testsubprogram;

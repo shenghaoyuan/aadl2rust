@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
@@ -782,7 +783,8 @@ fn create_sporadic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
 
     // 检查是否有需要端口数据的子程序调用
     let subprogram_calls = extract_subprogram_calls(temp_converter, impl_);
-    let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send);
+    println!("subprogram_calls{:?}",subprogram_calls);
+    let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send); //标志位，是否有需要传入数据的子程序
 
     // 在循环外定义 events 变量
     stmts.push(Statement::Let(LetStmt {

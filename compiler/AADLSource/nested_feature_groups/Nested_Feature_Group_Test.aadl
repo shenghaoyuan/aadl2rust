@@ -1,0 +1,94 @@
+-- 系统功能：演示嵌套特征组的使用模式和复杂数据结构传输
+--   - 线程Producer：周期性线程（周期1秒），产生两个整数参数（param1和param2）并发送
+--   - 线程Calculator：偶发线程，接收两个参数进行计算，返回Results类型的结果数据
+
+-- 系统特点：
+-- 1. 使用复杂数据结构Results，包含两个操作数（opA、opB）和一个计算结果（results）
+-- 2. 线程间形成双向通信模式：Producer发送参数，Calculator返回计算结果
+-- 3. 展示了嵌套特征组（feature group）的设计模式，可通过特征组组织相关端口
+-- 4. 注释中包含了特征组反转（inverse）的示例，用于匹配连接方向
+-- 5. 使用事件数据端口（event data port）进行数据传输和事件触发
+
+package Nested_Feature_Group_Test
+public
+	with Base_Types;
+
+	data Results
+	end Results;
+
+	data implementation Results.impl
+		subcomponents
+			opA: data Base_Types::Integer_32;
+			opB: data Base_Types::Integer_32;
+			results: data Base_Types::Integer_32;
+	end Results.impl;
+
+	-- feature group fg_A
+	-- 	features
+	-- 		nested_B: feature group fg_B;
+	-- 		nested_C: feature group fg_C;
+	-- end fg_A;
+
+	-- feature group fg_B
+	-- 	features
+	-- 		param1: out event data port Base_Types::Integer_32;
+	-- 		param2: out event data port Base_Types::Integer_32;
+	-- end fg_B;
+
+	-- feature group fg_C
+	-- 	features
+	-- 		result: in event data port Results.impl;
+	-- end fg_C;
+
+	----------------------------------------------
+	system S
+	end S;
+
+	system implementation S.impl
+		subcomponents
+			p: process P.impl;
+	end S.impl;
+
+	process P
+	end P;
+
+	process implementation P.impl
+		subcomponents
+			prod: thread Producer.impl;
+			calc: thread Calculator.impl;
+		connections
+			c1: port prod.param1 -> calc.param1;
+			c2: port prod.param2 -> calc.param2;
+			c3: port calc.result -> prod.result;
+	end P.impl;
+
+	----------------------------------------------
+	thread Producer
+		features
+			-- fg_A: feature group fg_A;
+			param1: out event data port Base_Types::Integer_32;
+			param2: out event data port Base_Types::Integer_32;
+			result: in event data port Results;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 1 sec;
+	end Producer;
+
+	thread implementation Producer.impl
+	end Producer.impl;
+
+	----------------------------------------------
+	thread Calculator
+		features
+			-- fg_A: feature group inverse of fg_A;
+			param1: in event data port Base_Types::Integer_32;
+			param2: in event data port Base_Types::Integer_32;
+			result: out event data port Results;
+		properties
+			Dispatch_Protocol => Sporadic;
+
+	end Calculator;
+
+	thread implementation Calculator.impl
+	end Calculator.impl;
+end Nested_Feature_Group_Test;

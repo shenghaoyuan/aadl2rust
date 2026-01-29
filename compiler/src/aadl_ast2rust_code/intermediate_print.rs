@@ -1,4 +1,4 @@
-// src/ir/intermediate_print.rs
+#![allow(clippy::all)]
 use super::intermediate_ast::*;
 use chrono::Local;
 

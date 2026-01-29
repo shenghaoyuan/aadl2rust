@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 #[allow(dead_code)]
 pub mod aadl_ast_cj {
 

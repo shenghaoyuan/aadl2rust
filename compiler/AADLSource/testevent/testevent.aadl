@@ -1,0 +1,84 @@
+-- 同testdpmon案例（端口：纯事件端口 event port）
+package testevent
+public
+	-- with HAMR;
+		
+	thread emitter
+		features
+			e: out event port;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Initialize_Entrypoint_Source_Text => "testevent_emitter_component_init";
+			-- Source_Text => ("behavior_code/components/Emitter/src/emitter.c");
+			-- Compute_Entrypoint_Source_Text => "run_emitter";
+	end emitter;
+	
+	thread implementation emitter.impl
+	calls 
+	Mycalls: {
+		A_Spg : subprogram C_A;
+	};
+	end emitter.impl;
+
+	thread consumer
+		features
+			s: in event port;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Initialize_Entrypoint_Source_Text => "testevent_consumer_component_init";
+			-- Source_Text => ("behavior_code/components/Consumer/src/consumer.c");
+	end consumer;
+	
+	thread implementation consumer.impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_B;
+	};
+	end consumer.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			src: thread emitter.impl;
+			snk: thread consumer.impl;
+		connections
+			conn1: port src.e -> snk.s;
+	end top_process.impl;
+
+	system top
+	end top;
+	
+	system implementation top.impl
+		subcomponents
+			proc: processor proc.impl;
+			testevent: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to testevent;
+		-- 	HAMR::Platform => (seL4_TB, seL4_Only);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};
+	end top.impl;
+	
+	subprogram C_A
+		properties
+			source_language => (C);
+			source_name => "run_emitter";
+			source_text     => ("emitter.c");
+	end C_A;
+
+	subprogram C_B
+		properties
+			source_language => (C);
+			source_name => "testevent_consumer_s_event_handler";
+			source_text     => ("emitter.c");
+	end C_B;
+end testevent;

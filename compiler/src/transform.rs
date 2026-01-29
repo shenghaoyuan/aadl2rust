@@ -1,5 +1,5 @@
 //pest解析后的结果转换为aadlAst
-
+#![allow(clippy::all)]
 use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};

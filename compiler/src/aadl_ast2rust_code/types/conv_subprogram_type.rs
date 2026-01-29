@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;
@@ -130,6 +131,7 @@ fn generate_c_function_wrapper(
                                         let data_types = find_data_type_from_implementation(
                                             data_component_name,
                                             package,
+                                            temp_converter,
                                         );
                                         // 将所有数据类型添加到导入列表中
                                         for data_type in &data_types {
@@ -325,7 +327,7 @@ fn is_rust_primitive_type(type_name: &str) -> bool {
 
 /// 从数据组件实现名称中查找具体的数据类型
 /// 例如：从 POS.Impl 中找到 Field : data POS_Internal_Type 中的 POS_Internal_Type
-fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Vec<String> {
+fn find_data_type_from_implementation(impl_name: &str, package: &Package, temp_converter:&AadlConverter) -> Vec<String> {
     let mut data_types = Vec::new();
 
     // 在 Package 中查找组件实现
@@ -345,7 +347,14 @@ fn find_data_type_from_implementation(impl_name: &str, package: &Package) -> Vec
                                     UniqueComponentClassifierReference::Implementation(unirf),
                                 ) = &sub.classifier
                                 {
-                                    data_types.push(unirf.implementation_name.type_identifier.clone());
+                                    // 先去查找type_mappings中是否有这个类型
+                                    if let Some(type_name) = temp_converter.type_mappings.get(&unirf.implementation_name.type_identifier.to_lowercase()) {
+                                        if let Type::Named(type_name_str) = type_name {
+                                            data_types.push(type_name_str.clone());
+                                        }
+                                    } else {
+                                        data_types.push(unirf.implementation_name.type_identifier.clone());
+                                    }
                                 }
                             }
                         }

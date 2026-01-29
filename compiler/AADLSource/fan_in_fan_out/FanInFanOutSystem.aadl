@@ -1,0 +1,100 @@
+-- 系统功能概述：
+-- 这是一个扇入扇出（Fan-In/Fan-Out）通信模式测试案例，专门用于测试多对一和一对多的数据流连接模式。
+-- 系统包含两个独立的进程，分别展示了扇入（多个生产者到单个消费者）和扇出（单个生产者到多个消费者）两种通信模式。
+--
+-- 线程功能：
+-- 1. FanInProc进程中的线程：
+--    - producer1和producer2线程（周期1000ms）：两个独立的生产者线程，分别产生整数数据
+--    - consumer线程（偶发1000ms）：同时接收两个生产者的数据，实现扇入（Fan-In）模式
+-- 2. FanOutProc进程中的线程：
+--    - producer线程（周期1000ms）：单个生产者线程，产生整数数据
+--    - consumer1和consumer2线程（偶发1000ms）：两个消费者线程，同时接收同一生产者的数据，实现扇出（Fan-Out）模式
+--
+-- 系统特点：
+-- 1. 这是专门的通信模式测试案例，聚焦于扇入和扇出这两种典型的并行通信模式
+-- 2. 扇入（Fan-In）模式：多个数据源汇聚到单个接收器，适用于数据融合或集中处理场景
+-- 3. 扇出（Fan-Out）模式：单个数据源分发到多个接收器，适用于广播或数据分发场景
+
+package FanInFanOutSystem
+public
+	with Base_Types;
+	
+	--===========================================================================================================
+	--
+	--   T o p - L e v e l     S y s t e m
+	--
+	--   
+	--===========================================================================================================
+	
+	system Sys
+	end Sys;
+		
+	system implementation Sys.i
+	  subcomponents
+	    fanIn: process FanInProc.i;
+	    fanOut: process FanOutProc.i;
+	end Sys.i;
+	
+	--===========================================================================================================
+	--
+	--   P r o c e s s e s
+	--
+	--===========================================================================================================
+	
+	process FanInProc
+	end FanInProc;
+		
+	process implementation FanInProc.i
+	  subcomponents
+	    producer1: thread ProducerThr.i;
+	    producer2: thread ProducerThr.i;
+	    consumer: thread ConsumerThr.i;
+	  connections
+        conn1: port producer1.myInteger -> consumer.myInteger;
+        conn2: port producer2.myInteger -> consumer.myInteger;
+	end FanInProc.i;
+	
+	process FanOutProc
+	end FanOutProc;
+		
+	process implementation FanOutProc.i
+	  subcomponents
+	    producer: thread ProducerThr.i;
+	    consumer1: thread ConsumerThr.i;
+	    consumer2: thread ConsumerThr.i;
+	  connections
+        conn1: port producer.myInteger -> consumer1.myInteger;
+        conn2: port producer.myInteger -> consumer2.myInteger;
+	end FanOutProc.i;
+	
+	--===========================================================================================================
+	--
+	--   T h r e a d s
+	--
+	--===========================================================================================================
+	
+	thread ProducerThr
+	  features
+	  -- ==== OUTPUTS ====	
+	    myInteger : out event data port Base_Types::Integer;
+	  properties
+	    Dispatch_Protocol => Periodic;
+	    Period => 1000ms;
+	end ProducerThr;
+	
+	thread implementation ProducerThr.i
+	end ProducerThr.i;
+	
+	thread ConsumerThr
+	  features
+	  -- ==== INPUTS ====	
+	    myInteger : in event data port Base_Types::Integer;
+	  properties
+	   Dispatch_Protocol => Sporadic;
+	   Period => 1000ms;
+	end ConsumerThr;
+	
+	thread implementation ConsumerThr.i
+	end ConsumerThr.i;
+	
+end FanInFanOutSystem;

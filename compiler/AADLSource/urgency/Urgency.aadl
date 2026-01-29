@@ -1,0 +1,169 @@
+-- 系统功能：演示事件端口紧急度属性和触发条件配置
+--   - 线程Producer：周期性线程（周期5秒），产生三个不同紧急度的事件（o1、o2、o3）
+--   - 线程Consumer_Default：偶发线程，默认接收所有三个事件（无指定触发条件）
+--   - 线程Consumer_Trigger_1_2：偶发线程，仅由in1_urgencyMin和in2两个事件触发
+--   - 线程Consumer_Trigger_2_3：偶发线程，仅由in2和in3_urgencyMax两个事件触发
+--   - 线程Consumer_Trigger_1_3：偶发线程，仅由in1_urgencyMin和in3_urgencyMax两个事件触发
+
+-- 系统特点：
+-- 1. 专门测试事件端口紧急度（Urgency）属性和触发条件（Dispatch_Trigger）配置
+-- 2. 使用注释展示了不同紧急度配置：in1_urgencyMin（最低紧急度0）、in3_urgencyMax（最高紧急度）
+-- 3. 一个生产者同时向四个不同类型的消费者发送事件，对比不同触发条件的效果
+-- 4. 所有消费者线程都有相同的端口结构但不同的触发条件配置
+-- 5. 通过不同触发条件组合测试事件驱动的调度行为
+
+package Urgency
+public
+	system Sys
+	end Sys;
+
+	system implementation Sys.impl
+		subcomponents
+			p: process Proc.impl;
+	end Sys.impl;
+
+	process Proc
+	end Proc;
+
+	process implementation Proc.impl
+		subcomponents
+			producer: thread Producer.impl;
+
+			-- consumer_default: thread Consumer.impl;
+			consumer_default: thread Consumer_Default.impl;
+
+			-- consumer_dispatch_trigger_1_2x: thread Consumer.impl { 
+			-- 	Dispatch_Trigger => (reference (in1_urgencyMin), 
+			-- 		                 reference (in2));
+			-- };
+			-- consumer_dispatch_trigger_2_3x: thread Consumer.impl {
+			--     Dispatch_Trigger => (reference (in2), 
+			--     	                 reference (in3_urgencyMax));
+			-- };
+ 			-- consumer_dispatch_trigger_1_3x: thread Consumer.impl {
+			--     Dispatch_Trigger => (reference (in1_urgencyMin), 
+			--     	                 reference (in3_urgencyMax));
+			-- };
+			consumer_1_2: thread Consumer_Trigger_1_2.impl;
+			
+			consumer_2_3: thread Consumer_Trigger_2_3.impl;
+ 			
+			consumer_1_3: thread Consumer_Trigger_1_3.impl;
+		connections
+			c0: port producer.o1 -> consumer_default.in1_urgencyMin;
+			c1: port producer.o2 -> consumer_default.in2;
+			c2: port producer.o3 -> consumer_default.in3_urgencyMax;
+			
+			-- c3: port producer.o1 -> consumer_dispatch_trigger_1_2x.in1_urgencyMin;
+			-- c4: port producer.o2 -> consumer_dispatch_trigger_1_2x.in2;
+			-- c5: port producer.o3 -> consumer_dispatch_trigger_1_2x.in3_urgencyMax;
+			c3: port producer.o1 -> consumer_1_2.in1_urgencyMin;
+			c4: port producer.o2 -> consumer_1_2.in2;
+			c5: port producer.o3 -> consumer_1_2.in3_urgencyMax;
+
+			-- c6: port producer.o1 -> consumer_dispatch_trigger_2_3x.in1_urgencyMin;
+			-- c7: port producer.o2 -> consumer_dispatch_trigger_2_3x.in2;
+			-- c8: port producer.o3 -> consumer_dispatch_trigger_2_3x.in3_urgencyMax;
+			c6: port producer.o1 -> consumer_2_3.in1_urgencyMin;
+			c7: port producer.o2 -> consumer_2_3.in2;
+			c8: port producer.o3 -> consumer_2_3.in3_urgencyMax;
+			
+			-- c9: port producer.o1 -> consumer_dispatch_trigger_1_3x.in1_urgencyMin;
+			-- c10: port producer.o2 -> consumer_dispatch_trigger_1_3x.in2;
+			-- c11: port producer.o3 -> consumer_dispatch_trigger_1_3x.in3_urgencyMax;
+			c9: port producer.o1 -> consumer_1_3.in1_urgencyMin;
+			c10: port producer.o2 -> consumer_1_3.in2;
+			c11: port producer.o3 -> consumer_1_3.in3_urgencyMax;				
+	end Proc.impl;
+
+	thread Producer
+		features
+			o1: out event port;
+			o2: out event port;
+			o3: out event port;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 5 sec;
+	end Producer;
+
+	thread implementation Producer.impl
+	end Producer.impl;
+
+	-- thread Consumer
+	-- 	features
+	-- 		in1_urgencyMin: in event port { Urgency => 0; };
+	-- 		in2: in event port;
+	-- 		in3_urgencyMax: in event port { Urgency => AADL_Project::Max_Urgency; }; -- 12 
+			
+	-- 		out1 : out event port;
+	-- 		out2 : out event port;
+	-- 		out3 : out event port;
+	-- 	properties
+	-- 		Dispatch_Protocol => Sporadic;
+	-- end Consumer;
+
+	-- thread implementation Consumer.impl
+	-- end Consumer.impl;
+	thread Consumer_Default
+		features
+			in1_urgencyMin: in event port;
+			in2: in event port;
+			in3_urgencyMax: in event port;
+			out1 : out event port;
+			out2 : out event port;
+			out3 : out event port;
+		properties
+			Dispatch_Protocol => Sporadic;
+	end Consumer_Default;
+
+	thread implementation Consumer_Default.impl
+	end Consumer_Default.impl;
+
+	thread Consumer_Trigger_1_2
+		features
+			in1_urgencyMin: in event port;
+			in2: in event port;
+			in3_urgencyMax: in event port;
+			out1 : out event port;
+			out2 : out event port;
+			out3 : out event port;
+		properties
+			Dispatch_Protocol => Sporadic;
+			Dispatch_Trigger => (in1_urgencyMin, in2);
+	end Consumer_Trigger_1_2;
+
+	thread implementation Consumer_Trigger_1_2.impl
+	end Consumer_Trigger_1_2.impl;
+
+	thread Consumer_Trigger_2_3
+		features
+			in1_urgencyMin: in event port;
+			in2: in event port;
+			in3_urgencyMax: in event port;
+			out1 : out event port;
+			out2 : out event port;
+			out3 : out event port;
+		properties
+			Dispatch_Protocol => Sporadic;
+			Dispatch_Trigger => (in2, in3_urgencyMax);
+	end Consumer_Trigger_2_3;
+
+	thread implementation Consumer_Trigger_2_3.impl
+	end Consumer_Trigger_2_3.impl;
+
+	thread Consumer_Trigger_1_3
+		features
+			in1_urgencyMin: in event port;
+			in2: in event port;
+			in3_urgencyMax: in event port;
+			out1 : out event port;
+			out2 : out event port;
+			out3 : out event port;
+		properties
+			Dispatch_Protocol => Sporadic;
+			Dispatch_Trigger => (in1_urgencyMin, in3_urgencyMax);
+	end Consumer_Trigger_1_3;
+
+	thread implementation Consumer_Trigger_1_3.impl
+	end Consumer_Trigger_1_3.impl;
+end Urgency;

@@ -1,6 +1,6 @@
 // src/aadlAst2rustCode/converter_annex.rs
 // Behavior Annex 代码生成器
-
+#![allow(clippy::all)]
 use super::intermediate_ast::*;
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;

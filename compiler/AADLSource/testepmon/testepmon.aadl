@@ -1,0 +1,94 @@
+-- 同testdpmon案例（端口：带事件的数据端口 event data port）
+package testepmon
+public
+	-- with HAMR;
+	with Base_Types;
+	
+	thread emitter_t
+		features
+			enq: out event data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;			
+			-- Source_Text => ("emitter.c");
+			-- Initialize_Entrypoint_Source_Text => "testepmon_emitter_component_init";
+			-- Compute_Entrypoint_Source_Text => "run_emitter";
+	end emitter_t;
+	
+	thread implementation emitter_t.impl
+	calls 
+	Mycalls: {
+		A_Spg : subprogram C_A;
+	};
+	connections
+		cnx_a : parameter A_Spg.out_param -> enq;
+	end emitter_t.impl;
+	
+	thread consumer_t
+		features
+			deq: in event data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("emitter.c");
+			-- Initialize_Entrypoint_Source_Text => "testepmon_consumer_component_init";
+	end consumer_t;
+	
+	thread implementation consumer_t.impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_B;
+	};
+	connections
+		cnx_b : parameter deq -> B_Spg.in_param;
+	end consumer_t.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			src: thread emitter_t.impl;
+			dest: thread consumer_t.impl;
+		connections
+ 			conn1: port src.enq -> dest.deq;
+	end top_process.impl;
+
+	system top
+	end top;
+	
+	system implementation top.impl
+		subcomponents
+			proc: processor proc.impl;
+			testepmon: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to testepmon;
+		-- 	HAMR::Platform => (seL4_TB, seL4_Only);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};
+	end top.impl;
+
+	subprogram C_A
+		features
+			out_param : out parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			-- source_name => "testdpmon_source_component_init";
+			source_name => "run_emitter";
+			source_text     => ("emitter.c");
+	end C_A;
+
+	subprogram C_B
+		features
+			in_param : in parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			source_name => "testepmon_consumer_s_event_handler";
+			source_text     => ("emitter.c");
+	end C_B;
+end testepmon;

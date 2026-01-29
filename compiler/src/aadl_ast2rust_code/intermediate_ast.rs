@@ -1,5 +1,5 @@
 // src/ir/intermediate_ast.rs
-
+#![allow(clippy::all)]
 /// 轻量级Rust抽象语法树（模块级）
 #[derive(Debug,Clone)]
 pub struct RustModule {

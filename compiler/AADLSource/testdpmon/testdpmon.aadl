@@ -1,0 +1,101 @@
+-- 系统功能：演示纯数据端口通信与监视机制
+--   - 线程source_t：偶发线程，通过子程序C_A产生64位整数数据并写入数据端口
+--   - 线程destination_t：偶发线程，通过子程序C_B从数据端口读取并处理64位整数数据
+
+-- 系统特点：
+-- 1. 使用纯数据端口（data port）而非事件数据端口或事件端口进行通信
+-- 2. 两个线程都是偶发调度（Sporadic），通过子程序调用连接具体C代码实现
+
+package testdpmon
+public
+	with Base_Types;
+	-- with HAMR;
+
+	thread source_t
+		features
+			write_port: out data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("source.c");
+			-- Initialize_Entrypoint_Source_Text => "testdpmon_source_component_init";
+			-- Compute_Entrypoint_Source_Text => "run_sender";
+	end source_t;
+	
+	thread implementation source_t.impl
+	calls 
+	Mycalls: {
+		A_Spg : subprogram C_A;
+	};
+	connections
+		cnx_a : parameter A_Spg.out_param -> write_port;
+	end source_t.impl;
+		
+	thread destination_t
+		features
+			read_port: in data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("source.c");
+			-- Compute_Entrypoint_Source_Text => "run_receiver";
+	end destination_t;
+	
+	thread implementation destination_t.impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_B;
+	};
+	connections
+		cnx_b : parameter read_port -> B_Spg.in_param;
+	end destination_t.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			src: thread source_t.impl;
+			dest: thread destination_t.impl;
+		connections
+ 			conn1: port src.write_port -> dest.read_port;
+	end top_process.impl;
+
+	system top
+	end top;
+	
+	system implementation top.impl
+		subcomponents
+			proc: processor proc.impl;
+			testdpmon: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to testdpmon;
+			-- HAMR::PLatform => (seL4_TB, seL4_Only);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};
+	end top.impl;
+	
+	subprogram C_A
+		features
+			out_param : out parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			-- source_name => "testdpmon_source_component_init";
+			source_name => "run_sender";
+			source_text     => ("source.c");
+	end C_A;
+
+	subprogram C_B
+		features
+			in_param : in parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			source_name => "run_receiver";
+			source_text     => ("source.c");
+	end C_B;
+end testdpmon;

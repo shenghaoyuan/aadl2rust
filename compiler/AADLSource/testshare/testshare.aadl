@@ -1,0 +1,113 @@
+-- 系统功能：演示线程间数据共享访问机制
+--   - 线程publisher：发布者线程，拥有对共享数据Thing_t的访问权限，负责写入数据
+--   - 线程subscriber：订阅者线程，拥有对同一共享数据Thing_t的访问权限，负责读取数据
+
+-- 系统特点：
+-- 1. 使用数据访问连接（data access connection）而非端口连接，实现内存共享通信
+-- 2. 共享数据结构Thing_t定义为结构体，包含四个8位整数字段（lepht、right、top、bottom）
+-- 3. 两个线程通过数据访问特征（requires data access）声明对共享数据的访问需求
+
+package testshare
+public
+	-- with HAMR;
+	-- with SB_Sys;
+	with Base_Types;
+	
+	data Thing_t
+	properties
+    	Data_Model::Data_Representation => Struct;
+	end Thing_t;
+
+	data implementation Thing_t.impl
+		subcomponents
+			lepht: data Base_Types::Integer_8;
+			right: data Base_Types::Integer_8;
+			top: data Base_Types::Integer_8;
+			bottom: data Base_Types::Integer_8;
+	end Thing_t.impl;
+	
+	subprogram spg_run_publisher
+		properties
+			source_language => (C);
+			source_text => ("testshare.c");
+			source_name => "run_publisher";
+	end spg_run_publisher;
+
+	subprogram spg_run_subscriber
+		properties
+			source_language => (C);
+			source_text => ("testshare.c");
+			source_name => "run_subscriber";
+	end spg_run_subscriber;
+
+	thread publisher
+		features
+			b1: requires data access Thing_t;
+	    -- properties
+        --     Initialize_Entrypoint_Source_Text => "testshare_publisher_component_init";
+        --     Source_Text => ("testshare.c");
+        --     Compute_Entrypoint_Source_Text => "run_publisher";
+	end publisher;
+
+	thread implementation publisher.impl
+	calls
+	MyCall: {
+		P : subprogram spg_run_publisher;
+	};
+	end publisher.impl;
+	
+	thread subscriber
+		features
+			b2: requires data access Thing_t;
+	    -- properties
+        --     Initialize_Entrypoint_Source_Text => "testshare_subscriber_component_init";
+        --     Source_Text => ("testshare.c");
+        --     Compute_Entrypoint_Source_Text => "run_subscriber";
+	end subscriber;
+
+	thread implementation subscriber.impl
+	calls
+	MyCall: {
+		Q : subprogram spg_run_subscriber;
+	};
+	end subscriber.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			publisher_inst: thread publisher.impl;
+			subscriber_inst: thread subscriber.impl;
+			
+			-- shared: data Thing_t.impl {
+			-- 	SB_SYS::CAmkES_Owner_Thread => "testshare::publisher.impl";
+			-- };
+			shared: data Thing_t;
+		connections
+			conn2: data access shared -> subscriber_inst.b2;
+			conn1: data access shared -> publisher_inst.b1;
+
+	end top_process.impl;
+
+	system top
+	end top;
+	
+	system implementation top.impl
+		subcomponents
+			proc: processor proc.impl;
+			testshare: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to testshare;
+		-- 	HAMR::Platform => (seL4_TB);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};			
+	end top.impl;	
+end testshare;

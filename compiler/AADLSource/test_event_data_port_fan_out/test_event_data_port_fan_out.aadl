@@ -1,0 +1,180 @@
+-- 系统功能：演示事件数据端口的一对多扇出通信，并测试不同队列大小的消费者行为
+--   - emitter线程：周期性线程（周期2秒），产生64位整数数据并通过事件数据端口广播
+--   - consumer_queue_default线程：偶发线程，默认队列大小，接收并处理数据
+--   - consumer_queue_2_A和consumer_queue_2_B线程：偶发线程，队列大小为2，接收并处理数据
+--   - consumer_queue_5线程：偶发线程，队列大小为5，接收并处理数据
+
+-- 系统特点：
+-- 1. 专门测试事件数据端口的扇出通信模式，单个生产者向四个不同队列配置的消费者广播数据
+-- 2. 消费者线程配置了不同的队列大小（默认、2、5），测试事件处理能力和缓冲机制
+-- 3. 生产者周期较长（2秒），便于观察事件分发和不同队列大小的影响
+-- 4. 所有线程在同一进程中，通过处理器绑定确保在同一处理器上执行
+-- 5. 事件数据端口在数据传递的同时触发事件，数据被消费后自动清除
+
+package test_event_data_port_fan_out
+public
+	-- with HAMR;
+	with Base_Types;
+
+	subprogram C_A
+	features
+		out_param : out parameter Base_Types::Integer_64;
+	properties
+		source_language => (C);
+		source_name => "run_emitter";
+		source_text     => ("emitter.c");
+	end C_A;
+
+	subprogram C_B
+		features
+			in_param_b : in parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			source_name => "test_event_data_port_consumer_s_event_handler";
+			source_text     => ("emitter.c");
+	end C_B;
+
+	subprogram C_C
+	features
+		in_param_c : in parameter Base_Types::Integer_64;
+	properties
+		source_language => (C);
+		source_name => "test_event_data_port_consumer_s_event_handler";
+		source_text     => ("emitter.c");
+	end C_C;
+
+	subprogram C_D
+		features
+			in_param_d : in parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			source_name => "test_event_data_port_consumer_s_event_handler";
+			source_text     => ("emitter.c");
+	end C_D;
+
+	thread emitter
+		features
+			enq: out event data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 2000 ms;
+			-- Source_Text => ("behavior_code/components/emitter/src/emitter.c");
+			-- Initialize_Entrypoint_Source_Text => "test_event_data_port_emitter_component_init";
+			-- Compute_Entrypoint_Source_Text => "run_emitter";
+	end emitter;
+
+	thread implementation emitter.impl
+	calls 
+	Mycalls: {
+		A_Spg : subprogram C_A;
+	};
+	connections
+		cnx_a : parameter A_Spg.out_param -> enq;
+	end emitter.impl;
+
+	thread consumer_queue_default
+		features
+			-- deq: in event data port Base_Types::Integer_8 {
+			-- 	Compute_Entrypoint_Source_Text => "test_event_data_port_consumer_s_event_handler";
+			-- };
+			deq: in event data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("behavior_code/components/consumer/src/consumer_queue_default.c");
+			-- Initialize_Entrypoint_Source_Text => "test_event_data_port_consumer_component_init";
+	end consumer_queue_default;
+
+	thread implementation consumer_queue_default.impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_B;
+	};
+	connections
+		cnx_b : parameter deq -> B_Spg.in_param_b;
+	end consumer_queue_default.impl;
+
+	thread consumer_queue_2
+		features
+			-- deq: in event data port Base_Types::Integer_8 {
+			-- 	Compute_Entrypoint_Source_Text => "test_event_data_port_consumer_s_event_handler";
+			-- 	Queue_Size => 2;
+			-- };
+			deq: in event data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("behavior_code/components/consumer/src/consumer_queue_2.c");
+			-- Initialize_Entrypoint_Source_Text => "test_event_data_port_consumer_component_init";
+			Queue_Size => 2;
+	end consumer_queue_2;
+
+	thread implementation consumer_queue_2.impl
+	calls 
+	Mycalls: {
+		C_Spg : subprogram C_C;
+	};
+	connections
+		cnx_c : parameter deq -> C_Spg.in_param_c;
+	end consumer_queue_2.impl;
+
+	thread consumer_queue_5
+		features
+			-- deq: in event data port Base_Types::Integer_8 {
+			-- 	Compute_Entrypoint_Source_Text => "test_event_data_port_consumer_s_event_handler";
+			-- 	Queue_Size => 5;
+			-- };
+			deq: in event data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("behavior_code/components/consumer/src/consumer_queue_5.c");
+			-- Initialize_Entrypoint_Source_Text => "test_event_data_port_consumer_component_init";
+			Queue_Size => 5;
+	end consumer_queue_5;
+
+	thread implementation consumer_queue_5.impl
+	calls 
+	Mycalls: {
+		D_Spg : subprogram C_D;
+	};
+	connections
+		cnx_d : parameter deq -> D_Spg.in_param_d;
+	end consumer_queue_5.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			src: thread emitter.impl;
+			snk_default: thread consumer_queue_default.impl;
+			snk_2_A: thread consumer_queue_2.impl;
+			snk_2_B: thread consumer_queue_2.impl;
+			snk_5: thread consumer_queue_5.impl;
+		connections
+			conn1: port src.enq -> snk_default.deq;
+			conn2: port src.enq -> snk_2_A.deq;
+			conn3: port src.enq -> snk_2_B.deq;
+			conn4: port src.enq -> snk_5.deq;
+	end top_process.impl;
+
+	system top
+	end top;
+
+	system implementation top.impl
+		subcomponents
+			proc: processor proc.impl;
+			test_event_data_port: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to test_event_data_port;
+		-- 	HAMR::Platform => (seL4_TB, seL4_Only);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};
+	end top.impl;
+
+end test_event_data_port_fan_out;

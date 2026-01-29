@@ -1,4 +1,5 @@
 // aadlAST2rustAST
+#![allow(clippy::all)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
 
@@ -10,7 +11,7 @@ use crate::aadl_ast2rust_code::implementations::*;
 
 // AADL到Rust中间表示的转换器
 pub struct AadlConverter {
-    type_mappings: HashMap<String, Type>, //初始是根据AADL库文件Base_Types.aadl，将AADL Data组件名称映射到对应的Rust类型，后续会根据AADL模型文件，添加新的映射关系
+    pub type_mappings: HashMap<String, Type>, //初始是根据AADL库文件Base_Types.aadl，将AADL Data组件名称映射到对应的Rust类型，后续会根据AADL模型文件，添加新的映射关系
 
     pub component_types: HashMap<String, ComponentType>, // 存储组件类型信息，（为了有些情况下，需要在组件实现中，根据组件类型来获取端口信息）
     pub annex_converter: AnnexConverter, // Behavior Annex 转换器
@@ -420,6 +421,7 @@ impl AadlConverter {
                 ref type_ref,
             )) => {
                 // 优先查找我们所自定义类型映射规则
+                // println!("cjcjcjcj:{:?}",self.type_mappings);
                 self.type_mappings
                     .get(&type_ref.implementation_name.type_identifier.to_lowercase())
                     .cloned()

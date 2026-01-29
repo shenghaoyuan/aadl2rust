@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};

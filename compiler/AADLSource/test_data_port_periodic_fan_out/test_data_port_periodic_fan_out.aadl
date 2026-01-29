@@ -1,0 +1,109 @@
+-- 系统功能：演示一对多扇出（Fan-Out）数据分发模式
+--   - source_t线程：周期性线程（周期1秒），产生64位整数数据
+--   - dest_A线程：周期性线程（周期2秒），接收并处理数据
+--   - dest_B线程：周期性线程（周期2秒），接收并处理相同的数据
+
+-- 系统特点：
+-- 1. 专门测试数据端口的扇出通信模式，单个生产者向多个消费者广播数据
+-- 2. 所有线程都是周期性调度，但消费者周期（2秒）是生产者周期（1秒）的两倍
+-- 3. 两个消费者线程具有相同的实现，展示数据复制分发机制
+-- 4. 所有线程在同一进程中，共享进程地址空间，通过处理器绑定确保在同一处理器上执行
+
+package test_data_port_periodic_fan_out
+public
+	-- with HAMR;
+	with Base_Types;
+	
+	subprogram C_A
+	features
+		out_param : out parameter Base_Types::Integer_64;
+	properties
+		source_language => (C);
+		source_name => "test_data_port_periodic_source_component_time_triggered";
+		source_text     => ("source.c");
+	end C_A;
+
+	subprogram C_B
+		features
+			in_param : in parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			source_name => "test_data_port_periodic_destination_component_time_triggered";
+			source_text     => ("source.c");
+	end C_B;
+
+	thread source_t
+		features
+			write_port: out data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 1sec;
+			-- Source_Text => ("behavior_code/components/source/src/source.c");
+			-- Initialize_Entrypoint_Source_Text => "test_data_port_periodic_source_component_init";
+			-- Compute_Entrypoint_Source_Text => "test_data_port_periodic_source_component_time_triggered";
+	end source_t;
+	
+	thread implementation source_t.impl
+	calls 
+	Mycalls: {
+		A_Spg : subprogram C_A;
+	};
+	connections
+		cnx_a : parameter A_Spg.out_param -> write_port;
+	end source_t.impl;
+	
+	thread destination_t
+		features
+			read_port: in data port Base_Types::Integer_64;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 2sec;
+			-- Source_Text => ("behavior_code/components/destination/src/destination.c");
+			-- Initialize_Entrypoint_Source_Text => "test_data_port_periodic_destination_component_init";
+			-- Compute_Entrypoint_Source_Text => "test_data_port_periodic_destination_component_time_triggered";
+	end destination_t;
+	
+	thread implementation destination_t.impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_B;
+	};
+	connections
+		cnx_b : parameter read_port -> B_Spg.in_param;
+	end destination_t.impl;
+
+	processor proc
+	end proc;
+
+	processor implementation proc.impl
+	end proc.impl;
+
+	process top_process
+	end top_process;
+
+	process implementation top_process.impl
+		subcomponents
+			src: thread source_t.impl;
+			dest_A: thread destination_t.impl;
+			dest_B: thread destination_t.impl;
+		connections
+ 			conn1: port src.write_port -> dest_A.read_port;
+ 			conn2: port src.write_port -> dest_B.read_port;
+	end top_process.impl;
+
+	system top
+	end top;
+	
+	system implementation top.impl
+		subcomponents
+			proc: processor proc.impl;
+			test_data_port_periodic: process top_process.impl;
+		properties
+			Actual_Processor_Binding => reference (proc) applies to test_data_port_periodic;
+		-- 	HAMR::Platform => (seL4_TB, seL4_Only);
+		-- annex resolute {**
+		-- 	check CASE_Tools
+		-- **};
+	end top.impl;
+	
+end test_data_port_periodic_fan_out;

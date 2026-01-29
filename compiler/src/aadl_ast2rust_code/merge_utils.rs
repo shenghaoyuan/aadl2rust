@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 use super::intermediate_ast::*;
 
 /// 对 RustModule 中的 StructDef 进行合并去重
