@@ -8,5 +8,6 @@ pub mod transform_annex;
 pub mod model_statistics;
 
 pub mod test_mod;
+pub mod test_mod2;
 
 pub mod build_project_tool;

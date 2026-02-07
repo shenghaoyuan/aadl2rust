@@ -9,7 +9,7 @@ cov-html:
         --branch \
         --html \
         --output-dir target/llvm-cov \
-        --ignore-filename-regex "collector\.rs|generate_build\.rs|intermediate_print\.rs|merge_utils\.rs|tool\.rs|ast\.rs|main\.rs|printmessage\.rs|test_mod\.rs|transform\.rs|transform_annex\.rs|model_statistics\.rs"
+        --ignore-filename-regex "collector\.rs|generate_build\.rs|intermediate_print\.rs|merge_utils\.rs|tool\.rs|ast\.rs|main\.rs|printmessage\.rs|test_mod\.rs|transform\.rs|transform_annex\.rs|model_statistics\.rs|test_mod2\.rs"
 
 
 build:

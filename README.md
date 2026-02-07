@@ -17,6 +17,7 @@ we have tested on
 Some additional packages are required:
 ```shell
 sudo apt install -y jq
+cargo install tokei
 ```
 
 ## compiler
@@ -48,4 +49,30 @@ make cov
 
 # see readme from compiler/generate_test 
 # check `/aadl2rust/compiler/target/llvm-cov/html/index.html` for the whole coverage report
+```
+
+
+
+## Usage
+
+```shell
+cargo test #run all test cases.
+just cov-html # generate an HTML coverage report. 
+			  #output file: "\compiler\target\llvm-cov\html\index.html"
+cargo run -- --input <folder_name>   # run a single case
+```
+
+To count effective lines of AADL code (excluding blank lines and comments) for each case under `AADLSource/`:
+
+```shell
+chmod +x scripts/aadl_loc_by_folder_csv.sh
+./scripts/aadl_loc_by_folder_csv.sh # output file:AADLSource/aadl_code_loc_by_folder.csv
+```
+
+To count effective lines of Rust code for each generated project under `generate/project/`:
+
+```shell
+chmod +x scripts/rust_loc_by_project_csv.sh
+./scripts/rust_loc_by_project_csv.sh 
+#output file :generate/project_rust_code_loc_by_folder.csv
 ```
