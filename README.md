@@ -38,10 +38,6 @@ cargo install tokei
 
 
 
-## test
-
-各案例生成的代码在Linux下可运行的完整项目。
-
 ### test coverage
 ```shell
 cd compiler
