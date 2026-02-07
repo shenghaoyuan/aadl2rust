@@ -1,5 +1,4 @@
 // aadlAST2rustAST
-#![allow(clippy::all)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
 
@@ -147,23 +146,20 @@ impl AadlConverter {
     fn convert_withs(&self, pkg: &Package) -> Vec<RustWith> {
         let mut withs = Vec::new();
         for ele in pkg.visibility_decls.iter() {
-            match ele {
-                VisibilityDeclaration::Import { packages, property_sets: _ } => {
-                    //println!("packages: {:?}", packages);
-                    //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
-                    for pkg_name in packages.iter() {
-                        // 关键点：不使用 to_string()
-                         print!("pkg0:{:?}",pkg_name.0.clone());
-                        let segments = pkg_name.0.iter().map(|s| s.to_ascii_lowercase()).collect();
-        
-                        withs.push(RustWith {
-                            path: segments,
-                            glob: true,
-                        });
+            if let VisibilityDeclaration::Import { packages, property_sets: _ } = ele {
+                        //println!("packages: {:?}", packages);
+                        //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
+                        for pkg_name in packages.iter() {
+                            // 关键点：不使用 to_string()
+                             print!("pkg0:{:?}",pkg_name.0.clone());
+                            let segments = pkg_name.0.iter().map(|s| s.to_ascii_lowercase()).collect();
+            
+                            withs.push(RustWith {
+                                path: segments,
+                                glob: true,
+                            });
+                        }
                     }
-                }
-                _ => {}
-            }
         }
         //println!("withs: {:?}", withs);
         withs
@@ -181,7 +177,7 @@ impl AadlConverter {
                 for feature in features {
                     if let Feature::Port(port) = feature {
                         if port.identifier.to_lowercase() == port_name.to_lowercase() {
-                            return port.direction.clone();
+                            return port.direction;
                         }
                     }
                 }
@@ -241,10 +237,10 @@ impl AadlConverter {
         match comp.category {
             ComponentCategory::Data => conv_data_type::convert_data_component(&mut self.type_mappings, comp,&mut self.data_comp_type),
             ComponentCategory::Thread => conv_thread_type::convert_thread_component(self, comp),
-            ComponentCategory::Subprogram => conv_subprogram_type::convert_subprogram_component(&self,comp, package),
+            ComponentCategory::Subprogram => conv_subprogram_type::convert_subprogram_component(self,comp, package),
             ComponentCategory::System => conv_system_type::convert_system_component(self, comp),
             ComponentCategory::Process => conv_process_type::convert_process_component(self, comp),
-            ComponentCategory::Device => conv_device_type::convert_device_component(&self,comp),
+            ComponentCategory::Device => conv_device_type::convert_device_component(self,comp),
             _ => Vec::default(), //TODO:其他组件类型还需要处理
         }
     }
@@ -269,7 +265,7 @@ impl AadlConverter {
                     Feature::Port(port) => {
                         fields.push(Field {
                             name: port.identifier.to_lowercase(),
-                            ty: self.convert_port_type(&port,comp_identifier.clone()),
+                            ty: self.convert_port_type(port,comp_identifier.clone()),
                             docs: vec![format!("// Port: {} {:?}", port.identifier, port.direction)],
                             attrs: Vec::new(),
                         });
@@ -369,7 +365,7 @@ impl AadlConverter {
 
             //针对process中线程端口是广播类型的情况进行处理
             //只可能在thread_broadcast_receive的值中存在
-            for (_, vercport) in &self.thread_broadcast_receive {
+            for vercport in self.thread_broadcast_receive.values() {
                 for (comp, port_identifier) in vercport {
                     if port_identifier.eq(&port.identifier) {
                         if let Some(subcomponent_identify) = self.process_subcomponent_identify_to_type.get(&comp.clone()) {
@@ -453,7 +449,6 @@ impl AadlConverter {
                 }
             }
         }
-
         result
         // properties
     }

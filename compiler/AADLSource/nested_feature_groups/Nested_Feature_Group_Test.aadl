@@ -14,6 +14,8 @@ public
 	with Base_Types;
 
 	data Results
+	properties
+		Data_Model::Data_Representation => Struct;
 	end Results;
 
 	data implementation Results.impl
@@ -71,7 +73,7 @@ public
 			result: in event data port Results;
 		properties
 			Dispatch_Protocol => Periodic;
-			Period => 1 sec;
+			Period => 1000 ms;
 	end Producer;
 
 	thread implementation Producer.impl

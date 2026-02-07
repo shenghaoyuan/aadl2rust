@@ -1,3 +1,13 @@
+-- 系统功能：演示文件存储与Ping通信相结合的测试案例
+--   - pinger线程：周期性线程（周期1000ms），从文件读取数据并通过事件数据端口发送
+--   - produce_pkts线程：周期性线程（周期500ms），产生数据包并存储到文件
+--   - ping_Me线程：偶发线程，接收pinger线程发送的数据并进行处理
+
+-- 系统特点：
+-- 1. 结合文件存储与进程间通信，展示数据从文件到端口的完整传输流程
+-- 2. 包含两个生产者线程：一个周期性产生数据包，另一个周期性从文件读取并发送
+-- 3. 数据通过事件数据端口（event data port）从pinger线程传送到ping_Me线程
+
 package PING
 public
   with Software;
@@ -22,49 +32,49 @@ public
   ---------
 
   -- bus Ethernet_Bus
-  -- properties
-  --   Deployment::Transport_API => BSD_Sockets;
+  -- -- properties
+  -- --   Deployment::Transport_API => BSD_Sockets;
   -- end Ethernet_Bus;
 
   ---------------
   -- Processes --
   ---------------
 
-  process A
-  features
-    Out_Port : out event data port Software::Simple_Type;
-  end A;
+  -- process A
+  -- features
+  --   Out_Port : out event data port Software::Simple_Type;
+  -- end A;
 
-  process implementation A.Impl
-  subcomponents
-    Pinger        : thread Software::P.Impl;
-    produce_pkts  : thread software::packet_producer.i;
-  connections
-    cn0: port Pinger.Data_Source -> Out_Port;
-  end A.Impl;
+  -- process implementation A.Impl
+  -- subcomponents
+  --   Pinger        : thread Software::P.Impl;
+  --   produce_pkts  : thread software::packet_producer.i;
+  -- connections
+  --   cn0: port Pinger.Data_Source -> Out_Port;
+  -- end A.Impl;
 
-  process B
-  features
-    In_Port  : in event data port Software::Simple_Type;
-  end B;
+  -- process B
+  -- features
+  --   In_Port  : in event data port Software::Simple_Type;
+  -- end B;
 
-  process implementation B.Impl
-  subcomponents
-    Ping_Me        : thread Software::Q.Impl;
-  connections
-    cn1: port In_Port -> Ping_Me.Data_Sink;
-  end B.Impl;
+  -- process implementation B.Impl
+  -- subcomponents
+  --   Ping_Me        : thread Software::Q.Impl;
+  -- connections
+  --   cn0: port In_Port -> Ping_Me.Data_Sink;
+  -- end B.Impl;
 
   process singleProcess
   end singleProcess;
 
   process implementation singleProcess.Impl
   subcomponents
-    Pinger        : thread Software::P.Impl;
+    pinger        : thread Software::P.Impl;
     produce_pkts  : thread software::packet_producer.i;
-    Ping_Me       : thread Software::Q.Impl;
+    ping_Me       : thread Software::Q.Impl;
   connections
-    cn2: port Pinger.Data_Source -> Ping_Me.Data_Sink;
+    cn0: port Pinger.Data_Source -> Ping_Me.Data_Sink;
   end singleProcess.Impl;
 
   ------------
@@ -74,50 +84,50 @@ public
   system PING
   end PING;
 
-  system implementation PING.Impl
-  subcomponents
-    Node_A : process A.Impl;
-    Node_B : process B.Impl;
-
-    -- Device_A : device ocarina_drivers::generic_sockets_ip.pohic
-    -- {Source_Text => ("devicesconf.c");};
-    -- Device_B : device ocarina_drivers::generic_sockets_ip.pohic
-    -- {Source_Text => ("devicesconf.c");};
-
-    CPU_A : processor the_processor;
-    CPU_B : processor the_processor;
-    -- the_bus : bus ocarina_buses::ip.i;
-  connections
-    -- bus access the_bus -> Device_A.link;
-    -- bus access the_bus -> Device_B.link;
-
-    cn3: port Node_A.Out_Port -> Node_B.In_Port;
-    -- {Actual_Connection_Binding => (reference (the_bus));};
-  properties
-    actual_processor_binding => reference (CPU_A) applies to Node_A;
-    actual_processor_binding => reference (CPU_B) applies to Node_B;
-    -- actual_processor_binding => (reference (CPU_A)) applies to Device_A;
-    -- actual_processor_binding => (reference (CPU_B)) applies to Device_B;
-  end PING.Impl;
-
-  -- system implementation PING.Local
+  -- system implementation PING.Impl
   -- subcomponents
-  --   Node_A : process singleProcess.Impl;
+  --   Node_A : process A.Impl;
+  --   Node_B : process B.Impl;
+
+  --   -- Device_A : device ocarina_drivers::generic_sockets_ip.pohic
+  --   -- {Source_Text => ("devicesconf.c");};
+  --   -- Device_B : device ocarina_drivers::generic_sockets_ip.pohic
+  --   -- {Source_Text => ("devicesconf.c");};
+
   --   CPU_A : processor the_processor;
+  --   CPU_B : processor the_processor;
+  --   -- the_bus : bus ocarina_buses::ip.i;
+  -- connections
+  --   -- bus access the_bus -> Device_A.link;
+  --   -- bus access the_bus -> Device_B.link;
+
+  --   cn0: port Node_A.Out_Port -> Node_B.In_Port;
+  --   -- {Actual_Connection_Binding => (reference (the_bus));};
   -- properties
   --   actual_processor_binding => reference (CPU_A) applies to Node_A;
-  -- end PING.Local;
+  --   actual_processor_binding => reference (CPU_B) applies to Node_B;
+  --   -- actual_processor_binding => (reference (CPU_A)) applies to Device_A;
+  --   -- actual_processor_binding => (reference (CPU_B)) applies to Device_B;
+  -- end PING.Impl;
+
+  system implementation PING.Local
+  subcomponents
+    Node_A : process singleProcess.Impl;
+    CPU_A : processor the_processor;
+  properties
+    actual_processor_binding => reference (CPU_A) applies to Node_A;
+  end PING.Local;
 
   -- system implementation PING.Xenomai
   -- extends PING.Local
-  -- properties
-  --   Deployment::Execution_Platform => linux32_xenomai_native applies to CPU_A;
+  -- -- properties
+  -- --   Deployment::Execution_Platform => linux32_xenomai_native applies to CPU_A;
   -- end PING.Xenomai;
 
   -- system implementation PING.RTEMS
   -- extends PING.local
-  -- properties
-  --   Deployment::Execution_platform => LEON_RTEMS applies to CPU_A ;
+  -- -- properties
+  -- --   Deployment::Execution_platform => LEON_RTEMS applies to CPU_A ;
   -- end PING.RTEMS;
 
 

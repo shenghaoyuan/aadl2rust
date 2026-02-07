@@ -1,3 +1,15 @@
+-- 系统功能概述：
+-- 这是一个本地Ping通信监控案例，展示了在同一处理器内的线程间通信和监控功能。
+-- 系统包含一个进程，该进程中包含两个线程：一个发送Ping消息，一个接收并处理Ping消息。
+--
+-- 线程功能：
+-- 1. Pinger线程（周期1000ms，优先级2）：周期性发送数据，具有恢复入口点（recover）
+-- 2. Ping_Me线程（偶发10ms，优先级1）：接收并处理传入的数据
+--
+-- 系统特点：
+-- 1. 这是单节点、单处理器部署的Ping案例，所有通信在同一处理器内部进行
+-- 2. 展示了本地通信模式（与分布式Ping案例形成对比）
+
 --  This model completes the PING example by adding deployment
 --  information.
 --
@@ -28,10 +40,10 @@ end A;
 
 process implementation A.Impl
 subcomponents
-  Pinger        : thread Software::P.Impl;
-  Ping_Me       : thread Software::Q.Impl;
+  pinger        : thread Software::P.Impl;
+  ping_me       : thread Software::Q.Impl;
 connections
-  cx : port Pinger.Data_Source -> Ping_Me.Data_Sink;
+  cx : port Pinger.Data_Source -> ping_me.Data_Sink;
 end A.Impl;
 
 ------------

@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;

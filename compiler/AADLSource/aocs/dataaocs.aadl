@@ -1,0 +1,142 @@
+package dataaocs
+public
+  with Data_Model;
+  with Base_Types;
+  ------------------------------
+  -- Data definition
+  ------------------------------
+  
+  data FSS_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end FSS_data;
+  
+  data CSS_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end CSS_data;
+  
+  data SPS_data
+  properties
+    Data_Model::Data_Representation => Boolean;
+  end SPS_data;
+  
+  data ES_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end ES_data;
+  
+  data MGM_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end MGM_data;
+  
+  data GYR_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end GYR_data;
+  
+  data STR_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end STR_data;
+  
+  data GPS_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end GPS_data;
+  
+  data THU_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end THU_data;
+  
+  data RW_data
+  properties
+    Data_Model::Data_Representation => Float;
+  end RW_data;
+  
+  data MGT_data
+  properties
+    Data_Model::Data_Representation => float;
+  end MGT_data;
+  
+  data attitude
+  properties
+    Data_Model::Data_Representation => Float;
+  end attitude;
+  
+  data orbit
+  properties
+    Data_Model::Data_Representation => Float;
+  end orbit;
+  
+  data telecommand
+  properties
+    Data_Model::Data_Representation => Float;
+  end telecommand;
+  
+  data telemetry
+  properties
+    Data_Model::Data_Representation => Float;
+  end telemetry;
+  
+  data power_status
+  properties
+    Data_Model::Data_Representation => Boolean;
+  end power_status;
+  
+  data reset
+  properties
+    Data_Model::Data_Representation => Boolean;
+  end reset;
+  
+  data manoeuvre_command
+    -- complex command
+  properties
+    Data_Model::Data_Representation => Struct;
+  end manoeuvre_command;
+  
+  data implementation manoeuvre_command.impl
+  subcomponents
+    torque_value : data float;
+    force_value : data float;
+    execute : data Boolean;
+  end manoeuvre_command.impl;
+
+  data reconfiguration_command
+    -- complex command holding the faulty unit
+  properties
+    Data_Model::Data_Representation => Struct;
+  end reconfiguration_command;
+
+  data implementation reconfiguration_command.impl
+  subcomponents
+    faulty_unit : data String;
+    switch_to_redundant : data Boolean;
+  end reconfiguration_command.impl;
+  
+  data reconfigure_sensor
+  properties
+    Data_Model::Data_Representation => Boolean; -- reconfiguring faulty sensor (switch to redundant sensor)
+  end reconfigure_sensor;
+  
+  data reconfigure_actuator
+  properties
+    Data_Model::Data_Representation => Boolean; -- reconfiguring faulty actuator (switch to redundant actuator)
+  end reconfigure_actuator;
+  
+  data attitude_window
+  properties
+    Data_Model::Data_Representation => Float;
+  end attitude_window;
+  
+  data check_thresholds
+    -- set of check thresholds (probably float values)
+  properties
+    Data_Model::Data_Representation => Array;
+    Data_Model::Base_Type => (classifier (Base_Types::Float));
+    Data_Model::Dimension => (8);
+  end check_thresholds;
+
+end dataaocs;

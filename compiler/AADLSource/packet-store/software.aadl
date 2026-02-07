@@ -37,6 +37,9 @@ properties
 end produce_packet_spg;
 
 subprogram Do_Ping_Spg
+features
+  -- 添加输出参数，将从文件读取的数据传出
+  data_source : out parameter Simple_Type;
 properties
   source_language => (C);
   source_name     => "user_do_ping_spg";
@@ -45,11 +48,11 @@ end Do_Ping_Spg;
 
 subprogram Ping_Spg
 features
-  Data_Sink : in parameter Simple_Type;
+  data_sink : in parameter Simple_Type;
 properties
   source_language => (C);
   source_name     => "user_ping_spg";
-  source_text     => ("pingme.c");
+  source_text     => ("pinger.c");
 end Ping_Spg;
 
 
@@ -75,7 +78,7 @@ end packet_producer.i;
 
 thread P
 features
-  Data_Source : out event data port Simple_Type;
+  data_source : out event data port Simple_Type;
 end P;
 
 thread implementation P.Impl
@@ -83,6 +86,9 @@ calls
 Mycalls: {
   P_Spg : subprogram Do_Ping_Spg;
 };
+connections
+  -- 将子程序的输出参数连接到线程的输出端口
+  cn0: parameter P_Spg.data_source -> data_source;
 properties
   Recover_Entrypoint_Source_Text     => "recover";
   Dispatch_Protocol                  => Periodic;
@@ -93,7 +99,7 @@ end P.Impl;
 
 thread Q
 features
-  Data_Sink : in event data port Simple_Type;
+  data_sink : in event data port Simple_Type;
 end Q;
 
 thread implementation Q.Impl
@@ -102,12 +108,12 @@ Mycalls: {
   Q_Spg : subprogram Ping_Spg;
 };
 connections
-  cn0: parameter Data_Sink -> Q_Spg.Data_Sink;
+  cn0: parameter data_sink -> Q_Spg.data_sink;
 properties
   Dispatch_Protocol                  => Sporadic;
-  Period                             => 10 Ms;
-  deadline                           => 10 Ms;
-  Priority                           => 1;
+  -- Period                             => 10 Ms;
+  -- deadline                           => 10 Ms;
+  -- Priority                           => 1;
 end Q.Impl;
 
 end Software;

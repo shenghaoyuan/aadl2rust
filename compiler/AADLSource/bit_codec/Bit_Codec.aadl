@@ -19,17 +19,32 @@ package Bit_Codec
 public
 	with Base_Types, Data_Model;
 
-	data Latitude extends Base_Types::Integer_32
+	-- data Latitude extends Base_Types::Integer_32
+	-- end Latitude;
+
+	data Latitude
+	properties
+		Data_Model::Data_Representation => Integer;
+		Data_Model::Base_Type => (classifier (Base_Types::Integer_32));
 	end Latitude;
 
-	data Longitude extends Base_Types::Integer_32
+	-- data Longitude extends Base_Types::Integer_32
+	-- properties
+	-- 	Data_Size => 30 bits; -- change the default data_size
+	-- end Longitude;
+
+	data Longitude
 		properties
-			Data_Size => 30 bits; -- change the default data_size
+			Data_Model::Data_Representation => Integer;
+			Data_Model::Base_Type => (classifier (Base_Types::Integer_32));
+			Data_Size => 30 bits; 
 	end Longitude;
 
 	data Coordinate
 		-- properties
 		-- 	HAMR::Bit_Codec_Max_Size => 70 bits;
+	properties
+		Data_Model::Data_Representation => Struct;
 	end Coordinate;
 
 	data implementation Coordinate.Impl

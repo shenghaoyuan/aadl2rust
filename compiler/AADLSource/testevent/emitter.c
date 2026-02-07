@@ -4,18 +4,21 @@
 #include <stdio.h>
 // #include <sb_types.h>
 // #include <sb_emitter_t_impl.h>
-
-typedef long long int int64_t;
-typedef int bool;
-#define true 1
-#define false 0
+#include <stdint.h>
+#include <stdbool.h>
+#include "emitter.h"
 
 static int64_t _value;
 static bool event_queued = false;
 
-void testevent_emitter_component_init(const int64_t *in_arg)
+void testevent_emitter_component_init(void)
 {
+    static bool is_initialized = false;
+    if (is_initialized) {
+        return;
+    }
     printf("testevent_emitter_component_init called\n");
+    is_initialized = true;
 }
 
 /* control thread: keep calling enqueue for thing
@@ -26,7 +29,7 @@ void run_emitter()
     printf("[Emitter] Sent event.\n");
 }
 
-void testevent_consumer_component_init(const int64_t *in_arg) {
+void testevent_consumer_component_init(void) {
   printf("testevent_consumer_component_init called\n");
   _value = 0;
 }

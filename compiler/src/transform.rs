@@ -1,5 +1,8 @@
 //pest解析后的结果转换为aadlAst
-#![allow(clippy::all)]
+#![allow(
+    clippy::single_match,
+    clippy::if_same_then_else,
+)]
 use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};
@@ -20,6 +23,12 @@ pub struct PortManager {
     ports: Vec<PortInfo>,
 }
 
+impl Default for PortManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PortManager {
     pub fn new() -> Self {
         Self { ports: Vec::new() }
@@ -32,7 +41,7 @@ impl PortManager {
     pub fn get_port_direction(&self, name: &str) -> Option<PortDirection> {
         self.ports.iter()
             .find(|port| port.name == name)
-            .map(|port| port.direction.clone())
+            .map(|port| port.direction)
     }
     
     pub fn is_outgoing_port(&self, name: &str) -> bool {
@@ -45,7 +54,7 @@ impl PortManager {
 }
 
 // 全局端口管理器
-use std::{char::ToLowercase, sync::Mutex};
+use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
 static GLOBAL_PORT_MANAGER: Lazy<Mutex<PortManager>> = Lazy::new(|| {
@@ -77,6 +86,12 @@ pub struct AADLTransformer {
 }
 
 #[warn(unused_mut)]
+impl Default for AADLTransformer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AADLTransformer {
     pub fn new() -> Self {
         Self {
@@ -132,7 +147,7 @@ impl AADLTransformer {
         let mut private_section = None;
         let properties = PropertyClause::ExplicitNone;
         
-        while let Some(inner) = inner_iter.next() {
+        for inner in inner_iter {
             //println!("  内部规则: {:?}, 内容: {}", inner.as_rule(), inner.as_str());
             match inner.as_rule() {
                 aadlight_parser::Rule::visibility_declarations => {
@@ -302,7 +317,7 @@ impl AADLTransformer {
         let mut properties = PropertyClause::ExplicitNone;
         let mut annexes = Vec::new();
         
-        while let Some(inner) = inner_iter.next() {
+        for inner in inner_iter {
             match inner.as_rule() {
                 aadlight_parser::Rule::prototypes => {
                     prototypes = Self::transform_prototypes_clause(inner);
@@ -408,7 +423,7 @@ impl AADLTransformer {
                 // 收集端口信息
                 if let Feature::Port(port_spec) = &feature {
                     if let Ok(mut manager) = get_global_port_manager().lock() {
-                        manager.add_port(port_spec.identifier.clone(), port_spec.direction.clone());
+                        manager.add_port(port_spec.identifier.clone(), port_spec.direction);
                     }
                 }
                 
@@ -502,7 +517,7 @@ impl AADLTransformer {
 
             return Feature::Port(PortSpec {
                 identifier,
-                direction: direction.unwrap_or_else(|| match resolved_port_type {
+                direction: direction.unwrap_or(match resolved_port_type {
                     PortType::Data { .. } | PortType::EventData { .. } => PortDirection::InOut,
                     PortType::Event => PortDirection::In,
                 }),
@@ -678,7 +693,7 @@ impl AADLTransformer {
                 let lower_val = extract_identifier(parts.next().unwrap());
                 //let lower_unit = Some(parts.next().unwrap().as_str().trim().to_string());
                 // 解析下限单位（变为可选，例如优先级它没有单位）
-                let lower_unit = if parts.peek().map_or(false, |p| p.as_rule() == aadlight_parser::Rule::unit) {
+                let lower_unit = if parts.peek().is_some_and(|p| p.as_rule() == aadlight_parser::Rule::unit) {
                     Some(parts.next().unwrap().as_str().trim().to_string())
                 } else {
                     None
@@ -687,7 +702,7 @@ impl AADLTransformer {
                 let upper_val = extract_identifier(parts.next().unwrap());
                 //let upper_unit = Some(parts.next().unwrap().as_str().trim().to_string());
                 // 解析上限单位（可选）
-                let upper_unit = if parts.peek().map_or(false, |p| p.as_rule() == aadlight_parser::Rule::unit) {
+                let upper_unit = if parts.peek().is_some_and(|p| p.as_rule() == aadlight_parser::Rule::unit) {
                     Some(parts.next().unwrap().as_str().trim().to_string())
                 } else {
                     None
@@ -825,7 +840,7 @@ impl AADLTransformer {
                 
                 // 检查是否有 applies to 子句
                 let mut applies_to = None;
-                while let Some(part) = ref_parts.next() {
+                for part in ref_parts {
                     if part.as_rule() == aadlight_parser::Rule::qualified_identifier {
                         applies_to = Some(extract_identifier(part));
                         break;
@@ -925,7 +940,7 @@ impl AADLTransformer {
         let mut properties = PropertyClause::ExplicitNone;
         let mut annexes = Vec::new();
         
-        while let Some(inner) = inner_iter.next() {
+        for inner in inner_iter {
             match inner.as_rule() {
                 aadlight_parser::Rule::prototypes => {
                     prototypes = Self::transform_prototypes_clause(inner);
@@ -1070,7 +1085,7 @@ impl AADLTransformer {
         //let _open_brace = inner_iter.next();
         
         let mut calls = Vec::new();
-        while let Some(inner) = inner_iter.next() {
+        for inner in inner_iter {
             if inner.as_rule() == aadlight_parser::Rule::subprogram_call {
                 calls.push(Self::transform_subprogram_call(inner));
             }

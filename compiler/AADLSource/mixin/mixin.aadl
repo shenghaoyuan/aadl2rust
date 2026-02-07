@@ -1,0 +1,194 @@
+-- 系统功能：演示AADL中混入（Mixin）模式的多重继承机制
+--   - Trigger线程：周期性线程（周期1000ms），产生两个不同的事件（out_1和out_2）
+--   - Mix_1进程中的Buzzer线程：偶发线程（周期10ms），响应out_1事件，模拟蜂鸣器
+--   - Mix_2进程中的Light线程：偶发线程（周期10ms），响应out_2事件，模拟闪光灯
+
+-- 系统特点：
+-- 1. 专门演示混入（Mixin）模式，如何在AADL中实现类似多重继承的效果
+-- 2. 定义了Interface_1和Interface_2两个接口，每个接口包含一个事件端口
+-- 3. 通过独立的进程实现接口的具体行为：Buzzer线程响应接口1，Light线程响应接口2
+-- 4. 使用事件端口连接，形成触发器驱动两个独立设备的工作模式
+
+-- This package demonstrates how to support multiple inheritance in
+-- AADLv2, using the mixin pattern defined in many object-oriented
+-- languages like Ada.
+
+package Mixin
+public
+
+  -- Here, we define two interfaces
+
+  -- abstract Interface_1
+  -- features
+  --   Port_1 : in event port;
+  -- end Interface_1;
+
+  -- abstract implementation Interface_1.impl
+  -- end Interface_1.impl;
+
+  process Interface_1
+  features
+    port_1 : in event port;
+  end Interface_1;
+
+  process implementation Interface_1.impl
+  subcomponents
+    worker : thread Buzzer.impl;
+  connections
+    C1: port port_1 -> worker.port_1;
+  end Interface_1.impl;
+
+  -- abstract Interface_2
+  -- features
+  --   Port_2 : in event port;
+  -- end Interface_2;
+
+  -- abstract implementation Interface_2.impl
+  -- end Interface_2.impl;
+
+  process Interface_2
+  features
+    port_2 : in event port;
+  end Interface_2;
+
+  process implementation Interface_2.impl
+  subcomponents
+    worker : thread Light.impl;
+  connections
+    C1: port port_2 -> worker.port_2;
+  end Interface_2.impl;
+
+  -- The mixin component type and implementation "inherits" features
+  -- from both interfaces; mixin implementation details how the
+  -- inheritance of features/properties is handled.
+  --
+  -- Note that:
+  -- a) properties are _NOT_ inherited, only features. 
+  --
+  -- b) in case of name collision for features, it is up to the user
+  -- to decide how to solve the issue: either create a separate port,
+  -- or connect one port to several subcomponents, and vice versa with
+  -- out ports.
+  --
+  -- c) we could have inherited from Interface_1, and then add ports
+  -- from Interface_2, but this would break symmetry between the two
+  -- interfaces inherited, and would also inherit properties, which is
+  -- to be avoided.
+
+  -- abstract Mixin
+  -- features
+  --   Port_1 : in event port;
+  --   Port_2 : in event port;
+  -- end Mixin;
+
+  -- abstract implementation Mixin.impl
+  -- subcomponents
+  --   Mix_1 : abstract Interface_1;
+  --   Mix_2 : abstract Interface_2;
+
+  -- connections
+  --   Y1:port Port_1 -> Mix_1.Port_1;
+  --   Y2:port Port_2 -> Mix_2.Port_2;
+  -- end Mixin.impl;
+
+  -- Now, let us implement elements
+
+  -- device Buzzer
+  --   --  Buzz when its event port is triggered
+  -- features
+  --   Port_1 : in event port;
+  -- end Buzzer;
+
+  -- device implementation Buzzer.impl
+  -- end Buzzer.impl;
+
+  thread Buzzer
+  features
+    port_1 : in event port;
+  properties
+    Dispatch_Protocol => Sporadic;
+    Period => 10 ms;
+  end Buzzer;
+
+  thread implementation Buzzer.impl
+  end Buzzer.impl;
+
+  -- device Light 
+  --   --  Flash light when its event port is triggered
+  -- features
+  --   Port_2 : in event port;
+  -- end Light;
+
+  -- device implementation Light.impl
+  -- end Light.impl;
+
+  thread Light
+  features
+    port_2 : in event port;
+  properties
+    Dispatch_Protocol => Sporadic;
+    Period => 10 ms;
+  end Light;
+
+  thread implementation Light.impl
+  end Light.impl;
+
+  --  And then, instantiate the Mixin
+  --
+  --  Here, we directly inherits features from the mixin, and
+  --  connections as part of the extension of the corresponding
+  --  component implementation.
+
+  thread Trigger
+  features
+      out_1 : out event port;
+      out_2 : out event port;
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 1000 ms;
+  end Trigger;
+
+  thread implementation Trigger.impl
+  end Trigger.impl;
+  
+  process Trigger_Process
+  features
+      out_1 : out event port;
+      out_2 : out event port;
+  end Trigger_Process;
+  
+  process implementation Trigger_Process.impl
+  subcomponents
+    th : thread Trigger.impl;
+  connections
+    C1: port th.out_1 -> out_1;
+    C2: port th.out_2 -> out_2;
+  end Trigger_Process.impl;
+
+  processor CPU
+  end CPU;
+  
+  processor implementation CPU.impl
+  end CPU.impl;
+  
+  system Demo
+  end Demo;
+
+  system implementation Demo.impl
+  subcomponents
+    -- Mix_1 : refined to device Buzzer.impl { Classifier_Substitution_Rule => Signature_Match;};
+    -- Mix_2 : refined to device Light.impl { Classifier_Substitution_Rule => Signature_Match;};
+    Mix_1 : process Interface_1.impl;
+    Mix_2 : process Interface_2.impl;
+    Driver : process Trigger_Process.impl;
+    CPU  : processor CPU.impl;
+  connections
+    C1: port Driver.Out_1 -> Mix_1.Port_1;
+    C2: port Driver.Out_2 -> Mix_2.Port_2;
+  properties
+    Actual_Processor_Binding => reference (CPU) applies to Mix_1;
+    Actual_Processor_Binding => reference (CPU) applies to Mix_2;
+    Actual_Processor_Binding => reference (CPU) applies to Driver;
+  end Demo.impl;
+
+end Mixin;

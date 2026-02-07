@@ -4,21 +4,22 @@
 #include <stdio.h>
 // #include <sb_types.h>
 // #include <sb_emitter_impl.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "emitter.h"
-
-typedef signed int int32_t;
-typedef long long int int64_t;
-typedef int bool;
-#define true 1
-#define false 0
 
 static int32_t counter = 0;
 #define EVENT_QUEUE_MAX_SIZE 5
 static int32_t current_event_count = 0;
 
-void testevent_emitter_component_init(const int64_t *in_arg)
+void testevent_emitter_component_init(void)
 {
-    printf("testevent_emitter_component_init called\n");
+  static bool is_initialized = false;
+    if (is_initialized) {
+        return;
+    }
+  printf("testevent_emitter_component_init called\n");
+  is_initialized = true;
 }
 
 /* control thread: keep calling enqueue for thing
@@ -33,12 +34,17 @@ void run_emitter(){
   counter++;
 }
 
-void testevent_consumer_component_init(const int64_t *in_arg) {
+void testevent_consumer_component_init(void) {
+  static bool is_initialized = false;
+    if (is_initialized) {
+        return;
+    }
   printf("testevent_consumer_component_init called\n");
+  is_initialized = true;
 }
 
 void testevent_consumer_s_event_handler() {
-  int32_t receivedEvents = 1; // 1 for the event that caused handler to be invoked
+  int32_t receivedEvents = 0; // 1 for the event that caused handler to be invoked
   while(sb_s_dequeue()) {
     receivedEvents++;
   }

@@ -46,7 +46,7 @@ public
 			output: out event data port Base_Types::Integer_32;
 		properties
 			Dispatch_Protocol => Periodic;
-			Period => 1sec;
+			Period => 1000 ms;
 			-- Source_Text => ("comp.c");	
 			-- Source_Text => "Comp_A_time_triggered"; 
 	end Comp_A;

@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+
 use std::collections::{HashMap, HashSet};
 
 
@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
         // 对剩余的每种项只保留一个
         let mut seen = HashSet::new();
         vec.retain(|item| seen.insert(item.clone()));
-        return vec.clone();
+        vec.clone()
     }
     pub fn dedup_with_min_two_unique_single_string(vec: &mut Vec<String>) -> Vec<String> {
         let mut freq: HashMap<String, usize> = HashMap::new();

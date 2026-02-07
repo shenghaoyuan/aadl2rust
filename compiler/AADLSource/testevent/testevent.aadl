@@ -16,6 +16,7 @@ public
 	thread implementation emitter.impl
 	calls 
 	Mycalls: {
+		Init_Spg : subprogram source_init;
 		A_Spg : subprogram C_A;
 	};
 	end emitter.impl;
@@ -68,6 +69,13 @@ public
 		-- **};
 	end top.impl;
 	
+	subprogram source_init
+	properties
+		source_language => (C);
+		source_name => "testevent_emitter_component_init";
+		source_text => ("source.c");
+	end source_init;
+
 	subprogram C_A
 		properties
 			source_language => (C);

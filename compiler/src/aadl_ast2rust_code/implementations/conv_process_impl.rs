@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+#![allow(clippy::single_match)]
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
@@ -105,198 +105,195 @@ fn get_process_fields(
     if let Some(comp_type) = temp_converter.get_component_type(impl_) {
         if let FeatureClause::Items(features) = &comp_type.features {
             for feature in features {
-                match feature {
-                    Feature::Port(port) => {
-                        // 添加对外端口
-                        fields.push(Field {
-                            name: port.identifier.to_lowercase(),
-                            ty: temp_converter.convert_port_type(&port, "".to_string()),
-                            docs: vec![format!(
-                                "// Port: {} {:?}",
-                                port.identifier, port.direction
-                            )],
-                            attrs: Vec::new(),
-                        });
+                if let Feature::Port(port) = feature {
+                    // 添加对外端口
+                    fields.push(Field {
+                        name: port.identifier.to_lowercase(),
+                        ty: temp_converter.convert_port_type(port, "".to_string()),
+                        docs: vec![format!(
+                            "// Port: {} {:?}",
+                            port.identifier, port.direction
+                        )],
+                        attrs: Vec::new(),
+                    });
 
-                        // 添加对应的内部端口
-                        let internal_port_name = match port.direction {
-                            PortDirection::In => format!("{}Send", port.identifier.to_lowercase()),
-                            PortDirection::Out => format!("{}Rece", port.identifier.to_lowercase()),
-                            PortDirection::InOut => {
-                                format!("{}Send", port.identifier.to_lowercase())
-                            } // InOut 暂时按 In 处理
-                        };
+                    // 添加对应的内部端口
+                    let internal_port_name = match port.direction {
+                        PortDirection::In => format!("{}Send", port.identifier.to_lowercase()),
+                        PortDirection::Out => format!("{}Rece", port.identifier.to_lowercase()),
+                        PortDirection::InOut => {
+                            format!("{}Send", port.identifier.to_lowercase())
+                        } // InOut 暂时按 In 处理
+                    };
 
-                        let internal_port_type = match port.direction {
-                            PortDirection::In => {
-                                // 对外是接收端口，内部需要发送端口
-                                match temp_converter.convert_port_type(&port, "".to_string()) {
-                                    Type::Generic(option_name, inner_types)
-                                        if option_name == "Option" =>
+                    let internal_port_type = match port.direction {
+                        PortDirection::In => {
+                            // 对外是接收端口，内部需要发送端口
+                            match temp_converter.convert_port_type(port, "".to_string()) {
+                                Type::Generic(option_name, inner_types)
+                                    if option_name == "Option" =>
+                                {
+                                    if let Type::Generic(channel_name, channel_args) =
+                                        &inner_types[0]
                                     {
-                                        if let Type::Generic(channel_name, channel_args) =
-                                            &inner_types[0]
-                                        {
 
-                                            let mut send_type = "Sender".to_string();
-                                            // 从 Option<Receiver<T>> 转换为 Option<BcSender<T>>
-                                            if temp_converter.thread_broadcast_receive.contains_key(&(port.identifier.clone(),impl_.name.type_identifier.clone())){
-                                                send_type = "BcSender".to_string();
-                                            }
+                                        let mut send_type = "Sender".to_string();
+                                        // 从 Option<Receiver<T>> 转换为 Option<BcSender<T>>
+                                        if temp_converter.thread_broadcast_receive.contains_key(&(port.identifier.clone(),impl_.name.type_identifier.clone())){
+                                            send_type = "BcSender".to_string();
+                                        }
 
-                                            if channel_name == "Receiver" {
-                                                Type::Generic(
-                                                    "Option".to_string(),
-                                                    vec![Type::Generic(
-                                                        send_type.clone(),
-                                                        channel_args.clone(),
-                                                    )],
-                                                )
-                                            } else {
-                                                Type::Generic(
-                                                    "Option".to_string(),
-                                                    vec![Type::Generic(
-                                                        channel_name.clone(),
-                                                        channel_args.clone(),
-                                                    )],
-                                                )
-                                            }
+                                        if channel_name == "Receiver" {
+                                            Type::Generic(
+                                                "Option".to_string(),
+                                                vec![Type::Generic(
+                                                    send_type.clone(),
+                                                    channel_args.clone(),
+                                                )],
+                                            )
                                         } else {
                                             Type::Generic(
                                                 "Option".to_string(),
                                                 vec![Type::Generic(
-                                                    "Sender".to_string(),
-                                                    vec![inner_types[0].clone()],
+                                                    channel_name.clone(),
+                                                    channel_args.clone(),
                                                 )],
                                             )
                                         }
-                                    }
-                                    _ => {
-                                        // 如果不是 Option 类型，创建 Option<BcSender<T>>
+                                    } else {
                                         Type::Generic(
                                             "Option".to_string(),
                                             vec![Type::Generic(
                                                 "Sender".to_string(),
-                                                vec![temp_converter
-                                                    .convert_port_type(&port, "".to_string())],
+                                                vec![inner_types[0].clone()],
                                             )],
                                         )
                                     }
                                 }
+                                _ => {
+                                    // 如果不是 Option 类型，创建 Option<BcSender<T>>
+                                    Type::Generic(
+                                        "Option".to_string(),
+                                        vec![Type::Generic(
+                                            "Sender".to_string(),
+                                            vec![temp_converter
+                                                .convert_port_type(port, "".to_string())],
+                                        )],
+                                    )
+                                }
                             }
-                            PortDirection::Out => {
-                                // 对外是发送端口，内部需要接收端口
-                                match temp_converter.convert_port_type(&port, "".to_string()) {
-                                    Type::Generic(option_name, inner_types)
-                                        if option_name == "Option" =>
+                        }
+                        PortDirection::Out => {
+                            // 对外是发送端口，内部需要接收端口
+                            match temp_converter.convert_port_type(port, "".to_string()) {
+                                Type::Generic(option_name, inner_types)
+                                    if option_name == "Option" =>
+                                {
+                                    if let Type::Generic(channel_name, channel_args) =
+                                        &inner_types[0]
                                     {
-                                        if let Type::Generic(channel_name, channel_args) =
-                                            &inner_types[0]
-                                        {
-                                            if channel_name == "Sender" {
-                                                // 从 Option<Sender<T>> 转换为 Option<Receiver<T>>
-                                                Type::Generic(
-                                                    "Option".to_string(),
-                                                    vec![Type::Generic(
-                                                        "Receiver".to_string(),
-                                                        channel_args.clone(),
-                                                    )],
-                                                )
-                                            } else {
-                                                Type::Generic(
-                                                    "Option".to_string(),
-                                                    vec![Type::Generic(
-                                                        channel_name.clone(),
-                                                        channel_args.clone(),
-                                                    )],
-                                                )
-                                            }
-                                        } else {
+                                        if channel_name == "Sender" {
+                                            // 从 Option<Sender<T>> 转换为 Option<Receiver<T>>
                                             Type::Generic(
                                                 "Option".to_string(),
                                                 vec![Type::Generic(
                                                     "Receiver".to_string(),
-                                                    vec![inner_types[0].clone()],
+                                                    channel_args.clone(),
                                                 )],
                                             )
-                                        }
-                                    }
-                                    _ => {
-                                        // 如果不是 Option 类型，创建 Option<Receiver<T>>
-                                        Type::Generic(
-                                            "Option".to_string(),
-                                            vec![Type::Generic(
-                                                "Receiver".to_string(),
-                                                vec![temp_converter
-                                                    .convert_port_type(&port, "".to_string())],
-                                            )],
-                                        )
-                                    }
-                                }
-                            }
-                            PortDirection::InOut => {
-                                // InOut 暂时按 In 处理
-                                match temp_converter.convert_port_type(&port, "".to_string()) {
-                                    Type::Generic(option_name, inner_types)
-                                        if option_name == "Option" =>
-                                    {
-                                        if let Type::Generic(channel_name, channel_args) =
-                                            &inner_types[0]
-                                        {
-                                            if channel_name == "Receiver" {
-                                                // 从 Option<Receiver<T>> 转换为 Option<BcSender<T>>
-                                                Type::Generic(
-                                                    "Option".to_string(),
-                                                    vec![Type::Generic(
-                                                        "BcSender".to_string(),
-                                                        channel_args.clone(),
-                                                    )],
-                                                )
-                                            } else {
-                                                Type::Generic(
-                                                    "Option".to_string(),
-                                                    vec![Type::Generic(
-                                                        channel_name.clone(),
-                                                        channel_args.clone(),
-                                                    )],
-                                                )
-                                            }
                                         } else {
                                             Type::Generic(
                                                 "Option".to_string(),
                                                 vec![Type::Generic(
-                                                    "BcSender".to_string(),
-                                                    vec![inner_types[0].clone()],
+                                                    channel_name.clone(),
+                                                    channel_args.clone(),
                                                 )],
                                             )
                                         }
-                                    }
-                                    _ => {
-                                        // 如果不是 Option 类型，创建 Option<BcSender<T>>
+                                    } else {
                                         Type::Generic(
                                             "Option".to_string(),
                                             vec![Type::Generic(
-                                                "BcSender".to_string(),
-                                                vec![temp_converter
-                                                    .convert_port_type(&port, "".to_string())],
+                                                "Receiver".to_string(),
+                                                vec![inner_types[0].clone()],
                                             )],
                                         )
                                     }
                                 }
+                                _ => {
+                                    // 如果不是 Option 类型，创建 Option<Receiver<T>>
+                                    Type::Generic(
+                                        "Option".to_string(),
+                                        vec![Type::Generic(
+                                            "Receiver".to_string(),
+                                            vec![temp_converter
+                                                .convert_port_type(port, "".to_string())],
+                                        )],
+                                    )
+                                }
                             }
-                        };
+                        }
+                        PortDirection::InOut => {
+                            // InOut 暂时按 In 处理
+                            match temp_converter.convert_port_type(port, "".to_string()) {
+                                Type::Generic(option_name, inner_types)
+                                    if option_name == "Option" =>
+                                {
+                                    if let Type::Generic(channel_name, channel_args) =
+                                        &inner_types[0]
+                                    {
+                                        if channel_name == "Receiver" {
+                                            // 从 Option<Receiver<T>> 转换为 Option<BcSender<T>>
+                                            Type::Generic(
+                                                "Option".to_string(),
+                                                vec![Type::Generic(
+                                                    "BcSender".to_string(),
+                                                    channel_args.clone(),
+                                                )],
+                                            )
+                                        } else {
+                                            Type::Generic(
+                                                "Option".to_string(),
+                                                vec![Type::Generic(
+                                                    channel_name.clone(),
+                                                    channel_args.clone(),
+                                                )],
+                                            )
+                                        }
+                                    } else {
+                                        Type::Generic(
+                                            "Option".to_string(),
+                                            vec![Type::Generic(
+                                                "BcSender".to_string(),
+                                                vec![inner_types[0].clone()],
+                                            )],
+                                        )
+                                    }
+                                }
+                                _ => {
+                                    // 如果不是 Option 类型，创建 Option<BcSender<T>>
+                                    Type::Generic(
+                                        "Option".to_string(),
+                                        vec![Type::Generic(
+                                            "BcSender".to_string(),
+                                            vec![temp_converter
+                                                .convert_port_type(port, "".to_string())],
+                                        )],
+                                    )
+                                }
+                            }
+                        }
+                    };
 
-                        fields.push(Field {
-                            name: internal_port_name,
-                            ty: internal_port_type,
-                            docs: vec![format!(
-                                "// 内部端口: {} {:?}",
-                                port.identifier, port.direction
-                            )],
-                            attrs: Vec::new(),
-                        });
-                    }
-                    _ => {}
+                    fields.push(Field {
+                        name: internal_port_name,
+                        ty: internal_port_type,
+                        docs: vec![format!(
+                            "// 内部端口: {} {:?}",
+                            port.identifier, port.direction
+                        )],
+                        attrs: Vec::new(),
+                    });
                 }
             }
         }
@@ -310,7 +307,7 @@ fn get_process_fields(
                     UniqueComponentClassifierReference::Implementation(unirf),
                 ) => {
                     // 直接使用子组件标识符 + "Thread"
-                    format!("{}", unirf.implementation_name.type_identifier)
+                    unirf.implementation_name.type_identifier.to_string()
                 }
                 _ => "UnsupportedComponent".to_string(),
             };
@@ -485,7 +482,7 @@ fn create_process_new_body(
                     );
                     data_inits.push(Statement::Let(LetStmt {
                         ifmut: false,
-                        name: format!("{}", var_name),
+                        name: var_name.to_string(),
                         ty: Some(Type::Named(shared_ty.clone())),
                         init: Some(init_expr),
                     }));
@@ -498,7 +495,7 @@ fn create_process_new_body(
                     }
                     thread_inits.push(Statement::Let(LetStmt {
                         ifmut: true,
-                        name: format!("{}", var_name),
+                        name: var_name.to_string(),
                         ty: Some(Type::Named(format!("{}Thread", to_upper_camel_case(&type_name)))),
                         init: Some(Expr::Call(
                             Box::new(Expr::Path(
@@ -564,6 +561,7 @@ fn create_process_new_body(
     // 3. 建立连接
     // 函数内存储已处理过的广播连接，避免二次处理。
     let mut processed_broadcast_connections = Vec::new();
+    //println!("thread_broadcast_receive:{:?}",temp_converter.thread_broadcast_receive);
 
     if let ConnectionClause::Items(connections) = &impl_.connections {
         for conn in connections {
@@ -609,7 +607,7 @@ fn create_process_new_body(
                         PortDirection::InOut => format!("{}Send", port.identifier.to_lowercase()),
                     };
 
-                    field_inits.push(format!("{}", internal_port_name));
+                    field_inits.push(internal_port_name.to_string());
                 }
             }
         }
@@ -628,7 +626,7 @@ fn create_process_new_body(
     let all_fields = field_inits.join(", ");
 
     stmts.push(Statement::Expr(Expr::Ident(format!(
-        "return Self {{ {} }}  //显式return",
+        "Self {{ {} }}  // finalize process",
         all_fields
     ))));
 
@@ -794,7 +792,7 @@ fn create_data_forwarding_tasks(impl_: &ComponentImplementation) -> Vec<(String,
                         },
                     ) => {
                         // 对于进程端口，应该使用内部端口字段名（如 evenementSend）
-                        let src_field = format!("{}", src_port.to_lowercase());
+                        let src_field = src_port.to_lowercase().to_string();
                         let dst_field = format!("{}Send", src_port.to_lowercase());
                         (src_field, dst_field)
                     }
@@ -808,7 +806,7 @@ fn create_data_forwarding_tasks(impl_: &ComponentImplementation) -> Vec<(String,
                     ) => {
                         let src_field = format!("{}Rece", dst_port.to_lowercase());
                         // 对于进程端口，应该使用内部端口字段名（如 evenementRece）
-                        let dst_field = format!("{}", dst_port.to_lowercase());
+                        let dst_field = dst_port.to_lowercase().to_string();
                         (src_field, dst_field)
                     }
                     _ => continue,

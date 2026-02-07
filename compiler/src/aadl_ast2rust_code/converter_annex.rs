@@ -1,11 +1,15 @@
 // src/aadlAst2rustCode/converter_annex.rs
 // Behavior Annex 代码生成器
-#![allow(clippy::all)]
+#![allow(
+    clippy::empty_line_after_doc_comments,
+    clippy::only_used_in_recursion,
+)]
 use super::intermediate_ast::*;
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
 
 /// Behavior Annex 代码生成器
+#[derive(Default)]
 pub struct AnnexConverter {
     /// 存储状态信息，用于判断状态是否需要continue
     state_info: HashMap<String, bool>, // state_name -> needs_continue
@@ -13,14 +17,6 @@ pub struct AnnexConverter {
     states_with_conditions: std::collections::HashSet<String>,
 }
 
-impl Default for AnnexConverter {
-    fn default() -> Self {
-        Self {
-            state_info: HashMap::new(),
-            states_with_conditions: std::collections::HashSet::new(),
-        }
-    }
-}
 
 impl AnnexConverter {
     /// 为线程实现生成Behavior Annex代码
@@ -263,7 +259,7 @@ impl AnnexConverter {
         for port_name in ports_to_receive {
             let receive_stmt = Statement::Let(LetStmt {
                 ifmut: false,
-                name: format!("{}", port_name),
+                name: port_name.to_string(),
                 ty: None,
                 init: Some(self.build_port_receive_expr(&port_name)),
             });
@@ -537,7 +533,7 @@ impl AnnexConverter {
             for trigger in &execute_cond.dispatch_triggers {
                 match trigger {
                     DispatchTrigger::InEventPort(port_name) => {
-                        let port_var = format!("{}", port_name.to_lowercase());
+                        let port_var = port_name.to_lowercase().to_string();
                         let mut condition = if use_less_than {
                             let number_literal = parsed_number.as_ref().unwrap().clone();
                             Expr::BinaryOp(
@@ -546,7 +542,7 @@ impl AnnexConverter {
                                 Box::new(Expr::Ident(port_var.clone())),
                             )
                         } else {
-                            let expected_value = if not_flag { false } else { true };
+                            let expected_value = !not_flag;
                             Expr::BinaryOp(
                                 Box::new(Expr::Ident(port_var.clone())),
                                 "==".to_string(),

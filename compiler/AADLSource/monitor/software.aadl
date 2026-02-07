@@ -13,11 +13,16 @@ public
 -- Data --
 ----------
 
+-- data Simple_Type
+-- properties
+--   Type_Source_Name => "custom_int"; 
+--   Source_Text => ("ping");
+--   Data_Size => 8 Bytes;
+-- end Simple_Type;
+
 data Simple_Type
 properties
-  Type_Source_Name => "custom_int"; 
-  Source_Text => ("ping");
-  Source_Data_Size => 8 Bytes;
+  Data_Model::Data_Representation => Integer;
 end Simple_Type;
 
 -----------------
@@ -60,9 +65,9 @@ Mycalls: {
 connections
   cn0: parameter P_Spg.Data_Source -> Data_Source;
 properties
-  Recover_Entrypoint_Source_Text     => "recover";
+  -- Recover_Entrypoint_Source_Text     => "recover";
   Dispatch_Protocol                  => Periodic;
-  Period                             => 1000 Ms;
+  Period                             => 1000 ms;
   Deadline                           => 1000 ms;
   Priority                           => 2;
 end P.Impl;
@@ -81,8 +86,8 @@ connections
   cn0: parameter Data_Sink -> Q_Spg.Data_Sink;
 properties
   Dispatch_Protocol                  => Sporadic;
-  Period                             => 10 Ms;
-  deadline                           => 10 Ms;
+  Period                             => 10 ms;
+  deadline                           => 10 ms;
   Priority                           => 1;
 end Q.Impl;
 

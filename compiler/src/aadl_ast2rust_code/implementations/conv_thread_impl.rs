@@ -1,4 +1,5 @@
-#![allow(clippy::all)]
+#![allow(clippy::vec_init_then_push)]
+#![allow(clippy::single_match)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::aadl_ast2rust_code::converter_annex::AnnexConverter;
@@ -40,7 +41,7 @@ pub fn convert_thread_implemenation(temp_converter: &mut AadlConverter, impl_: &
     // 将实现级别的属性值追加到 thread_field_values
     if !field_values.is_empty() {
         // 获取现有的字段值映射，如果不存在则创建新的
-        let existing_values = temp_converter.thread_field_values.entry(struct_name.clone()).or_insert_with(HashMap::new);
+        let existing_values = temp_converter.thread_field_values.entry(struct_name.clone()).or_default();
         // 追加新的字段值，如果字段已存在则覆盖（实现级别的属性优先级更高）
         for (key, value) in field_values {
             existing_values.insert(key, value);
@@ -135,7 +136,7 @@ fn create_thread_new_method(temp_converter: &mut AadlConverter, impl_: &Componen
     // 为每个字段生成初始化表达式和注释
     for (field_name, prop_value) in &field_values {
         let mut init_value = property_value_to_initializer(prop_value);
-        let comment = format!("");
+        let comment = String::new();
 
         // 对以"Shared"结尾的字段类型添加参数（已删去），并修改初始化值
         if let Some(field_type) = field_types.get(field_name) {
@@ -169,7 +170,7 @@ fn create_thread_new_method(temp_converter: &mut AadlConverter, impl_: &Componen
     field_initializations.push("            cpu_id: cpu_id, // CPU ID".to_string());
     
     // 创建结构体字面量返回语句
-    let struct_literal = format!("return Self {{\n{}\n        }}", field_initializations.join("\n"));
+    let struct_literal = format!("Self {{\n{}\n        }} // finalize thread", field_initializations.join("\n"));
     
     // 创建方法体
     let body = Block {
@@ -227,12 +228,12 @@ fn create_thread_run_body(temp_converter: &mut AadlConverter, impl_: &ComponentI
             stmts: vec![
                 // let mut param = sched_param { sched_priority: self.priority as i32 };
                 Statement::Let(LetStmt {
-                    ifmut: true,
+                    ifmut: false,
                     name: "param".to_string(),
                     ty: Some(Type::Named("sched_param".to_string())),
                     init: Some(Expr::Ident(format!("sched_param {{ sched_priority: {} }}", priority as i32))),
                 }),
-                // let ret = pthread_setschedparam(pthread_self(), *, &mut param);
+                // let ret = pthread_setschedparam(pthread_self(), *, &param);
                 Statement::Let(LetStmt {
                     ifmut: false,
                     name: "ret".to_string(),
@@ -279,7 +280,7 @@ fn create_thread_run_body(temp_converter: &mut AadlConverter, impl_: &ComponentI
                             Expr::Reference(
                                 Box::new(Expr::Ident("param".to_string())),
                                 true,
-                                true,
+                                false,
                             ),
                         ],
                     )),
@@ -481,7 +482,8 @@ fn create_periodic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
     let mut stmts = Vec::new();
     
     // 从AADL属性中提取周期值，默认为2000ms
-    let period = extract_property_value(temp_converter, impl_, "period").unwrap_or(2000);
+    let period = extract_property_value(temp_converter, impl_, "period").unwrap_or(1000);
+    println!("{:?}period:{:?}",impl_.name,period);
     stmts.push(Statement::Let(LetStmt {
         ifmut: false,
         name: "period".to_string(),
@@ -656,7 +658,7 @@ fn create_aperiodic_execution_logic(temp_converter: &AadlConverter, impl_: &Comp
             
             // 如果事件队列中有事件，则挑选出优先级最高的进行处理
             loop_stmts.push(Statement::Expr(Expr::IfLet {
-                pattern: "Some((idx, (val, _urgency, _ts)))".to_string(),
+                pattern: "Some((idx, (_val, _urgency, _ts)))".to_string(),
                 value: Box::new(Expr::MethodCall(
                     Box::new(Expr::MethodCall(
                         Box::new(Expr::MethodCall(
@@ -783,7 +785,7 @@ fn create_sporadic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
 
     // 检查是否有需要端口数据的子程序调用
     let subprogram_calls = extract_subprogram_calls(temp_converter, impl_);
-    println!("subprogram_calls{:?}",subprogram_calls);
+    // println!("subprogram_calls{:?}",subprogram_calls);
     let has_receiving_subprograms = subprogram_calls.iter().any(|(_, _, _, is_send, _)| !is_send); //标志位，是否有需要传入数据的子程序
 
     // 在循环外定义 events 变量
@@ -807,7 +809,7 @@ fn create_sporadic_execution_logic(temp_converter: &AadlConverter, impl_: &Compo
             
             // 如果事件队列中有事件，则挑选出优先级最高的进行处理
             loop_stmts.push(Statement::Expr(Expr::IfLet {
-                pattern: "Some((idx, (val, _urgency, _ts)))".to_string(),
+                pattern: "Some((idx, (_val, _urgency, _ts)))".to_string(),
                 value: Box::new(Expr::MethodCall(
                     Box::new(Expr::MethodCall(
                         Box::new(Expr::MethodCall(
@@ -1018,7 +1020,7 @@ fn create_timed_execution_logic(temp_converter: &AadlConverter, impl_: &Componen
             
             // 如果事件队列中有事件，则挑选出优先级最高的进行处理
             loop_stmts.push(Statement::Expr(Expr::IfLet {
-                pattern: "Some((idx, (val, _urgency, _ts)))".to_string(),
+                pattern: "Some((idx, (_val, _urgency, _ts)))".to_string(),
                 value: Box::new(Expr::MethodCall(
                     Box::new(Expr::MethodCall(
                         Box::new(Expr::MethodCall(
@@ -1267,25 +1269,30 @@ fn create_subprogram_call_logic_with_data(temp_converter: &AadlConverter, impl_:
                                         expr: None,
                                     },
                                 },
-                                MatchArm {
-                                    pattern: "Err(crossbeam_channel::TryRecvError::Empty)".to_string(),
+                                MatchArm{
+                                    pattern: "_".to_string(),
                                     guard: None,
-                                    body: Block { stmts: vec![], expr: None },
+                                    body :Block { stmts: vec![], expr: None },
                                 },
-                                MatchArm {
-                                    pattern: "Err(crossbeam_channel::TryRecvError::Disconnected)".to_string(),
-                                    guard: None,
-                                    body: Block {
-                                        stmts: vec![Statement::Expr(Expr::Call(
-                                            Box::new(Expr::Path(
-                                                vec!["eprintln!".to_string()],
-                                                PathType::Namespace,
-                                            )),
-                                            vec![Expr::Literal(Literal::Str("channel closed".to_string()))],
-                                        ))],
-                                        expr: None,
-                                    },
-                                },
+                                // MatchArm {
+                                //     pattern: "Err(crossbeam_channel::TryRecvError::Empty)".to_string(),
+                                //     guard: None,
+                                //     body: Block { stmts: vec![], expr: None },
+                                // },
+                                // MatchArm {
+                                //     pattern: "Err(crossbeam_channel::TryRecvError::Disconnected)".to_string(),
+                                //     guard: None,
+                                //     body: Block {
+                                //         stmts: vec![Statement::Expr(Expr::Call(
+                                //             Box::new(Expr::Path(
+                                //                 vec!["eprintln!".to_string()],
+                                //                 PathType::Namespace,
+                                //             )),
+                                //             vec![Expr::Literal(Literal::Str("channel closed".to_string()))],
+                                //         ))],
+                                //         expr: None,
+                                //     },
+                                // },
                             ],
                         };
 
@@ -1299,7 +1306,7 @@ fn create_subprogram_call_logic_with_data(temp_converter: &AadlConverter, impl_:
                                     PathType::Member,
                                 )),
                                 true,
-                                false,
+                                true,
                             )),
                             then_branch: Block {
                                 stmts: receive_stmts,
@@ -1381,7 +1388,9 @@ fn extract_property_value(temp_converter: &AadlConverter, impl_: &ComponentImple
     for prop in temp_converter.convert_properties(ComponentRef::Impl(impl_)) {
         if prop.name.to_lowercase() == target_name {
             match prop.value {
-                StruPropertyValue::Integer(val) => return Some(val as u64),
+                StruPropertyValue::Integer(val) => {
+                    return Some(val as u64);
+                }
                 StruPropertyValue::Duration(val, unit) => {
                     println!(
                         "Warning: Found duration {} {} for property {}, expected integer",

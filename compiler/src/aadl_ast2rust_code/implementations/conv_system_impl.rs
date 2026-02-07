@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
@@ -285,7 +285,7 @@ fn create_system_new_body(
 
     let fields_str = field_names.join(", ");
     stmts.push(Statement::Expr(Expr::Ident(format!(
-        "return Self {{ {} }}  //显式return",
+        "Self {{ {} }}  // finalize system ",
         fields_str
     ))));
 

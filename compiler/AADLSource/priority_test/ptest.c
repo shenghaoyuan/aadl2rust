@@ -1,8 +1,8 @@
-
 #include <stdio.h>
-#include <po_hi_time.h>
+#include "po_hi_time.h"
 #include <unistd.h>
-
+#include <time.h>
+#include "ptest.h"
 #include "whetstone.c"
 
 #define loop 167

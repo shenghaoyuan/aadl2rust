@@ -4,24 +4,24 @@
 #include <stdio.h>
 // #include <sb_types.h>
 // #include <sb_source_t_impl.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "source.h"
-
-typedef signed char int8_t;
-typedef signed int int32_t;
-typedef long long int int64_t;
-typedef int bool;
-#define true 1
-#define false 0
 
 static int64_t port_buffer;
 static bool buffer_has_data = false;
 
 static int64_t _value;
 
-void testdpmon_source_component_init(const int64_t *in_arg)
+void testdpmon_source_component_init(void)
 {
+    static bool is_initialized = false;
+    if (is_initialized) {
+        return;
+    }
     printf("testdpmon_source_component_init called\n");
     _value = 0;
+    is_initialized = true;
 }
 
 /* control thread: keep calling enqueue for thing
@@ -34,7 +34,7 @@ void run_sender(const int64_t *in_arg)
     }
 }
 
-void testdpmon_destination_component_init(const int64_t *in_arg)
+void testdpmon_destination_component_init(void)
 {
     printf("testdpmon_destination_component_init called\n");
 }

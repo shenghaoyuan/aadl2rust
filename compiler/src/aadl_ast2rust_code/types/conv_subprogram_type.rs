@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+#![allow(clippy::collapsible_match)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;
@@ -239,7 +239,7 @@ fn generate_c_function_wrapper(
         let mut imports = vec![c_func_name.to_string()];
         //println!("types_to_import: {:?}", types_to_import);
         if !types_to_import.is_empty() {
-            imports.extend(types_to_import.into_iter());
+            imports.extend(types_to_import);
         }
 
         let use_stmt = Item::Use(UseStatement {
@@ -253,7 +253,7 @@ fn generate_c_function_wrapper(
 
         let module = RustModule {
             name: comp.identifier.to_lowercase(),
-            docs: docs,
+            docs,
             //items: functions.into_iter().map(Item::Function).collect(),
             items: module_items,
             attrs: Default::default(),

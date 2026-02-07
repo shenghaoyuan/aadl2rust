@@ -18,6 +18,8 @@ public
 
 	------------------------------------------------
 	data SensorPacket
+		properties
+			Data_Model::Data_Representation => Struct;
 	end SensorPacket;
 
 	data implementation SensorPacket.impl
@@ -28,6 +30,8 @@ public
 	end SensorPacket.impl;
 
 	data MonitorPacket
+		properties
+			Data_Model::Data_Representation => Struct;
 	end MonitorPacket;
 
 	data implementation MonitorPacket.impl
@@ -50,7 +54,7 @@ public
 	thread PeriodicThread
 	properties
 		Dispatch_Protocol => Periodic;
-		Period => 1 sec;
+		Period => 1000 ms;
 		Stack_Size => 61440 Bytes;
 		Compute_Execution_Time => 10ms .. 10ms;
 	end PeriodicThread;

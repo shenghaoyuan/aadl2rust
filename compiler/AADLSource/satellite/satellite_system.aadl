@@ -1,0 +1,50 @@
+-- 系统功能：模拟完整的卫星在轨软件系统，包含系统管理、姿态控制、平台管理、有效载荷和数据处理
+--   - 系统管理任务：SYS_CYCL（125ms，优先级249），负责总体系统管理
+--   - AOCS任务：AOCS_CYCL（125ms，248）、AOCS_CONF（250ms，245）、AOCS_MAN（250ms，244），负责姿态与轨道控制
+--   - 平台任务：PF_CYCL（125ms，246）、PF_CONF（250ms，243），负责平台管理
+--   - 有效载荷任务：PL_CYCL（125ms，247）、PL_CONF（250ms，242），负责有效载荷操作
+--   - 数据处理任务：RTC_HDLR（250ms，255）等6个DHS任务，负责遥测、遥控和数据总线处理
+
+-- 系统特点：
+-- 1. 完整的卫星软件系统架构，包含18个线程和6个共享数据组件，形成复杂的多级控制体系
+-- 2. 多速率周期性调度，线程周期从125ms到250ms，优先级从255（最高）到242（最低）
+-- 3. 使用多种通信机制：事件端口、数据端口、事件数据端口和共享数据访问
+-- 4. 基于ERC32处理器（航天领域专用），适合星载计算机系统
+
+package satellite_system
+public
+
+with satellite_software;
+with satellite_hardware;
+
+ -------------------------------------------------------------------------------
+  --  the system
+  -------------------------------------------------------------------------------
+
+  system OBMU
+  end OBMU;
+
+  system implementation OBMU.Impl
+    subcomponents
+      OBSW: process satellite_software::SAT_APPLI.Impl;
+      ERC32: processor satellite_hardware::ERC32.impl;
+      -- RAM: memory satellite_hardware::RAM;
+      -- AVB: bus satellite_hardware::bus_1553;
+      -- ICB: bus satellite_hardware::bus_1553;
+      -- PLB: bus satellite_hardware::bus_1553;
+         
+    -- connections
+    --   C1: bus access AVB -> RAM.AVB_bus_connected;
+    --   C2: bus access AVB -> ERC32.AVB_bus_connected;
+    --   C3: bus access ICB -> RAM.ICB_bus_connected;
+    --   C4: bus access ICB -> ERC32.ICB_bus_connected;
+    --   C5: bus access PLB -> RAM.PLB_bus_connected;
+    --   C6: bus access PLB -> ERC32.PLB_bus_connected;
+         
+    properties
+      Actual_Processor_Binding =>  reference (ERC32) applies to OBSW;
+      -- Actual_Memory_Binding =>  (reference (ram)) applies to OBSW;
+      
+  end OBMU.Impl;
+
+end satellite_system;

@@ -26,18 +26,32 @@ public
 			bottom: data Base_Types::Integer_8;
 	end Thing_t.impl;
 	
+	subprogram source_init
+	properties
+		source_language => (C);
+		source_name => "testshare_publisher_component_init";
+		source_text => ("testshare.c");
+	end source_init;
+
+	subprogram dest_init
+	properties
+		source_language => (C);
+		source_name => "testshare_subscriber_component_init";
+		source_text => ("testshare.c");
+	end dest_init;
+
 	subprogram spg_run_publisher
 		properties
 			source_language => (C);
-			source_text => ("testshare.c");
 			source_name => "run_publisher";
+			source_text => ("testshare.c");
 	end spg_run_publisher;
 
 	subprogram spg_run_subscriber
 		properties
 			source_language => (C);
-			source_text => ("testshare.c");
 			source_name => "run_subscriber";
+			source_text => ("testshare.c");
 	end spg_run_subscriber;
 
 	thread publisher
@@ -52,6 +66,7 @@ public
 	thread implementation publisher.impl
 	calls
 	MyCall: {
+		Init_Spg : subprogram source_init;
 		P : subprogram spg_run_publisher;
 	};
 	end publisher.impl;
@@ -68,6 +83,7 @@ public
 	thread implementation subscriber.impl
 	calls
 	MyCall: {
+		Init_Dest : subprogram dest_init;
 		Q : subprogram spg_run_subscriber;
 	};
 	end subscriber.impl;

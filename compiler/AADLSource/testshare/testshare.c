@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 // #include <camkes.h>
 // #include <sb_types.h>
 // #include <sb_publisher_impl.h>
@@ -29,8 +30,13 @@ static Thing_t *b1 = &shared_memory_storage;
 static Thing_t *b2 = &shared_memory_storage;
 
 void testshare_publisher_component_init(void) {
-  printf("testshare_publisher_component_init called\n");
-  _value = 0;
+    static bool is_initialized = false;
+    if (is_initialized) {
+        return;
+    }
+    is_initialized = true;
+    printf("testshare_publisher_component_init called\n");
+    _value = 0;
 }
 
 void run_publisher(void)
@@ -47,6 +53,11 @@ void run_publisher(void)
 }
 
 void testshare_subscriber_component_init(void) {
+    static bool is_initialized = false;
+    if (is_initialized) {
+        return;
+    }
+    is_initialized = true;
     printf("testshare_subscriber_component_init called\n");
     printf("[subscriber] starting--poll for nonzero thing_t\n");
 }

@@ -1,4 +1,7 @@
-#![allow(clippy::all)]
+#![allow(
+    unused_mut,
+    clippy::manual_strip,
+)]
 use crate::aadlight_parser;
 use super::ast::aadl_ast_cj::*;
 use pest::{iterators::Pair};
@@ -158,7 +161,7 @@ pub fn transform_state_declaration(pair: Pair<aadlight_parser::Rule>) -> State {
     let mut modifiers = Vec::new();
     
     // 处理标识符列表
-    while let Some(inner) = inner_iter.next() {
+    for inner in inner_iter {
         match inner.as_rule() {
             aadlight_parser::Rule::identifier => {
                 identifiers.push(extract_identifier(inner));
@@ -294,7 +297,7 @@ fn transform_dispatch_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCo
     let mut trigger_condition = None;
     let mut frozen_ports = None;
     
-    while let Some(inner) = inner_iter.next() {
+    for inner in inner_iter {
         match inner.as_rule() {
             aadlight_parser::Rule::dispatch_trigger_condition => {
                 trigger_condition = Some(transform_dispatch_trigger_condition(inner));
@@ -346,7 +349,7 @@ fn transform_execute_condition(pair: Pair<aadlight_parser::Rule>) -> BehaviorCon
         not: has_not,
         dispatch_triggers: vec![DispatchTrigger::InEventPort(identifier)],
         number: Some(number),
-        less_than: less_than,
+        less_than,
     };
     
     BehaviorCondition::Execute(conjunction)

@@ -1,13 +1,18 @@
-#![allow(clippy::all)]
+#![allow(
+    clippy::empty_line_after_doc_comments,
+    clippy::if_same_then_else,
+    clippy::collapsible_match,
+    clippy::vec_init_then_push,
+)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::aadl_ast2rust_code::tool;
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
 /**
-    收集器：收集AADL模型中的组件类型信息、process之间的多连接关系、thread之间的多连接关系
-    collect_component_types: 收集所有组件类型信息
-    collect_process_connections: 收集system内process之间的多连接关系
-    collect_thread_connections: 收集process内和thread之间的多连接关系
+ * 收集器：收集AADL模型中的组件类型信息、process之间的多连接关系、thread之间的多连接关系
+ * collect_component_types: 收集所有组件类型信息
+ * collect_process_connections: 收集system内process之间的多连接关系
+ * collect_thread_connections: 收集process内和thread之间的多连接关系
 */
 
 // 收集所有组件类型信息
@@ -88,7 +93,7 @@ pub fn collect_process_connections(
                                                 //self.process_broadcast_send.push((d_subcomponent.clone(), d_port.clone()));
                                                 process_broadcast_receive
                                                     .entry(ele.clone())
-                                                    .or_insert(Vec::new())
+                                                    .or_default()
                                                     .push((d_subcomponent.clone(), d_port.clone()));
                                             }
                                         }
@@ -165,6 +170,7 @@ pub fn collect_thread_connections(
             }
         }
     }
+    //println!("process_forwarder_broadcast_send:{:?}",process_forwarder_broadcast_send);
 
     //筛选重复出现的端口。保留。
     let temp_process_port =
@@ -183,7 +189,7 @@ pub fn collect_thread_connections(
                                         if proc_port.eq(port) {
                                             if let PortEndpoint::SubcomponentPort {
                                                 subcomponent,
-                                                port,
+                                                port:sub_port,
                                             } = &port_conn.destination
                                             {
                                                 thread_broadcast_receive
@@ -191,8 +197,8 @@ pub fn collect_thread_connections(
                                                         port.clone(),
                                                         impl_.name.type_identifier.clone(),
                                                     ))
-                                                    .or_insert(Vec::new())
-                                                    .push((subcomponent.clone(), port.clone()));
+                                                    .or_default()
+                                                    .push((subcomponent.clone(), sub_port.clone()));
                                             }
                                         }
                                     }
@@ -205,7 +211,7 @@ pub fn collect_thread_connections(
         }
     }
     //遍历thread_broadcast_receive的键值对当中所有的值（不考虑键），把其中的组件名，在process中对应的子组件名，找到它的真实类型，并记录下来存储到process_subcomponent_identify_to_type。
-    for (_, vercport) in thread_broadcast_receive {
+    for vercport in thread_broadcast_receive.values_mut() {
         for (comp, _) in vercport {
             if let Some(public_section) = &pkg.public_section {
                 for decl in &public_section.declarations {

@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+#![allow(clippy::only_used_in_recursion)]
 use super::intermediate_ast::*;
 use chrono::Local;
 
@@ -6,6 +6,12 @@ use chrono::Local;
 pub struct RustCodeGenerator {
     buffer: String,
     indent_level: usize,
+}
+
+impl Default for RustCodeGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RustCodeGenerator {

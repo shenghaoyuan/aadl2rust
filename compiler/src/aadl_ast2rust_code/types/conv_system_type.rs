@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;
@@ -12,7 +12,7 @@ pub fn convert_system_component(temp_converter: &AadlConverter, comp: &Component
     let struct_def = StructDef {
         name: format!("{}System", to_upper_camel_case(&comp.identifier)),
         fields: vec![], // 系统类型不包含字段
-        properties: temp_converter.convert_properties(ComponentRef::Type(&comp)), //TODO:这里似乎不需要
+        properties: temp_converter.convert_properties(ComponentRef::Type(comp)), //TODO:这里似乎不需要
         generics: Vec::new(),
         derives: vec!["Debug".to_string()],
         docs: vec![format!("// AADL System: {}", comp.identifier)],

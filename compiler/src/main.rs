@@ -48,7 +48,7 @@ fn main() {
         println!("输出名称: {}", test_case.output_name);
 
         // 确保 generate 目录存在
-        if !fs::metadata("generate").is_ok() {
+        if fs::metadata("generate").is_err() {
             fs::create_dir("generate").expect("无法创建 generate 目录");
         }
 
@@ -246,7 +246,7 @@ fn main() {
             println!("文件路径: {}", test_case.path);
 
             // 确保generate目录存在
-            if !fs::metadata("generate").is_ok() {
+            if fs::metadata("generate").is_err() {
                 fs::create_dir("generate").expect("无法创建generate目录");
             }
 
@@ -275,12 +275,12 @@ fn process_test_case(test_case: &TestCase) {
             println!("=== 解析成功，共 {} 个pair ===", pairs.clone().count());
 
             // 确保generate/temp目录存在
-            if !fs::metadata("generate/temp").is_ok() {
+            if fs::metadata("generate/temp").is_err() {
                 fs::create_dir("generate/temp").expect("无法创建generate/temp目录");
             }
 
             // 确保generate/project目录存在
-            if !fs::metadata("generate/project").is_ok() {
+            if fs::metadata("generate/project").is_err() {
                 fs::create_dir("generate/project").expect("无法创建generate/project目录");
             }
 
@@ -309,7 +309,7 @@ fn process_test_case(test_case: &TestCase) {
 
             println!("\n==================================== 生成Rust代码 ===================================");
             let mut converter = AadlConverter::default();
-            for (_index, package) in ast.iter().enumerate() {
+            for package in ast.iter() {
                 generate_rust_code_for_test_case(package, test_case, ast.len(), &mut converter);
             }
 
@@ -374,10 +374,10 @@ fn read_aadl_inputs(path: &str) -> Result<String, std::io::Error> {
             merged.push_str("-- ================================\n");
             merged.push_str(&format!("-- merged from file: {}\n", file.display()));
             merged.push_str("-- ================================\n");
-            merged.push_str("\n");
+            merged.push('\n');
 
             merged.push_str(&content);
-            merged.push_str("\n");
+            merged.push('\n');
         }
 
         return Ok(merged);
@@ -394,11 +394,11 @@ pub fn generate_rust_code_for_test_case(
     test_case: &TestCase,
     _number_of_packages: usize,
     converter: &mut AadlConverter,
-) -> () {
+) {
     // 第一级转换：语义转换
     //let mut converter = AadlConverter::default();
 
-    let rust_module = converter.convert_package(&aadl_pkg);
+    let rust_module = converter.convert_package(aadl_pkg);
     //println!("\n==================================== rust_module ===================================");
 
     // 保存中间AST到文件

@@ -9,7 +9,7 @@ RUSTUP_TOOLCHAIN := +nightly
 # llvm-cov ignore settings
 # =========================
 
-LLVM_COV_IGNORE_REGEX := collector\.rs|generate_build\.rs|intermediate_print\.rs|merge_utils\.rs|tool\.rs|ast\.rs|main\.rs|printmessage\.rs|test_mod\.rs|transform\.rs|transform_annex\.rs
+LLVM_COV_IGNORE_REGEX := collector\.rs|generate_build\.rs|intermediate_print\.rs|merge_utils\.rs|tool\.rs|ast\.rs|main\.rs|printmessage\.rs|test_mod\.rs|transform\.rs|transform_annex\.rs|model_statistics\.rs
 
 # =========================
 # Default target

@@ -32,6 +32,15 @@ public
 			source_text     => ("source.c");
 	end C_B;
 
+	subprogram C_C
+		features
+			in_param : in parameter Base_Types::Integer_64;
+		properties
+			source_language => (C);
+			source_name => "test_data_port_periodic_destination_component_time_triggered2";
+			source_text     => ("source.c");
+	end C_C;
+
 	thread source_t
 		features
 			write_port: out data port Base_Types::Integer_64;
@@ -50,27 +59,47 @@ public
 	};
 	connections
 		cnx_a : parameter A_Spg.out_param -> write_port;
+	properties
+		Dispatch_Protocol => Periodic;
+		Period => 10000 ms;
+		Priority   => 5;
 	end source_t.impl;
 	
-	thread destination_t
+	thread destinationt1
 		features
 			read_port: in data port Base_Types::Integer_64;
-		properties
-			Dispatch_Protocol => Periodic;
-			Period => 2sec;
-			-- Source_Text => ("behavior_code/components/destination/src/destination.c");
-			-- Initialize_Entrypoint_Source_Text => "test_data_port_periodic_destination_component_init";
-			-- Compute_Entrypoint_Source_Text => "test_data_port_periodic_destination_component_time_triggered";
-	end destination_t;
+	end destinationt1;
 	
-	thread implementation destination_t.impl
+	thread implementation destinationt1.impl
 	calls 
 	Mycalls: {
 		B_Spg : subprogram C_B;
 	};
 	connections
 		cnx_b : parameter read_port -> B_Spg.in_param;
-	end destination_t.impl;
+	properties
+		Dispatch_Protocol => Periodic;
+		Period => 2000 ms;
+		Priority   => 2;
+	end destinationt1.impl;
+
+	thread destinationt2
+	features
+		read_port: in data port Base_Types::Integer_64;
+	end destinationt2;
+	
+	thread implementation destinationt2.impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_C;
+	};
+	connections
+		cnx_b : parameter read_port -> B_Spg.in_param;
+	properties
+		Dispatch_Protocol => Periodic;
+		Period => 2000 ms;
+		Priority   => 1;
+	end destinationt2.impl;
 
 	processor proc
 	end proc;
@@ -78,18 +107,31 @@ public
 	processor implementation proc.impl
 	end proc.impl;
 
-	process top_process
-	end top_process;
+	process top_process1
+		features
+			out_port: out data port Base_Types::Integer_64;
+	end top_process1;
 
-	process implementation top_process.impl
+	process implementation top_process1.impl
 		subcomponents
 			src: thread source_t.impl;
-			dest_A: thread destination_t.impl;
-			dest_B: thread destination_t.impl;
 		connections
- 			conn1: port src.write_port -> dest_A.read_port;
- 			conn2: port src.write_port -> dest_B.read_port;
-	end top_process.impl;
+ 			conn1: port src.write_port -> out_port;
+	end top_process1.impl;
+
+	process top_process2
+		features
+			in_port: in data port Base_Types::Integer_64;
+	end top_process2;
+
+	process implementation top_process2.impl
+		subcomponents
+			dest_a: thread destinationt1.impl;
+			dest_b: thread destinationt2.impl;
+		connections
+ 			conn1: port in_port -> dest_a.read_port;
+ 			conn2: port in_port -> dest_b.read_port;
+	end top_process2.impl;
 
 	system top
 	end top;
@@ -97,13 +139,17 @@ public
 	system implementation top.impl
 		subcomponents
 			proc: processor proc.impl;
-			test_data_port_periodic: process top_process.impl;
+			test_data_port_periodic1: process top_process1.impl;
+			test_data_port_periodic2: process top_process2.impl;
+		connections
+			conn1: port test_data_port_periodic1.out_port -> test_data_port_periodic2.in_port;
 		properties
-			Actual_Processor_Binding => reference (proc) applies to test_data_port_periodic;
+			Actual_Processor_Binding => reference (proc) applies to test_data_port_periodic1;
 		-- 	HAMR::Platform => (seL4_TB, seL4_Only);
 		-- annex resolute {**
 		-- 	check CASE_Tools
 		-- **};
+		
 	end top.impl;
 	
 end test_data_port_periodic_fan_out;

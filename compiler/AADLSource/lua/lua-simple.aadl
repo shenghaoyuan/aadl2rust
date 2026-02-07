@@ -1,6 +1,21 @@
+-- 系统功能概述：
+-- 这是一个Lua脚本集成测试案例，展示了如何在AADL系统中集成和调用Lua脚本。
+-- 系统包含两个线程，分别以不同周期调用C语言函数，其中一个函数会调用Lua脚本。
+--
+-- 线程功能：
+-- 1. Task1线程（周期1000ms，优先级1）：周期性调用hello_func函数，打印"hello world"
+-- 2. Task2线程（周期500ms，优先级2）：周期性调用lua_sample函数，该函数执行Lua脚本
+--
+-- 系统特点：
+-- 1. 这是Lua脚本集成测试案例，展示了如何在嵌入式实时系统中使用脚本语言
+-- 2. 双线程、双速率调度（1000ms和500ms），展示了不同优先级的任务调度
+-- 3. Task2的优先级(2)高于Task1(1)，但Task2周期更短，展示了优先级调度策略
+-- 4. 使用POSIX最高优先级优先调度协议
+-- 5. 计算执行时间范围明确指定（0-3ms），便于实时性分析
 package test_lua
 public
-  with Deployment;
+  -- with Deployment;
+  with Data_Model;
 
   -----------------
   -- Subprograms --
@@ -8,14 +23,15 @@ public
 
   subprogram Hello_Spg_1
   properties
-    source_language => (LUA);
-    source_text     => ("hello.lua");
+    source_language => (C);
+    source_text     => ("hello.c");
+    source_name     => "hello_func";
   end Hello_Spg_1;
 
   subprogram Hello_Spg_2
   properties
-    source_language => (LUA);
-    source_text     => ("hello2.lua");
+    source_language => (C);
+    source_text     => ("hello.c");
     source_name     => "lua_sample";
   end Hello_Spg_2;
 
@@ -23,13 +39,13 @@ public
   -- Threads --
   -------------
 
-  thread Task
-  end Task;
+  thread Task1
+  end Task1;
 
-  thread implementation Task.impl_1
+  thread implementation Task1.impl_1
   calls
     Mycalls: {
-    P_Spg : subprogram Hello_Spg_1;
+      P_Spg : subprogram Hello_Spg_1;
     };
   properties
     Dispatch_Protocol                  => Periodic;
@@ -37,12 +53,15 @@ public
     Compute_Execution_time             => 0 ms .. 3 ms;
     Deadline                           => 1000 ms;
     Priority => 1;
-  end Task.impl_1;
+  end Task1.impl_1;
 
-  thread implementation Task.impl_2
+  thread Task2
+  end Task2;
+
+  thread implementation Task2.impl_2
   calls
     Mycalls: {
-    P_Spg : subprogram Hello_Spg_2;
+      P_Spg : subprogram Hello_Spg_2;
     };
   properties
     Dispatch_Protocol                  => Periodic;
@@ -50,15 +69,15 @@ public
     Compute_Execution_time             => 0 ms .. 3 ms;
     Deadline                           => 500 ms;
     Priority => 2;
-  end Task.impl_2;
+  end Task2.impl_2;
 
   ---------------
   -- Processor --
   ---------------
 
   processor cpurm
-  properties
-    Deployment::Execution_Platform => (linux32);
+  -- properties
+  --   Deployment::Execution_Platform => (linux32);
   end cpurm;
 
   processor implementation cpurm.impl
@@ -76,8 +95,8 @@ public
 
   process implementation node_a.impl
   subcomponents
-    Task1 : thread Task.impl_1;
-    Task2 : thread Task.impl_2;
+    Task1 : thread Task1.impl_1;
+    Task2 : thread Task2.impl_2;
   end node_a.impl;
 
   ------------
@@ -90,9 +109,9 @@ public
   system implementation lua.impl
   subcomponents
     node_a : process node_a.impl;
-    cpu_rm : processor cpurm.impl;
+    cpurm : processor cpurm.impl;
   properties
-    Actual_Processor_Binding => reference (cpu_rm) applies to node_a;
+    Actual_Processor_Binding => reference (cpurm) applies to node_a;
   end lua.impl;
 
 end test_lua;

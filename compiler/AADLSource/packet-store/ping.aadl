@@ -1,3 +1,21 @@
+-- 系统功能概述：
+-- 这是一个数据包存储测试案例，重点测试数据包的产生、存储和传输机制。
+-- 系统包含两个节点（Node_A和Node_B），分别部署在不同的处理器上，通过事件数据端口进行通信。
+--
+-- 线程功能：
+-- Node_A中的线程：
+-- 1. packet_producer线程（周期500ms，优先级2）：负责初始化并产生数据包
+-- 2. Pinger线程（周期1000ms，优先级2）：负责发送数据包，具有恢复入口点
+-- Node_B中的线程：
+-- 1. Ping_Me线程（偶发10ms，优先级1）：负责接收并处理数据包
+--
+-- 系统特点：
+-- 1. 专注于数据包的存储和传输机制
+-- 2. 包含了数据包初始化功能（produce_packet_init_spg），展示了数据包生命周期的完整性
+-- 3. 提供了两种部署模式：分布式（双节点）和本地（单进程）版本
+-- 4. 使用了事件数据端口进行通信，支持异步数据传输
+-- 5. Pinger线程具有恢复入口点，增加了系统的鲁棒性
+
 --  This model completes the PING example by adding deployment
 --  information.
 --
@@ -7,7 +25,7 @@
 package PING::packetStore
 public
   with Software;
-  with Deployment;
+  -- with Deployment;
   -- with ocarina_drivers;
   -- with ocarina_buses;
 
@@ -43,10 +61,10 @@ end A;
 
 process implementation A.Impl
 subcomponents
-  Pinger        : thread Software::P.Impl;
+  pinger        : thread Software::P.Impl;
   produce_pkts  : thread software::packet_producer.i;
 connections
-  cn0: port Pinger.Data_Source -> Out_Port;
+  cn0: port pinger.data_source -> Out_Port;
 end A.Impl;
 
 process B
@@ -56,22 +74,22 @@ end B;
 
 process implementation B.Impl
 subcomponents
-  Ping_Me        : thread Software::Q.Impl;
+  ping_me        : thread Software::Q.Impl;
 connections
-  cn0: port In_Port -> Ping_Me.Data_Sink;
+  cn0: port In_Port -> ping_me.data_sink;
 end B.Impl;
 
-process singleProcess
-end singleProcess;
+-- process singleProcess
+-- end singleProcess;
 
-process implementation singleProcess.Impl
-subcomponents
-  Pinger        : thread Software::P.Impl;
-  produce_pkts  : thread software::packet_producer.i;
-  Ping_Me        : thread Software::Q.Impl;
-connections
-  cn0: port Pinger.Data_Source -> Ping_Me.Data_Sink;
-end singleProcess.Impl;
+-- process implementation singleProcess.Impl
+-- subcomponents
+--   Pinger        : thread Software::P.Impl;
+--   produce_pkts  : thread software::packet_producer.i;
+--   Ping_Me        : thread Software::Q.Impl;
+-- connections
+--   cn0: port Pinger.Data_Source -> Ping_Me.Data_Sink;
+-- end singleProcess.Impl;
 
 ------------
 -- System --
@@ -102,8 +120,8 @@ connections
 properties
   actual_processor_binding => reference (CPU_A) applies to Node_A;
   actual_processor_binding => reference (CPU_B) applies to Node_B;
-  actual_processor_binding => reference (CPU_A) applies to Device_A;
-  actual_processor_binding => reference (CPU_B) applies to Device_B;
+  -- actual_processor_binding => reference (CPU_A) applies to Device_A;
+  -- actual_processor_binding => reference (CPU_B) applies to Device_B;
 end PING.Impl;
 
 -- system implementation PING.local

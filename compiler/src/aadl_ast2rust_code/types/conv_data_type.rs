@@ -1,4 +1,5 @@
-#![allow(clippy::all)]
+
+#![allow(clippy::collapsible_match)]
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
@@ -9,6 +10,7 @@ pub fn convert_data_component(
     data_comp_type: &mut HashMap<String, String>,
 ) -> Vec<Item> {
     let target_type = determine_data_type(type_mappings, comp);
+    println!("target_type:{:?}",target_type);
     // 当 determine_data_type 返回结构体类型时，生成结构体定义
     // 当 determine_data_type 返回联合体类型时，生成枚举定义
     // 当 determine_data_type 返回枚举类型时，生成枚举定义
@@ -102,10 +104,7 @@ pub fn convert_data_component(
         }
     }
     // 只有当组件标识符不存在于type_mappings中时，才添加到type_mappings中
-    if !type_mappings.contains_key(&comp.identifier.to_lowercase()) {
-        //println!("3333comp.identifier: {:?}", comp.identifier.to_lowercase());
-        type_mappings.insert(comp.identifier.to_lowercase(), target_type.clone());
-    }
+    type_mappings.entry(comp.identifier.to_lowercase()).or_insert_with(|| target_type.clone());
 
     vec![Item::TypeAlias(TypeAlias {
         name: comp.identifier.clone(),
@@ -117,6 +116,7 @@ pub fn convert_data_component(
 
 fn determine_data_type(type_mappings: &HashMap<String, Type>, comp: &ComponentType) -> Type {
     // 首先检查组件标识符是否已经存在于type_mappings中
+    // println!("comp.identifier.to_lowercase():{:?}",comp.identifier.to_lowercase());
     if let Some(existing_type) = type_mappings.get(&comp.identifier.to_lowercase()) {
         return existing_type.clone();
     }
@@ -198,6 +198,7 @@ fn determine_array_type(type_mappings: &HashMap<String, Type>, props: &[Property
     for prop in props {
         //println!("prop: {:?}", prop);
         if let Property::BasicProperty(bp) = prop {
+            // 查找base_type属性
             if bp.identifier.name.to_lowercase() == "base_type" {
                 if let PropertyValue::Single(PropertyExpression::ComponentClassifier(
                     ComponentClassifierTerm {
@@ -207,6 +208,7 @@ fn determine_array_type(type_mappings: &HashMap<String, Type>, props: &[Property
                 {
                     if let UniqueComponentClassifierReference::Type(impl_ref) = uccr {
                         let type_name = impl_ref.implementation_name.type_identifier.clone();
+                        println!("type_mappings:{:?}",type_mappings);
                         base_type = type_mappings
                             .get(&type_name.to_lowercase())
                             .cloned()
@@ -299,7 +301,7 @@ fn determine_struct_type(
                                 let rust_type = type_mappings
                                     .get(&type_name.to_string().to_lowercase())
                                     .cloned()
-                                    .unwrap_or_else(|| Type::Named(type_name));
+                                    .unwrap_or(Type::Named(type_name));
 
                                 field_types.push(rust_type);
                             }
@@ -398,7 +400,7 @@ fn determine_union_type(
                                 let rust_type = type_mappings
                                     .get(&type_name.to_string().to_lowercase())
                                     .cloned()
-                                    .unwrap_or_else(|| Type::Named(type_name));
+                                    .unwrap_or(Type::Named(type_name));
 
                                 field_types.push(rust_type);
                             }
@@ -549,7 +551,7 @@ fn determine_taggedunion_type(
                                 let rust_type = type_mappings
                                     .get(&type_name.to_string().to_lowercase())
                                     .cloned()
-                                    .unwrap_or_else(|| Type::Named(type_name));
+                                    .unwrap_or(Type::Named(type_name));
 
                                 field_types.push(rust_type);
                             }

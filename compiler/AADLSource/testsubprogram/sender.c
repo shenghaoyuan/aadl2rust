@@ -5,15 +5,22 @@
 // #include "../includes/sb_sender_impl.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "sender.h"
 
-static int64_t counter = 0;
+static testsubprogram__operands_impl global_ops;
 
-// void sender_init(const int64_t *arg){
-//    printf("Initializer method for sender invoked\n");
-// }
+void sender_init(void){
+   static bool is_init = false;
+   if (is_init) 
+   {
+      return;
+   }
+   is_init = true;
+   printf("Initializer method for sender invoked\n");
+}
 
-// void run_sender(int64_t * arg) {
+// void run_sender(void) {
 //    uint32_t result;
 
 //    operations_add(10, 5, &result);
@@ -23,6 +30,26 @@ static int64_t counter = 0;
 //    printf("Result of 'subtract' call to receiver with arguments 10, 5 : (%d) \n", result);
 // }
 
+void run_sender(void) {
+   global_ops.A = 10;
+   global_ops.B = 5;
+   global_ops.result = 0;
+
+   operations_add();
+   
+   printf("Result of 'add' call to receiver with arguments %u, %u : (%u) \n", 
+          global_ops.A, global_ops.B, global_ops.result);
+   
+   global_ops.A = 10;
+   global_ops.B = 5;
+   global_ops.result = 0; 
+   
+   operations_subtract();
+   
+   printf("Result of 'subtract' call to receiver with arguments %u, %u : (%u) \n", 
+          global_ops.A, global_ops.B, global_ops.result);
+}
+
 // void operations_add(uint32_t A, uint32_t B, uint32_t *result) {
 // 	*result = A + B;
 // }
@@ -31,18 +58,10 @@ static int64_t counter = 0;
 // 	*result = A - B;
 // }
 
-void run_sender(int64_t *result) {
-   counter++;
-   *result = counter;
-   printf("[Sender] Calculated value: %ld\n", *result);
-   fflush(stdout);
+void operations_add(void) {
+    global_ops.result = global_ops.A + global_ops.B;
 }
 
-void run_receiver(int64_t input) {
-   printf("[Receiver] Received value: %ld\n", input);
-   int64_t added = input + 5;
-   int64_t subbed = input - 2;
-   printf("           (Logic: %ld+5=%ld, %ld-2=%ld)\n", input, added, input, subbed);
-   
-   fflush(stdout);
+void operations_subtract(void) {
+    global_ops.result = global_ops.A - global_ops.B;
 }

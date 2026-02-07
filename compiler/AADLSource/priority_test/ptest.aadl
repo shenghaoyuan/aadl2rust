@@ -1,3 +1,19 @@
+-- 系统功能概述：
+-- 这是一个优先级测试案例，专门用于进行可调度性分析和周期性任务优先级行为研究。
+-- 系统包含三个独立的周期性任务，它们之间没有交互，运行在同一处理器上，用于分析优先级调度策略。
+--
+-- 线程功能：
+-- 1. Task1（周期600ms，优先级30）：调用task_1函数，最高优先级任务
+-- 2. Task2（周期800ms，优先级20）：调用task_2函数，具有200ms启动偏移（Dispatch_offset）
+-- 3. Task3（周期1200ms，优先级10）：调用task_3函数，最低优先级任务
+--
+-- 系统特点：
+-- 1. 专门用于配合Cheddar等调度分析工具
+-- 2. 三个任务具有不同优先级（30>20>10）和不同周期（600ms<800ms<1200ms）
+-- 3. Task2设置了启动偏移（200ms），用于避免任务同时启动导致的瞬时高负载
+-- 4. 任务之间没有通信连接，专注于调度行为分析
+-- 5. 优先级范围0-255，使用POSIX最高优先级优先调度协议
+
 --  This AADL model illustrates how to conduct schedulability analysis
 --  using Cheddar, and then code generation of periodic tasks.
 --
@@ -9,7 +25,7 @@
 
 package PTEST
 public
-  with Deployment;
+  -- with Deployment;
 
   -----------------
   -- Subprograms --
@@ -40,10 +56,10 @@ public
   -- Threads --
   -------------
 
-  thread Task
-  end Task;
+  thread Task1
+  end Task1;
 
-  thread implementation Task.impl_1
+  thread implementation Task1.impl_1
   calls
     Mycalls: {
     P_Spg : subprogram Ptest_Spg_1;
@@ -52,9 +68,12 @@ public
     Dispatch_Protocol                  => Periodic;
     Period                             => 600ms;
     Priority => 30;
-  end Task.impl_1;
+  end Task1.impl_1;
 
-  thread implementation Task.impl_2
+  thread Task2
+  end Task2;
+
+  thread implementation Task2.impl_2
   calls
     Mycalls: {
     P_Spg : subprogram Ptest_Spg_2;
@@ -64,9 +83,12 @@ public
     Period                             => 800ms;
     Priority => 20;
     Dispatch_offset                    => 200ms;
-  end Task.impl_2;
+  end Task2.impl_2;
 
-  thread implementation Task.impl_3
+  thread Task3
+  end Task3;
+
+  thread implementation Task3.impl_3
   calls
     Mycalls: {
     P_Spg : subprogram Ptest_Spg_3;
@@ -75,15 +97,15 @@ public
     Dispatch_Protocol                  => Periodic;
     Period                             => 1200ms;
     Priority => 10;
-  end Task.impl_3;
+  end Task3.impl_3;
 
   ---------------
   -- Processor --
   ---------------
 
   processor cpurm
-  properties
-    Deployment::Execution_Platform => native;
+  -- properties
+  --   Deployment::Execution_Platform => native;
   end cpurm;
 
   processor implementation cpurm.impl
@@ -101,9 +123,9 @@ public
 
   process implementation node_a.impl
   subcomponents
-    Task1 : thread Task.impl_1;
-    Task2 : thread Task.impl_2;
-    Task3 : thread Task.impl_3;
+    Task1 : thread Task1.impl_1;
+    Task2 : thread Task2.impl_2;
+    Task3 : thread Task3.impl_3;
   end node_a.impl;
 
   ------------

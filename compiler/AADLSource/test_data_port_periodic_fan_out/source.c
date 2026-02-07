@@ -32,7 +32,15 @@ void test_data_port_periodic_destination_component_time_triggered(int64_t arg) {
   int64_t value;
 
   if(sb_read_port_read(&value)){
-    printf("[Destination] value {%d}\n", value);
+    printf("[Destination1] value {%d}\n", value);
+  }
+}
+
+void test_data_port_periodic_destination_component_time_triggered2(int64_t arg) {
+  int64_t value;
+
+  if(sb_read_port_read(&value)){
+    printf("[Destination2] value {%d}\n", value);
   }
 }
 

@@ -6,101 +6,193 @@ public
 -- Data --
 ----------
 
-data Ravenscar
+-- data Ravenscar
+-- end Ravenscar;
+
+-- data implementation Ravenscar.Integer
+-- properties
+--   Data_Model::Data_Representation => Integer;
+-- end Ravenscar.Integer;
+data Integer_Type
 properties
   Data_Model::Data_Representation => Integer;
-end Ravenscar;
+end Integer_Type;
 
 -----------------
 -- Subprograms --
 -----------------
 
-subprogram Sensor_Sim_Spg
-features
-  AoA            : out parameter Ravenscar;
-  Climb_Rate     : out parameter Ravenscar;
-properties
-  source_language => (C);
-  source_name     => "On_Sensor_Sim";
-  source_text     => ("flight-mgmt.c");
-end Sensor_Sim_Spg;
+  -- === Sensor Sim ===
+  -- 1. 执行计算逻辑（更新内部状态）
+  subprogram Sensor_Sim_Job
+  properties
+    Source_Language => (C);
+    Source_Name     => "sensor_sim_job";
+    Source_Text     => ("flight-mgmt.c");
+  end Sensor_Sim_Job;
 
-subprogram Stall_Monitor_Spg
-features
-  AoA        : in  parameter Ravenscar;
-  Climb_Rate : in  parameter Ravenscar;
-  Stall_Warn : out event data port Ravenscar;
-properties
-  source_language => (C);
-  source_name     => "On_Stall_Monitor";
-  source_text     => ("flight-mgmt.c");
-end Stall_Monitor_Spg;
+  -- 2. 获取输出
+  subprogram Get_AoA
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "get_aoa";
+    Source_Text     => ("flight-mgmt.c");
+  end Get_AoA;
 
-subprogram Landing_Gear_Req_Spg
-features
-  Req : in event port;
-  Ack : out event port;
-properties
-  source_language => (C);
-  source_name     => "On_Req";
-  source_text     => ("flight-mgmt.c");
-end Landing_Gear_Req_Spg;
+  subprogram Get_Climb_Rate
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "get_climb_rate";
+    Source_Text     => ("flight-mgmt.c");
+  end Get_Climb_Rate;
 
-subprogram Landing_Gear_Dummy_In_Spg
-features
-  Dummy_In : in event port;
-  Dummy_Out : out event port;
-properties
-  source_language => (C);
-  source_name     => "On_Dummy_In";
-  source_text     => ("flight-mgmt.c");
-end Landing_Gear_Dummy_In_Spg;
+  subprogram Get_Engine_Failure
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "get_engine_failure";
+    Source_Text     => ("flight-mgmt.c");
+  end Get_Engine_Failure;
 
-subprogram Stall_Warning_Spg
-features
-  Stall_Warning : in event data port Ravenscar;
-properties
-  source_language => (C);
-  source_name     => "On_Stall_Warning";
-  source_text     => ("flight-mgmt.c");
-end Stall_Warning_Spg;
 
-subprogram Engine_Failure_Spg
-features
-  Engine_Failure : in event port;
-properties
-  source_language => (C);
-  source_name     => "On_Engine_Failure";
-  source_text     => ("flight-mgmt.c");
-end Engine_Failure_Spg;
+  -- === Stall Monitor ===
+  -- 输入设置
+  subprogram Set_Stall_AoA
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "set_stall_aoa";
+    Source_Text     => ("flight-mgmt.c");
+  end Set_Stall_AoA;
 
-subprogram Gear_Cmd_Spg
-features
-  Gear_Cmd : in  event port;
-  Gear_Req : out event port;
-properties
-  source_language => (C);
-  source_name     => "On_Gear_Cmd";
-  source_text     => ("flight-mgmt.c");
-end Gear_Cmd_Spg;
+  subprogram Set_Stall_Climb_Rate
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "set_stall_climb_rate";
+    Source_Text     => ("flight-mgmt.c");
+  end Set_Stall_Climb_Rate;
 
-subprogram Gear_Ack_Spg
-features
-  Gear_Ack : in event port;
-properties
-  source_language => (C);
-  source_name     => "On_Gear_Ack";
-  source_text     => ("flight-mgmt.c");
-end Gear_Ack_Spg;
+  -- 执行逻辑
+  subprogram Stall_Monitor_Job
+  properties
+    Source_Language => (C);
+    Source_Name     => "stall_monitor_job";
+    Source_Text     => ("flight-mgmt.c");
+  end Stall_Monitor_Job;
 
-subprogram Operator_Spg
-features
-  Gear_Cmd : out event port;
-properties
-  source_language => (C);
-  source_name     => "On_Operator";
-  source_text     => ("flight-mgmt.c");
-end Operator_Spg;
+  -- 获取输出
+  subprogram Get_Stall_Warn
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "get_stall_warn";
+    Source_Text     => ("flight-mgmt.c");
+  end Get_Stall_Warn;
+
+
+  -- === HCI ===
+  subprogram HCI_Stall_Warn_In
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "hci_stall_warn_in";
+    Source_Text     => ("flight-mgmt.c");
+  end HCI_Stall_Warn_In;
+
+  subprogram HCI_Engine_Fail_In
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "hci_engine_fail_in";
+    Source_Text     => ("flight-mgmt.c");
+  end HCI_Engine_Fail_In;
+
+  subprogram HCI_Gear_Cmd_In
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "hci_gear_cmd_in";
+    Source_Text     => ("flight-mgmt.c");
+  end HCI_Gear_Cmd_In;
+
+  subprogram HCI_Gear_Req_Out
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "hci_gear_req_out";
+    Source_Text     => ("flight-mgmt.c");
+  end HCI_Gear_Req_Out;
+
+  subprogram HCI_Gear_Ack_In
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "hci_gear_ack_in";
+    Source_Text     => ("flight-mgmt.c");
+  end HCI_Gear_Ack_In;
+
+
+  -- === Landing Gear ===
+  subprogram Gear_Req_In
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "gear_req_in";
+    Source_Text     => ("flight-mgmt.c");
+  end Gear_Req_In;
+
+  subprogram Gear_Dummy_Out
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "gear_dummy_out";
+    Source_Text     => ("flight-mgmt.c");
+  end Gear_Dummy_Out;
+
+  subprogram Gear_Dummy_In
+  features
+    val : in parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "gear_dummy_in";
+    Source_Text     => ("flight-mgmt.c");
+  end Gear_Dummy_In;
+
+  subprogram Gear_Ack_Out
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "gear_ack_out";
+    Source_Text     => ("flight-mgmt.c");
+  end Gear_Ack_Out;
+
+
+  -- === Operator ===
+  subprogram Operator_Cmd_Out
+  features
+    val : out parameter Integer_Type;
+  properties
+    Source_Language => (C);
+    Source_Name     => "operator_cmd_out";
+    Source_Text     => ("flight-mgmt.c");
+  end Operator_Cmd_Out;
 
 -------------
 -- Threads --
@@ -108,97 +200,173 @@ end Operator_Spg;
 
 thread Sensor_Sim_T
 features
-  AoA            : out data port Ravenscar;
-  Climb_Rate     : out data port Ravenscar;
-  Engine_Failure : out event port;
+  AoA            : out data port Integer_Type;
+  Climb_Rate     : out data port Integer_Type;
+  Engine_Failure : out event data port Integer_Type;
 end Sensor_Sim_T;
 
 thread Stall_Monitor_T
 features
-  AoA        : in  data port Ravenscar;
-  Climb_Rate : in  data port Ravenscar;
-  Stall_Warn : out event data port Ravenscar;
+  AoA        : in data port Integer_Type;
+  Climb_Rate : in data port Integer_Type;
+  Stall_Warn : out event data port Integer_Type;
 end Stall_Monitor_T;
 
 thread Landing_Gear_T
 features
-  Req       : in  event port;
-  Ack       : out event port;
-  Dummy_Out : out event port;
-  Dummy_In  : in  event port;
+  -- Req       : in  event port {Compute_Entrypoint_Source_Text => "On_Req";};
+  Req       : in  event data port Integer_Type;
+  Ack       : out event data port Integer_Type;
+  Dummy_Out : out event data port Integer_Type;
+  -- Dummy_In  : in  event port {Compute_Entrypoint_Source_Text => "On_Dummy_In";};
+  Dummy_In  : in  event data port Integer_Type;
 end Landing_Gear_T;
 
 thread HCI_T
 features
-  Stall_Warning  : in  event data port Ravenscar;
-  Engine_Failure : in  event port;
-  Gear_Cmd       : in  event port;
-  Gear_Req       : out event port;
-  Gear_Ack       : in  event port;
+  Stall_Warning  : in event data port Integer_Type;
+    -- {Compute_Entrypoint_Source_Text => "On_Stall_Warning";};
+  Engine_Failure : in  event data port Integer_Type;
+    -- {Compute_Entrypoint_Source_Text => "On_Engine_Failure";};
+  Gear_Cmd       : in  event data port Integer_Type;
+    -- {Compute_Entrypoint_Source_Text => "On_Gear_Cmd";};
+  Gear_Req       : out event data port Integer_Type;
+  Gear_Ack       : in  event data port Integer_Type;
+    -- {Compute_Entrypoint_Source_Text => "On_Gear_Ack";};
 end HCI_T;
 
 thread Operator_T
 features
-  Gear_Cmd : out event port;
+  Gear_Cmd: out event data port Integer_Type;
 end Operator_T;
 
------------------------------
--- Thread Implementations --
------------------------------
-
 thread implementation Sensor_Sim_T.RS
+-- properties
+--   Period             => 20 ms;
+--   Compute_Entrypoint_Source_Text => "On_Sensor_Sim";
+--   Dispatch_Protocol  => Periodic;
+--   Deadline           => 15 ms;
+--   source_text        => ("flight-mgmt.c");
 calls
-  CS: {
-    Sim : subprogram Sensor_Sim_Spg;
+  Mycalls: {
+    -- Spg : subprogram Sensor_Sim_Spg;
+    Job   : subprogram Sensor_Sim_Job;
+    Get_1 : subprogram Get_AoA;
+    Get_2 : subprogram Get_Climb_Rate;
+    Get_3 : subprogram Get_Engine_Failure;
   };
+connections
+  -- c1: parameter Spg.AoA -> AoA;
+  -- c2: parameter Spg.Climb_Rate -> Climb_Rate;
+  c1: parameter Get_1.val -> AoA;
+  c2: parameter Get_2.val -> Climb_Rate;
+  c3: parameter Get_3.val -> Engine_Failure;
 properties
-  Dispatch_Protocol => Periodic;
-  Period            => 20 ms;
-  Deadline          => 15 ms;
+  Dispatch_Protocol  => Periodic;
+  Period             => 1000 ms; -- 调慢一点便于观察
+  Priority           => 10;
 end Sensor_Sim_T.RS;
 
 thread implementation Stall_Monitor_T.RS
+-- properties
+--   Compute_Entrypoint_Source_Text => "On_Stall_Monitor";
+--   Dispatch_Protocol  => Periodic;
+--   Period             => 20 ms;
+--   source_text        => ("flight-mgmt.c");
 calls
-  CS: {
-    Mon : subprogram Stall_Monitor_Spg;
+  Mycalls: {
+    -- Spg : subprogram Stall_Monitor_Spg;
+    Set_1 : subprogram Set_Stall_AoA;
+    Set_2 : subprogram Set_Stall_Climb_Rate;
+    Job   : subprogram Stall_Monitor_Job;
+    Get_1 : subprogram Get_Stall_Warn;
   };
+connections
+  -- c1: parameter AoA -> Spg.AoA;
+  -- c2: parameter Climb_Rate -> Spg.Climb_Rate;
+  -- c3: parameter Spg.Stall_Warn -> Stall_Warn;
+  c1: parameter AoA -> Set_1.val;
+  c2: parameter Climb_Rate -> Set_2.val;
+  c3: parameter Get_1.val -> Stall_Warn;
 properties
-  Dispatch_Protocol => Periodic;
-  Period            => 20 ms;
+  Dispatch_Protocol  => Periodic;
+  Period             => 1000 ms;
+  Priority           => 9;
 end Stall_Monitor_T.RS;
-
-thread implementation Landing_Gear_T.RS
-calls
-  CS: {
-    Req   : subprogram Landing_Gear_Req_Spg;
-    Dummy : subprogram Landing_Gear_Dummy_In_Spg;
-  };
-properties
-  Dispatch_Protocol => Sporadic;
-  Period            => 3000 ms;
-end Landing_Gear_T.RS;
 
 thread implementation HCI_T.RS
 calls
-  CS: {
-    Stall  : subprogram Stall_Warning_Spg;
-    Eng    : subprogram Engine_Failure_Spg;
-    Cmd    : subprogram Gear_Cmd_Spg;
-    Ack    : subprogram Gear_Ack_Spg;
+  Mycalls: {
+    -- Stall_Spg : subprogram HCI_Stall_Warn_Spg;
+    -- Fail_Spg  : subprogram HCI_Engine_Fail_Spg;
+    -- Cmd_Spg   : subprogram HCI_Gear_Cmd_Spg;
+    -- Ack_Spg   : subprogram HCI_Gear_Ack_Spg;
+    In_1  : subprogram HCI_Stall_Warn_In;
+    In_2  : subprogram HCI_Engine_Fail_In;
+    
+    -- 收到 Cmd 后转发 Req
+    In_3  : subprogram HCI_Gear_Cmd_In;
+    Out_1 : subprogram HCI_Gear_Req_Out;
+    
+    In_4  : subprogram HCI_Gear_Ack_In;
   };
+connections
+  -- c1: parameter Stall_Warning -> Stall_Spg.Stall_Warning;
+  -- c2: parameter Cmd_Spg.Gear_Req -> Gear_Req;
+  c1: parameter Stall_Warning -> In_1.val;
+  c2: parameter Engine_Failure -> In_2.val;
+  c3: parameter Gear_Cmd -> In_3.val;
+  c4: parameter Out_1.val -> Gear_Req;
+  c5: parameter Gear_Ack -> In_4.val;
 properties
   Dispatch_Protocol => Sporadic;
-  Period            => 10 ms;
+  -- Period            => 10 ms;
 end HCI_T.RS;
 
-thread implementation Operator_T.RS
+thread implementation Landing_Gear_T.RS
 calls
-  CS: {
-    Op : subprogram Operator_Spg;
+  Mycalls: {
+    -- Req_Spg : subprogram Landing_Gear_Req_Spg;
+    -- Dummy_Spg : subprogram Landing_Gear_Dummy_In_Spg;
+    -- 接收请求并生成 Dummy Out
+    In_1  : subprogram Gear_Req_In;
+    Out_1 : subprogram Gear_Dummy_Out;
+    
+    -- 接收 Dummy In 并生成 Ack
+    In_2  : subprogram Gear_Dummy_In;
+    Out_2 : subprogram Gear_Ack_Out;
   };
+connections
+  -- c1: parameter Req_Spg.Dummy_Out -> Dummy_Out;
+  -- c2: parameter Dummy_Spg.Ack -> Ack;
+  c1: parameter Req -> In_1.val;
+  c2: parameter Out_1.val -> Dummy_Out;
+  
+  c3: parameter Dummy_In -> In_2.val;
+  c4: parameter Out_2.val -> Ack;
 properties
-  Dispatch_Protocol => Periodic;
-  Period            => 10 sec;
+  Dispatch_Protocol => Sporadic;
+  -- Period            => 3000 ms;
+end Landing_Gear_T.RS;
+
+thread implementation Operator_T.RS
+-- properties
+--   Dispatch_Protocol  => Periodic;
+--   Period             => 10 sec;
+--   Compute_Entrypoint_Source_Text => "On_Operator";
+--   source_text        => ("flight-mgmt.c");
+calls
+  Mycalls: {
+    -- Spg : subprogram Operator_Spg;
+    Out_1 : subprogram Operator_Cmd_Out;
+  };
+connections
+  -- c1: parameter Spg.Gear_Cmd -> Gear_Cmd;
+  c1: parameter Out_1.val -> Gear_Cmd;
+properties
+  Dispatch_Protocol  => Periodic;
+  Period             => 5000 ms;
+  Priority           => 8;
 end Operator_T.RS;
 
 end Software;

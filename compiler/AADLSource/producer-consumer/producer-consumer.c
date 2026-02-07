@@ -1,15 +1,16 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include <stdio.h>
 #include <time.h>
 // #include <po_hi_time.h>
-
-void user_produce_spg (int* data);
-void user_consume_spg (int data);
+#include "producer-consumer.h"
 
 void user_produce_spg (int* data)
 {
   static int produce_data = 42;
 
-#if defined (POSIX)
+// #if defined (POSIX)
+#if defined(__linux__) || defined(__APPLE__) || defined(__unix__)
    struct timespec mytime;
    clock_gettime (CLOCK_REALTIME, &mytime);
    *data = produce_data;
@@ -27,7 +28,7 @@ void user_produce_spg (int* data)
 
 void user_consume_spg (int data)
 {
-#if defined (POSIX)
+#if defined(__linux__) || defined(__APPLE__) || defined(__unix__)
    struct timespec mytime;
    clock_gettime (CLOCK_REALTIME, &mytime);
    printf( "At time %3lu:%3lu, consume : %d\n", mytime.tv_sec % 3600 , mytime.tv_nsec/1000000,data);

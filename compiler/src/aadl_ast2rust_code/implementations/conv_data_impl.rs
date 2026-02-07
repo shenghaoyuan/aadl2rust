@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+
 use crate::aadl_ast2rust_code::intermediate_ast::*;
 use crate::ast::aadl_ast_cj::*;
 use std::collections::HashMap;
@@ -313,7 +313,7 @@ fn determine_struct_impl(
                 type_mappings
                     .get(&type_name.to_lowercase())
                     .cloned()
-                    .unwrap_or_else(|| Type::Named(type_name))
+                    .unwrap_or(Type::Named(type_name))
             }
             _ => Type::Named("UnknownType".to_string()),
             // SubcomponentClassifier::ClassifierReference(
@@ -380,7 +380,7 @@ fn determine_union_impl(
                 type_mappings
                     .get(&type_name.to_lowercase())
                     .cloned()
-                    .unwrap_or_else(|| Type::Named(type_name))
+                    .unwrap_or(Type::Named(type_name))
             }
             _ => Type::Named("UnknownType".to_string()),
             // SubcomponentClassifier::ClassifierReference(
@@ -447,7 +447,7 @@ fn determine_taggedunion_impl(
                 type_mappings
                     .get(&type_name.to_lowercase())
                     .cloned()
-                    .unwrap_or_else(|| Type::Named(type_name))
+                    .unwrap_or(Type::Named(type_name))
             }
             _ => Type::Named("UnknownType".to_string()),
             // SubcomponentClassifier::ClassifierReference(

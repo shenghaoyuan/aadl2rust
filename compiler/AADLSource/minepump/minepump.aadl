@@ -1,0 +1,225 @@
+-- 系统功能：模拟矿井排水泵安全监控系统，防止甲烷爆炸和水位过高风险
+--   - WaterLevelMonitoring线程：周期性线程（周期250ms，优先级2），监测水位并输出水位警报
+--   - MethaneMonitoring线程：周期性线程（周期100ms，优先级2），监测甲烷浓度并输出浓度等级
+--   - PumpCtrl线程：偶发线程（周期100ms，优先级2），根据甲烷浓度和水位控制水泵并触发警报
+--   - WaterAlarm线程：偶发线程（周期100ms，优先级2），接收水位警报并执行警报操作
+
+-- 系统特点：
+-- 1. 典型的安全关键系统，用于矿井环境，防止甲烷爆炸和水位过高双重危险
+-- 2. 线程间通过事件数据端口和数据端口混合通信，形成安全监控控制链
+-- 3. 每个线程都通过独立的子程序调用实现，所有C代码集中在minepump.c文件中
+-- 4. 使用POSIX最高优先级优先调度协议，确保关键安全功能的及时响应
+-- 5. 所有线程都有相同的执行时间范围（1-2ms），简化实时性分析
+-- 6. 明确的优先级配置（优先级2），形成统一的执行优先级层次
+
+package MinePump
+public
+
+  with Data_Model; --  For data representation (integer, ...)
+  -- with Deployment; --  For execution platform
+
+  --  Basic integer data type
+
+  data Int
+  --  Definition of an integer type
+  properties
+    Data_Model::Data_Representation => Integer;
+  end Int;
+
+  subprogram Spg_WaterLevelMonitoring
+  features
+    WaterAlarm : out parameter Int;
+  properties
+    Source_Language => (C);
+    Source_Name     => "water_level_monitoring";
+    Source_Text     => ("minepump.c");
+  end Spg_WaterLevelMonitoring;
+
+  subprogram Spg_MethaneMonitoring
+  features
+    MethaneLevel : out parameter Int;
+  properties
+    Source_Language => (C);
+    Source_Name     => "methane_monitoring";
+    Source_Text     => ("minepump.c");
+  end Spg_MethaneMonitoring;
+
+  subprogram Spg_PumpCtrl_ReadMethane
+  features
+    MethaneLevel : in parameter Int;
+  properties
+    Source_Language => (C);
+    Source_Name     => "pump_ctrl_read_methane";
+    Source_Text     => ("minepump.c");
+  end Spg_PumpCtrl_ReadMethane;
+
+  subprogram Spg_PumpCtrl_ReadWater
+  features
+    WaterLevel : in parameter Int;
+  properties
+    Source_Language => (C);
+    Source_Name     => "pump_ctrl_read_water";
+    Source_Text     => ("minepump.c");
+  end Spg_PumpCtrl_ReadWater;
+
+  subprogram Spg_PumpCtrl_Logic
+  features
+    WaterAlarm : out parameter Int;
+  properties
+    Source_Language => (C);
+    Source_Name     => "pump_ctrl_logic";
+    Source_Text     => ("minepump.c");
+  end Spg_PumpCtrl_Logic;
+
+  subprogram Spg_WaterAlarm
+  features
+    WaterAlarm : in parameter Int;
+  properties
+    Source_Language => (C);
+    Source_Name     => "water_alarm_task";
+    Source_Text     => ("minepump.c");
+  end Spg_WaterAlarm;
+
+  --  WaterLevelMonitorig task
+
+  thread WaterLevelMonitoring
+  features
+    WaterAlarm : out data port Int;
+  properties
+    Dispatch_Protocol => Periodic;         --  Concurrency configuration
+    Period => 250 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
+
+    -- Source_Language => (C);                --  Link to code source
+    -- Compute_Entrypoint_Source_Text => "waterlevelmonitoring_body";
+    -- Source_Text => ("minepump.c");
+  end WaterLevelMonitoring;
+
+  thread implementation WaterLevelMonitoring.impl
+  calls
+    MyCall : {
+      Spg : subprogram Spg_WaterLevelMonitoring;
+    };
+  connections
+    c0 : parameter Spg.WaterAlarm -> WaterAlarm;
+  end WaterLevelMonitoring.impl;
+
+  --  MethaneMonitoring task
+
+  thread MethaneMonitoring
+  features
+    MethaneLevel : out data port int;
+  properties
+    Dispatch_Protocol => Periodic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
+
+    -- Source_Language => (C);                --  Link to code source
+    -- Compute_Entrypoint_Source_Text => "methanemonitoring_body";
+    -- Source_Text => ("minepump.c");
+  end MethaneMonitoring;
+
+  thread implementation MethaneMonitoring.impl
+  calls
+    MyCall : {
+      Spg : subprogram Spg_MethaneMonitoring;
+    };
+  connections
+    c0 : parameter Spg.MethaneLevel -> MethaneLevel;
+  end MethaneMonitoring.impl;
+
+  thread PumpCtrl
+  features
+    MethaneLevel : in event data port int;
+    WaterLevel   : in event data port int;
+    WaterAlarm   : out data port Int;
+  properties
+    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
+
+    -- Source_Language => (C);                --  Link to code source
+    -- Compute_Entrypoint_Source_Text => "pumpctrl_body";
+    -- Source_Text => ("minepump.c");
+  end PumpCtrl;
+
+  thread implementation PumpCtrl.impl
+  calls
+    MyCall : {
+      Spg_ReadM : subprogram Spg_PumpCtrl_ReadMethane;
+      Spg_ReadW : subprogram Spg_PumpCtrl_ReadWater;
+      Spg_Logic : subprogram Spg_PumpCtrl_Logic;
+    };
+  connections
+    c0 : parameter MethaneLevel -> Spg_ReadM.MethaneLevel;
+    c1 : parameter WaterLevel -> Spg_ReadW.WaterLevel;
+    c2 : parameter Spg_Logic.WaterAlarm -> WaterAlarm;
+  end PumpCtrl.impl;
+
+  thread WaterAlarm
+  features
+    WaterAlarm : in event data port Int;
+
+  properties
+    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
+
+    -- Source_Language => (C);                --  Link to code source
+    -- Compute_Entrypoint_Source_Text => "wateralarm_body";
+    -- Source_Text => ("minepump.c");
+  end WaterAlarm;
+
+  thread implementation WaterAlarm.impl
+  calls
+    MyCall : {
+      Spg : subprogram Spg_WaterAlarm;
+    };
+  connections
+    c0 : parameter WaterAlarm -> Spg.WaterAlarm;
+  end WaterAlarm.impl;
+
+  --  MinePump software process
+
+  process MinePump_Software
+  end MinePump_Software;
+
+  process implementation MinePump_Software.impl
+  subcomponents
+    WaterLevelMonitoring_Thread : thread WaterLevelMonitoring;
+    MethaneMonitoring_Thread    : thread MethaneMonitoring;
+    PumpCtrl_Thread             : thread PumpCtrl;
+    WaterAlarm_Thread           : thread WaterAlarm;
+
+  connections
+    C1 : port MethaneMonitoring_Thread.MethaneLevel
+                -> PumpCtrl_Thread.MethaneLevel;
+    C2 : port WaterLevelMonitoring_Thread.WaterAlarm
+                -> PumpCtrl_Thread.WaterLevel;
+
+    C3 : port PumpCtrl_Thread.WaterAlarm
+                -> WaterAlarm_Thread.WaterAlarm;
+  end MinePump_Software.impl;
+
+  processor CPU
+  properties
+    Scheduling_Protocol => (POSIX_1003_HIGHEST_PRIORITY_FIRST_PROTOCOL);
+    -- Deployment::Execution_Platform => Native;
+  end CPU;
+
+  system MinePump
+  end MinePump;
+
+  system implementation MinePump.impl
+  subcomponents
+    Software : process MinePump_Software.impl;
+    Hardware : processor CPU;
+  properties
+    Actual_Processor_Binding => reference (Hardware) applies to Software;
+  end MinePump.impl;
+
+end MinePump;

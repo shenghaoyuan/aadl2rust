@@ -1,9 +1,23 @@
+-- 系统功能：模拟飞机飞行管理系统，包含传感器监测、失速检测、人机交互和起落架控制
+--   - sensor_sim线程：周期性线程（1000ms），模拟传感器数据（攻角、爬升率、发动机故障）
+--   - stall_monitor线程：周期性线程（1000ms），监测失速条件并发出警告
+--   - hci线程：偶发线程，处理人机交互（失速警告、发动机故障、起落架指令）
+--   - landing_gear线程：偶发线程，控制起落架收放并发送确认
+--   - operator线程：周期性线程（5000ms），模拟操作员发送起落架控制命令
+
+-- 系统特点：
+-- 1. 复杂的多线程交互系统，包含五种不同类型的线程，形成完整的飞行控制逻辑链
+-- 2. 使用多种通信端口类型：数据端口（data port）、事件端口（event port）、事件数据端口（event data port）
+-- 3. 线程间形成多层控制回路：传感器→监测→人机界面→执行器→确认反馈
+-- 4. 所有线程使用相同的Integer_Type数据格式进行通信，保证接口一致性
+-- 5. 通过子程序精细分离功能：每个线程的输入、输出、计算逻辑都有独立的子程序
+
 --  Model of a basic flight management system, contributed by Irfan Hamid
 
 package flight::mgmt
 public
+  -- with Deployment, Software;
   with Software;
-
   ---------------
   -- Processes --
   ---------------
@@ -13,20 +27,20 @@ public
 
   process implementation Mgmt_T.RS
   subcomponents
-    Sensor_Sim    : thread Software::Sensor_Sim_T.RS;
-    Stall_Monitor : thread Software::Stall_Monitor_T.RS;
-    HCI           : thread Software::HCI_T.RS;
-    Landing_Gear  : thread Software::Landing_Gear_T.RS;
-    Operator      : thread Software::Operator_T.RS;
+    sensor_sim    : thread Software::Sensor_Sim_T.RS;
+    stall_monitor : thread Software::Stall_Monitor_T.RS;
+    hci           : thread Software::HCI_T.RS;
+    landing_gear  : thread Software::Landing_Gear_T.RS;
+    operator      : thread Software::Operator_T.RS;
   connections
-    DataConnection1      : port Sensor_Sim.AoA -> Stall_Monitor.AoA;
-    DataConnection2      : port Sensor_Sim.Climb_Rate -> Stall_Monitor.Climb_Rate;
-    EventConnection1     : port Sensor_Sim.Engine_Failure -> HCI.Engine_Failure;
-    EventDataConnection1 : port Stall_Monitor.Stall_Warn -> HCI.Stall_Warning;
-    EventConnection2     : port HCI.Gear_Req -> Landing_Gear.Req;
-    EventConnection3     : port Landing_Gear.Ack -> HCI.Gear_Ack;
-    EventConnection4     : port Landing_Gear.Dummy_Out -> Landing_Gear.Dummy_In;
-    EventConnection5     : port Operator.Gear_Cmd -> HCI.Gear_Cmd;
+    DataConnection1      : port sensor_sim.AoA -> stall_monitor.AoA;
+    DataConnection2      : port sensor_sim.Climb_Rate -> stall_monitor.Climb_Rate;
+    EventConnection1     : port sensor_sim.Engine_Failure -> hci.Engine_Failure;
+    EventDataConnection1 : port stall_monitor.Stall_Warn -> hci.Stall_Warning;
+    EventConnection2     : port hci.Gear_Req -> landing_gear.Req;
+    EventConnection3     : port landing_gear.Ack -> hci.Gear_Ack;
+    EventConnection4     : port landing_gear.Dummy_Out -> landing_gear.Dummy_In;
+    EventConnection5     : port operator.Gear_Cmd -> hci.Gear_Cmd;
   end Mgmt_T.RS;
 
   ---------------
@@ -55,14 +69,14 @@ public
 
   -- system implementation Flight_Mgmt.Xenomai
   --    extends Flight_Mgmt.local
-  -- properties
-  --   Deployment::Execution_Platform => linux32_xenomai_native applies to CPU;
+  -- -- properties
+  -- --   Deployment::Execution_Platform => linux32_xenomai_native applies to CPU;
   -- end Flight_Mgmt.Xenomai;
 
   -- system implementation Flight_Mgmt.RTEMS
   --    extends Flight_Mgmt.local
-  -- properties
-  --    Deployment::Execution_platform => LEON_RTEMS applies to CPU;
+  -- -- properties
+  -- --    Deployment::Execution_platform => LEON_RTEMS applies to CPU;
   -- end Flight_Mgmt.RTEMS;
 
 end flight::mgmt;

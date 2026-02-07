@@ -27,6 +27,8 @@ public
 	end PC_Processor.Impl;
 
 	data Coordinate
+	properties
+		Data_Model::Data_Representation => Struct;
 	end Coordinate;
 
 	data implementation Coordinate.Impl

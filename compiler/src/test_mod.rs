@@ -162,7 +162,7 @@ fn run_single_test_case(
     full_path: &str,
     converter: &mut AadlConverter,
 ) -> Result<(), String> {
-    let aadl_input = fs::read_to_string(&full_path)
+    let aadl_input = fs::read_to_string(full_path)
         .map_err(|e| format!("读取文件失败 [{}]: {}", full_path, e))?;
 
     let pairs = AADLParser::parse(Rule::file, &aadl_input)

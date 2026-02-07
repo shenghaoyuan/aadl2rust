@@ -8,7 +8,7 @@ public
 			e: out event port;
 		properties
 			Dispatch_Protocol => Periodic;
-			Period => 2sec;
+			Period => 2000 ms;
             -- Source_Text => ("behavior_code/components/Emitter/src/emitter.c");			
             -- Initialize_Entrypoint_Source_Text => "testevent_emitter_component_init";
             -- Compute_Entrypoint_Source_Text => "run_emitter";
@@ -17,6 +17,7 @@ public
 	thread implementation emitter.impl
 	calls 
 	Mycalls: {
+		Init_Spg : subprogram source_init;
 		A_Spg : subprogram C_A;
 	};
 	end emitter.impl;
@@ -33,6 +34,7 @@ public
 	thread implementation consumer.impl
 	calls 
 	Mycalls: {
+		Init_Dest : subprogram dest_init;
 		B_Spg : subprogram C_B;
 	};
 	end consumer.impl;
@@ -69,6 +71,20 @@ public
 		-- **};			
 	end top.impl;
 	
+	subprogram source_init
+	properties
+		source_language => (C);
+		source_name => "testevent_emitter_component_init";
+		source_text => ("emitter.c");
+	end source_init;
+
+	subprogram dest_init
+	properties
+		source_language => (C);
+		source_name => "testevent_consumer_component_init";
+		source_text => ("emitter.c");
+	end dest_init;
+
 	subprogram C_A
 		properties
 			source_language => (C);
