@@ -1097,7 +1097,8 @@ fn create_timed_execution_logic(temp_converter: &AadlConverter, impl_: &Componen
                                         vec![Expr::Literal(Literal::Str(format!("{}Thread: timeout dispatch → Recover_Entrypoint", to_upper_camel_case(&impl_.name.type_identifier))))],   
                                     )),
                                     // recover_entrypoint();
-                                    Statement::Expr(Expr::Ident("// recover_entrypoint();".to_string())),
+                                    Statement::Expr(Expr::Ident("// recover_entrypoint()".to_string())),
+                                    Statement::Expr(Expr::Ident("start_time = now".to_string())),
                                 ],
                                 expr: None,
                             },

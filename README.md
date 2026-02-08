@@ -52,6 +52,7 @@ make cov
 ## Usage
 
 ```shell
+cd compiler
 cargo test #run all test cases.
 just cov-html # generate an HTML coverage report. 
 			  #output file: "\compiler\target\llvm-cov\html\index.html"

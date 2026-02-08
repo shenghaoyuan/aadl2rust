@@ -1,0 +1,139 @@
+--针对定时线程/非周期线程的测试，修改线程Q的调度协议即可
+
+package PING_Local
+public
+  --with Deployment;
+
+  ---------------
+  -- Processor --
+  ---------------
+
+  processor the_processor
+  -- properties
+  --   Deployment::Execution_Platform => native;
+  end the_processor;
+
+  processor implementation the_processor.Impl
+  properties
+    Scheduling_Protocol => (Posix_1003_Highest_Priority_First_Protocol);
+    Priority_Range => 0 .. 255;
+  end the_processor.Impl;
+
+  ---------------
+  -- Processes --
+  ---------------
+
+  process A
+  end A;
+
+  process implementation A.Impl
+  subcomponents
+    Pinger        : thread P.Impl;
+    Ping_Me       : thread Q.Impl;
+  connections
+    cnx : port Pinger.Data_Source -> Ping_Me.Data_Sink;
+  end A.Impl;
+
+  ------------
+  -- System --
+  ------------
+
+  system PING
+  end PING;
+
+  system implementation PING.Local
+  subcomponents
+    Node_A : process A.Impl;
+    CPU : processor the_processor.Impl;
+
+  properties
+     Actual_processor_binding => reference (CPU) applies to Node_A;
+  end PING.Local;
+
+
+
+--  This AADL model illustrates how to model a simple interaction
+--  between tasks, in a local or distributed environment.
+--
+--  One task pings another, sending a data periodically.
+--
+
+----------
+-- Data --
+----------
+
+data Simple_Type
+properties
+  Type_Source_Name => "custom_int"; 
+  Source_Text => ("ping");
+  Data_Size => 8 Bytes;
+end Simple_Type;
+
+-----------------
+-- Subprograms --
+-----------------
+
+subprogram Do_Ping_Spg
+features
+  Data_Source : out parameter Simple_Type;
+properties
+  source_language => (C);
+  source_name     => "user_do_ping_spg";
+  source_text     => ("ping.c");
+end Do_Ping_Spg;
+
+subprogram Ping_Spg
+features
+  Data_Sink : in parameter Simple_Type;
+properties
+  source_language => (C);
+  source_name     => "user_ping_spg";
+  source_text     => ("ping.c");
+end Ping_Spg;
+
+
+-------------
+-- Threads --
+-------------
+
+thread P
+features
+  Data_Source : out event data port Simple_Type;
+end P;
+
+thread implementation P.Impl
+calls 
+Mycalls: {
+  P_Spg : subprogram Do_Ping_Spg;
+};
+connections
+  cnx : parameter P_Spg.Data_Source -> Data_Source;
+properties
+  Recover_Entrypoint_Source_Text     => "recover";
+  Dispatch_Protocol                  => Periodic;
+  Period                             => 2000 Ms;
+  Deadline                           => 2000 ms;
+  Priority                           => 2;
+  Dispatch_Offset                    => 500 Ms;
+end P.Impl;
+
+thread Q
+features
+  Data_Sink : in event data port Simple_Type;
+end Q;
+
+thread implementation Q.Impl
+calls 
+Mycalls: {
+  Q_Spg : subprogram Ping_Spg;
+};
+connections
+  cnx : parameter Data_Sink -> Q_Spg.Data_Sink;
+properties
+  Dispatch_Protocol                  => Timed;
+  Period                             => 3000 Ms;
+  -- Dispatch_Protocol                  => Aperiodic;
+  Priority                           => 1;
+end Q.Impl;
+
+end PING_Local;

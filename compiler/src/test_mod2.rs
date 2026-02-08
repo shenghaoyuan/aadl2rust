@@ -33,6 +33,7 @@ pub fn all_case_folders() -> Vec<&'static str> {
         "periodicDispatch/",
         "ping_spark/",
         "pingpong/",
+        "pingpong_timed/",
         "priority_test/",
         "producer-consumer/",
         "producer_consumer_ba/",

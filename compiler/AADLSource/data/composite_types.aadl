@@ -47,18 +47,6 @@ data A_Union1
 			classifier (Base_Types::Character));
 		Data_Model::Element_Names => ("f1", "c2");
 end A_Union1;
---标记联合体
--- data CJ_taggedUnion
--- 	properties
--- 		Data_Model::Data_Representation => Struct;
--- 		Data_Model::Base_Type => (classifier (Base_Types::Integer),
--- 			classifier (A_Union1));
--- 		Data_Model::Element_Names => ("type", "unionData");
--- end CJ_taggedUnion;
--- struct {
---   type : Integer;      -- 判别字段
---   unionData : union { float f1; char f2; }
--- }
 
 data A_Union2
 	properties
