@@ -85,15 +85,6 @@ public
   thread WaterLevelMonitoring
   features
     WaterAlarm : out data port Int;
-  properties
-    Dispatch_Protocol => Periodic;         --  Concurrency configuration
-    Period => 250 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
-
-    -- Source_Language => (C);                --  Link to code source
-    -- Compute_Entrypoint_Source_Text => "waterlevelmonitoring_body";
-    -- Source_Text => ("minepump.c");
   end WaterLevelMonitoring;
 
   thread implementation WaterLevelMonitoring.impl
@@ -103,6 +94,11 @@ public
     };
   connections
     c0 : parameter Spg.WaterAlarm -> WaterAlarm;
+  properties
+    Dispatch_Protocol => Periodic;         --  Concurrency configuration
+    Period => 250 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end WaterLevelMonitoring.impl;
 
   --  MethaneMonitoring task
@@ -110,15 +106,6 @@ public
   thread MethaneMonitoring
   features
     MethaneLevel : out data port int;
-  properties
-    Dispatch_Protocol => Periodic;         --  Concurrency configuration
-    Period => 100 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
-
-    -- Source_Language => (C);                --  Link to code source
-    -- Compute_Entrypoint_Source_Text => "methanemonitoring_body";
-    -- Source_Text => ("minepump.c");
   end MethaneMonitoring;
 
   thread implementation MethaneMonitoring.impl
@@ -128,6 +115,11 @@ public
     };
   connections
     c0 : parameter Spg.MethaneLevel -> MethaneLevel;
+  properties
+    Dispatch_Protocol => Periodic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end MethaneMonitoring.impl;
 
   thread PumpCtrl
@@ -135,15 +127,6 @@ public
     MethaneLevel : in event data port int;
     WaterLevel   : in event data port int;
     WaterAlarm   : out data port Int;
-  properties
-    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
-    Period => 100 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
-
-    -- Source_Language => (C);                --  Link to code source
-    -- Compute_Entrypoint_Source_Text => "pumpctrl_body";
-    -- Source_Text => ("minepump.c");
   end PumpCtrl;
 
   thread implementation PumpCtrl.impl
@@ -157,21 +140,18 @@ public
     c0 : parameter MethaneLevel -> Spg_ReadM.MethaneLevel;
     c1 : parameter WaterLevel -> Spg_ReadW.WaterLevel;
     c2 : parameter Spg_Logic.WaterAlarm -> WaterAlarm;
+  properties
+    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end PumpCtrl.impl;
 
   thread WaterAlarm
   features
     WaterAlarm : in event data port Int;
 
-  properties
-    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
-    Period => 100 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
 
-    -- Source_Language => (C);                --  Link to code source
-    -- Compute_Entrypoint_Source_Text => "wateralarm_body";
-    -- Source_Text => ("minepump.c");
   end WaterAlarm;
 
   thread implementation WaterAlarm.impl
@@ -181,6 +161,11 @@ public
     };
   connections
     c0 : parameter WaterAlarm -> Spg.WaterAlarm;
+  properties
+    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end WaterAlarm.impl;
 
   --  MinePump software process

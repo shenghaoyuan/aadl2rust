@@ -7,12 +7,6 @@ public
 	thread source_t
 		features
 			write_port: out data port Base_Types::Integer_64;
-		properties
-			Dispatch_Protocol => Periodic;
-			Period => 1000 ms;
-			-- Source_Text => ("behavior_code/components/source/src/source.c");
-			-- Initialize_Entrypoint_Source_Text => "testdpmon_source_component_init";
-			-- Compute_Entrypoint_Source_Text => "testdpmon_source_component_time_triggered";
 	end source_t;
 	
 	thread implementation source_t.impl
@@ -23,16 +17,18 @@ public
 	};
 	connections
 		cnx_a : parameter A_Spg.out_param -> write_port;
+	properties
+			Dispatch_Protocol => Periodic;
+			Period => 1000 ms;
+			Priority => 1;
+			-- Source_Text => ("behavior_code/components/source/src/source.c");
+			-- Initialize_Entrypoint_Source_Text => "testdpmon_source_component_init";
+			-- Compute_Entrypoint_Source_Text => "testdpmon_source_component_time_triggered";
 	end source_t.impl;
 	
 	thread destination_t
 		features
 			read_port: in data port Base_Types::Integer_64;
-		properties
-			Dispatch_Protocol => Periodic;
-			Period => 2000 ms;
-			-- Source_Text => ("behavior_code/components/destination/src/destination.c");
-			-- Compute_Entrypoint_Source_Text => "testdpmon_destination_component_time_triggered";
 	end destination_t;
 	
 	thread implementation destination_t.impl
@@ -42,6 +38,12 @@ public
 	};
 	connections
 		cnx_b : parameter read_port -> B_Spg.in_param;
+	properties
+			Dispatch_Protocol => Periodic;
+			Period => 2000 ms;
+			Priority => 1;
+			-- Source_Text => ("behavior_code/components/destination/src/destination.c");
+			-- Compute_Entrypoint_Source_Text => "testdpmon_destination_component_time_triggered";
 	end destination_t.impl;
 
 	processor proc

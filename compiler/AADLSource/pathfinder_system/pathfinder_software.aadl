@@ -65,47 +65,49 @@ public
   thread image_producer
   features
     images_data : out data port images_data;
+  end image_producer;
+
+  thread implementation image_producer.impl
   properties
     Dispatch_protocol => Periodic;
     period => 10 ms;
     compute_execution_time => 1 ms .. 1 ms;
     priority => 10; -- High priority to ensure data availability
-  end image_producer;
-
-  thread implementation image_producer.impl
   end image_producer.impl;
 
   thread radio_producer
   features
     reception_data : out data port reception_data;
+  end radio_producer;
+
+  thread implementation radio_producer.impl
   properties
     Dispatch_protocol => Periodic;
     period => 10 ms;
     compute_execution_time => 1 ms .. 1 ms;
     priority => 10;
-  end radio_producer;
-
-  thread implementation radio_producer.impl
   end radio_producer.impl;
 
   thread sensor_producer
   features
     measured_data : out data port measured_data;
+  end sensor_producer;
+
+  thread implementation sensor_producer.impl
   properties
     Dispatch_protocol => Periodic;
     period => 5 ms;
     compute_execution_time => 1 ms .. 1 ms;
     priority => 10;
-  end sensor_producer;
-
-  thread implementation sensor_producer.impl
   end sensor_producer.impl;
 
   thread bus_scheduling
     -- bus control task
   features
     control_data : out data port control_data;
+  end bus_scheduling;
 
+  thread implementation bus_scheduling.impl
   properties
     Dispatch_protocol => Periodic;
     period => 5 ms;
@@ -113,9 +115,6 @@ public
     deadline => 5 ms;
     priority => 7;
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
-  end bus_scheduling;
-
-  thread implementation bus_scheduling.impl
   end bus_scheduling.impl;
 
   thread data_distribution
@@ -123,7 +122,9 @@ public
   features
     req_data_rw : requires data access data_rw;
     measured_data : in data port measured_data;
+  end data_distribution;
 
+  thread implementation data_distribution.impl
   properties
     Dispatch_protocol => Periodic;
     period => 5 ms;
@@ -131,9 +132,6 @@ public
     deadline => 5 ms;
     priority => 6;
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
-  end data_distribution;
-
-  thread implementation data_distribution.impl
   end data_distribution.impl;
 
   thread control_task
@@ -141,6 +139,9 @@ public
   features
     req_data_rw : requires data access data_rw;
 
+  end control_task;
+
+  thread implementation control_task.impl
   properties
     Dispatch_protocol => Periodic;
     period => 10 ms;
@@ -148,9 +149,6 @@ public
     deadline => 10 ms;
     priority => 5;
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
-  end control_task;
-
-  thread implementation control_task.impl
   end control_task.impl;
 
   thread radio_task
@@ -159,6 +157,9 @@ public
     reception_data : in data port reception_data;
     emission_data : out data port emission_data;
 
+  end radio_task;
+
+  thread implementation radio_task.impl
   properties
     Dispatch_protocol => Periodic;
     period => 10 ms;
@@ -166,9 +167,6 @@ public
     deadline => 10 ms;
     priority => 4;
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
-  end radio_task;
-
-  thread implementation radio_task.impl
   end radio_task.impl;
 
   thread camera_task
@@ -176,7 +174,9 @@ public
   features
     images_data : in data port images_data;
     camera_control : out data port camera_control;
+  end camera_task;
 
+  thread implementation camera_task.impl
   properties
     Dispatch_protocol => Periodic;
     period => 10 ms;
@@ -184,16 +184,15 @@ public
     deadline => 10 ms;
     priority => 3;
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
-  end camera_task;
-
-  thread implementation camera_task.impl
   end camera_task.impl;
 
   thread mesure_task
     -- mesurement task
   features
     req_data_rw : requires data access data_rw;
+  end mesure_task;
 
+  thread implementation mesure_task.impl
   properties
     Dispatch_protocol => Periodic;
     period => 200 ms;
@@ -201,9 +200,6 @@ public
     deadline => 200 ms;
     priority => 2;
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
-  end mesure_task;
-
-  thread implementation mesure_task.impl
   end mesure_task.impl;
 
   thread meteo_task
@@ -211,6 +207,9 @@ public
   features
     req_data_rw : requires data access data_rw;
 
+  end meteo_task;
+
+  thread implementation meteo_task.impl
   properties
     -- POSIX_Scheduling_Policy => SCHED_FIFO;
     Dispatch_protocol => Periodic;
@@ -218,10 +217,6 @@ public
     period => 200 ms;
     deadline => 200 ms;
     compute_execution_time => 3 ms .. 3 ms;
-
-  end meteo_task;
-
-  thread implementation meteo_task.impl
   end meteo_task.impl;
 
   -----------------------------------------------------------------

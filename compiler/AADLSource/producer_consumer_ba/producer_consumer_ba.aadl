@@ -63,11 +63,6 @@ public
   features
     data_source : out event data port Alpha_Type;
     --  XXX Data seems corrupted if Data_Source is an out data port
-  properties
-    Dispatch_Protocol => Periodic;
-    Compute_Execution_Time => 1 ms .. 10 ms;
-    Priority => 1;
-    Period => 500 ms;
   end P;
 
   thread implementation P.Impl
@@ -77,16 +72,16 @@ public
     };
   connections
     Z1:parameter P_Spg.data_source -> data_source;
+  properties
+    Dispatch_Protocol => Periodic;
+    Compute_Execution_Time => 1 ms .. 10 ms;
+    Priority => 1;
+    Period => 500 ms;
   end P.Impl;
 
   thread Q
   features
     data_sink : in event data port Alpha_Type;
-  properties
-    Dispatch_Protocol => Sporadic;
-    Compute_Execution_Time => 1 ms .. 20 ms;
-    Priority => 2;
-    Period => 10 ms;
   end Q;
 
   thread implementation Q.Impl
@@ -96,6 +91,11 @@ public
     };
   connections
     Z2:parameter data_sink -> Q_Spg.data_sink;
+  properties
+    Dispatch_Protocol => Sporadic;
+    Compute_Execution_Time => 1 ms .. 20 ms;
+    Priority => 2;
+    Period => 10 ms;
   end Q.Impl;
 
   ---------------

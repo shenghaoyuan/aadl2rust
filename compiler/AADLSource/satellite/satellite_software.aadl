@@ -1,5 +1,52 @@
-package satellite_software
+-- 系统功能：模拟完整的卫星在轨软件系统，包含系统管理、姿态控制、平台管理、有效载荷和数据处理
+--   - 系统管理任务：SYS_CYCL（125ms，优先级249），负责总体系统管理
+--   - AOCS任务：AOCS_CYCL（125ms，248）、AOCS_CONF（250ms，245）、AOCS_MAN（250ms，244），负责姿态与轨道控制
+--   - 平台任务：PF_CYCL（125ms，246）、PF_CONF（250ms，243），负责平台管理
+--   - 有效载荷任务：PL_CYCL（125ms，247）、PL_CONF（250ms，242），负责有效载荷操作
+--   - 数据处理任务：RTC_HDLR（250ms，255）等6个DHS任务，负责遥测、遥控和数据总线处理
+
+-- 系统特点：
+-- 1. 完整的卫星软件系统架构，包含18个线程和6个共享数据组件，形成复杂的多级控制体系
+-- 2. 多速率周期性调度，线程周期从125ms到250ms，优先级从255（最高）到242（最低）
+-- 3. 使用多种通信机制：事件端口、数据端口、事件数据端口和共享数据访问
+-- 4. 基于ERC32处理器（航天领域专用），适合星载计算机系统
+
+package satellite
 public
+
+with satellite_hardware;
+
+ -------------------------------------------------------------------------------
+  --  the system
+  -------------------------------------------------------------------------------
+
+  system OBMU
+  end OBMU;
+
+  system implementation OBMU.Impl
+    subcomponents
+      OBSW: process SAT_APPLI.Impl;
+      ERC32: processor satellite_hardware::ERC32.impl;
+      -- RAM: memory satellite_hardware::RAM;
+      -- AVB: bus satellite_hardware::bus_1553;
+      -- ICB: bus satellite_hardware::bus_1553;
+      -- PLB: bus satellite_hardware::bus_1553;
+         
+    -- connections
+    --   C1: bus access AVB -> RAM.AVB_bus_connected;
+    --   C2: bus access AVB -> ERC32.AVB_bus_connected;
+    --   C3: bus access ICB -> RAM.ICB_bus_connected;
+    --   C4: bus access ICB -> ERC32.ICB_bus_connected;
+    --   C5: bus access PLB -> RAM.PLB_bus_connected;
+    --   C6: bus access PLB -> ERC32.PLB_bus_connected;
+         
+    properties
+      Actual_Processor_Binding =>  reference (ERC32) applies to OBSW;
+      -- Actual_Memory_Binding =>  (reference (ram)) applies to OBSW;
+      
+  end OBMU.Impl;
+
+
 
   -------------------------------------------------------------------------------
   --  the on-board software process
@@ -135,15 +182,15 @@ public
      PF_RTC : out event port;
      PL_RTC : out event port;
      SYS_RTC : out event port;
-	  properties
+  end RTC_HDLR;
+
+  thread implementation RTC_HDLR.impl
+  properties
       Dispatch_Protocol => Periodic;
       Period => 250 ms;
       Deadline => 250 ms;
 	    Compute_Execution_Time => 1 ms..1 ms ;
 	    Priority => 255;
-  end RTC_HDLR;
-
-  thread implementation RTC_HDLR.impl
   end RTC_HDLR.impl;
 
   thread TC_HDLR
@@ -152,15 +199,15 @@ public
       PF_TC : out event data port default_type;
       PL_TC : out event data port default_type;
       SYS_TC : out event data port default_type;
-	properties
+  end TC_HDLR;
+
+  thread implementation TC_HDLR.impl
+  properties
       Dispatch_Protocol => Periodic;
       Period => 250 ms;
       Deadline => 250 ms;
       Compute_Execution_Time => 2 ms..2 ms ;
       Priority => 254;
-  end TC_HDLR;
-
-  thread implementation TC_HDLR.impl
   end TC_HDLR.impl;
 
   thread RTM_HDLR
@@ -169,15 +216,15 @@ public
   	PF_RTM : in event data port default_type;
   	PL_RTM : in event data port default_type;
   	SYS_RTM : in event data port default_type;
- 	properties
-    Dispatch_Protocol => Periodic;
-    Period => 250 ms;
-    Deadline => 250 ms;
-	Compute_Execution_Time => 3 ms..4 ms ;
-	Priority => 250;
   end RTM_HDLR;
 
   thread implementation RTM_HDLR.impl
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 250 ms;
+    Deadline => 250 ms;
+    Compute_Execution_Time => 3 ms..4 ms ;
+    Priority => 250;
   end RTM_HDLR.impl;
 
   thread AVB_HDLR
@@ -185,15 +232,15 @@ public
       -- Synchronizations
       AVB_AOCS_ACQ_features : requires data access AVB_AOCS_ACQ;
       AOCS_AVB : out event port;
-    properties
+  end AVB_HDLR;
+
+  thread implementation AVB_HDLR.impl
+  properties
       Dispatch_Protocol => Periodic;
       Period => 125 ms;
       Deadline => 125 ms;
       Compute_Execution_Time => 0 ms.. 3 ms;
       Priority => 253;
-  end AVB_HDLR;
-
-  thread implementation AVB_HDLR.impl
   end AVB_HDLR.impl;
 
   thread ICB_HDLR
@@ -204,15 +251,15 @@ public
       AOCS_ICB : out event port;
       PF_ICB : out event port;
       SYS_ICB : out event port;
-    properties
+  end ICB_HDLR;
+
+  thread implementation ICB_HDLR.impl
+  properties
       Dispatch_Protocol => Periodic;
       Period => 125 ms;
       Deadline => 125 ms;
       Compute_Execution_Time => 3 ms..4 ms ;
       Priority => 252;
-  end ICB_HDLR;
-
-  thread implementation ICB_HDLR.impl
   end ICB_HDLR.impl;
 
   thread PLB_HDLR
@@ -221,15 +268,16 @@ public
 	  -- PLB_PL_ACQ_features : requires data access PLB_PL_ACQ;
       PF_PLB : out event port;
       PL_PLB : out event port;
-    properties
+    
+  end PLB_HDLR;
+
+  thread implementation PLB_HDLR.impl
+  properties
       Dispatch_Protocol => Periodic;
       Period => 125 ms;
       Deadline => 125 ms;
       Compute_Execution_Time => 6 ms..7 ms ;
       Priority => 251;
-  end PLB_HDLR;
-
-  thread implementation PLB_HDLR.impl
   end PLB_HDLR.impl;
 
   -----------------------------------------------------------
@@ -256,45 +304,45 @@ public
       ICB: in event port;
       --system comm
       SYS: out event port;
-    properties
-      Dispatch_Protocol => Periodic;
-      Period => 125 ms;
-      Deadline => 125 ms;
-	  Compute_Execution_Time => 25 ms..25 ms ;
-	  Priority => 248;
   end AOCS_CYCL;
 
   thread implementation AOCS_CYCL.impl
+  properties
+      Dispatch_Protocol => Periodic;
+      Period => 125 ms;
+      Deadline => 125 ms;
+      Compute_Execution_Time => 25 ms..25 ms ;
+      Priority => 248;
   end AOCS_CYCL.impl;
 
   thread AOCS_CONF
     features
       ENABLE: in event port;
-    properties
+  end AOCS_CONF;
+
+  thread implementation AOCS_CONF.impl
+  properties
 --      Dispatch_Protocol => Sporadic;
       Dispatch_Protocol => Periodic;
       Period => 250 ms;
       Deadline => 250 ms;
       Compute_Execution_Time => 11 ms..60 ms ;
       Priority => 245;
-  end AOCS_CONF;
-
-  thread implementation AOCS_CONF.impl
   end AOCS_CONF.impl;
 
   thread AOCS_MAN
     features
       ENABLE: in event port;
-    properties
+  end AOCS_MAN;
+
+  thread implementation AOCS_MAN.impl
+  properties
 --      Dispatch_Protocol => Sporadic;
       Dispatch_Protocol => Periodic;
       Period => 250 ms;
       Deadline => 250 ms;
       Compute_Execution_Time => 11 ms..12 ms ;
       Priority => 244;
-  end AOCS_MAN;
-
-  thread implementation AOCS_MAN.impl
   end AOCS_MAN.impl;
 
   -----------------------------------------------------------
@@ -320,30 +368,30 @@ public
       PLB: in event port;
       --system comm
       SYS: out event port;
-    properties
-      Dispatch_Protocol => Periodic;
-      Period => 125 ms;
-      Deadline => 125 ms;
-	  Compute_Execution_Time => 4 ms..4 ms ;
-	  Priority => 246;
   end PF_CYCL;
 
   thread implementation PF_CYCL.impl
+  properties
+      Dispatch_Protocol => Periodic;
+      Period => 125 ms;
+      Deadline => 125 ms;
+      Compute_Execution_Time => 4 ms..4 ms ;
+      Priority => 246;
   end PF_CYCL.impl;
 
   thread PF_CONF
     features
       ENABLE: in event port;
-    properties
+  end PF_CONF;
+
+  thread implementation PF_CONF.impl
+  properties
 --      Dispatch_Protocol => Sporadic;
       Dispatch_Protocol => Periodic;
       Period => 250 ms;
       Deadline => 250 ms;
       Compute_Execution_Time => 8 ms..8 ms ;
       Priority => 243;
-  end PF_CONF;
-
-  thread implementation PF_CONF.impl
   end PF_CONF.impl;
 
   -----------------------------------------------------------
@@ -366,30 +414,30 @@ public
       PLB: in event port;
       --system comm
       SYS: out event port;
-    properties
+  end PL_CYCL;
+
+  thread implementation PL_CYCL.impl
+  properties
       Dispatch_Protocol => Periodic;
       Period => 125 ms;
       Deadline => 125 ms;
       Compute_Execution_Time => 8 ms..8 ms ;
       Priority => 247;
-  end PL_CYCL;
-
-  thread implementation PL_CYCL.impl
   end PL_CYCL.impl;
 
   thread PL_CONF
     features
       ENABLE: in event port;
-    properties
+  end PL_CONF;
+
+  thread implementation PL_CONF.impl
+  properties
 --      Dispatch_Protocol => Sporadic;
       Dispatch_Protocol => Periodic;
       Period => 250 ms;
       Deadline => 250 ms;
       Compute_Execution_Time => 8 ms..8 ms ;
      Priority => 242;
-  end PL_CONF;
-
-  thread implementation PL_CONF.impl
   end PL_CONF.impl;
 
 --------------------------------------------
@@ -466,4 +514,4 @@ public
         val : data Base_Types::Integer_64;
   end PLB_PL_ACQ.impl;
 
-end satellite_software;
+end satellite;

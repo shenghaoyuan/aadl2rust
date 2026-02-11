@@ -107,15 +107,15 @@ public
     pos_c : in  data port pos_c;
     pos_o : in  data port pos_o;
     acc_c : out data port acc_c;
+  end NL;
+
+  thread implementation NL.impl
   properties
     Dispatch_Protocol      => Periodic;
     Period                 => 120 ms;
     Compute_Execution_Time => 0 ms .. 20 ms;
     Deadline               => 120 ms;
     Priority               => 2;
-  end NL;
-
-  thread implementation NL.impl
   end NL.impl;
 
   thread NF
@@ -123,15 +123,15 @@ public
   features
     pos_i : in  data port pos_i;
     pos_o : out data port pos_o;
-  properties
+  end NF;
+
+  thread implementation NF.impl
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 120 ms;
     Compute_Execution_Time => 0 ms .. 10 ms;
     Deadline               => 120 ms;
     Priority               => 1;
-  end NF;
-
-  thread implementation NF.impl
   end NF.impl;
 
   thread PL
@@ -140,15 +140,15 @@ public
     acc_c   : in  data port acc_c;
     acc_o   : in  data port acc_o;
     angle_c : out data port angle_c;
-  properties
+  end PL;
+
+  thread implementation PL.impl
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 40 ms;
     Compute_Execution_Time => 0 ms .. 5 ms;
     Deadline               => 40 ms;
     Priority               => 4;
-  end PL;
-
-  thread implementation PL.impl
   end PL.impl;
 
   thread PF
@@ -156,15 +156,16 @@ public
   features
     acc_i : in  data port acc_i;
     acc_o : out data port acc_o;
-  properties
+
+  end PF;
+
+  thread implementation PF.impl
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 40 ms;
     Compute_Execution_Time => 0 ms .. 5 ms;
     Deadline               => 40 ms;
     Priority               => 3;
-  end PF;
-
-  thread implementation PF.impl
   end PF.impl;
 
   thread FL
@@ -173,15 +174,16 @@ public
     angle_c : in  data port angle_c;
     angle_o : in  data port angle_o;
     order   : out data port order;
+  
+  end FL;
+
+  thread implementation FL.impl
   properties
     Dispatch_Protocol      => Periodic;
     Period                 => 10 ms;
     Compute_Execution_Time => 0 ms .. 2 ms;
     Deadline               => 10 ms;
     Priority               => 7;
-  end FL;
-
-  thread implementation FL.impl
   end FL.impl;
 
   thread FF
@@ -189,15 +191,15 @@ public
   features
     angle   : in  data port angle;
     angle_o : out data port angle_o;
-  properties
+  end FF;
+
+  thread implementation FF.impl
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 10 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
     Deadline               => 10 ms;
     Priority               => 6;
-  end FF;
-
-  thread implementation FF.impl
   end FF.impl;
 
   thread AP
@@ -207,65 +209,69 @@ public
     acc      : in  data port acc;
     acc_i    : out data port acc_i;
     pos_i    : out data port pos_i;
-  properties
+  end AP;
+
+  thread implementation AP.impl
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 10 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
     Deadline               => 10 ms;
     Priority               => 5;
-  end AP;
-
-  thread implementation AP.impl
   end AP.impl;
 
     -- 模拟 Operator 设备
   thread Mock_Operator
   features
     pos_c : out data port pos_c;
-  properties
+  end Mock_Operator;
+  thread implementation Mock_Operator.impl 
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 120 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
     Priority               => 8;
-  end Mock_Operator;
-  thread implementation Mock_Operator.impl end Mock_Operator.impl;
+  end Mock_Operator.impl;
 
   -- 模拟 GPS 设备
   thread Mock_GPS
   features
     position : out data port position;
-  properties
+  end Mock_GPS;
+  thread implementation Mock_GPS.impl 
+    properties
     Dispatch_Protocol      => Periodic;
     Period                 => 10 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
     Priority               => 8;
-  end Mock_GPS;
-  thread implementation Mock_GPS.impl end Mock_GPS.impl;
+  end Mock_GPS.impl;
 
   -- 模拟 IMU 设备
   thread Mock_IMU
   features
     angle : out data port angle;
     acc   : out data port acc;
+  end Mock_IMU;
+  thread implementation Mock_IMU.impl 
   properties
     Dispatch_Protocol      => Periodic;
     Period                 => 10 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
     Priority               => 8;
-  end Mock_IMU;
-  thread implementation Mock_IMU.impl end Mock_IMU.impl;
+  end Mock_IMU.impl;
 
   -- 模拟 Platform 设备 (接收端)
   thread Mock_Platform
   features
     order : in data port order;
+  end Mock_Platform;
+  thread implementation Mock_Platform.impl 
   properties
     Dispatch_Protocol      => Periodic;
     Period                 => 10 ms;
     Compute_Execution_Time => 0 ms .. 1 ms;
     Priority               => 1;
-  end Mock_Platform;
-  thread implementation Mock_Platform.impl end Mock_Platform.impl;
+  end Mock_Platform.impl;
 
   ---------------
   -- Processor --

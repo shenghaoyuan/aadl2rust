@@ -63,26 +63,28 @@ public
 		features
 			currenttemp: out data port Temperature;
 			tempchanged: out event port;
+	end TempSensor;
+
+	thread implementation TempSensor.Impl
 		properties
 			Dispatch_Protocol => Periodic;
 			Period => 1000 ms;
 			Stack_Size => 114688 Bytes;
-	end TempSensor;
-
-	thread implementation TempSensor.Impl
+			Priority => 1;
 	end TempSensor.Impl;
 
 	thread Fan
 		features
 			fancmd: in event data port FanCmd;
-			fanack: out event data port FanAck;
-		properties
-			Dispatch_Protocol => Sporadic;
-			Period => 1000 ms;
-			Stack_Size => 114688 Bytes;			
+			fanack: out event data port FanAck;		
 	end Fan;
 
 	thread implementation Fan.Impl
+		properties
+			Dispatch_Protocol => Sporadic;
+			Period => 1000 ms;
+			Stack_Size => 114688 Bytes;	
+			Priority => 1;
 	end Fan.Impl;
 
 	thread TempControl
@@ -91,26 +93,28 @@ public
 			tempchanged: in event port;
 			fanack: in event data port FanAck;
 			setpoint: in event data port SetPoint;
-			fancmd: out event data port FanCmd;
-		properties
-			Dispatch_Protocol => Sporadic;
-			Period => 1000 ms;
-			Stack_Size => 114688 Bytes;			
+			fancmd: out event data port FanCmd;		
 	end TempControl;
 
 	thread implementation TempControl.Impl
+		properties
+			Dispatch_Protocol => Sporadic;
+			Period => 1000 ms;
+			Stack_Size => 114688 Bytes;	
+			Priority => 1;
 	end TempControl.Impl;
 
 	thread SetPointDriver
 		features
 			setpoint: out event data port SetPoint;
+	end SetPointDriver;
+
+	thread implementation SetPointDriver.Impl
 		properties
 			Dispatch_Protocol => Periodic;
 			Period => 5000 ms;
 			Stack_Size => 114688 Bytes;
-	end SetPointDriver;
-
-	thread implementation SetPointDriver.Impl
+			Priority => 1;
 	end SetPointDriver.Impl;
 
 	data Temperature

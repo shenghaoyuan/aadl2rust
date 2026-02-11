@@ -130,11 +130,6 @@ public
   thread WaterLevelMonitoring
   features
     wateralarm : out data port Int;
-  properties
-    Dispatch_Protocol => Periodic;         --  Concurrency configuration
-    Period => 250 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
   -- annex behavior_specification {**
   --   variables
   -- 		HLS : Int;
@@ -166,6 +161,11 @@ public
     };
   connections
     c1 : parameter s.out_port -> wateralarm;
+  properties
+    Dispatch_Protocol => Periodic;         --  Concurrency configuration
+    Period => 250 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end WaterLevelMonitoring.impl;
 
   --  MethaneMonitoring task
@@ -173,11 +173,6 @@ public
   thread MethaneMonitoring
   features
     methanelevel : out data port int;
-  properties
-    Dispatch_Protocol => Periodic;         --  Concurrency configuration
-    Period => 100 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
   -- annex behavior_specification {**
   -- 	variables
   -- 		MS    : Int;
@@ -207,6 +202,11 @@ public
     };
   connections
     c1 : parameter s.out_port -> methanelevel;
+  properties
+    Dispatch_Protocol => Periodic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end MethaneMonitoring.impl;
 
   thread PumpCtrl
@@ -214,11 +214,6 @@ public
     methanelevel : in event data port Int;
     waterlevel   : in event data port Int;
     wateralarm   : out data port Int;
-  properties
-    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
-    Period => 100 ms;
-    Compute_Execution_Time => 1 ms .. 2 ms;
-    Priority => 2;
   -- annex behavior_specification {**
   -- 	variables
   -- 		niveau_eau : Int;
@@ -266,17 +261,16 @@ public
     c1 : parameter methanelevel -> s1.val;
     c2 : parameter waterlevel -> s2.val;
     c3 : parameter s3.alarm_out -> wateralarm;
-  end PumpCtrl.impl;
-
-  thread WaterAlarm
-  features
-    wateralarm : in event data port Int;
-
   properties
     Dispatch_Protocol => Sporadic;         --  Concurrency configuration
     Period => 100 ms;
     Compute_Execution_Time => 1 ms .. 2 ms;
     Priority => 2;
+  end PumpCtrl.impl;
+
+  thread WaterAlarm
+  features
+    wateralarm : in event data port Int;
   -- annex behavior_specification {**
   -- 	variables
   -- 		value : Int;
@@ -298,6 +292,11 @@ public
     };
   connections
     c1 : parameter wateralarm -> s.in_port;
+  properties
+    Dispatch_Protocol => Sporadic;         --  Concurrency configuration
+    Period => 100 ms;
+    Compute_Execution_Time => 1 ms .. 2 ms;
+    Priority => 2;
   end WaterAlarm.impl;
 
   --  MinePump software process

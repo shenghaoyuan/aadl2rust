@@ -10,7 +10,7 @@ pub fn convert_data_component(
     data_comp_type: &mut HashMap<String, String>,
 ) -> Vec<Item> {
     let target_type = determine_data_type(type_mappings, comp);
-    println!("target_type:{:?}",target_type);
+    // println!("target_type:{:?}",target_type);
     // 当 determine_data_type 返回结构体类型时，生成结构体定义
     // 当 determine_data_type 返回联合体类型时，生成枚举定义
     // 当 determine_data_type 返回枚举类型时，生成枚举定义

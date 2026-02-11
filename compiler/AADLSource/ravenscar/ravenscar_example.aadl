@@ -101,15 +101,8 @@ public
   features
     additional_workload : out event data port Workload;
 
-    handle_external_interrupt  : out event port;
+    handle_external_interrupt  : out event data port Workload;
 
-  properties
-    -- Compute_Entrypoint_Source_Text     => "Work.Regular_Producer_Operation";
-    Dispatch_Protocol                  => Periodic;
-    Period                             => 1000 ms;
-    Deadline                           => 500 ms;
-    Compute_Execution_Time             => 0 ms .. 498 ms;
-    Priority                           => 7;
   end Regular_Producer;
 
   thread implementation Regular_Producer.Impl
@@ -117,6 +110,13 @@ public
     MyCalls : { Spg : subprogram Regular_Producer_Op; };
   connections
     c1 : parameter Spg.add_load -> additional_workload;
+  properties
+    -- Compute_Entrypoint_Source_Text     => "Work.Regular_Producer_Operation";
+    Dispatch_Protocol                  => Periodic;
+    Period                             => 1000 ms;
+    Deadline                           => 500 ms;
+    Compute_Execution_Time             => 0 ms .. 498 ms;
+    Priority                           => 7;
   end Regular_Producer.Impl;
 
   thread On_Call_Producer
@@ -125,13 +125,6 @@ public
     -- {Queue_Size                     => 5;
     -- Compute_Entrypoint_Source_Text => "Work.On_Call_Producer_Operation";};
 
-  properties
-    Dispatch_Protocol                  => Sporadic;
-    Period                             => 1000 ms;
-    Deadline                           => 800 ms;
-    Compute_Execution_Time             => 0 ms .. 250 ms;
-    Priority                           => 5;
-    Queue_Size                         => 5;
   end On_Call_Producer;
 
   thread implementation On_Call_Producer.Impl
@@ -139,6 +132,13 @@ public
     MyCalls : { Spg : subprogram On_Call_Producer_Op; };
   connections
     c1 : parameter additional_workload_depository -> Spg.load_in;
+  properties
+    Dispatch_Protocol                  => Sporadic;
+    Period                             => 1000 ms;
+    Deadline                           => 800 ms;
+    Compute_Execution_Time             => 0 ms .. 250 ms;
+    Priority                           => 5;
+    Queue_Size                         => 5;
   end On_Call_Producer.Impl;
 
   thread External_Event_Server
@@ -149,13 +149,6 @@ public
 
     external_interrupt : out data port Interrupt_Counter;
 
-  properties
-    Dispatch_Protocol                  => Sporadic;
-    Period                             => 5000 ms;
-    Deadline                           => 100 ms;
-    Compute_Execution_Time             => 0 ms .. 2 ms;
-    Priority                           => 11;
-    Queue_Size                         => 1;
   end External_Event_Server;
 
   thread implementation External_Event_Server.Impl
@@ -167,23 +160,23 @@ public
   connections
     c1 : parameter external_interrupt_depository -> Set_Dep.depository_in;
     c2 : parameter Get_Int.interrupt_out -> external_interrupt;
+  properties
+    Dispatch_Protocol                  => Sporadic;
+    Period                             => 5000 ms;
+    Deadline                           => 100 ms;
+    Compute_Execution_Time             => 0 ms .. 2 ms;
+    Priority                           => 11;
+    Queue_Size                         => 1;
   end External_Event_Server.Impl;
 
   thread Activation_Log_Reader
   features
     external_interrupt_depository : in data port Interrupt_Counter;
 
-    signal : in event port;
+    signal : in event data port Interrupt_Counter;
     -- {Queue_Size                     => 1;
     -- Compute_Entrypoint_Source_Text => "Logs.On_Signal";};
 
-  properties
-    Dispatch_Protocol                  => Sporadic;
-    Period                             => 1000 ms;
-    Deadline                           => 1000 ms;
-    Compute_Execution_Time             => 0 ms .. 125 ms;
-    Priority                           => 3;
-    Queue_Size                         => 1;
   end Activation_Log_Reader;
 
   thread implementation Activation_Log_Reader.Impl
@@ -191,12 +184,26 @@ public
     MyCalls : { Spg : subprogram On_Signal_Op; };
   connections
     c1 : parameter External_Interrupt_Depository -> Spg.interrupt_in;
+  properties
+    Dispatch_Protocol                  => Sporadic;
+    Period                             => 1000 ms;
+    Deadline                           => 1000 ms;
+    Compute_Execution_Time             => 0 ms .. 125 ms;
+    Priority                           => 3;
+    Queue_Size                         => 1;
   end Activation_Log_Reader.Impl;
 
   thread External_Event_Source
   features
     external_interrupt : out event data port Interrupt_Counter;
 
+  end External_Event_Source;
+
+  thread implementation External_Event_Source.Impl
+  calls
+    MyCalls : { Spg : subprogram Event_Source_Op; };
+  connections
+    c1 : parameter Spg.interrupt_out -> External_Interrupt;
   properties
     -- Initialize_Entrypoint_Source_Text  => "Event_Source.Init";
     -- Compute_Entrypoint_Source_Text     => "Event_Source.New_External_Event";
@@ -205,13 +212,6 @@ public
     Deadline                           => 100 ms;
     Compute_Execution_Time             => 0 ms .. 10 ms;
     Priority                           => 11;
-  end External_Event_Source;
-
-  thread implementation External_Event_Source.Impl
-  calls
-    MyCalls : { Spg : subprogram Event_Source_Op; };
-  connections
-    c1 : parameter Spg.interrupt_out -> External_Interrupt;
   end External_Event_Source.Impl;
 
   process Workload_Manager

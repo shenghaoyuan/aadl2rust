@@ -84,12 +84,13 @@ public
   thread Printer
   features
     top : in event port;
-  properties
-    Dispatch_Protocol => Sporadic;
-    Period            => 1 ms;
   end Printer;
 
   thread implementation Printer.impl
+  properties
+    Dispatch_Protocol => Sporadic;
+    Period            => 1 ms;
+    Priority          => 1;
   end Printer.impl;
 
   process Ticker

@@ -105,12 +105,13 @@ public
   thread Buzzer
   features
     port_1 : in event port;
-  properties
-    Dispatch_Protocol => Sporadic;
-    Period => 10 ms;
   end Buzzer;
 
   thread implementation Buzzer.impl
+  properties
+    Dispatch_Protocol => Sporadic;
+    Period => 10 ms;
+    Priority => 1;
   end Buzzer.impl;
 
   -- device Light 
@@ -125,12 +126,13 @@ public
   thread Light
   features
     port_2 : in event port;
-  properties
-    Dispatch_Protocol => Sporadic;
-    Period => 10 ms;
   end Light;
 
   thread implementation Light.impl
+  properties
+    Dispatch_Protocol => Sporadic;
+    Period => 10 ms;
+    Priority => 1;
   end Light.impl;
 
   --  And then, instantiate the Mixin
@@ -143,12 +145,13 @@ public
   features
       out_1 : out event port;
       out_2 : out event port;
-  properties
-    Dispatch_Protocol => Periodic;
-    Period => 1000 ms;
   end Trigger;
 
   thread implementation Trigger.impl
+  properties
+    Dispatch_Protocol => Periodic;
+    Period => 1000 ms;
+    Priority => 1;  
   end Trigger.impl;
   
   process Trigger_Process

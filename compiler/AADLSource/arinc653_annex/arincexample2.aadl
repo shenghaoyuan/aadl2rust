@@ -59,15 +59,16 @@ public
   -- bus implementation anybus.i extends buses::misc::generic_bus.impl end anybus.i;
 
   thread network_driver_thread
-  properties
+  end network_driver_thread;
+
+  thread implementation network_driver_thread.i
+    properties
     Stack_Size => 4 Bytes;
     Code_Size => 10 Bytes;
     Period => 200 ms;
     Compute_Execution_Time => 5 ms .. 10 ms;
     Dispatch_Protocol => Periodic;
-  end network_driver_thread;
-
-  thread implementation network_driver_thread.i
+    Priority                           => 1;
   end network_driver_thread.i;
 
  --  JH addition
@@ -133,9 +134,7 @@ public
   thread module1_thread_part1
   features
     sensorout : out event data port simple_type;
-  properties
-    Dispatch_Protocol => Periodic;
-    Period => 100 ms;
+  
   -- properties
   --  ARINC653::HM_Errors =>
   --          (Deadline_Miss, Application_Error, Numeric_Error, Illegal_Request);
@@ -144,12 +143,13 @@ public
   end module1_thread_part1; -- Thread for the first partition
 
   thread implementation module1_thread_part1.impl
-  end module1_thread_part1.impl;
-
-  thread module1_thread_part2
   properties
     Dispatch_Protocol => Periodic;
     Period => 100 ms;
+    Priority  => 1;
+  end module1_thread_part1.impl;
+
+  thread module1_thread_part2
   -- properties
   --  ARINC653::HM_Errors =>
   --        (Deadline_Miss, Application_Error, Numeric_Error, Illegal_Request);
@@ -158,6 +158,10 @@ public
   end module1_thread_part2; -- Thread for the second partition
 
   thread implementation module1_thread_part2.impl
+    properties
+    Dispatch_Protocol => Periodic;
+    Period => 100 ms;
+    Priority   => 1;
   end module1_thread_part2.impl;
 
   process module1_process_part1
@@ -231,9 +235,6 @@ public
   thread module2_thread_part1
   features
     sensorin : in event data port simple_type;
-  properties
-    Dispatch_Protocol => Periodic;
-    Period => 100 ms;
   -- properties
   --  ARINC653::HM_Errors =>
   --      (Deadline_Miss, Application_Error, Numeric_Error, Illegal_Request);
@@ -242,6 +243,10 @@ public
   end module2_thread_part1;
 
   thread implementation module2_thread_part1.impl
+    properties
+    Dispatch_Protocol => Periodic;
+    Period => 100 ms;
+    Priority  => 1;
   end module2_thread_part1.impl;
 
   process module2_process_part1

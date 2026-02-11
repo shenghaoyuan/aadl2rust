@@ -481,9 +481,9 @@ fn create_thread_run_body(temp_converter: &mut AadlConverter, impl_: &ComponentI
 fn create_periodic_execution_logic(temp_converter: &AadlConverter, impl_: &ComponentImplementation) -> Vec<Statement> {
     let mut stmts = Vec::new();
     
-    // 从AADL属性中提取周期值，默认为2000ms
+    // 从AADL属性中提取周期值，默认为1000ms
     let period = extract_property_value(temp_converter, impl_, "period").unwrap_or(1000);
-    println!("{:?}period:{:?}",impl_.name,period);
+    // println!("{:?}period:{:?}",impl_.name,period);
     stmts.push(Statement::Let(LetStmt {
         ifmut: false,
         name: "period".to_string(),
