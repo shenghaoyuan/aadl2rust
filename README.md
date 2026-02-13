@@ -55,8 +55,6 @@ The project can be built and executed on both Linux and Windows platforms.
   		  # output file: "\target\llvm-cov\html\index.html"
   ```
 
-  <img src="images\code_coverage.png" alt="code_coverage" style="zoom:80%;" />
-
 - To count effective lines of AADL code (excluding blank lines and comments) for each case under `AADLSource/`:
 
   ```shell
