@@ -46,7 +46,7 @@ The project can be built and executed on both Linux and Windows platforms.
 
   For example:
 
-  <img src="D:\master\AADL2Rust\Rust_Practice\testpaper\aadl2rust\images\cargo_run_input.png" alt="cargo_run_input" style="zoom:80%;" />
+  <img src="images\cargo_run_input.png" alt="cargo_run_input" style="zoom:80%;" />
 
 - If you need to view the coverage report:
 
