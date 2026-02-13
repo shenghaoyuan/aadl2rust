@@ -34,7 +34,7 @@ The project can be built and executed on both Linux and Windows platforms.
 
   A successful execution should report that the integration test `all_aadl_models_should_generate_rust_code` passes without errors.
 
-  ![cargo_test](images/cargo_test.gif)![generate_project](images/generate_project.png)
+  <img src="images\cargo_test.gif" alt="cargo_test" style="zoom:100%;" /><img src="images/generate_project.png" alt="generate_project" style="zoom:100%;" />
 
   
 
