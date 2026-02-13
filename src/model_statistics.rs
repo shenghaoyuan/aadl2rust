@@ -176,7 +176,7 @@ impl ModelStatistics {
 
         let safe_pkg_name = sanitize_package_name(package_name).to_lowercase();
         let file_path = base_dir.join(format!("{safe_pkg_name}.md"));
-        println!("Generate model statistics file: {:?}", file_path);
+        // println!("Generate model statistics file: {:?}", file_path);
 
         let mut file = File::create(file_path)?;
 

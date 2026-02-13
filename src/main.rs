@@ -417,8 +417,8 @@ pub fn generate_rust_code_for_test_case(
     let output_path = format!("{}/{}.rs", output_dir, package_name);
 
     fs::write(&output_path, rust_code).expect("Failed to write Rust code");
-    println!(
-        "Rust code generated (package: {}): {}",
-        package_name, output_path
-    );
+    // println!(
+    //     "Rust code generated (package: {}): {}",
+    //     package_name, output_path
+    // );
 }
