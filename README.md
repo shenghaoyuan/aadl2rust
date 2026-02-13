@@ -25,7 +25,7 @@ cargo install tokei
 ```shell
 cargo test #run all test cases.
 just cov-html / make cov # generate an HTML coverage report. 
-			  #output file: "\compiler\target\llvm-cov\html\index.html"
+			  #output file: "\target\llvm-cov\html\index.html"
 cargo run -- --input <folder_name>   # run a single case
 ```
 
