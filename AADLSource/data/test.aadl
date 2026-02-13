@@ -1,0 +1,10 @@
+package test_package
+public
+
+system test_system
+end test_system;
+
+system implementation test_system.impl
+end test_system.impl;
+
+end test_package;

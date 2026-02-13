@@ -1,0 +1,632 @@
+// aadl.pest
+
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" | COMMENT }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" | "--" ~ (!"\n" ~ ANY)* }
+
+
+identifier = @{ 
+    ASCII_ALPHA ~ 
+    //(ASCII_ALPHANUMERIC | '_' .. '.')*  
+    (ASCII_ALPHANUMERIC | '_' .. '_' | '.'..'.')*  
+}
+no_point_identifier = @{ 
+    ASCII_ALPHA ~ 
+    (ASCII_ALPHANUMERIC | '_' .. '_' )*  
+}
+
+qualified_identifier = @{ (identifier ~ "::")* ~ identifier }
+package_name = { qualified_identifier }
+property_set_name = { identifier }
+
+
+package_declaration = {
+    "package" ~ package_name ~ 
+    ("public" | "private")? ~
+    visibility_declarations* ~
+    package_sections ~
+    "end" ~ package_name ~ ";"
+}
+
+visibility_declarations = {
+    (WITH ~ (package_name | property_set_name) ~ ("," ~ (package_name | property_set_name))* ~ ";" )|
+    (identifier ~ "renames" ~ ("package" ~ package_name | qualified_identifier) ~ ("as" ~ identifier)? ~ ";")
+}
+WITH = { "with" }
+
+package_sections = {
+    ((PUBLIC | PRIVATE)?  ~ declaration*)? 
+}
+PUBLIC = { "public" }
+PRIVATE = { "private" }
+
+
+declaration = {
+    component_type |
+    component_implementation |
+    annex_library
+}
+
+component_category = {
+    "abstract" |
+    "data" | "subprogram" | "subprogram group" |
+    "thread" | "thread group" | "processor" |
+    "memory" | "process" | "bus" | "device" | "virtual processor" | "virtual bus" |
+    "system"
+}
+
+component_type = {
+    component_category ~ identifier ~ extends? ~
+    prototypes? ~
+    features? ~
+    properties? ~
+    annex_subclause* ~
+    "end" ~ identifier ~ ";"
+}
+extends = { "extends" ~ qualified_identifier}
+// 4.4 Component Implementations
+component_implementation = {
+    component_category ~ "implementation" ~ identifier ~ 
+    prototypes? ~
+    subcomponents? ~
+    calls? ~
+    connections? ~
+    properties? ~
+    annex_subclause* ~
+    "end" ~ identifier ~ ";"
+}
+
+// 4.5 Subcomponents
+subcomponent = {
+    identifier ~ ":" ~ component_category ~ qualified_identifier ~
+    array_spec? ~
+    properties? ~
+    ";"
+}
+
+// 4.7 Prototypes TODO
+prototype_declaration = {
+    identifier ~ ":" ~
+    ("component" ~ component_category ~ ("classifier" ~ qualified_identifier)?) |
+    ("feature" ~ ("in" | "out" | "in out")? ~ ("classifier" ~ qualified_identifier)?) |
+    ("feature group" ~ ("classifier" ~ qualified_identifier)?)
+}
+
+// 8 Features
+feature_declaration = {
+    identifier ~ ":" ~ (
+        (direction? ~ port_type ~ qualified_identifier?) |
+        (access_direction? ~ access_type ~ "access" ~ qualified_identifier?)
+    ) ~ ";"
+}
+
+direction = { "in out" | "in" | "out" } 
+access_direction = { "provides" | "requires" }
+
+port_type = { "data port" | "event data port" | "event port" | "parameter" }
+access_type = { "subprogram" | "data" }
+
+// 9 Connections
+connection = {
+    identifier ~ ":" ~ connection_type ~
+    (port_connection | parameter_connection) ~
+    ";"
+}
+
+connection_type = { "port" | "parameter" | "subprogram access" | "data access"}
+connection_operator = { "->" | "<->" }
+
+port_connection = {
+    port_reference ~ connection_operator ~ port_reference
+}
+
+parameter_connection = {
+    parameter_reference ~ connection_operator ~ parameter_reference
+}
+
+property_association = {
+    identifier ~
+    ( "::" ~ identifier )? ~
+    property_operator ~
+    constant? ~ property_value ~
+    ";"
+}
+
+property_operator = { "=>" | "+=>" }
+
+constant = { "constant" }
+
+property_value = {
+    apply_value |
+    list_value |
+    range_value | 
+    literal_value | 
+    reference_value |
+    component_classifier_value
+}
+apply_value = { number ~ "applies" ~ "to" ~ qualified_identifier } //contained_property_association
+literal_value = { (number | enum_value | string_literal | boolean  ) ~ unit? } 
+range_value = { 
+    number ~ WHITESPACE* ~ unit? ~ WHITESPACE* ~ 
+    ".." ~ WHITESPACE* ~ 
+    (number | identifier) ~ WHITESPACE* ~ unit? 
+}
+list_value = { "(" ~ property_value ~ ("," ~ property_value)* ~ ")" }
+reference_value = { "reference" ~ "(" ~ qualified_identifier ~ ")" ~ ( "applies" ~ "to" ~ qualified_identifier )? }
+component_classifier_value = { "classifier" ~ "(" ~ qualified_identifier ~ ")" }
+
+sign = { "+" | "-" }
+dot = { "." }
+number = { sign? ~ numbervalue} 
+numbervalue = {(ASCII_DIGIT+) ~ (dot ~ ASCII_DIGIT+)?}
+
+unit = { no_point_identifier } 
+//TODO:string_literal
+string_literal = { 
+    "\"" ~ (!"\"" ~ ANY)* ~ "\"" | 
+    "(" ~ ("()" | ( !")" ~ ANY ) )* ~ ")" 
+}
+
+boolean = { "true" | "false"}
+enum_value = @{
+    "Periodic" | "Sporadic" | "Aperiodic" | "Timed" | "Event" | "Hybrid" |
+    "native"  | "Struct" | 
+    "Boolean" | "Signed" |  "Float" | "Simple" | "Double" | "Character" | "String" | 
+    "Struct" | "Union" | "Enum" | "Fixed" | "Array" | "TaggedUnion" |
+    "struct" | "union" | "enum" | "fixed" | "array" | "taggedunion" |
+    "unsigned_8" | "unsigned_16" | "unsigned_32" | "unsigned_64" | "unsigned" |
+    "integer_8" | "integer_16" | "integer_32" | "integer_64" | "integer" |
+    "natural" | "float" | "float_32" | "float_64" | "character" | "string"|
+    "Unsigned_8" | "Unsigned_16" | "Unsigned_32" | "Unsigned_64" | "Unsigned" |
+    "Integer_8" | "Integer_16" | "Integer_32" | "Integer_64" | "Integer" |
+    "Natural" |  "Float_32" | "Float_64" | "Float" |"Character" | "String"
+}
+
+// 5.2 Subprogram Calls
+call_sequence = {
+    identifier ~ ":" ~ "{" ~ subprogram_call+ ~ "}" ~ ";"
+}
+
+subprogram_call = {
+    identifier ~ ":" ~ "subprogram" ~ qualified_identifier ~ ";"
+}
+
+// Annexes
+annex_library = { "annex" ~ identifier? ~ "{" ~ ANY* ~ "}" ~ ";" }
+
+annex_subclause = { 
+    "annex" ~ annex_identifier ~ 
+    ("{**" ~ annex_content ~ "**};") 
+}
+
+annex_identifier = { 
+    "Behavior_specification" | 
+    "EMV2" | 
+    identifier 
+}
+
+annex_content = { 
+    behavior_annex_content?
+}
+
+behavior_annex_content = {
+    (state_variables | states | transitions)*
+}
+
+state_variables = { 
+    "variables" ~ 
+    state_variable_declaration+ 
+}
+
+state_variable_declaration = {
+    identifier ~ ":" ~ qualified_identifier ~ (assignment_operator ~ behavior_expression)? ~ ";" 
+}
+assignment_operator = { ":=" }
+
+states = { 
+    "states" ~ 
+    state_declaration+ 
+}
+
+state_declaration = {
+    identifier ~ ("," ~ identifier)* ~ 
+    ":" ~ 
+    state_modifier* ~ 
+    "state" ~ 
+    ";" 
+}
+
+state_modifier = { 
+    "initial" | "complete" | "final"
+}
+
+transitions = { 
+    "transitions" ~ 
+    transition_declaration+
+}
+
+transition_declaration = {
+    identifier ~ 
+    "-[" ~ guard? ~ "]->" ~ 
+    identifier ~ 
+    behavior_action_block? ~
+    ";" 
+}
+
+
+guard = { 
+    dispatch_condition | 
+    execute_condition 
+}
+
+// dispatch_condition ::= on dispatch [ dispatch_trigger_condition ] [ frozen frozen_ports ]
+dispatch_condition = {
+    "on dispatch" ~ dispatch_trigger_condition? ~ frozen_ports?
+}
+
+// dispatch_trigger_condition ::= dispatch_trigger_logical_expression | provides_subprogram_access_identifier | stop
+dispatch_trigger_condition = {
+    dispatch_trigger_logical_expression |
+    provides_subprogram_access_identifier |
+    "stop"
+}
+
+// dispatch_trigger_logical_expression ::= dispatch_conjunction { or dispatch_conjunction }*
+dispatch_trigger_logical_expression = {
+    dispatch_conjunction ~ ("or" ~ dispatch_conjunction)*
+}
+
+// dispatch_conjunction ::= dispatch_trigger { and dispatch_trigger }*
+dispatch_conjunction = {
+    dispatch_trigger ~ ("and" ~ dispatch_trigger)*
+}
+
+// dispatch_trigger ::= in_event_port_identifier | in_event_data_port_identifier
+dispatch_trigger = {
+    identifier
+}
+
+// provides_subprogram_access_identifier
+provides_subprogram_access_identifier = {
+    identifier
+}
+
+// frozen_ports ::= frozen frozen_port_identifier { , frozen_port_identifier }*
+frozen_ports = {
+    "frozen" ~ identifier ~ ("," ~ identifier)*
+}
+
+// execute_condition ::= logical_value_expression | otherwise
+execute_condition = {
+    (unary_boolean_operator? ~ identifier) |
+    (number ~ less_than_operator ~ identifier)
+}
+less_than_operator = { "<" }
+
+
+behavior_action = { 
+    basic_action | 
+    behavior_action_block | 
+    if_statement | 
+    for_statement | 
+    forall_statement | 
+    while_statement | 
+    do_until_statement 
+}
+
+// basic_action ::= assignment_action | communication_action | timed_action
+basic_action = { 
+    computation_action | 
+    assignment_action | 
+    communication_action 
+}
+
+// timed_action ::= computation ( behavior_time [ .. behavior_time ] )
+// computation_action = { 
+//     "computation" ~ "(" ~ behavior_time ~ (".." ~ behavior_time)? ~ ")" 
+// }
+computation_action = { 
+    "computation" ~ "(" ~ behavior_time  ~ ")" 
+}
+
+// delay_action = { 
+//     "delay" ~ "(" ~ behavior_time ~ ")" ~ ";" 
+// }
+
+
+// communication_action ::= subprogram_call | port_communication | data_access_communication | broadcast
+communication_action = { 
+    port_communication | 
+    data_access_communication | 
+    broadcast_action 
+}
+
+
+// assignment_action ::= target := ( value_expression | any )
+assignment_action = { 
+    target ~ ":=" ~ ("("?)~ (behavior_expression | "any") ~ (")"?)
+}
+
+
+//behavior_parameter_bindings ::=
+// behavior_expression [ -> unique_port_identifier ]
+// { , behavior_expression [ -> unique_port_identifier ] } *
+// behavior_parameter_bindings = { 
+//     "(" ~ behavior_parameter_binding ~ ("," ~ behavior_parameter_binding)* ~ ")" 
+// }
+
+// behavior_parameter_binding = { 
+//     behavior_expression ~ ("->" ~ identifier)? 
+// }
+
+
+behavior_expression = { 
+    value_expression
+}
+
+
+
+// behavior_time ::= integer_value unit_identifier
+behavior_time = { 
+    integer_value ~ unit_identifier? 
+}
+// behavior_time = { 
+//         "1 ms"
+//     }
+
+
+// integer_value ::= integer_value_variable | integer_value_constant
+integer_value = { 
+    number | identifier   
+}
+// numbertemp = @{
+//     ASCII_DIGIT+
+// }
+
+unit_identifier = { 
+    no_point_identifier 
+}
+
+// port_communication ::= output_port_name ! [ ( value_expression ) ] | input_port_name >> | input_port_name ? [ ( target ) ]
+port_communication = { 
+    (identifier ~ "!" ~ ("(" ~ behavior_expression ~ ")")?) |  
+    (identifier ~ ">>") |  
+    (identifier ~ "?" ~ ("(" ~ target ~ ")")?)  
+}
+
+// data_access_communication ::= required_data_access_name !< | required_data_access_name !> | required_data_access_name . provided_subprogram_access_name ! [ ( subprogram_parameter_list ) ]
+data_access_communication = { 
+    (identifier ~ ("!<" | "!>")) |  
+    (identifier ~ "." ~ identifier ~ "!" ~ ("(" ~ subprogram_parameter_list ~ ")")?)  
+}
+
+
+// broadcast ::= *!< | *!>
+broadcast_action = { 
+    "*!<" | "*!>" 
+}
+
+
+// target ::= local_variable_name | outgoing_port_name | outgoing_subprogram_parameter_name | data_component_reference
+target = { 
+    identifier  
+}
+
+// subprogram_parameter_list ::= parameter_label { , parameter_label }*
+subprogram_parameter_list = { 
+    parameter_label ~ ("," ~ parameter_label)* 
+}
+
+// parameter_label ::= in_parameter_value_expression | out_parameter_target
+parameter_label = { 
+    ("in" ~ behavior_expression) | 
+    ("out" ~ target) 
+}
+
+// behavior_action_block ::= { behavior_actions } [ timeout behavior_time ]
+behavior_action_block = { 
+    "{" ~ behavior_actions ~ "}" ~ ("timeout" ~ behavior_time)? 
+}
+
+// behavior_actions ::= behavior_action | behavior_action_sequence | behavior_action_set
+behavior_actions = { 
+    behavior_action_sequence | 
+    behavior_action_set |
+    behavior_action 
+}
+
+// behavior_action_sequence ::= behavior_action { ; behavior_action }+
+behavior_action_sequence = { 
+    behavior_action ~ (";" ~ behavior_action)+ 
+}
+
+// behavior_action_set ::= behavior_action { & behavior_action }+
+behavior_action_set = { 
+    behavior_action ~ ("&" ~ behavior_action)+ 
+}
+
+// if ( logical_value_expression ) behavior_actions { elsif ( logical_value_expression ) behavior_actions }* [ else behavior_actions ] end if
+if_statement = { 
+    "if" ~ "(" ~ behavior_expression ~ ")" ~ behavior_actions ~ 
+    ("elsif" ~ "(" ~ behavior_expression ~ ")" ~ behavior_actions)* ~ 
+    ("else" ~ behavior_actions)? ~ 
+    "end" ~ "if" 
+}
+
+// for ( element_identifier : data_unique_component_classifier_reference in element_values ) { behavior_actions }
+for_statement = { 
+    "for" ~ "(" ~ identifier ~ ":" ~ identifier ~ "in" ~ element_values ~ ")" ~ 
+    "{" ~ behavior_actions ~ "}" 
+}
+
+// forall ( element_identifier : data_unique_component_classifier_reference in element_values ) { behavior_actions }
+forall_statement = { 
+    "forall" ~ "(" ~ identifier ~ ":" ~ identifier ~ "in" ~ element_values ~ ")" ~ 
+    "{" ~ behavior_actions ~ "}" 
+}
+
+// while ( logical_value_expression ) { behavior_actions }
+while_statement = { 
+    "while" ~ "(" ~ behavior_expression ~ ")" ~ "{" ~ behavior_actions ~ "}" 
+}
+
+// do behavior_actions until ( logical_value_expression )
+do_until_statement = { 
+    "do" ~ behavior_actions ~ "until" ~ "(" ~ behavior_expression ~ ")" 
+}
+
+// element_values ::= integer_range | event_data_port_name | array_data_component_reference
+element_values = { 
+    integer_range | 
+    identifier |  
+    (identifier ~ "[" ~ behavior_expression ~ "]")  
+}
+
+
+// integer_range ::= integer_value .. integer_value
+integer_range = { 
+    integer_value ~ ".." ~ integer_value 
+}
+
+
+
+
+binary_operator = { 
+
+    "and" | "or" |
+
+    "=" | "!=" | "<" | "<=" | ">" | ">=" |
+
+    "+" | "-" | "*" | "/" | "mod"
+}
+
+
+// value_expression ::= relation { logical_operator relation }*
+value_expression = { 
+    relation ~ (logical_operator ~ relation)* 
+}
+
+
+// logical_operator ::= and | or | xor
+logical_operator = { 
+    "and" | "or" | "xor" 
+}
+
+
+// relation ::= simple_expression [ relational_operator simple_expression ]
+relation = { 
+    simple_expression ~ (relational_operator ~ simple_expression)? 
+}
+
+
+// relational_operator ::= = | != | < | <= | > | >=
+relational_operator = { 
+    "=" | "!=" | "<" | "<=" | ">" | ">=" 
+}
+
+
+// simple_expression ::= [ unary_adding_operator ] term { binary_adding_operator term }*
+simple_expression = { 
+    unary_adding_operator? ~ term ~ (binary_adding_operator ~ term)* 
+}
+
+
+// unary_adding_operator ::= + | -
+unary_adding_operator = { 
+    "+" | "-" 
+}
+
+
+// binary_adding_operator ::= + | -
+binary_adding_operator = { 
+    "+" | "-" 
+}
+
+
+// term ::= factor { multiplying_operator factor }*
+term = { 
+    factor ~ (multiplying_operator ~ factor)* 
+}
+
+
+// multiplying_operator ::= * | / | mod | rem
+multiplying_operator = { 
+    "*" | "/" | "mod" | "rem" 
+}
+
+
+// factor ::= value [ binary_numeric_operator value ] | unary_numeric_operator value | unary_boolean_operator value
+factor = { 
+    value |
+    (value ~ binary_numeric_operator ~ value) |
+    (unary_numeric_operator ~ value) |
+    (unary_boolean_operator ~ value)
+}
+
+
+// binary_numeric_operator ::= **
+binary_numeric_operator = { 
+    "**" 
+}
+
+
+// unary_numeric_operator ::= abs
+unary_numeric_operator = { 
+    "abs" 
+}
+
+
+// unary_boolean_operator ::= not
+unary_boolean_operator = { 
+    "not" 
+}
+
+
+// value ::= value_variable | value_constant | ( value_expression )
+value = { 
+    value_constant | 
+    value_variable | 
+    ("(" ~ simple_expression ~ ")") 
+}
+
+
+// value_variable ::= incoming_port_name | incoming_port_name ? | incoming_subprogram_parameter_name | local_variable_name | data_component_reference | port_name ' count | port_name ' fresh
+value_variable = { 
+    (identifier ~ "'count") |  // port_name ' count
+    (identifier ~ "'fresh") |  // port_name ' fresh
+    (identifier ~ "?") |       // incoming_port_name ?
+    identifier                 
+}
+
+
+// value_constant ::= boolean_literal | numeric_literal | string_literal | property_constant | property_value
+value_constant = { 
+    number | 
+    boolean | 
+    string_literal  
+    //identifier  // property_constant / property_value
+}
+
+
+
+operator = { 
+    "+" | "-" | "*" | "/" | "mod" | "=" | "!=" | "<" | ">" | "<=" | ">=" | "and" | "or" 
+}
+
+// Helpers
+array_spec = { "[" ~ dimension ~ ("," ~ dimension)* ~ "]" }
+dimension = { number? }
+//mode_reference_list = { identifier ~ ("," ~ identifier)* }
+qualified_identifier_list = { qualified_identifier ~ ("," ~ qualified_identifier)* }
+port_reference = { (no_point_identifier ~ ".")? ~ no_point_identifier }
+parameter_reference = { (identifier ~ ".")? ~ identifier }
+
+prototypes = { "prototypes" ~ (prototype_declaration+ | "") }
+features = { "features" ~ (feature_declaration+ | "") }
+properties = { "properties" ~ (property_association+) }
+subcomponents = { "subcomponents" ~ (subcomponent+ | "") }
+calls = { "calls" ~ (call_sequence+ | "") }
+connections = { "connections" ~ (connection+ | "") }
+
+
+file = { SOI ~ package_declaration+ ~ EOI }

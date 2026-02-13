@@ -17,9 +17,8 @@ Cargo.lock
 # Node modules
 node_modules/
 
-compiler/generate_test/
-compiler/generate/
-compiler/clippy.log
+generate/
+clippy.log
 
 *.zip
 *.7z

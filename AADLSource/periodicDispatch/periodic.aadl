@@ -1,0 +1,89 @@
+package Periodic
+public
+    with Base_Types;
+    -- with HAMR;
+    
+	system Critical
+	end Critical;
+	
+	system implementation Critical.Impl
+		subcomponents
+			PROC : processor HW_Proc.Impl;
+			SW : process SW.Impl;
+		properties
+			-- HAMR::Platform => (seL4_TB);
+			Actual_Processor_Binding => reference (PROC) applies to SW;
+	end Critical.Impl;
+		
+	processor HW_Proc
+	end HW_Proc;
+	
+	processor implementation HW_Proc.Impl
+	end HW_Proc.Impl;
+	
+	process SW
+	end SW;
+	
+	process implementation SW.Impl
+		subcomponents
+			A: thread Comp_A.Impl;
+			B: thread Comp_B.Impl;
+		connections
+			c1: port A.output -> B.input;
+	end SW.Impl;
+		
+	thread Comp_A
+		features
+			output: out event data port Base_Types::Integer_32;
+		properties
+			Dispatch_Protocol => Periodic;
+			Period => 1000 ms;
+			-- Source_Text => ("comp.c");	
+			-- Source_Text => "Comp_A_time_triggered"; 
+	end Comp_A;
+	
+	thread implementation Comp_A.Impl
+	calls 
+	Mycalls: {
+		A_Spg : subprogram C_A;
+	};
+	connections
+		cnx_a : parameter A_Spg.output_param -> output;
+	end Comp_A.Impl;
+
+	thread Comp_B
+		features
+			input: in event data port Base_Types::Integer_32;
+		properties
+			Dispatch_Protocol => Sporadic;
+			-- Source_Text => ("comp.c");
+			-- Source_Text => "Comp_B_input"; 
+	end Comp_B;
+	
+	thread implementation Comp_B.Impl
+	calls 
+	Mycalls: {
+		B_Spg : subprogram C_B;
+	};
+	connections
+		cnx_b : parameter input -> B_Spg.input_param;
+	end Comp_B.Impl;	
+
+	subprogram C_A
+		features
+			output_param : out parameter Base_Types::Integer_32;
+		properties
+			source_language => (C);
+			source_name     => "Comp_A_time_triggered";
+			source_text     => ("comp.c");
+	end C_A;
+
+	subprogram C_B
+		features
+			input_param : in parameter Base_Types::Integer_32;
+		properties
+			source_language => (C);
+			source_name     => "Comp_B_input";
+			source_text     => ("comp.c");
+	end C_B;
+end Periodic;
