@@ -34,7 +34,9 @@ The project can be built and executed on both Linux and Windows platforms.
 
   A successful execution should report that the integration test `all_aadl_models_should_generate_rust_code` passes without errors.
 
-  ![cargotest截图](D:\master\AADL2Rust\AADL2Rust_Notion配图\paper图片\cargotest截图.gif)![image-20260213175432112](C:\Users\ChengJian\AppData\Roaming\Typora\typora-user-images\image-20260213175432112.png)
+  ![cargo_test](images\cargo_test.gif)![generate_project](images\generate_project.png)
+
+  
 
 - If you need to test a single case:
 
@@ -44,9 +46,7 @@ The project can be built and executed on both Linux and Windows platforms.
 
   For example:
 
-  <img src="C:\Users\ChengJian\AppData\Roaming\Typora\typora-user-images\image-20260213180248079.png" alt="image-20260213180248079" style="zoom:80%;" />
-
-
+  <img src="D:\master\AADL2Rust\Rust_Practice\testpaper\aadl2rust\images\cargo_run_input.png" alt="cargo_run_input" style="zoom:80%;" />
 
 - If you need to view the coverage report:
 
@@ -55,7 +55,7 @@ The project can be built and executed on both Linux and Windows platforms.
   		  # output file: "\target\llvm-cov\html\index.html"
   ```
 
-  <img src="C:\Users\ChengJian\AppData\Roaming\Typora\typora-user-images\image-20260213181357934.png" alt="image-20260213181357934" style="zoom:80%;" />
+  <img src="images\code_coverage.png" alt="code_coverage" style="zoom:80%;" />
 
 - To count effective lines of AADL code (excluding blank lines and comments) for each case under `AADLSource/`:
 
