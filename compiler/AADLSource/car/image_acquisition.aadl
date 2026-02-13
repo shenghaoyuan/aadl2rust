@@ -41,9 +41,13 @@ thread implementation image_acquisition_thr.i
 annex Behavior_specification {**
 	 states
 	 s0 : initial complete final state;
+	 s1 : complete final state;
 	 transitions
-	 s0 -[picture]-> s0 {
+	 s0 -[on dispatch]-> s1 {
 		obstacle_detected ! (false)
+	 };
+	 s1 -[on dispatch]-> s0 {
+		obstacle_detected ! (true)
 	 };
 	**};
 end image_acquisition_thr.i;

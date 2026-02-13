@@ -208,7 +208,7 @@ fn determine_array_type(type_mappings: &HashMap<String, Type>, props: &[Property
                 {
                     if let UniqueComponentClassifierReference::Type(impl_ref) = uccr {
                         let type_name = impl_ref.implementation_name.type_identifier.clone();
-                        println!("type_mappings:{:?}",type_mappings);
+                        // println!("type_mappings:{:?}",type_mappings);
                         base_type = type_mappings
                             .get(&type_name.to_lowercase())
                             .cloned()

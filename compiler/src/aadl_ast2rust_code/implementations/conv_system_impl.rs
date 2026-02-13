@@ -216,8 +216,8 @@ fn create_system_new_body(
                     let creation_stmt = format!(
                         "let mut {}: {}Device = {}Device::new()",
                         var_name,
-                        type_name.to_lowercase(),
-                        type_name.to_lowercase()
+                        to_upper_camel_case(&type_name),
+                        to_upper_camel_case(&type_name)
                     );
                     stmts.push(Statement::Expr(Expr::Ident(creation_stmt)));
                 }

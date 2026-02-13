@@ -237,8 +237,12 @@ fn generate_c_function_wrapper(
 
         // 构建use语句
         let mut imports = vec![c_func_name.to_string()];
-        //println!("types_to_import: {:?}", types_to_import);
+        // println!("types_to_import: {:?}", types_to_import);
         if !types_to_import.is_empty() {
+            // 删去types_to_import中已经是Rust原生类型的部分
+            types_to_import.retain(|type_name| !is_rust_primitive_type(type_name));
+            //println!("types_to_import after filtering: {:?}", types_to_import);
+            
             imports.extend(types_to_import);
         }
 

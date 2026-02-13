@@ -55,7 +55,7 @@ connections
     c04 : port wheel_sensor_dev.speed                    -> speed_voter.wheel_sensor;
     c05 : port laser_sensor_dev.speed                    -> speed_voter.laser_sensor;
     c06 : port speed_voter.speed                     -> speed_ctrl.current_speed;
-    c07 : port speed_voter.speed                     -> screen_dev.actual_speed;
+    -- c07 : port speed_voter.speed                     -> screen_dev.actual_speed;
     c08 : port speed_ctrl.speed_cmd                  -> acceleration_dev.cmd;
     c09 : port speed_ctrl.brake_cmd                  -> brake_dev.cmd;
     c10 : port speed_ctrl.warning                    -> screen_dev.warning;
@@ -63,7 +63,7 @@ connections
     c12 : port panel_dev.decrease_speed                  -> panel_controller.decrease_speed;
     c13 : port panel_controller.desired_speed        -> speed_ctrl.desired_speed;
     c14 : port speed_voter.speed                     -> panel_controller.current_speed;
-    c15 : port panel_controller.desired_speed        -> screen_dev.desired_speed;
+    -- c15 : port panel_controller.desired_speed        -> screen_dev.desired_speed;
 	c16 : port bluetooth_ctrl_dev.contacts               -> entertainment.contacts;
 	c17 : port bluetooth_ctrl_dev.music                  -> entertainment.music_in;
 	c18 : port entertainment.music_out               -> speaker_dev.music;

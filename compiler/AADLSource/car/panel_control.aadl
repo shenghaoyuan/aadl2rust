@@ -28,8 +28,8 @@ end panel_control.i;
 
 thread panel_control_thr
 features
-	increase_speed : in event port aadlbook::icd::speed;
-	decrease_speed : in event port aadlbook::icd::speed;
+	increase_speed : in event data port aadlbook::icd::speed;
+	decrease_speed : in event data port aadlbook::icd::speed;
 	current_speed : in data port aadlbook::icd::speed;
 	desired_speed : out data port aadlbook::icd::speed;
 	tire_pressure_in : in data port aadlbook::icd::pressure;

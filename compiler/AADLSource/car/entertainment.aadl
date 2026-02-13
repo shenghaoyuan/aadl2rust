@@ -42,8 +42,6 @@ end entertainment_thr;
 
 thread implementation entertainment_thr.i
 annex Behavior_specification {**
-	variables
-	 infos_value : Base_Types::Integer_8 := 0;
 	states
 	 s0 : initial complete final state;
 	 transitions

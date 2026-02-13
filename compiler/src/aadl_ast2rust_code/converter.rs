@@ -151,7 +151,7 @@ impl AadlConverter {
                         //withs.push(RustWith { path: packages.iter().map(|p| p.to_string()).collect(), glob: true });
                         for pkg_name in packages.iter() {
                             // 关键点：不使用 to_string()
-                             print!("pkg0:{:?}",pkg_name.0.clone());
+                            // print!("pkg0:{:?}",pkg_name.0.clone());
                             let segments = pkg_name.0.iter().map(|s| s.to_ascii_lowercase()).collect();
             
                             withs.push(RustWith {
@@ -171,7 +171,7 @@ impl AadlConverter {
 
     // 根据端口名称获取端口方向
     fn get_port_direction(&self, port_name: &str) -> PortDirection {
-        // 遍历所有组件类型，查找包含该端口的组件
+        // 遍历所有组件类型，查找包含该端口的组件 TODO:这里如果有两个组件都包含同名端口，且该端口的方向不同，就会有问题，
         for comp_type in self.component_types.values() {
             if let FeatureClause::Items(features) = &comp_type.features {
                 for feature in features {
@@ -548,7 +548,7 @@ impl AadlConverter {
         let mut is_channel_created = false;
 
         // 根据连接是否是广播，创建适当的channel。
-        // 目前这种检查只存在于针对system中的连接。
+        // 目前这种检查只存在于针对system中进程之间的连接。
         let mut is_broadcast = false;
         if let PortEndpoint::SubcomponentPort { subcomponent, port } = &conn.source {
             if self.process_broadcast_send.contains(&(subcomponent.clone(), port.clone())) {
@@ -713,11 +713,14 @@ impl AadlConverter {
 
                 // 接收端给内部端口
                 //似乎这种的分配没必要，一定是Rece
-                let internal_port_name = match self.get_port_direction(port_name) {
-                    PortDirection::In => format!("{}Send", port_name.to_lowercase()),
-                    PortDirection::Out => format!("{}Rece", port_name.to_lowercase()), // 输出端口生成 Send
-                    PortDirection::InOut => format!("{}Send", port_name.to_lowercase()), // InOut 暂时按 In 处理
-                };
+                //而且get_port_direction()有bug
+                // let internal_port_name = match self.get_port_direction(port_name) {
+                //     PortDirection::In => {println!("In port: {}", port_name);format!("{}Send", port_name.to_lowercase())},
+                //     PortDirection::Out => {println!("Out port: {}", port_name); format!("{}Rece", port_name.to_lowercase())}, // 输出端口生成 Send
+                //     PortDirection::InOut => {println!("InOut port: {}", port_name);format!("{}Send", port_name.to_lowercase())}, // InOut 暂时按 In 处理
+                // };
+                // 直接改为以下
+                let internal_port_name = format!("{}Rece", port_name.to_lowercase());
                 
                 // 直接赋值给内部端口变量
                 stmts.push(Statement::Expr(Expr::BinaryOp(

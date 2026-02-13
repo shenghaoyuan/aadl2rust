@@ -735,7 +735,7 @@ fn create_process_start_body(
         // 创建接收端变量：let evenementRece_rx = evenementRece.unwrap();
         let rx_var_name = format!("{}_rx", src_field);
         stmts.push(Statement::Let(LetStmt {
-            ifmut: false,
+            ifmut: true,
             name: rx_var_name.clone(),
             ty: None,
             init: Some(Expr::MethodCall(

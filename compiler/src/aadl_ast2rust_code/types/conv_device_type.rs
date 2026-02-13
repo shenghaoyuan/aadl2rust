@@ -3,6 +3,7 @@ use crate::aadl_ast2rust_code::intermediate_ast::*;
 
 use crate::aadl_ast2rust_code::converter::AadlConverter;
 use crate::ast::aadl_ast_cj::*;
+use crate::aadl_ast2rust_code::tool::*;
 
 pub fn convert_device_component(temp_converter: &AadlConverter, comp: &ComponentType) -> Vec<Item> {
     let mut items = Vec::new();
@@ -21,7 +22,7 @@ pub fn convert_device_component(temp_converter: &AadlConverter, comp: &Component
         attrs: Vec::new(),
     });
 
-    let struct_name = format!("{}Device", comp.identifier.to_lowercase());
+    let struct_name = format!("{}Device", to_upper_camel_case(&comp.identifier));
     let struct_def = StructDef {
         name: struct_name.clone(),
         fields,
@@ -257,10 +258,12 @@ fn create_device_run_method(temp_converter: &AadlConverter, comp: &ComponentType
         };
 
         // 生成随机数据值（根据类型）
+        // println!("Generating random value for port '{}' of type '{:?}'", port_name, data_type);
         let random_value = match &data_type {
             Type::Named(type_name) => {
+                // 这里为了car案例做了特殊处理，TODO: 可以根据实际需要调整类型判断和生成逻辑
                 match type_name.as_str() {
-                    "i32" | "i64" | "i16" | "i8" => {
+                    "i32" | "i64" | "i16" | "i8" | "speed" => {
                         // 生成 0-200 的随机整数
                         Expr::MethodCall(
                             Box::new(Expr::Ident("rng".to_string())),
@@ -271,12 +274,12 @@ fn create_device_run_method(temp_converter: &AadlConverter, comp: &ComponentType
                             ],
                         )
                     }
-                    "u32" | "u64" | "u16" | "u8" => Expr::MethodCall(
+                    "u32" | "u64" | "u16" | "u8" | "pressure" | "contacts"=> Expr::MethodCall(
                         Box::new(Expr::Ident("rng".to_string())),
                         "gen_range".to_string(),
                         vec![
                             Expr::Literal(Literal::Int(0)),
-                            Expr::Literal(Literal::Int(201)),
+                            Expr::Literal(Literal::Int(127)),
                         ],
                     ),
                     "f32" | "f64" => Expr::MethodCall(
@@ -287,12 +290,17 @@ fn create_device_run_method(temp_converter: &AadlConverter, comp: &ComponentType
                             Expr::Literal(Literal::Float(200.0)),
                         ],
                     ),
-                    "bool" => {
+                    "bool" | "obstacle_position" | "music" => {
                         Expr::MethodCall(
                             Box::new(Expr::Ident("rng".to_string())),
                             "gen_bool".to_string(),
                             vec![Expr::Literal(Literal::Float(0.9))], // 90%概率为true
                         )
+                    }
+                    "picture" => {
+                        // 生成{core::array::from_fn(|_| { core::array::from_fn(|_| rng.gen_range(0..=100)) }) };
+                        // 简单一点直接包裹在Ident()中
+                        Expr::Ident("{core::array::from_fn(|_| { core::array::from_fn(|_| rng.gen_range(0,200)) }) }".to_string())
                     }
                     "error_type" => Expr::Ident("// please customize".to_string()),
                     _ => Expr::Ident("// please customize".to_string()), // 默认值
